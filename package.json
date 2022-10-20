@@ -6,7 +6,10 @@
   "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "tsc-watch --onSuccess \"nodemon\""
+    "dev": "tsc-watch --onSuccess \"nodemon\"",
+    "make-migrations": "npx mikro-orm migration:create",
+    "migrate": "mikro-orm migration:up",
+    "unmigrate": "mikro-orm migration:down --to 0"
   },
   "author": "squivix <devintheamateurdevin@gmail.com> (https://github.com/squivix)",
   "license": "MIT",
