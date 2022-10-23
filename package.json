@@ -7,8 +7,10 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "tsc-watch --onSuccess \"nodemon\"",
-    "make-migrations": "npx mikro-orm migration:create",
+    "clean": "rm -rf ./build/* && tsc",
+    "make-migrations": "mikro-orm migration:create",
     "migrate": "mikro-orm migration:up",
+    "fresh": "mikro-orm migration:fresh",
     "unmigrate": "mikro-orm migration:down --to 0"
   },
   "author": "squivix <devintheamateurdevin@gmail.com> (https://github.com/squivix)",
@@ -27,5 +29,11 @@
     "nodemon": "^2.0.20",
     "tsc-watch": "^5.0.3",
     "typescript": "^4.8.4"
+  },
+  "mikro-orm": {
+    "configPaths": [
+      "./src/mikro-orm.config.ts",
+      "./build/mikro-orm.config.js"
+    ]
   }
 }
