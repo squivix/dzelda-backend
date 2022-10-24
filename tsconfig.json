@@ -1,8 +1,8 @@
 {
   "compilerOptions": {
     "experimentalDecorators": true,
-    "target": "es2016",
-    "module": "ES6",
+    "target": "es2017",
+    "module": "ES2022",
     "rootDir": "./src",
     "outDir": "./build",
     "esModuleInterop": true,
