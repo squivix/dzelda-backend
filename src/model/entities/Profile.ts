@@ -1,4 +1,4 @@
-import {Entity, ManyToMany, OneToMany, OneToOne, Property, types} from "@mikro-orm/core";
+import {Collection, Entity, ManyToMany, OneToMany, OneToOne, Property, types} from "@mikro-orm/core";
 import {User} from "./auth/User.js";
 import {CustomBaseEntity} from "./CustomBaseEntity.js";
 import {Course} from "./Course.js";
@@ -30,33 +30,33 @@ export class Profile extends CustomBaseEntity {
         mappedBy: (lesson: Lesson) => lesson.learners,
         pivotEntity: () => MapLearnerLesson
     })
-    lessonsLearning!: Lesson;
+    lessonsLearning: Collection<Lesson> = new Collection<Lesson>(this);
 
     @ManyToMany({
         entity: () => Vocab,
         mappedBy: (vocab: Vocab) => vocab.learners,
         pivotEntity: () => MapLearnerVocab
     })
-    vocabsLearning!: Vocab;
+    vocabsLearning: Collection<Vocab> = new Collection<Vocab>(this);
 
     @ManyToMany({
         entity: () => Meaning,
         mappedBy: (meaning: Meaning) => meaning.learners,
         pivotEntity: () => MapLearnerMeaning
     })
-    meaningsLearning!: Meaning;
+    meaningsLearning: Collection<Meaning> = new Collection<Meaning>(this);
 
     @ManyToMany({
         entity: () => Dictionary,
         mappedBy: (dictionary: Dictionary) => dictionary.learners,
         pivotEntity: () => MapLearnerDictionary
     })
-    dictionariesSaved!: Dictionary;
+    dictionariesSaved: Collection<Dictionary> = new Collection<Dictionary>(this);
 
     @OneToMany({entity: () => Course, mappedBy: (course: Course) => course.addedBy})
-    coursesAdded!: Course;
+    coursesAdded: Collection<Course> = new Collection<Course>(this);
 
     @OneToMany({entity: () => Meaning, mappedBy: (meaning: Meaning) => meaning.addedBy})
-    meaningsAdded!: Meaning;
+    meaningsAdded: Collection<Meaning> = new Collection<Meaning>(this);
 
 }

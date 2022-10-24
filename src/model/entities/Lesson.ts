@@ -1,5 +1,5 @@
 import {CustomBaseEntity} from "./CustomBaseEntity.js";
-import {Entity, ManyToMany, ManyToOne, Property, types} from "@mikro-orm/core";
+import {Collection, Entity, ManyToMany, ManyToOne, Property, types} from "@mikro-orm/core";
 import {Course} from "./Course.js";
 import {Vocab} from "./Vocab.js";
 import {MapLessonVocab} from "./MapLessonVocab.js";
@@ -34,12 +34,12 @@ export class Lesson extends CustomBaseEntity {
         mappedBy: (vocab) => vocab.lessonsAppearingIn,
         pivotEntity: () => MapLessonVocab
     })
-    vocabs!: Vocab;
+    vocabs: Collection<Vocab> = new Collection<Vocab>(this);
 
     @ManyToMany({
         entity: () => Profile,
         inversedBy: (profile: Profile) => profile.lessonsLearning,
         pivotEntity: () => MapLearnerLesson
     })
-    learners!: Profile;
+    learners: Collection<Profile> = new Collection<Profile>(this);
 }

@@ -1,5 +1,5 @@
 import {Lesson} from "./Lesson.js";
-import {Entity, ManyToMany, ManyToOne, OneToMany, Property, types, Unique} from "@mikro-orm/core";
+import {Collection, Entity, ManyToMany, ManyToOne, OneToMany, Property, types, Unique} from "@mikro-orm/core";
 import {MapLessonVocab} from "./MapLessonVocab.js";
 import {CustomBaseEntity} from "./CustomBaseEntity.js";
 import {Language} from "./Language.js";
@@ -20,21 +20,21 @@ export class Vocab extends CustomBaseEntity {
     isPhrase!: boolean;
 
     @OneToMany({entity: () => Meaning, mappedBy: (meaning: Meaning) => meaning.vocab})
-    meanings!: Meaning;
+    meanings: Collection<Meaning> = new Collection<Meaning>(this);
 
     @ManyToMany({
         entity: () => Lesson,
         inversedBy: (lesson: Lesson) => lesson.vocabs,
         pivotEntity: () => MapLessonVocab
     })
-    lessonsAppearingIn!: Lesson;
+    lessonsAppearingIn: Collection<Lesson> = new Collection<Lesson>(this);
 
     @ManyToMany({
         entity: () => Profile,
         inversedBy: (profile: Profile) => profile.vocabsLearning,
         pivotEntity: () => MapLearnerVocab
     })
-    learners!: Profile;
+    learners: Collection<Profile> = new Collection<Profile>(this);
 
 
 }

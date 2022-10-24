@@ -1,6 +1,6 @@
 import { Migration } from '@mikro-orm/migrations';
 
-export class Migration20221023192738 extends Migration {
+export class Migration20221024053010 extends Migration {
 
   async up(): Promise<void> {
     this.addSql('create table "language" ("id" serial primary key, "code" varchar(4) not null, "name" varchar(255) not null, "greeting" varchar(255) not null, "flag" varchar(500) null default null, "flag_circular" varchar(500) null default null, "flag_emoji" varchar(4) null default null, "is_supported" boolean not null default false, "level_thresholds" jsonb not null default {beginner1: 0,beginner2: 1000,intermediate1: 5000,intermediate2: 12000,advanced1: 20000,advanced2: 30000}\'::jsonb);');

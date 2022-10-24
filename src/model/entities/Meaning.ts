@@ -1,5 +1,5 @@
 import {CustomBaseEntity} from "./CustomBaseEntity.js";
-import {Entity, ManyToMany, ManyToOne, Property, types, Unique} from "@mikro-orm/core";
+import {Collection, Entity, ManyToMany, ManyToOne, Property, types, Unique} from "@mikro-orm/core";
 import {Vocab} from "./Vocab.js";
 import {Profile} from "./Profile.js";
 import {Language} from "./Language.js";
@@ -28,5 +28,5 @@ export class Meaning extends CustomBaseEntity {
         inversedBy: (learner: Profile) => learner.meaningsLearning,
         pivotEntity: () => MapLearnerMeaning,
     })
-    learners!: Profile;
+    learners: Collection<Profile> = new Collection<Profile>(this);
 }

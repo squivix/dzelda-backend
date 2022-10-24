@@ -1,4 +1,4 @@
-import {Entity, OneToMany, Property, types} from "@mikro-orm/core";
+import {Collection, Entity, OneToMany, Property, types} from "@mikro-orm/core";
 import {CustomBaseEntity} from "./CustomBaseEntity.js";
 import {Course} from "./Course.js";
 import {Vocab} from "./Vocab.js";
@@ -17,7 +17,7 @@ export class Language extends CustomBaseEntity {
     greeting!: string;
 
     @OneToMany({entity: () => Course, mappedBy: (course: Course) => course.language})
-    courses!: Course;
+    courses: Collection<Course> = new Collection<Course>(this);
 
     @Property({type: types.string, length: 500, nullable: true, default: null})
     flag?: string;
@@ -45,12 +45,12 @@ export class Language extends CustomBaseEntity {
     };
 
     @OneToMany({entity: () => Dictionary, mappedBy: (dictionary) => dictionary.language})
-    dictionaries!: Dictionary;
+    dictionaries: Collection<Dictionary> = new Collection<Dictionary>(this);
 
     @OneToMany({entity: () => Vocab, mappedBy: (vocab) => vocab.language})
-    vocabs!: Vocab;
+    vocabs: Collection<Vocab> = new Collection<Vocab>(this);
 
     @OneToMany({entity: () => Meaning, mappedBy: (meaning) => meaning.language})
-    meaningsSavedIn!: Meaning;
+    meaningsSavedIn: Collection<Meaning> = new Collection<Meaning>(this);
 }
 
