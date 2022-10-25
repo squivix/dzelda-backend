@@ -1,13 +1,16 @@
 import { Migration } from '@mikro-orm/migrations';
 
-export class Migration20221024053010 extends Migration {
+export class Migration20221025162045 extends Migration {
 
   async up(): Promise<void> {
-    this.addSql('create table "language" ("id" serial primary key, "code" varchar(4) not null, "name" varchar(255) not null, "greeting" varchar(255) not null, "flag" varchar(500) null default null, "flag_circular" varchar(500) null default null, "flag_emoji" varchar(4) null default null, "is_supported" boolean not null default false, "level_thresholds" jsonb not null default {beginner1: 0,beginner2: 1000,intermediate1: 5000,intermediate2: 12000,advanced1: 20000,advanced2: 30000}\'::jsonb);');
+    this.addSql('create table "language" ("id" serial primary key, "code" varchar(4) not null, "name" varchar(255) not null, "greeting" varchar(255) not null, "flag" varchar(500) null default null, "flag_circular" varchar(500) null default null, "flag_emoji" varchar(4) null default null, "is_supported" boolean not null default false, "level_thresholds" jsonb not null default {beginner1: 0,beginner2: 1000,intermediate1: 5000,intermediate2: 12000,advanced1: 20000,advanced2: 30000}\'\':\':jsonb);');
 
     this.addSql('create table "dictionary" ("id" serial primary key, "language_id" int not null, "name" varchar(255) not null, "link" varchar(500) not null, "is_default" boolean not null default false);');
 
     this.addSql('create table "user" ("id" serial primary key, "username" varchar(20) not null, "email" varchar(255) not null, "password" varchar(255) not null, "is_staff" boolean not null default false, "is_admin" boolean not null default false, "account_created_at" timestamptz(0) not null default now, "last_login" timestamptz(0) not null default now);');
+
+    this.addSql('create table "session" ("id" serial primary key, "token" varchar(255) not null, "user_id" int not null);');
+    this.addSql('alter table "session" add constraint "session_user_id_unique" unique ("user_id");');
 
     this.addSql('create table "profile" ("id" serial primary key, "user_id" int not null, "profile_picture" varchar(500) not null, "bio" text not null default \'\', "is_public" boolean not null default true);');
     this.addSql('alter table "profile" add constraint "profile_user_id_unique" unique ("user_id");');
@@ -39,6 +42,8 @@ export class Migration20221024053010 extends Migration {
     this.addSql('alter table "map_learner_vocab" add constraint "map_learner_vocab_learner_id_vocab_id_unique" unique ("learner_id", "vocab_id");');
 
     this.addSql('alter table "dictionary" add constraint "dictionary_language_id_foreign" foreign key ("language_id") references "language" ("id") on update cascade;');
+
+    this.addSql('alter table "session" add constraint "session_user_id_foreign" foreign key ("user_id") references "user" ("id") on update cascade;');
 
     this.addSql('alter table "profile" add constraint "profile_user_id_foreign" foreign key ("user_id") references "user" ("id") on update cascade;');
 
@@ -85,6 +90,8 @@ export class Migration20221024053010 extends Migration {
 
     this.addSql('alter table "dictionary_learners" drop constraint "dictionary_learners_dictionary_id_foreign";');
 
+    this.addSql('alter table "session" drop constraint "session_user_id_foreign";');
+
     this.addSql('alter table "profile" drop constraint "profile_user_id_foreign";');
 
     this.addSql('alter table "map_learner_dictionary" drop constraint "map_learner_dictionary_learner_id_foreign";');
@@ -120,6 +127,8 @@ export class Migration20221024053010 extends Migration {
     this.addSql('drop table if exists "dictionary" cascade;');
 
     this.addSql('drop table if exists "user" cascade;');
+
+    this.addSql('drop table if exists "session" cascade;');
 
     this.addSql('drop table if exists "profile" cascade;');
 

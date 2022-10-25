@@ -11,7 +11,7 @@ export class User extends CustomBaseEntity {
     @Property({type: types.string, length: 255})
     email!: string;
 
-    @Property({type: types.string, length: 255})
+    @Property({type: types.string, length: 255, hidden: true})
     password!: string;
 
     @OneToOne({entity: () => Profile, mappedBy: (profile: Profile) => profile.user})
@@ -23,10 +23,10 @@ export class User extends CustomBaseEntity {
     @Property({type: types.boolean, default: false})
     isAdmin!: boolean;
 
-    @Property({type: types.datetime, defaultRaw: "now"})
+    @Property({type: types.datetime, defaultRaw: "now()"})
     accountCreatedAt!: Date;
 
-    @Property({type: types.datetime, defaultRaw: "now"})
+    @Property({type: types.datetime, defaultRaw: "now()"})
     lastLogin!: Date;
 
 }

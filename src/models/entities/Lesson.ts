@@ -26,7 +26,7 @@ export class Lesson extends CustomBaseEntity {
     @Property({type: types.integer, default: 0})
     orderInCourse!: number;
 
-    @Property({type: types.datetime, defaultRaw: "now"})
+    @Property({type: types.datetime, defaultRaw: "now()"})
     addedOn!: Date;
 
     @ManyToMany({
