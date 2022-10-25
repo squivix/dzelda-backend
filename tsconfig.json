@@ -12,5 +12,6 @@
     "noEmitOnError": true,
     "moduleResolution": "node",
     "sourceMap": true,
+    "typeRoots": ["./types"]
   }
 }

@@ -1,6 +1,8 @@
-import {Entity, OneToOne, Property, types} from "@mikro-orm/core";
+import {Entity, EntityRepositoryType, OneToOne, Property, types} from "@mikro-orm/core";
 import {CustomBaseEntity} from "../CustomBaseEntity.js";
 import {Profile} from "../Profile.js";
+import UserRepo from "../../repos/auth/UserRepo.js";
+import {Session} from "./Session.js";
 
 
 @Entity()
@@ -29,4 +31,8 @@ export class User extends CustomBaseEntity {
     @Property({type: types.datetime, defaultRaw: "now()"})
     lastLogin!: Date;
 
+    @OneToOne({entity: () => Session, mappedBy: (session: Session) => session.user})
+    session!: Session;
+
+    [EntityRepositoryType]?: UserRepo;
 }
