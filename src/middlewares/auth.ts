@@ -1,17 +1,15 @@
-import {NextFunction, Response} from "express";
+import {NextFunction, Response, Request} from "express";
 import {orm} from "../app.js";
 import {User} from "../models/entities/auth/User.js";
-import {Express} from "../../types/custom.js";
-import Request = Express.CustomRequest;
 
 export default async (req: Request, res: Response, next: NextFunction) => {
-    const token = req?.headers?.authorization?.split(" ")[1];
+    const tokenArray = req?.get("authorization")?.split(" ");
 
-    if (token == undefined) {
+    if (!tokenArray || tokenArray.length !== 2 || tokenArray[0] !== "Token" || !tokenArray[1]) {
         res.status(401).json({details: "Authentication credentials were not provided"});
         return;
     }
-    console.log(token);
+    const token = tokenArray[1];
     const userRepo = orm.em.getRepository(User);
     const user = await userRepo.findOne({session: {token: token}});
     if (user) {
