@@ -1,4 +1,4 @@
-import {Entity, EntityRepositoryType, OneToOne, Property, types} from "@mikro-orm/core";
+import {Entity, EntityRepositoryType, OneToOne, Property, types, Unique} from "@mikro-orm/core";
 import {CustomBaseEntity} from "../CustomBaseEntity.js";
 import {Profile} from "../Profile.js";
 import UserRepo from "../../repos/auth/UserRepo.js";
@@ -7,10 +7,19 @@ import {Session} from "./Session.js";
 
 @Entity()
 export class User extends CustomBaseEntity {
+    constructor(username: string, email: string, password: string) {
+        super();
+        this.username = username;
+        this.email = email;
+        this.password = password;
+    }
+
     @Property({type: types.string, length: 20})
+    @Unique()
     username!: string;
 
     @Property({type: types.string, length: 255})
+    @Unique()
     email!: string;
 
     @Property({type: types.string, length: 255, hidden: true})

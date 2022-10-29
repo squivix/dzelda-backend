@@ -3,7 +3,7 @@
     "experimentalDecorators": true,
     "target": "es2017",
     "module": "ES2022",
-    "rootDir": "./src",
+    "rootDir": ".",
     "outDir": "./build",
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
