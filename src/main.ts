@@ -1,7 +1,13 @@
 import {app} from "./app.js";
 
-const port = process.env.PORT || 3000;
+const port = Number(process.env.PORT) ?? 3000;
 
-app.listen(port, () => {
+// Run the server!
+await app.listen({port}, function (err, address) {
+    if (err) {
+        throw err;
+        // app.log.error(err);
+        // process.exit(1);
+    }
     console.log(`Dzelda listening on port http://localhost:${port}`);
 });

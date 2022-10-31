@@ -1,9 +1,11 @@
-import {Collection, Entity, OneToMany, Property, types} from "@mikro-orm/core";
+import {Collection, Entity, ManyToMany, OneToMany, Property, types} from "@mikro-orm/core";
 import {CustomBaseEntity} from "./CustomBaseEntity.js";
 import {Course} from "./Course.js";
 import {Vocab} from "./Vocab.js";
 import {Meaning} from "./Meaning.js";
 import {Dictionary} from "./Dictionary.js";
+import {Profile} from "./Profile.js";
+import {MapLearnerLanguage} from "./MapLearnerLanguage.js";
 
 @Entity()
 export class Language extends CustomBaseEntity {
@@ -52,5 +54,12 @@ export class Language extends CustomBaseEntity {
 
     @OneToMany({entity: () => Meaning, mappedBy: (meaning) => meaning.language})
     meaningsSavedIn: Collection<Meaning> = new Collection<Meaning>(this);
+
+    @ManyToMany({
+        entity: () => Profile,
+        inversedBy: (profile: Profile) => profile.languagesLearning,
+        pivotEntity: () => MapLearnerLanguage,
+    })
+    learners: Collection<Profile> = new Collection<Profile>(this);
 }
 

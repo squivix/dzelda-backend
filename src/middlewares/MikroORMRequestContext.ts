@@ -1,7 +1,12 @@
-import {RequestContext} from "@mikro-orm/core";
-import {NextFunction, Request, Response} from "express";
 import {orm} from "../app.js";
+import {FastifyInstance} from "fastify";
+import {FastifyPluginCallback} from "fastify/types/plugin.js";
 
-export default (req: Request, res: Response, next: NextFunction) => {
-    RequestContext.create(orm.em, next);
-};
+const MikroORMRequestContext: FastifyPluginCallback =
+    function (fastify: FastifyInstance, options: Object, done) {
+        fastify.addHook("onRequest", (request, reply, onRequestDone) => {
+            request.em = orm.em.fork();
+        });
+        done();
+    };
+export default MikroORMRequestContext;

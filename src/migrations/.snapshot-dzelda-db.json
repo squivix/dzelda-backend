@@ -430,6 +430,7 @@
           "primary": false,
           "nullable": false,
           "length": 500,
+          "default": "''",
           "mappedType": "string"
         },
         "bio": {
@@ -488,6 +489,87 @@
             "id"
           ],
           "referencedTableName": "public.user",
+          "updateRule": "cascade"
+        }
+      }
+    },
+    {
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "int",
+          "unsigned": true,
+          "autoincrement": true,
+          "primary": true,
+          "nullable": false,
+          "mappedType": "integer"
+        },
+        "language_id": {
+          "name": "language_id",
+          "type": "int",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "mappedType": "integer"
+        },
+        "learner_id": {
+          "name": "learner_id",
+          "type": "int",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "mappedType": "integer"
+        }
+      },
+      "name": "map_learner_language",
+      "schema": "public",
+      "indexes": [
+        {
+          "keyName": "map_learner_language_learner_id_language_id_unique",
+          "columnNames": [
+            "learner_id",
+            "language_id"
+          ],
+          "composite": true,
+          "primary": false,
+          "unique": true
+        },
+        {
+          "keyName": "map_learner_language_pkey",
+          "columnNames": [
+            "id"
+          ],
+          "composite": false,
+          "primary": true,
+          "unique": true
+        }
+      ],
+      "checks": [],
+      "foreignKeys": {
+        "map_learner_language_language_id_foreign": {
+          "constraintName": "map_learner_language_language_id_foreign",
+          "columnNames": [
+            "language_id"
+          ],
+          "localTableName": "public.map_learner_language",
+          "referencedColumnNames": [
+            "id"
+          ],
+          "referencedTableName": "public.language",
+          "updateRule": "cascade"
+        },
+        "map_learner_language_learner_id_foreign": {
+          "constraintName": "map_learner_language_learner_id_foreign",
+          "columnNames": [
+            "learner_id"
+          ],
+          "localTableName": "public.map_learner_language",
+          "referencedColumnNames": [
+            "id"
+          ],
+          "referencedTableName": "public.profile",
           "updateRule": "cascade"
         }
       }

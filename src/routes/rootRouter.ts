@@ -1,5 +1,10 @@
-import express from "express";
-import {userRouter} from "./users.js";
+import {FastifyPluginCallback} from "fastify/types/plugin.js";
+import userRouter from "./users.js";
 
-export const rootRouter = express.Router();
-rootRouter.use(userRouter);
+const rootRouter: FastifyPluginCallback = function rootRouter(fastify, options, done) {
+    fastify.register(userRouter);
+    done();
+};
+
+
+export default rootRouter;

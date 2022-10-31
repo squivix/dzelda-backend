@@ -1,5 +1,9 @@
-import express from "express";
 import UserController from "../controllers/UserController.js";
+import {FastifyPluginCallback} from "fastify/types/plugin.js";
 
-export const userRouter = express.Router();
-userRouter.post("/users/", UserController.signUp);
+const userRouter: FastifyPluginCallback = function rootRouter(fastify, options, done) {
+    fastify.post("/users/", UserController.signUp);
+    done();
+};
+
+export default userRouter;

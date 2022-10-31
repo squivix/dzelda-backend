@@ -5,8 +5,9 @@ import UserRepo from "../../repos/auth/UserRepo.js";
 import {Session} from "./Session.js";
 
 
-@Entity()
+@Entity({customRepository: () => UserRepo})
 export class User extends CustomBaseEntity {
+    //TODO hide id
     constructor(username: string, email: string, password: string) {
         super();
         this.username = username;
@@ -28,19 +29,19 @@ export class User extends CustomBaseEntity {
     @OneToOne({entity: () => Profile, mappedBy: (profile: Profile) => profile.user})
     profile!: Profile;
 
-    @Property({type: types.boolean, default: false})
+    @Property({type: types.boolean, default: false, hidden: true})
     isStaff!: boolean;
 
-    @Property({type: types.boolean, default: false})
+    @Property({type: types.boolean, default: false, hidden: true})
     isAdmin!: boolean;
 
-    @Property({type: types.datetime, defaultRaw: "now()"})
+    @Property({type: types.datetime, defaultRaw: "now()", hidden: true})
     accountCreatedAt!: Date;
 
-    @Property({type: types.datetime, defaultRaw: "now()"})
+    @Property({type: types.datetime, defaultRaw: "now()", hidden: true})
     lastLogin!: Date;
 
-    @OneToOne({entity: () => Session, mappedBy: (session: Session) => session.user})
+    @OneToOne({entity: () => Session, mappedBy: (session: Session) => session.user, hidden: true})
     session!: Session;
 
     [EntityRepositoryType]?: UserRepo;
