@@ -9,8 +9,7 @@ export class UserFactory extends Factory<User> {
         return {
             username: faker.random.alpha({count: 20}),
             email: faker.internet.email(),
-            password: faker.random.alphaNumeric(128)
+            password: faker.random.alphaNumeric(128)    // password not hashed because hashing is async
         };
     }
-
 }

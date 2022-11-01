@@ -3,34 +3,59 @@ import {API_ROOT, app, orm} from "../../../../src/app.js";
 import {User} from "../../../../src/models/entities/auth/User.js";
 import {UserFactory} from "../../../../src/seeders/factories/UserFactory.js";
 import {Profile} from "../../../../src/models/entities/Profile.js";
-import falso from "@ngneat/falso";
+import {faker} from "@faker-js/faker";
+import {LanguageFactory} from "../../../../src/seeders/factories/LanguageFactory.js";
+import {Language} from "../../../../src/models/entities/Language.js";
+import {fetchRequest} from "../utils.js";
+
 
 describe("POST /users", function () {
     const userRepo = orm.em.fork().getRepository(User);
     const profileRepo = orm.em.fork().getRepository(Profile);
+    const languageRepo = orm.em.fork().getRepository(Language);
     const userFactory = () => new UserFactory(orm.em.fork());
+    const languageFactory = () => new LanguageFactory(orm.em.fork());
+
     const signUpRequest = async (payload: object) => {
-        return await app.inject({
+        return await fetchRequest({
             method: "POST",
-            url: `${API_ROOT}/users/`,
+            url: `users/`,
             payload
         });
     };
 
+    describe("If all fields are valid a new user should be registered with profile and return 201", async () => {
+        test("If no initial language is sent, the new user should not be learning any language", async () => {
+            const newUser = userFactory().makeOne();
+            const response = await signUpRequest({
+                username: newUser.username,
+                password: newUser.password,
+                email: newUser.email
+            });
 
-    test("If all fields are valid a new user should be registered with profile", async () => {
-        const newUser = userFactory().makeOne();
-        const response = await signUpRequest({
-            username: newUser.username,
-            password: newUser.password,
-            email: newUser.email
+            expect(response.statusCode).to.equal(201);
+            expect(response.json()).toEqual(expect.objectContaining(newUser.toObject()));
+
+            expect(await userRepo.findOne({username: newUser.username})).not.toBeNull();
+            expect(await profileRepo.findOne({user: {username: newUser.username}})).not.toBeNull();
         });
+        test("If initial language is sent new user should be learning language", async () => {
+            const language = await languageFactory().createOne();
+            const newUser = userFactory().makeOne();
+            const response = await signUpRequest({
+                username: newUser.username,
+                password: newUser.password,
+                email: newUser.email,
+                initialLanguage: language.code
+            });
 
-        expect(response.statusCode).to.equal(201);
-        expect(response.json()).toEqual(expect.objectContaining(newUser.toObject()));
+            expect(response.statusCode).to.equal(201);
+            expect(response.json()).toEqual(expect.objectContaining(newUser.toObject()));
 
-        expect(await userRepo.findOne({username: newUser.username})).not.toBeNull();
-        expect(await profileRepo.findOne({user: {username: newUser.username}})).not.toBeNull();
+            expect(await userRepo.findOne({username: newUser.username})).not.toBeNull();
+            expect(await profileRepo.findOne({user: {username: newUser.username}})).not.toBeNull();
+            expect(await languageRepo.findOne({learners: {user: {username: newUser.username}}})).not.toBeNull();
+        });
     });
     describe("If required fields are missing return 400", async () => {
         test("If username is missing return 400", async () => {
@@ -67,7 +92,7 @@ describe("POST /users", function () {
             test("If username is shorter than 4 characters return 400", async () => {
                 const newUser = userFactory().makeOne();
                 const response = await signUpRequest({
-                    username: falso.randAlphaNumeric({length: 3}),
+                    username: faker.random.alphaNumeric(3),
                     password: newUser.password,
                     email: newUser.email
                 });
@@ -77,7 +102,17 @@ describe("POST /users", function () {
             test("If username is longer than 20 characters return 400", async () => {
                 const newUser = userFactory().makeOne();
                 const response = await signUpRequest({
-                    username: falso.randAlphaNumeric({length: 21}),
+                    username: faker.random.alphaNumeric(21),
+                    password: newUser.password,
+                    email: newUser.email
+                });
+
+                expect(response.statusCode).to.equal(400);
+            });
+            test("If username contains any characters other than A-Z,a-z,_,0-9  return 400", async () => {
+                const newUser = userFactory().makeOne();
+                const response = await signUpRequest({
+                    username: faker.datatype.string(20),
                     password: newUser.password,
                     email: newUser.email
                 });
@@ -93,6 +128,37 @@ describe("POST /users", function () {
                     email: newUser.email
                 });
 
+                expect(response.statusCode).to.equal(400);
+            });
+        });
+        describe("If email is invalid return 400", async () => {
+            test("If email is not a valid email return 400", async () => {
+                const newUser = userFactory().makeOne();
+                const response = await signUpRequest({
+                    username: newUser.username,
+                    password: newUser.password,
+                    email: faker.random.alphaNumeric(20)
+                });
+                expect(response.statusCode).to.equal(400);
+            });
+            test("If email is longer than 255 characters return 400", async () => {
+                const newUser = userFactory().makeOne();
+                const response = await signUpRequest({
+                    username: newUser.username,
+                    password: newUser.password,
+                    email: faker.internet.email(faker.random.alpha(257))
+                });
+                expect(response.statusCode).to.equal(400);
+            });
+        });
+        describe("If password is invalid return 400", async () => {
+            test("If password is shorter than 8 characters return 400", async () => {
+                const newUser = userFactory().makeOne();
+                const response = await signUpRequest({
+                    username: newUser.username,
+                    password: faker.random.alphaNumeric(7),
+                    email: newUser.email
+                });
                 expect(response.statusCode).to.equal(400);
             });
         });

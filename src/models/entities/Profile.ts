@@ -46,6 +46,8 @@ export class Profile extends CustomBaseEntity {
         entity: () => Language,
         mappedBy: (language: Language) => language.learners,
         pivotEntity: () => MapLearnerLanguage,
+        joinColumn: "learner_id",
+        inverseJoinColumn: "language_id",
     })
     languagesLearning: Collection<Language> = new Collection<Language>(this);
 

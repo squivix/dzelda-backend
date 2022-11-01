@@ -13,8 +13,8 @@ export default defineConfig({
         exclude: [...defaultExclude, "build/**"],
         threads: false,
         dangerouslyIgnoreUnhandledErrors: true,
-        coverage: {
-            provider: "istanbul"
-        }
+        // coverage: {
+        //     provider: "istanbul"
+        // }
     },
 });
