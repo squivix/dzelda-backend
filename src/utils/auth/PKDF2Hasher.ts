@@ -1,6 +1,5 @@
 import crypto from "crypto";
 import {promisify} from "util";
-import {resolveSrv} from "dns";
 
 const pbkdf2Async = promisify(crypto.pbkdf2);
 
@@ -25,7 +24,7 @@ export class PKDF2Hasher implements PasswordHasher {
 
     private deFormat(cipherText: string) {
         const dbValues = cipherText.split("$");
-        return {iterations: Number(dbValues [1]), hash: dbValues [2], salt: dbValues [3]};
+        return {iterations: Number(dbValues[1]), hash: dbValues[2], salt: Buffer.from(dbValues[3], "base64")};
     }
 
     constructor(iterations: number = 500_000, keyLength: number = 32, saltLength: number = 16, digest: string = "sha256") {

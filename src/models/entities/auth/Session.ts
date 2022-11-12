@@ -5,6 +5,12 @@ import {SessionRepo} from "../../repos/auth/SessionRepo.js";
 
 @Entity({customRepository: () => SessionRepo})
 export class Session extends CustomBaseEntity {
+    constructor(user: User, token: string) {
+        super();
+        this.user = user;
+        this.token = token;
+    }
+
     @Property({type: types.string, length: 255})
     @Unique()
     token!: string;

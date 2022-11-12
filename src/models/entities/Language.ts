@@ -18,16 +18,13 @@ export class Language extends CustomBaseEntity {
     @Property({type: types.string, length: 255})
     greeting!: string;
 
-    @OneToMany({entity: () => Course, mappedBy: (course: Course) => course.language})
-    courses: Collection<Course> = new Collection<Course>(this);
-
     @Property({type: types.string, length: 500, nullable: true, default: null})
     flag?: string;
 
     @Property({type: types.string, length: 500, nullable: true, default: null})
     flagCircular?: string;
 
-    @Property({type: types.string, length: 4, nullable: true, default: null})
+    @Property({type: types.string, length: 32, nullable: true, default: null})
     flagEmoji?: string;
 
     @Property({type: types.boolean, default: false})
@@ -45,14 +42,17 @@ export class Language extends CustomBaseEntity {
         advanced1: number;
         advanced2: number;
     };
+    
+    @OneToMany({entity: () => Course, mappedBy: (course: Course) => course.language, hidden: true})
+    courses: Collection<Course> = new Collection<Course>(this);
 
-    @OneToMany({entity: () => Dictionary, mappedBy: (dictionary) => dictionary.language})
+    @OneToMany({entity: () => Dictionary, mappedBy: (dictionary) => dictionary.language, hidden: true})
     dictionaries: Collection<Dictionary> = new Collection<Dictionary>(this);
 
-    @OneToMany({entity: () => Vocab, mappedBy: (vocab) => vocab.language})
+    @OneToMany({entity: () => Vocab, mappedBy: (vocab) => vocab.language, hidden: true})
     vocabs: Collection<Vocab> = new Collection<Vocab>(this);
 
-    @OneToMany({entity: () => Meaning, mappedBy: (meaning) => meaning.language})
+    @OneToMany({entity: () => Meaning, mappedBy: (meaning) => meaning.language, hidden: true})
     meaningsSavedIn: Collection<Meaning> = new Collection<Meaning>(this);
 
     @ManyToMany({
@@ -61,6 +61,7 @@ export class Language extends CustomBaseEntity {
         pivotEntity: () => MapLearnerLanguage,
         joinColumn: "language_id",
         inverseJoinColumn: "learner_id",
+        hidden: true
     })
     learners: Collection<Profile> = new Collection<Profile>(this);
 }

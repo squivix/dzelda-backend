@@ -42,7 +42,7 @@ const devOptions: Options = {
 const testOptions: Options = {
     ...devOptions,
     dbName: `${devOptions.dbName}-test`,
-    debug: true,
+    debug: false,       //SQL queries too verbose
 };
 
 const prodOptions: Options = {

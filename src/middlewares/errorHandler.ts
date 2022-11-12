@@ -1,0 +1,36 @@
+import {NotFoundError, UniqueConstraintViolationException} from "@mikro-orm/core";
+import {ZodError} from "zod";
+import {FastifyReply, FastifyRequest} from "fastify";
+import {APIError} from "../utils/errors/APIError.js";
+import {ValidationAPIError, FieldsObject} from "../utils/errors/ValidationAPIError.js";
+import {NotFoundAPIError} from "../utils/errors/NotFoundAPIError.js";
+
+export default (error: Error, request: FastifyRequest, reply: FastifyReply) => {
+    let apiError: APIError | undefined;
+
+    if (error instanceof APIError)
+        apiError = error;
+    else if (error instanceof ZodError) {
+        const fields: FieldsObject = {};
+        for (const issue of error.issues)
+            fields[issue.path[0]] = {message: issue.message};
+        apiError = new ValidationAPIError(fields);
+    } else if (error instanceof NotFoundError) {
+        const entity = error.message.split(" ")[0];
+        if (entity)
+            apiError = new NotFoundAPIError(entity);
+    } else if (error instanceof UniqueConstraintViolationException) {
+        //TODO find a better way of extracting field from error
+        //extracts column name from error message: "Key (column)=(value) already exists."
+        const field = (error as any).detail?.match(/\(([^)]*)\)/)?.pop();
+        if (field)
+            apiError = new ValidationAPIError({[field]: {message: "not unique"}});
+    }
+
+    if (apiError)
+        reply.status(apiError.statusCode).send(apiError.toJSON());
+    else {
+        console.error(error);
+        reply.status(500).send("Something went wrong");
+    }
+}

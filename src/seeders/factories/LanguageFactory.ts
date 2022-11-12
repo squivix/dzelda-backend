@@ -1,7 +1,6 @@
 import {Factory, Faker} from "@mikro-orm/seeder";
-import {Collection, EntityData, OneToMany, Property, types} from "@mikro-orm/core";
+import {EntityData} from "@mikro-orm/core";
 import {Language} from "../../models/entities/Language.js";
-import {Course} from "../../models/entities/Course.js";
 
 export class LanguageFactory extends Factory<Language> {
     readonly model = Language;
@@ -11,6 +10,18 @@ export class LanguageFactory extends Factory<Language> {
             code: faker.random.locale().substring(0, 2),
             name: faker.random.word(),
             greeting: faker.random.words(20),
+            flag: faker.image.imageUrl(100, 100),
+            flagCircular: faker.image.imageUrl(100, 100),
+            flagEmoji: faker.internet.emoji(),
+            isSupported: faker.datatype.boolean(),
+            levelThresholds: {
+                beginner1: 0,
+                beginner2: faker.datatype.number({min: 500, max: 1500}),
+                intermediate1: faker.datatype.number({min: 2500, max: 7500}),
+                intermediate2: faker.datatype.number({min: 8000, max: 15000}),
+                advanced1: faker.datatype.number({min: 16000, max: 25000}),
+                advanced2: faker.datatype.number({min: 26000, max: 35000}),
+            }
         };
     }
 

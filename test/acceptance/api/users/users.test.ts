@@ -1,5 +1,4 @@
-import {describe, expect, test} from "vitest";
-import {API_ROOT, app, orm} from "../../../../src/app.js";
+import {describe, expect, test, beforeEach} from "vitest";
 import {User} from "../../../../src/models/entities/auth/User.js";
 import {UserFactory} from "../../../../src/seeders/factories/UserFactory.js";
 import {Profile} from "../../../../src/models/entities/Profile.js";
@@ -7,7 +6,11 @@ import {faker} from "@faker-js/faker";
 import {LanguageFactory} from "../../../../src/seeders/factories/LanguageFactory.js";
 import {Language} from "../../../../src/models/entities/Language.js";
 import {fetchRequest} from "../utils.js";
+import {orm} from "../../../../src/server.js";
+import {clearDb} from "../../../utils.js";
 
+
+beforeEach(async () => clearDb());
 
 describe("POST /users", function () {
     const userRepo = orm.em.fork().getRepository(User);
