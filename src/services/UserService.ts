@@ -1,11 +1,11 @@
-import {passwordHasher} from "../server.js";
-import {User} from "../models/entities/auth/User.js";
-import {Profile} from "../models/entities/Profile.js";
-import {Language} from "../models/entities/Language.js";
-import {Session} from "../models/entities/auth/Session.js";
 import crypto from "crypto";
+import {passwordHasher} from "@/src/server.js";
+import {User} from "@/src/models/entities/auth/User.js";
+import {Profile} from "@/src/models/entities/Profile.js";
+import {Language} from "@/src/models/entities/Language.js";
+import {Session} from "@/src/models/entities/auth/Session.js";
 import {StatusCodes} from "http-status-codes";
-import {APIError} from "../utils/errors/APIError.js";
+import {APIError} from "@/src/utils/errors/APIError.js";
 import {EntityManager, EntityRepository} from "@mikro-orm/core";
 
 

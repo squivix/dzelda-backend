@@ -1,7 +1,7 @@
 import {z} from "zod";
-import UserService from "../services/UserService.js";
 import {FastifyReply, FastifyRequest} from "fastify";
-import {NotFoundAPIError} from "../utils/errors/NotFoundAPIError.js";
+import UserService from "@/src/services/UserService.js";
+import {NotFoundAPIError} from "@/src/utils/errors/NotFoundAPIError.js";
 
 type CustomFastifyRequest = FastifyRequest<{
     //path paramas

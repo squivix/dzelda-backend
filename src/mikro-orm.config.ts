@@ -1,23 +1,23 @@
 import * as dotenv from "dotenv";
-
 dotenv.config();
+
 import {LoadStrategy, Options} from "@mikro-orm/core";
-import {User} from "./models/entities/auth/User.js";
-import {Profile} from "./models/entities/Profile.js";
-import {Course} from "./models/entities/Course.js";
-import {CustomBaseEntity} from "./models/entities/CustomBaseEntity.js";
-import {Meaning} from "./models/entities/Meaning.js";
-import {Dictionary} from "./models/entities/Dictionary.js";
-import {MapLessonVocab} from "./models/entities/MapLessonVocab.js";
-import {MapLearnerLesson} from "./models/entities/MapLearnerLesson.js";
-import {MapLearnerMeaning} from "./models/entities/MapLearnerMeaning.js";
-import {Language} from "./models/entities/Language.js";
-import {MapLearnerDictionary} from "./models/entities/MapLearnerDictionary.js";
-import {MapLearnerVocab} from "./models/entities/MapLearnerVocab.js";
-import {Lesson} from "./models/entities/Lesson.js";
-import {Session} from "./models/entities/auth/Session.js";
-import {Vocab} from "./models/entities/Vocab.js";
-import {MapLearnerLanguage} from "./models/entities/MapLearnerLanguage.js";
+import {User} from "@/src/models/entities/auth/User.js";
+import {Profile} from "@/src/models/entities/Profile.js";
+import {Course} from "@/src/models/entities/Course.js";
+import {CustomBaseEntity} from "@/src/models/entities/CustomBaseEntity.js";
+import {Meaning} from "@/src/models/entities/Meaning.js";
+import {Dictionary} from "@/src/models/entities/Dictionary.js";
+import {MapLessonVocab} from "@/src/models/entities/MapLessonVocab.js";
+import {MapLearnerLesson} from "@/src/models/entities/MapLearnerLesson.js";
+import {MapLearnerMeaning} from "@/src/models/entities/MapLearnerMeaning.js";
+import {Language} from "@/src/models/entities/Language.js";
+import {MapLearnerDictionary} from "@/src/models/entities/MapLearnerDictionary.js";
+import {MapLearnerVocab} from "@/src/models/entities/MapLearnerVocab.js";
+import {Lesson} from "@/src/models/entities/Lesson.js";
+import {Session} from "@/src/models/entities/auth/Session.js";
+import {Vocab} from "@/src/models/entities/Vocab.js";
+import {MapLearnerLanguage} from "@/src/models/entities/MapLearnerLanguage.js";
 
 const devOptions: Options = {
     type: "postgresql",
@@ -51,9 +51,9 @@ const prodOptions: Options = {
 };
 
 let options: Options;
-if (process.env.ENVIRONMENT == "test")
+if (process.env.NODE_ENV == "test")
     options = testOptions;
-else if (process.env.ENVIRONMENT == "prod")
+else if (process.env.NODE_ENV == "prod")
     options = prodOptions;
 else
     options = devOptions;

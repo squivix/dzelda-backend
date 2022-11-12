@@ -1,5 +1,5 @@
-import UserService from "../services/UserService.js";
 import {preParsingAsyncHookHandler} from "fastify/types/hooks.js";
+import UserService from "@/src/services/UserService.js";
 
 
 export const authMiddleware: preParsingAsyncHookHandler = async (request, reply) => {

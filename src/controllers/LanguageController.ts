@@ -1,6 +1,6 @@
 import {FastifyReply, FastifyRequest} from "fastify";
 import {z} from "zod";
-import LanguageService from "../services/LanguageService.js";
+import LanguageService from "@/src/services/LanguageService.js";
 
 class LanguageController {
 

@@ -1,7 +1,7 @@
-import {CustomBaseEntity} from "./CustomBaseEntity.js";
 import {Entity, ManyToOne} from "@mikro-orm/core";
-import {Lesson} from "./Lesson.js";
-import {Profile} from "./Profile.js";
+import {CustomBaseEntity} from "@/src/models/entities/CustomBaseEntity.js";
+import {Lesson} from "@/src/models/entities/Lesson.js";
+import {Profile} from "@/src/models/entities/Profile.js";
 
 @Entity()
 export class MapLearnerLesson extends CustomBaseEntity {

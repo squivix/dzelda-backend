@@ -1,13 +1,12 @@
 import {describe, expect, test, beforeEach} from "vitest";
-import {fetchRequest} from "../utils.js";
-import {faker} from "@faker-js/faker";
-import {UserFactory} from "../../../../src/seeders/factories/UserFactory.js";
-
-import {ProfileFactory} from "../../../../src/seeders/factories/ProfileFactory.js";
-import {SessionFactory} from "../../../../src/seeders/factories/SessionFactory.js";
 import {InjectOptions} from "light-my-request";
-import {orm} from "../../../../src/server.js";
-import {clearDb} from "../../../utils.js";
+import {faker} from "@faker-js/faker";
+import {orm} from "@/src/server.js";
+import {fetchRequest} from "@/test/acceptance/api/utils.js";
+import {UserFactory} from "@/src/seeders/factories/UserFactory.js";
+import {ProfileFactory} from "@/src/seeders/factories/ProfileFactory.js";
+import {SessionFactory} from "@/src/seeders/factories/SessionFactory.js";
+import {clearDb} from "@/test/utils.js";
 
 beforeEach(async () => clearDb());
 

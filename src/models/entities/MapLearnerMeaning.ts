@@ -1,7 +1,7 @@
-import {CustomBaseEntity} from "./CustomBaseEntity.js";
 import {Entity, ManyToOne, Unique} from "@mikro-orm/core";
-import {Profile} from "./Profile.js";
-import {Meaning} from "./Meaning.js";
+import {CustomBaseEntity} from "@/src/models/entities/CustomBaseEntity.js";
+import {Profile} from "@/src/models/entities/Profile.js";
+import {Meaning} from "@/src/models/entities/Meaning.js";
 
 @Entity()
 @Unique({properties: ["learner", "meaning"]})

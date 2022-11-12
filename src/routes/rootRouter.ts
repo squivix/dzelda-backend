@@ -1,9 +1,9 @@
 import {FastifyPluginCallback} from "fastify/types/plugin.js";
-import {attachOrmEntityManager} from "../middlewares/attachOrmEntityManager.js";
-import {authMiddleware} from "../middlewares/authMiddleware.js";
-import userRouter from "./users.js";
-import profileRouter from "./profiles.js";
-import languageRouter from "./languages.js";
+import {attachOrmEntityManager} from "@/src/middlewares/attachOrmEntityManager.js";
+import {authMiddleware} from "@/src/middlewares/authMiddleware.js";
+import userRouter from "@/src/routes/users.js";
+import profileRouter from "@/src/routes/profiles.js";
+import languageRouter from "@/src/routes/languages.js";
 
 const rootRouter: FastifyPluginCallback = function rootRouter(fastify, options, done) {
     fastify.decorateRequest("em", null);

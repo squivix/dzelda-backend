@@ -1,7 +1,7 @@
-import {CustomBaseEntity} from "./CustomBaseEntity.js";
 import {Entity, ManyToOne, Unique} from "@mikro-orm/core";
-import {Vocab} from "./Vocab.js";
-import {Profile} from "./Profile.js";
+import {CustomBaseEntity} from "@/src/models/entities/CustomBaseEntity.js";
+import {Vocab} from "@/src/models/entities/Vocab.js";
+import {Profile} from "@/src/models/entities/Profile.js";
 
 @Entity()
 @Unique({properties: ["learner", "vocab"]})

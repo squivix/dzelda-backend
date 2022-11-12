@@ -1,6 +1,6 @@
 import {Factory, Faker} from "@mikro-orm/seeder";
 import {EntityData} from "@mikro-orm/core";
-import {Language} from "../../models/entities/Language.js";
+import {Language} from "@/src/models/entities/Language.js";
 
 export class LanguageFactory extends Factory<Language> {
     readonly model = Language;

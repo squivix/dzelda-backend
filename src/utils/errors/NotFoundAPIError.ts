@@ -1,6 +1,6 @@
-import {APIError} from "./APIError.js";
+import {APIError} from "@/src/utils/errors/APIError.js";
 import {StatusCodes} from "http-status-codes";
-import {toCapitalizedCase} from "../utils.js";
+import {toCapitalizedCase} from "@/src/utils/utils.js";
 
 export class NotFoundAPIError extends APIError {
     constructor(entity: string) {

@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json.schemastore.org/swcrc",
+  "jsc": {
+    "parser": {
+      "syntax": "typescript",
+      "jsx": false,
+      "dynamicImport": false,
+      "privateMethod": true,
+      "functionBind": false,
+      "exportDefaultFrom": false,
+      "exportNamespaceFrom": false,
+      "decorators": true,
+      "decoratorsBeforeExport": true,
+      "topLevelAwait": true,
+      "importMeta": false,
+    },
+    "transform": null,
+    "target": "es2017",
+    "loose": false,
+    "externalHelpers": false,
+    "keepClassNames": false,
+    "paths": {
+      "@/*" :["./*"],
+    }
+  },
+  "minify": false
+}

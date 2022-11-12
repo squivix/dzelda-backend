@@ -1,4 +1,4 @@
-import UserController from "../controllers/UserController.js";
+import UserController from "@/src/controllers/UserController.js";
 import {FastifyPluginCallback} from "fastify/types/plugin.js";
 
 const userRouter: FastifyPluginCallback = function rootRouter(fastify, options, done) {

@@ -1,9 +1,9 @@
-import {CustomBaseEntity} from "./CustomBaseEntity.js";
 import {Collection, Entity, ManyToMany, ManyToOne, Property, types, Unique} from "@mikro-orm/core";
-import {Vocab} from "./Vocab.js";
-import {Profile} from "./Profile.js";
-import {Language} from "./Language.js";
-import {MapLearnerMeaning} from "./MapLearnerMeaning.js";
+import {CustomBaseEntity} from "@/src/models/entities/CustomBaseEntity.js";
+import {Vocab} from "@/src/models/entities/Vocab.js";
+import {Profile} from "@/src/models/entities/Profile.js";
+import {Language} from "@/src/models/entities/Language.js";
+import {MapLearnerMeaning} from "@/src/models/entities/MapLearnerMeaning.js";
 
 @Entity()
 @Unique({properties: ["vocab", "text", "language"]})

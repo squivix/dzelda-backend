@@ -12,6 +12,13 @@
     "noEmitOnError": true,
     "moduleResolution": "node",
     "sourceMap": true,
-    "typeRoots": ["./types"]
+    "typeRoots": [
+      "./types"
+    ],
+    "baseUrl": ".", // this must be specified if "paths" is specified.
+
+    "paths": {
+      "@/*" :["./*"],
+    }
   }
 }

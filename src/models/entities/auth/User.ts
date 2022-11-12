@@ -1,8 +1,8 @@
 import {Entity, EntityRepositoryType, OneToOne, Property, types, Unique} from "@mikro-orm/core";
-import {CustomBaseEntity} from "../CustomBaseEntity.js";
-import {Profile} from "../Profile.js";
-import UserRepo from "../../repos/auth/UserRepo.js";
-import {Session} from "./Session.js";
+import {CustomBaseEntity} from "@/src/models/entities/CustomBaseEntity.js";
+import {Profile} from "@/src/models/entities/Profile.js";
+import UserRepo from "@/src/models/repos/auth/UserRepo.js";
+import {Session} from "@/src/models/entities/auth/Session.js";
 
 
 @Entity({customRepository: () => UserRepo})

@@ -1,27 +1,18 @@
-import {
-    Collection,
-    Entity,
-    EntityRepositoryType,
-    ManyToMany,
-    OneToMany,
-    OneToOne,
-    Property,
-    types
-} from "@mikro-orm/core";
-import {User} from "./auth/User.js";
-import {CustomBaseEntity} from "./CustomBaseEntity.js";
-import {Course} from "./Course.js";
-import {Meaning} from "./Meaning.js";
-import {Lesson} from "./Lesson.js";
-import {MapLearnerLesson} from "./MapLearnerLesson.js";
-import {Vocab} from "./Vocab.js";
-import {MapLearnerVocab} from "./MapLearnerVocab.js";
-import {MapLearnerMeaning} from "./MapLearnerMeaning.js";
-import {Dictionary} from "./Dictionary.js";
-import {MapLearnerDictionary} from "./MapLearnerDictionary.js";
-import ProfileRepo from "../repos/auth/ProfileRepo.js";
-import {Language} from "./Language.js";
-import {MapLearnerLanguage} from "./MapLearnerLanguage.js";
+import {Collection, Entity, EntityRepositoryType, ManyToMany, OneToMany, OneToOne, Property, types} from "@mikro-orm/core";
+import {User} from "@/src/models/entities/auth/User.js";
+import {CustomBaseEntity} from "@/src/models/entities/CustomBaseEntity.js";
+import {Course} from "@/src/models/entities/Course.js";
+import {Meaning} from "@/src/models/entities/Meaning.js";
+import {Lesson} from "@/src/models/entities/Lesson.js";
+import {MapLearnerLesson} from "@/src/models/entities/MapLearnerLesson.js";
+import {Vocab} from "@/src/models/entities/Vocab.js";
+import {MapLearnerVocab} from "@/src/models/entities/MapLearnerVocab.js";
+import {MapLearnerMeaning} from "@/src/models/entities/MapLearnerMeaning.js";
+import {Dictionary} from "@/src/models/entities/Dictionary.js";
+import {MapLearnerDictionary} from "@/src/models/entities/MapLearnerDictionary.js";
+import ProfileRepo from "@/src/models/repos/auth/ProfileRepo.js";
+import {Language} from "@/src/models/entities/Language.js";
+import {MapLearnerLanguage} from "@/src/models/entities/MapLearnerLanguage.js";
 
 @Entity({customRepository: () => ProfileRepo})
 export class Profile extends CustomBaseEntity {

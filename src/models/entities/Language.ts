@@ -1,11 +1,11 @@
 import {Collection, Entity, ManyToMany, OneToMany, Property, types} from "@mikro-orm/core";
-import {CustomBaseEntity} from "./CustomBaseEntity.js";
-import {Course} from "./Course.js";
-import {Vocab} from "./Vocab.js";
-import {Meaning} from "./Meaning.js";
-import {Dictionary} from "./Dictionary.js";
-import {Profile} from "./Profile.js";
-import {MapLearnerLanguage} from "./MapLearnerLanguage.js";
+import {CustomBaseEntity} from "@/src/models/entities/CustomBaseEntity.js";
+import {Course} from "@/src/models/entities/Course.js";
+import {Vocab} from "@/src/models/entities/Vocab.js";
+import {Meaning} from "@/src/models/entities/Meaning.js";
+import {Dictionary} from "@/src/models/entities/Dictionary.js";
+import {Profile} from "@/src/models/entities/Profile.js";
+import {MapLearnerLanguage} from "@/src/models/entities/MapLearnerLanguage.js";
 
 @Entity()
 export class Language extends CustomBaseEntity {
@@ -42,7 +42,7 @@ export class Language extends CustomBaseEntity {
         advanced1: number;
         advanced2: number;
     };
-    
+
     @OneToMany({entity: () => Course, mappedBy: (course: Course) => course.language, hidden: true})
     courses: Collection<Course> = new Collection<Course>(this);
 

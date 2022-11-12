@@ -1,6 +1,5 @@
-import {Language} from "../models/entities/Language.js";
+import {Language} from "@/src/models/entities/Language.js";
 import {EntityManager, EntityRepository} from "@mikro-orm/core";
-import {cleanObject} from "../utils/utils.js";
 
 
 class UserService {

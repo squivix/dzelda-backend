@@ -1,5 +1,5 @@
 import {z} from "zod";
-import UserService from "../services/UserService.js";
+import UserService from "@/src/services/UserService.js";
 import {FastifyReply, FastifyRequest} from "fastify";
 
 export default {

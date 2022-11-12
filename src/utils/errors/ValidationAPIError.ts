@@ -1,4 +1,4 @@
-import {APIError} from "./APIError.js";
+import {APIError} from "@/src/utils/errors/APIError.js";
 import {StatusCodes} from "http-status-codes";
 
 export type FieldsObject = { [field: string]: { message: string, details?: string } }

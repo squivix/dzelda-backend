@@ -1,10 +1,10 @@
 import {describe, expect, test, beforeEach} from "vitest";
-import {fetchRequest} from "../utils.js";
-import {orm, passwordHasher} from "../../../../src/server.js";
-import {UserFactory} from "../../../../src/seeders/factories/UserFactory.js";
 import {faker} from "@faker-js/faker";
-import {Session} from "../../../../src/models/entities/auth/Session.js";
-import {clearDb} from "../../../utils.js";
+import {orm, passwordHasher} from "@/src/server.js";
+import {UserFactory} from "@/src/seeders/factories/UserFactory.js";
+import {Session} from "@/src/models/entities/auth/Session.js";
+import {fetchRequest} from "@/test/acceptance/api/utils.js";
+import {clearDb} from "@/test/utils.js";
 
 beforeEach(async () => clearDb());
 

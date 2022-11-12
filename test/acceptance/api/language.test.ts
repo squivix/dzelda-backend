@@ -1,9 +1,9 @@
 import {beforeEach, describe, expect, test} from "vitest";
-import {buildQueryString, fetchRequest} from "./utils.js";
-import {LanguageFactory} from "../../../src/seeders/factories/LanguageFactory.js";
 import {faker} from "@faker-js/faker";
-import {orm} from "../../../src/server.js";
-import {clearDb} from "../../utils.js";
+import {orm} from "@/src/server.js";
+import {LanguageFactory} from "@/src/seeders/factories/LanguageFactory.js";
+import {clearDb} from "@/test/utils.js";
+import {buildQueryString, fetchRequest} from "@/test/acceptance/api/utils.js";
 
 beforeEach(async () => clearDb());
 describe("GET /languages/", function () {

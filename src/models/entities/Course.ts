@@ -1,9 +1,9 @@
 import {Entity, Enum, ManyToOne, OneToMany, Property, types} from "@mikro-orm/core";
-import {CustomBaseEntity} from "./CustomBaseEntity.js";
-import {Language} from "./Language.js";
-import {Profile} from "./Profile.js";
-import {LanguageLevel} from "../enums/LanguageLevel.js";
-import {Lesson} from "./Lesson.js";
+import {CustomBaseEntity} from "@/src/models/entities/CustomBaseEntity.js";
+import {Language} from "@/src/models/entities/Language.js";
+import {Profile} from "@/src/models/entities/Profile.js";
+import {LanguageLevel} from "@/src/models/enums/LanguageLevel.js";
+import {Lesson} from "@/src/models/entities/Lesson.js";
 
 @Entity()
 export class Course extends CustomBaseEntity {

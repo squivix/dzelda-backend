@@ -1,13 +1,13 @@
 import {describe, expect, test, beforeEach} from "vitest";
-import {User} from "../../../../src/models/entities/auth/User.js";
-import {UserFactory} from "../../../../src/seeders/factories/UserFactory.js";
-import {Profile} from "../../../../src/models/entities/Profile.js";
 import {faker} from "@faker-js/faker";
-import {LanguageFactory} from "../../../../src/seeders/factories/LanguageFactory.js";
-import {Language} from "../../../../src/models/entities/Language.js";
-import {fetchRequest} from "../utils.js";
-import {orm} from "../../../../src/server.js";
-import {clearDb} from "../../../utils.js";
+import {User} from "@/src/models/entities/auth/User.js";
+import {UserFactory} from "@/src/seeders/factories/UserFactory.js";
+import {Profile} from "@/src/models/entities/Profile.js";
+import {LanguageFactory} from "@/src/seeders/factories/LanguageFactory.js";
+import {Language} from "@/src/models/entities/Language.js";
+import {orm} from "@/src/server.js";
+import {fetchRequest} from "@/test/acceptance/api/utils.js";
+import {clearDb} from "@/test/utils.js";
 
 
 beforeEach(async () => clearDb());

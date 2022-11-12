@@ -1,6 +1,6 @@
 import {Factory, Faker} from "@mikro-orm/seeder";
 import {EntityData} from "@mikro-orm/core";
-import {Profile} from "../../models/entities/Profile.js";
+import {Profile} from "@/src/models/entities/Profile.js";
 
 export class ProfileFactory extends Factory<Profile> {
     readonly model = Profile;

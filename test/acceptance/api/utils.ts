@@ -1,4 +1,4 @@
-import {API_ROOT, server} from "../../../src/server.js";
+import {API_ROOT, server} from "@/src/server.js";
 import {InjectOptions} from "light-my-request";
 
 export async function fetchRequest(options: InjectOptions) {
