@@ -23,5 +23,6 @@
       "@/*" :["./*"],
     }
   },
-  "minify": false
+  "minify": false,
+ "sourceMaps": true
 }

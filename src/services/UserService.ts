@@ -7,6 +7,7 @@ import {Session} from "@/src/models/entities/auth/Session.js";
 import {StatusCodes} from "http-status-codes";
 import {APIError} from "@/src/utils/errors/APIError.js";
 import {EntityManager, EntityRepository} from "@mikro-orm/core";
+import {NotFoundAPIError} from "@/src/utils/errors/NotFoundAPIError.js";
 
 
 class UserService {
@@ -35,20 +36,30 @@ class UserService {
         return newUser;
     }
 
-    async getUser(username: "me" | string, sessionToken?: string) {
+    async getUser(username: "me" | string, authenticatedUser: User | null) {
         let user: User;
-        if (username == "me" && sessionToken)
-            user = await this.getUserBySession(sessionToken);
-        else
+        if (username == "me") {
+            if (!authenticatedUser) {
+                throw new APIError(
+                    StatusCodes.UNAUTHORIZED,
+                    "Authentication required",
+                    "User must be logged in"
+                );
+            }
+            user = authenticatedUser;
+        } else {
             user = await this.userRepo.findOneOrFail({username: username});
+            await this.profileRepo.populate(user.profile, true);
+            await this.em.flush();
+        }
 
-        await this.profileRepo.populate(user.profile, true);
         return user;
     }
 
     async getUserBySession(sessionToken: string) {
         const user = await this.userRepo.findOneOrFail({session: {token: sessionToken}});
         await this.profileRepo.populate(user.profile, true);
+        await this.em.flush();
         return user;
     }
 
