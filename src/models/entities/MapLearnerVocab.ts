@@ -6,9 +6,9 @@ import {Profile} from "@/src/models/entities/Profile.js";
 @Entity()
 @Unique({properties: ["learner", "vocab"]})
 export class MapLearnerVocab extends CustomBaseEntity {
-    @ManyToOne({entity: () => Profile})
-    learner!: Profile;
-
     @ManyToOne({entity: () => Vocab})
     vocab!: Vocab;
+
+    @ManyToOne({entity: () => Profile})
+    learner!: Profile;
 }

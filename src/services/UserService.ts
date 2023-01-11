@@ -7,7 +7,7 @@ import {Session} from "@/src/models/entities/auth/Session.js";
 import {StatusCodes} from "http-status-codes";
 import {APIError} from "@/src/utils/errors/APIError.js";
 import {EntityManager, EntityRepository} from "@mikro-orm/core";
-import {NotFoundAPIError} from "@/src/utils/errors/NotFoundAPIError.js";
+import {MapLearnerLanguage} from "@/src/models/entities/MapLearnerLanguage.js";
 
 
 class UserService {
@@ -47,20 +47,14 @@ class UserService {
                 );
             }
             user = authenticatedUser;
-        } else {
-            user = await this.userRepo.findOneOrFail({username: username});
-            await this.profileRepo.populate(user.profile, true);
-            await this.em.flush();
-        }
+        } else
+            user = await this.em.findOneOrFail(User, {username: username}, {populate: ["profile", "profile.languagesLearning"]});
 
         return user;
     }
 
     async getUserBySession(sessionToken: string) {
-        const user = await this.userRepo.findOneOrFail({session: {token: sessionToken}});
-        await this.profileRepo.populate(user.profile, true);
-        await this.em.flush();
-        return user;
+        return await this.em.findOne(User, {session: {token: sessionToken}}, {populate: ["profile", "profile.languagesLearning"]});
     }
 
     async authenticateUser(username: string, password: string) {
@@ -74,12 +68,18 @@ class UserService {
         } else {
             throw new APIError(
                 StatusCodes.UNAUTHORIZED,
-                "Username or password is incorrect",
-                "The username or password you entered is incorrect"
+                "Username and/or password is incorrect",
+                "The username and/or password you entered is incorrect"
             );
         }
     }
 
+    async addLanguageToUser(user: User, language: Language) {
+        const mapping = new MapLearnerLanguage(user.profile, language);
+        await this.em.persist(mapping);
+        await this.em.flush();
+        return mapping;
+    }
 }
 
 export default UserService;

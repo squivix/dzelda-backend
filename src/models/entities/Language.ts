@@ -9,7 +9,7 @@ import {MapLearnerLanguage} from "@/src/models/entities/MapLearnerLanguage.js";
 
 @Entity()
 export class Language extends CustomBaseEntity {
-    @Property({type: types.string, length: 4})
+    @Property({type: types.string, length: 4, unique:true})
     code!: string;
 
     @Property({type: types.string, length: 255})

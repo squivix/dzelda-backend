@@ -1,8 +1,7 @@
 import {Language} from "@/src/models/entities/Language.js";
 import {EntityManager, EntityRepository} from "@mikro-orm/core";
 import {User} from "@/src/models/entities/auth/User.js";
-import {MapLearnerLanguage} from "@/src/models/entities/MapLearnerLanguage.js";
-
+import {cleanObject} from "@/src/utils/utils.js";
 
 class LanguageService {
     em: EntityManager;
@@ -14,9 +13,7 @@ class LanguageService {
     }
 
     async getLanguages(filters: { isSupported: boolean | undefined }) {
-        if (filters.isSupported === undefined)
-            delete filters.isSupported;
-        const languages = await this.languageRepo.find(filters);
+        const languages = await this.languageRepo.find(cleanObject(filters));
         await this.em.flush();
         return languages;
     }
@@ -25,6 +22,12 @@ class LanguageService {
         const languages = await this.languageRepo.find({learners: user.profile, ...filters});
         await this.em.flush();
         return languages;
+    }
+
+    async getLanguage(code: string) {
+        const language = await this.languageRepo.findOneOrFail({code});
+        await this.em.flush();
+        return language;
     }
 }
 

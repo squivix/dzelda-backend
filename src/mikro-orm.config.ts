@@ -1,6 +1,4 @@
 import * as dotenv from "dotenv";
-dotenv.config();
-
 import {LoadStrategy, Options} from "@mikro-orm/core";
 import {User} from "@/src/models/entities/auth/User.js";
 import {Profile} from "@/src/models/entities/Profile.js";
@@ -19,8 +17,10 @@ import {Session} from "@/src/models/entities/auth/Session.js";
 import {Vocab} from "@/src/models/entities/Vocab.js";
 import {MapLearnerLanguage} from "@/src/models/entities/MapLearnerLanguage.js";
 
+dotenv.config();
+
 const devOptions: Options = {
-    type: "postgresql",
+    type:"postgresql",
     dbName: process.env.DB_NAME,
     user: process.env.DB_USER,
     password: process.env.DB_PASSWORD,

@@ -2,7 +2,7 @@ import {NotFoundError, UniqueConstraintViolationException} from "@mikro-orm/core
 import {ZodError} from "zod";
 import {FastifyReply, FastifyRequest} from "fastify";
 import {APIError} from "@/src/utils/errors/APIError.js";
-import {ValidationAPIError, FieldsObject} from "@/src/utils/errors/ValidationAPIError.js";
+import {FieldsObject, ValidationAPIError} from "@/src/utils/errors/ValidationAPIError.js";
 import {NotFoundAPIError} from "@/src/utils/errors/NotFoundAPIError.js";
 
 export default (error: Error, request: FastifyRequest, reply: FastifyReply) => {

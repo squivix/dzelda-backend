@@ -14,12 +14,7 @@ class ProfileController {
         const validator = z.object({
             username: z.string().min(4).max(20).regex(/^[A-Za-z0-9]*$/).or(z.literal("me"))
         });
-        const parsedPathParams = validator.safeParse(request.params);
-
-        if (!parsedPathParams.success)
-            throw new NotFoundAPIError("User");
-
-        const pathParams = parsedPathParams.data;
+        const pathParams = validator.parse(request.params);
         const userService = new UserService(request.em);
         const user = await userService.getUser(pathParams.username, request.user);
         // private user don't exist to the outside
@@ -30,4 +25,4 @@ class ProfileController {
     }
 }
 
-export default new ProfileController();
+export const profileController = new ProfileController();

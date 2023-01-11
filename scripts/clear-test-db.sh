@@ -1,1 +1,0 @@
-psql -U "$DB_USER" -d "$DB_NAME-test" -a -f scripts/delete-db.sql

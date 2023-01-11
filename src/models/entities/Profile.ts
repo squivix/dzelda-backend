@@ -36,9 +36,7 @@ export class Profile extends CustomBaseEntity {
     @ManyToMany({
         entity: () => Language,
         mappedBy: (language: Language) => language.learners,
-        pivotEntity: () => MapLearnerLanguage,
-        joinColumn: "learner_id",
-        inverseJoinColumn: "language_id",
+        pivotEntity: () => MapLearnerLanguage
     })
     languagesLearning: Collection<Language> = new Collection<Language>(this);
 
