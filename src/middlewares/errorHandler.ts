@@ -1,6 +1,6 @@
 import {NotFoundError, UniqueConstraintViolationException} from "@mikro-orm/core";
 import {ZodError} from "zod";
-import {FastifyError, FastifyErrorCodes, FastifyReply, FastifyRequest} from "fastify";
+import {FastifyError, FastifyReply, FastifyRequest} from "fastify";
 import {APIError} from "@/src/utils/errors/APIError.js";
 import {FieldsObject, ValidationAPIError} from "@/src/utils/errors/ValidationAPIError.js";
 import {NotFoundAPIError} from "@/src/utils/errors/NotFoundAPIError.js";
@@ -18,7 +18,8 @@ export const errorHandler = (error: Error, request: FastifyRequest, reply: Fasti
     else if (error instanceof ZodError) {
         const fields: FieldsObject = {};
         for (const issue of error.issues)
-            fields[issue.path[0]] = {message: issue.message};
+            fields[issue.path[0] ?? "root"] = {message: issue.message};
+
         apiError = new ValidationAPIError(fields);
     } else if (error instanceof NotFoundError) {
         const entity = error.message.split(" ")[0];

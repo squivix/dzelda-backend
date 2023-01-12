@@ -1,0 +1,28 @@
+import {Faker} from "@mikro-orm/seeder";
+import {EntityData} from "@mikro-orm/core";
+import {CustomFactory} from "@/src/seeders/factories/CustomFactory.js";
+import {Course} from "@/src/models/entities/Course";
+import {LanguageLevel} from "@/src/models/enums/LanguageLevel";
+import {randomEnum} from "@/tests/utils";
+import {LanguageFactory} from "@/src/seeders/factories/LanguageFactory";
+import {ProfileFactory} from "@/src/seeders/factories/ProfileFactory";
+import {UserFactory} from "@/src/seeders/factories/UserFactory";
+
+export class CourseFactory extends CustomFactory<Course> {
+    readonly model = Course;
+
+    protected definition(faker: Faker): EntityData<Course> {
+        return {
+            title: faker.random.words(faker.datatype.number({min: 4, max: 20})),
+            description: faker.random.words(faker.datatype.number({min: 20, max: 30})),
+            image: faker.image.imageUrl(100, 100),
+            isPublic: faker.datatype.boolean(),
+            level: randomEnum(LanguageLevel),
+            language: LanguageFactory.makeDefinition(faker),
+            addedBy: {
+                ...ProfileFactory.makeDefinition(faker),
+                user: {...UserFactory.makeDefinition(faker), profile: null}
+            }
+        }
+    }
+}

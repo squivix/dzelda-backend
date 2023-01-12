@@ -1,4 +1,13 @@
-import {Collection, Entity, EntityRepositoryType, ManyToMany, OneToMany, OneToOne, Property, types} from "@mikro-orm/core";
+import {
+    Collection,
+    Entity,
+    EntityRepositoryType,
+    ManyToMany,
+    OneToMany,
+    OneToOne,
+    Property,
+    types
+} from "@mikro-orm/core";
 import {User} from "@/src/models/entities/auth/User.js";
 import {CustomBaseEntity} from "@/src/models/entities/CustomBaseEntity.js";
 import {Course} from "@/src/models/entities/Course.js";
@@ -36,7 +45,8 @@ export class Profile extends CustomBaseEntity {
     @ManyToMany({
         entity: () => Language,
         mappedBy: (language: Language) => language.learners,
-        pivotEntity: () => MapLearnerLanguage
+        pivotEntity: () => MapLearnerLanguage,
+        hidden: true
     })
     languagesLearning: Collection<Language> = new Collection<Language>(this);
 
