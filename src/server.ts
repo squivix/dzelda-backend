@@ -2,7 +2,7 @@ import Fastify from "fastify";
 import options from "@/src/mikro-orm.config.js";
 import {PKDF2Hasher} from "@/src/utils/auth/PKDF2Hasher.js";
 import rootRouter from "@/src/routes/rootRouter.js";
-import errorHandler from "@/src/middlewares/errorHandler.js";
+import {errorHandler} from "@/src/middlewares/errorHandler.js";
 import {MikroORM} from "@mikro-orm/postgresql";
 
 export const API_VERSION = 1;
