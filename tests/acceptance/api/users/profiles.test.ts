@@ -20,7 +20,7 @@ describe(`GET users/:username/profile/`, function () {
             url: `users/${username}/profile/`,
         };
         if (authToken)
-            options.headers = {authorization: `Token ${authToken}`};
+            options.headers = {authorization: `Bearer ${authToken}`};
         return await fetchRequest(options);
     };
 

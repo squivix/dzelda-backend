@@ -1,0 +1,881 @@
+{
+  "openapi": "3.1.0",
+  "x-stoplight": {
+    "id": "64dpjoe1w4irj"
+  },
+  "info": {
+    "title": "dzelda-api",
+    "version": "1.0",
+    "description": "",
+    "summary": "The backend API for Dzelda: a free and open source language learning website."
+  },
+  "servers": [
+    {
+      "url": "http://localhost:3000"
+    }
+  ],
+  "paths": {
+    "/users/": {
+      "post": {
+        "summary": "Sign Up",
+        "operationId": "post-users",
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserDetails"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "type": "object",
+                  "properties": {}
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "integer",
+                      "enum": [
+                        400
+                      ]
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "Bad Request"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "type": "string"
+                    },
+                    "fields": {
+                      "type": "object",
+                      "properties": {
+                        "username": {
+                          "type": "object",
+                          "properties": {
+                            "message": {
+                              "type": "string"
+                            }
+                          }
+                        },
+                        "password": {
+                          "type": "object",
+                          "properties": {
+                            "message": {
+                              "type": "string"
+                            }
+                          }
+                        },
+                        "email": {
+                          "type": "object",
+                          "properties": {
+                            "message": {
+                              "type": "string"
+                            }
+                          }
+                        },
+                        "initialLanguage": {
+                          "type": "object",
+                          "properties": {
+                            "message": {
+                              "type": "string"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "status",
+                    "message",
+                    "details"
+                  ]
+                },
+                "examples": {}
+              }
+            }
+          }
+        },
+        "description": "Create a new user",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "username": {
+                    "type": "string",
+                    "minLength": 4,
+                    "maxLength": 20,
+                    "pattern": "^[A-Za-z0-9]*$"
+                  },
+                  "password": {
+                    "type": "string",
+                    "minLength": 8,
+                    "format": "password"
+                  },
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  },
+                  "initialLanguage": {
+                    "type": "string",
+                    "minLength": 2,
+                    "maxLength": 4
+                  }
+                },
+                "required": [
+                  "username",
+                  "password",
+                  "email"
+                ]
+              }
+            }
+          },
+          "description": ""
+        },
+        "security": []
+      }
+    },
+    "/sessions/": {
+      "post": {
+        "summary": "Login",
+        "operationId": "post-sessions",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "authToken": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "x-examples": {
+                    "Example 1": {
+                      "code": 400,
+                      "status": "Bad Request",
+                      "message": "string",
+                      "details": "string",
+                      "fields": {
+                        "username": {
+                          "message": "string"
+                        },
+                        "password": {
+                          "message": "string"
+                        },
+                        "email": {
+                          "message": "string"
+                        },
+                        "initialLanguage": {
+                          "message": "string"
+                        }
+                      }
+                    }
+                  },
+                  "properties": {
+                    "code": {
+                      "type": "integer",
+                      "enum": [
+                        400
+                      ]
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "Bad Request"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "type": "string"
+                    },
+                    "fields": {
+                      "type": "object",
+                      "properties": {
+                        "username": {
+                          "type": "object",
+                          "properties": {
+                            "message": {
+                              "type": "string"
+                            }
+                          }
+                        },
+                        "password": {
+                          "type": "object",
+                          "properties": {
+                            "message": {
+                              "type": "string"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "status",
+                    "message",
+                    "details"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "x-examples": {
+                    "Example 1": {
+                      "code": 401,
+                      "status": "Unauthorized",
+                      "message": "Username and/or password is incorrect",
+                      "details": "The username and/or password you entered is incorrect"
+                    }
+                  },
+                  "properties": {
+                    "code": {
+                      "type": "integer",
+                      "enum": [
+                        401
+                      ]
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "Unauthorized"
+                      ]
+                    },
+                    "message": {
+                      "type": "string",
+                      "enum": [
+                        "Username and/or password is incorrect"
+                      ]
+                    },
+                    "details": {
+                      "type": "string",
+                      "enum": [
+                        "The username and/or password you entered is incorrect"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "description": "Authenticate the user",
+        "security": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "username": {
+                    "type": "string",
+                    "minLength": 4,
+                    "maxLength": 20,
+                    "pattern": "^[A-Za-z0-9]*$"
+                  },
+                  "password": {
+                    "type": "string",
+                    "minLength": 8,
+                    "format": "password"
+                  }
+                }
+              }
+            }
+          },
+          "description": ""
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "UserDetails": {
+        "type": "object",
+        "x-examples": {
+          "Example 1": {
+            "username": "johndoe",
+            "email": "johndoe@email.com",
+            "profile": {
+              "id": 1,
+              "languagesLearning": [],
+              "profilePicture": "",
+              "bio": "",
+              "isPublic": true
+            }
+          }
+        },
+        "properties": {
+          "username": {
+            "type": "string",
+            "maxLength": 20,
+            "minLength": 4,
+            "pattern": "^[A-Za-z0-9]*$"
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "profile": {
+            "$ref": "#/components/schemas/ProfileDetails"
+          }
+        }
+      },
+      "ProfileDetails": {
+        "type": "object",
+        "x-examples": {
+          "Example 1": {
+            "id": 1,
+            "languagesLearning": [],
+            "profilePicture": "",
+            "bio": "",
+            "isPublic": true
+          }
+        },
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "languagesLearning": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LanguageList"
+            }
+          },
+          "profilePicture": {
+            "type": "string",
+            "format": "uri"
+          },
+          "bio": {
+            "type": "string"
+          },
+          "isPublic": {
+            "type": "boolean"
+          }
+        }
+      },
+      "LanguageList": {
+        "type": "object",
+        "x-examples": {
+          "Example 1": {
+            "id": 1,
+            "code": "es",
+            "name": "Spanish",
+            "greeting": "Hola!",
+            "flag": null,
+            "flagCircular": null,
+            "flagEmoji": null,
+            "isSupported": true,
+            "levelThresholds": {
+              "advanced1": 20000,
+              "advanced2": 30000,
+              "beginner1": 0,
+              "beginner2": 1000,
+              "intermediate1": 5000,
+              "intermediate2": 12000
+            }
+          }
+        },
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "code": {
+            "type": "string",
+            "maxLength": 4,
+            "minLength": 2
+          },
+          "name": {
+            "type": "string"
+          },
+          "greeting": {
+            "type": "string"
+          },
+          "flag": {
+            "type": "string",
+            "format": "uri"
+          },
+          "flagCircular": {
+            "type": "string",
+            "format": "uri"
+          },
+          "flagEmoji": {
+            "type": "string"
+          },
+          "isSupported": {
+            "type": "boolean"
+          },
+          "levelThresholds": {
+            "type": "object",
+            "properties": {
+              "beginner1": {
+                "type": "integer"
+              },
+              "beginner2": {
+                "type": "integer"
+              },
+              "intermediate1": {
+                "type": "integer"
+              },
+              "intermediate2": {
+                "type": "integer"
+              },
+              "advanced1": {
+                "type": "integer"
+              },
+              "advanced2": {
+                "type": "integer"
+              }
+            }
+          },
+          "learnersCount": {
+            "type": "integer"
+          }
+        }
+      },
+      "LanguageDetails": {
+        "type": "object",
+        "x-examples": {},
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "code": {
+            "type": "string",
+            "maxLength": 4,
+            "minLength": 2
+          },
+          "name": {
+            "type": "string"
+          },
+          "greeting": {
+            "type": "string"
+          },
+          "flag": {
+            "type": "string",
+            "format": "uri"
+          },
+          "flagCircular": {
+            "type": "string",
+            "format": "uri"
+          },
+          "flagEmoji": {
+            "type": "string"
+          },
+          "isSupported": {
+            "type": "boolean"
+          },
+          "levelThresholds": {
+            "type": "object",
+            "properties": {
+              "beginner1": {
+                "type": "integer"
+              },
+              "beginner2": {
+                "type": "integer"
+              },
+              "intermediate1": {
+                "type": "integer"
+              },
+              "intermediate2": {
+                "type": "integer"
+              },
+              "advanced1": {
+                "type": "integer"
+              },
+              "advanced2": {
+                "type": "integer"
+              }
+            }
+          },
+          "learnersCount": {
+            "type": "integer"
+          }
+        }
+      },
+      "CourseList": {
+        "type": "object",
+        "x-examples": {
+          "Example 1": {
+            "id": 7,
+            "title": "Sample Course 1",
+            "description": "This is the description of a sample course",
+            "image": null,
+            "isPublic": true,
+            "level": "beginner1",
+            "language": 1,
+            "addedBy": {
+              "id": 1,
+              "profilePicture": "",
+              "bio": "",
+              "isPublic": true
+            }
+          }
+        },
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "image": {
+            "type": "string",
+            "format": "uri"
+          },
+          "isPublic": {
+            "type": "boolean"
+          },
+          "level": {
+            "type": "string",
+            "enum": [
+              "Beginner 1",
+              "Beginner 2",
+              "Intermediate 1",
+              "Intermediate 2",
+              "Advanced 1",
+              "Advanced 2"
+            ]
+          },
+          "language": {
+            "type": "integer"
+          },
+          "addedBy": {
+            "type": "string"
+          }
+        }
+      },
+      "CourseDetails": {
+        "type": "object",
+        "x-examples": {},
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "image": {
+            "type": "string",
+            "format": "uri"
+          },
+          "isPublic": {
+            "type": "boolean"
+          },
+          "level": {
+            "type": "string",
+            "enum": [
+              "Beginner 1",
+              "Beginner 2",
+              "Intermediate 1",
+              "Intermediate 2",
+              "Advanced 1",
+              "Advanced 2"
+            ]
+          },
+          "language": {
+            "$ref": "#/components/schemas/LanguageDetails"
+          },
+          "addedBy": {
+            "$ref": "#/components/schemas/ProfileDetails"
+          },
+          "lessons": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LessonList"
+            }
+          }
+        }
+      },
+      "LessonList": {
+        "title": "LessonList",
+        "x-stoplight": {
+          "id": "o75iqcx5nqky7"
+        },
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "title": {
+            "type": "string"
+          },
+          "text": {
+            "type": "string"
+          },
+          "audio": {
+            "type": "string",
+            "format": "uri"
+          },
+          "image": {
+            "type": "string",
+            "format": "uri"
+          },
+          "course": {
+            "type": "integer"
+          },
+          "orderInCourse": {
+            "type": "integer"
+          },
+          "addedOn": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "vocabsByLevel": {
+            "type": "object",
+            "properties": {
+              "ignored": {
+                "type": "integer"
+              },
+              "new": {
+                "type": "integer"
+              },
+              "level1": {
+                "type": "integer"
+              },
+              "level2": {
+                "type": "integer"
+              },
+              "level3": {
+                "type": "integer"
+              },
+              "level4": {
+                "type": "integer"
+              },
+              "learned": {
+                "type": "integer"
+              },
+              "known": {
+                "type": "integer"
+              }
+            }
+          }
+        }
+      },
+      "LessonDetails": {
+        "title": "LessonDetails",
+        "x-stoplight": {
+          "id": "o75iqcx5nqky7"
+        },
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "title": {
+            "type": "string"
+          },
+          "text": {
+            "type": "string"
+          },
+          "audio": {
+            "type": "string",
+            "format": "uri"
+          },
+          "image": {
+            "type": "string",
+            "format": "uri"
+          },
+          "course": {
+            "$ref": "#/components/schemas/CourseDetails"
+          },
+          "orderInCourse": {
+            "type": "integer"
+          },
+          "addedOn": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "vocabsByLevel": {
+            "type": "object",
+            "properties": {
+              "ignored": {
+                "type": "integer"
+              },
+              "new": {
+                "type": "integer"
+              },
+              "level1": {
+                "type": "integer"
+              },
+              "level2": {
+                "type": "integer"
+              },
+              "level3": {
+                "type": "integer"
+              },
+              "level4": {
+                "type": "integer"
+              },
+              "learned": {
+                "type": "integer"
+              },
+              "known": {
+                "type": "integer"
+              }
+            }
+          }
+        }
+      },
+      "VocabList": {
+        "type": "object",
+        "x-examples": {
+          "Example 1": {
+            "id": 21990,
+            "text": "a",
+            "isPhrase": false,
+            "level": 5,
+            "notes": null,
+            "language": "es",
+            "userMeanings": [
+              {
+                "id": 219900,
+                "text": "to, for",
+                "vocab": 21990,
+                "score": 768,
+                "addedBy": "johndoe",
+                "language": "es",
+                "addedOn": "2011-09-01T10:20:30Z"
+              }
+            ],
+            "allMeanings": [
+              {
+                "id": 219900,
+                "text": "to, for",
+                "vocab": 21990,
+                "score": 768,
+                "addedBy": "johndoe",
+                "language": "es",
+                "addedOn": "2011-09-01T10:20:30Z"
+              }
+            ]
+          }
+        },
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "text": {
+            "type": "string"
+          },
+          "isPhrase": {
+            "type": "boolean"
+          },
+          "level": {
+            "type": "integer"
+          },
+          "notes": {
+            "type": "null"
+          },
+          "language": {
+            "type": "string"
+          },
+          "userMeanings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MeaningList"
+            }
+          },
+          "allMeanings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MeaningList"
+            }
+          }
+        }
+      },
+      "MeaningList": {
+        "type": "object",
+        "x-examples": {
+          "Example 1": {
+            "id": 219900,
+            "text": "to, for",
+            "vocab": 21990,
+            "score": 768,
+            "addedBy": "johndoe",
+            "language": "es",
+            "addedOn": "2011-09-01T10:20:30Z"
+          }
+        },
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "text": {
+            "type": "string"
+          },
+          "vocab": {
+            "type": "integer"
+          },
+          "learnersCount": {
+            "type": "integer"
+          },
+          "addedBy": {
+            "type": "string"
+          },
+          "language": {
+            "type": "string"
+          },
+          "addedOn": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      }
+    },
+    "securitySchemes": {
+      "token": {
+        "type": "http",
+        "scheme": "bearer",
+        "PREFIX": "HELLO"
+      }
+    }
+  },
+  "security": [
+    {
+      "token": []
+    }
+  ]
+}

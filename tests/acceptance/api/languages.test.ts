@@ -103,7 +103,7 @@ describe("GET users/:username/languages/", function () {
             url: `users/${username}/languages/`,
         };
         if (authToken)
-            options.headers = {authorization: `Token ${authToken}`};
+            options.headers = {authorization: `Bearer ${authToken}`};
         return await fetchRequest(options);
     };
 
@@ -162,7 +162,7 @@ describe("POST users/:username/languages/", function () {
             payload: body,
         };
         if (authToken)
-            options.headers = {authorization: `Token ${authToken}`};
+            options.headers = {authorization: `Bearer ${authToken}`};
         return await fetchRequest(options);
     };
 

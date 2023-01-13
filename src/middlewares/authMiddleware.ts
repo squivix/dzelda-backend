@@ -1,14 +1,16 @@
 import {preHandlerAsyncHookHandler, preParsingAsyncHookHandler} from "fastify/types/hooks.js";
 import UserService from "@/src/services/UserService.js";
-import {APIError} from "@/src/utils/errors/APIError.js";
-import {StatusCodes} from "http-status-codes";
+import {AnonymousUser} from "@/src/models/entities/auth/User.js";
+import {AuthenticationAPIError} from "@/src/utils/errors/AuthenticationAPIError.js";
 
-
+const BEARER_TOKEN_PREFIX = "Bearer"
 export const authMiddleware: preParsingAsyncHookHandler = async (request) => {
     const tokenArray = request.headers?.authorization?.split(" ");
 
-    if (!tokenArray || tokenArray.length !== 2 || tokenArray[0] !== "Token" || !tokenArray[1])
+    if (!tokenArray || tokenArray.length !== 2 || tokenArray[0] !== BEARER_TOKEN_PREFIX || !tokenArray[1]) {
+        request.user = new AnonymousUser();
         return;
+    }
 
     const token = tokenArray[1];
 
@@ -20,19 +22,6 @@ export const authMiddleware: preParsingAsyncHookHandler = async (request) => {
 };
 
 export const requiresAuth: preHandlerAsyncHookHandler = async (request) => {
-    const tokenArray = request.headers?.authorization?.split(" ");
-    if (!tokenArray || tokenArray.length !== 2 || tokenArray[0] !== "Token" || !tokenArray[1]) {
-        throw new APIError(
-            StatusCodes.UNAUTHORIZED,
-            "Authentication required",
-            "Authentication credentials were not provided"
-        );
-    }
-    if (!request.user) {
-        throw new APIError(
-            StatusCodes.UNAUTHORIZED,
-            "Invalid credentials",
-            "Invalid authentication credentials"
-        );
-    }
-};
+    if (!request.user || request.user instanceof AnonymousUser)
+        throw new AuthenticationAPIError(request.user);
+}

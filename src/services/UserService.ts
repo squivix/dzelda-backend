@@ -1,6 +1,6 @@
 import crypto from "crypto";
 import {passwordHasher} from "@/src/server.js";
-import {User} from "@/src/models/entities/auth/User.js";
+import {AnonymousUser, User} from "@/src/models/entities/auth/User.js";
 import {Profile} from "@/src/models/entities/Profile.js";
 import {Language} from "@/src/models/entities/Language.js";
 import {Session} from "@/src/models/entities/auth/Session.js";
@@ -8,6 +8,7 @@ import {StatusCodes} from "http-status-codes";
 import {APIError} from "@/src/utils/errors/APIError.js";
 import {EntityManager, EntityRepository} from "@mikro-orm/core";
 import {MapLearnerLanguage} from "@/src/models/entities/MapLearnerLanguage.js";
+import {AuthenticationAPIError} from "@/src/utils/errors/AuthenticationAPIError.js";
 
 
 class UserService {
@@ -36,16 +37,11 @@ class UserService {
         return newUser;
     }
 
-    async getUser(username: "me" | string, authenticatedUser: User | null) {
+    async getUser(username: "me" | string, authenticatedUser: User | AnonymousUser | null) {
         let user: User;
         if (username == "me") {
-            if (!authenticatedUser) {
-                throw new APIError(
-                    StatusCodes.UNAUTHORIZED,
-                    "Authentication required",
-                    "User must be logged in"
-                );
-            }
+            if (!authenticatedUser || authenticatedUser instanceof AnonymousUser)
+                throw new AuthenticationAPIError(authenticatedUser);
             user = authenticatedUser;
         } else
             user = await this.em.findOneOrFail(User, {username: username}, {populate: ["profile", "profile.languagesLearning"]});

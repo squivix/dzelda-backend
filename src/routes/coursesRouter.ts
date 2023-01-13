@@ -1,7 +1,7 @@
 import {FastifyPluginCallback} from "fastify/types/plugin.js";
-import CourseController from "@/src/controllers/CourseController";
+import CourseController from "@/src/controllers/CourseController.js";
 
-const coursesRouter: FastifyPluginCallback = function rootRouter(fastify, options, done) {
+const coursesRouter: FastifyPluginCallback = function (fastify, options, done) {
     fastify.get(`/courses/`, CourseController.getCourses);
     done();
 };

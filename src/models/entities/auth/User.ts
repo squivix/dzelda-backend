@@ -46,3 +46,8 @@ export class User extends CustomBaseEntity {
 
     [EntityRepositoryType]?: UserRepo;
 }
+
+
+export class AnonymousUser {
+    readonly username = "anonymous_user";
+}

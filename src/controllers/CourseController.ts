@@ -1,6 +1,6 @@
 import {FastifyReply, FastifyRequest} from "fastify";
 import {z} from "zod";
-import CourseService from "@/src/services/CourseService";
+import CourseService from "@/src/services/CourseService.js";
 
 class CourseController {
     async getCourses(request: FastifyRequest, reply: FastifyReply) {
