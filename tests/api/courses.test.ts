@@ -1,12 +1,12 @@
 import {beforeEach, describe, expect, test} from "vitest";
 import {orm} from "@/src/server.js";
-import {buildQueryString, fetchRequest} from "@/tests/acceptance/api/utils.js";
+import {buildQueryString, fetchRequest} from "@/tests/api/utils.js";
 import {UserFactory} from "@/src/seeders/factories/UserFactory.js";
 import {SessionFactory} from "@/src/seeders/factories/SessionFactory.js";
 import {EntityRepository} from "@mikro-orm/core";
 import {ProfileFactory} from "@/src/seeders/factories/ProfileFactory.js";
-import {CourseFactory} from "@/src/seeders/factories/CourseFactory";
-import {Course} from "@/src/models/entities/Course";
+import {CourseFactory} from "@/src/seeders/factories/CourseFactory.js";
+import {Course} from "@/src/models/entities/Course.js";
 
 // beforeEach(truncateDb);
 

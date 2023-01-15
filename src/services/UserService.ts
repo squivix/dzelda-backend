@@ -7,7 +7,6 @@ import {Session} from "@/src/models/entities/auth/Session.js";
 import {StatusCodes} from "http-status-codes";
 import {APIError} from "@/src/utils/errors/APIError.js";
 import {EntityManager, EntityRepository} from "@mikro-orm/core";
-import {MapLearnerLanguage} from "@/src/models/entities/MapLearnerLanguage.js";
 import {UnauthenticatedAPIError} from "@/src/utils/errors/UnauthenticatedAPIError.js";
 
 

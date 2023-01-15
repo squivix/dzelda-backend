@@ -3,8 +3,11 @@ import {CustomEntitySerializer, SerializationMode} from "@/src/schemas/serialize
 import {LanguageListSchema} from "@/src/schemas/interfaces/LanguageListSchema.js";
 import {LanguageDetailsSchema} from "@/src/schemas/interfaces/LanguageDetailsSchema.js";
 
-class LanguageSerializer extends CustomEntitySerializer<Language> {
-    serialize(language: Language, mode: SerializationMode = SerializationMode.DETAIL): LanguageListSchema | LanguageDetailsSchema {
+class LanguageSerializer extends CustomEntitySerializer<Language, LanguageListSchema | LanguageDetailsSchema> {
+    serialize(language: Language, {
+        mode,
+        hiddenFields
+    }: { mode?: SerializationMode; hiddenFields?: (keyof LanguageListSchema | LanguageDetailsSchema)[] } = {}): LanguageListSchema | LanguageDetailsSchema {
         return {
             id: language.id,
             code: language.code,

@@ -6,14 +6,17 @@ import {Profile} from "@/src/models/entities/Profile.js";
 import {LanguageFactory} from "@/src/seeders/factories/LanguageFactory.js";
 import {Language} from "@/src/models/entities/Language.js";
 import {orm} from "@/src/server.js";
-import {fetchRequest} from "@/tests/acceptance/api/utils.js";
-import {truncateDb} from "@/tests/utils.js";
+import {fetchRequest} from "@/tests/api/utils.js";
 import {EntityRepository} from "@mikro-orm/core";
+import {InjectOptions} from "light-my-request";
+import {userSerializer} from "@/src/schemas/serializers/UserSerializer.js";
+import {SessionFactory} from "@/src/seeders/factories/SessionFactory.js";
 
 // beforeEach(truncateDb);
 
 interface LocalTestContext {
     userFactory: UserFactory;
+    sessionFactory: SessionFactory;
     languageRepo: EntityRepository<Language>;
     userRepo: EntityRepository<User>;
     profileRepo: EntityRepository<Profile>;
@@ -25,6 +28,7 @@ beforeEach<LocalTestContext>((context) => {
 
     context.userFactory = new UserFactory(context.em);
     context.languageFactory = new LanguageFactory(context.em);
+    context.sessionFactory = new SessionFactory(context.em);
     context.languageRepo = context.em.getRepository(Language);
     context.userRepo = context.em.getRepository(User);
     context.profileRepo = context.em.getRepository(Profile);
@@ -180,3 +184,72 @@ describe("POST /users", function () {
         });
     });
 });
+
+/**{@link UserController#getUser}*/
+describe("GET /users/:username/", function () {
+    const makeRequest = async (username: "me" | string, authToken?: string) => {
+        const options: InjectOptions = {
+            method: "GET",
+            url: `users/${username}/`
+        };
+        if (authToken)
+            options.headers = {authorization: `Bearer ${authToken}`};
+        return await fetchRequest(options);
+    };
+    test<LocalTestContext>("If username is me and not authenticated return 401", async (context) => {
+        await context.userFactory.createOne({profile: {isPublic: true}});
+
+        const response = await makeRequest("me");
+        expect(response.statusCode).to.equal(401);
+    });
+    test<LocalTestContext>("If username is me and authenticated return user with email", async (context) => {
+        const user = await context.userFactory.createOne();
+        const session = await context.sessionFactory.createOne({user: user});
+
+        const response = await makeRequest("me", session.token);
+        expect(response.statusCode).to.equal(200);
+        expect(response.json()).toEqual(userSerializer.serialize(user));
+    });
+    test<LocalTestContext>("If username is not me and authenticated as user return user with email", async (context) => {
+        const user = await context.userFactory.createOne();
+        const session = await context.sessionFactory.createOne({user: user});
+
+        const response = await makeRequest(user.username, session.token);
+        expect(response.statusCode).to.equal(200);
+        expect(response.json()).toEqual(userSerializer.serialize(user));
+    });
+    describe("If profile is not public and not authenticated as user return 404", () => {
+        test<LocalTestContext>("If not authenticated return 404", async (context) => {
+            const user = await context.userFactory.createOne({profile: {isPublic: false}});
+
+            const response = await makeRequest(user.username);
+            expect(response.statusCode).to.equal(404);
+        });
+        test<LocalTestContext>("If authenticated as other user return 404", async (context) => {
+            const user = await context.userFactory.createOne({profile: {isPublic: false}});
+            const otherUser = await context.userFactory.createOne({profile: {isPublic: false}});
+            const session = await context.sessionFactory.createOne({user: otherUser});
+
+            const response = await makeRequest(user.username, session.token);
+            expect(response.statusCode).to.equal(404);
+        });
+    })
+    describe("If profile is public and not user return user without email", () => {
+        test<LocalTestContext>("If not authenticated return user without email", async (context) => {
+            const user = await context.userFactory.createOne({profile: {isPublic: true}});
+
+            const response = await makeRequest(user.username);
+            expect(response.statusCode).to.equal(200);
+            expect(response.json()).toEqual(userSerializer.serialize(user, {hiddenFields: ["email"]}));
+        });
+        test<LocalTestContext>("If authenticated as other user return user without email", async (context) => {
+            const user = await context.userFactory.createOne({profile: {isPublic: true}});
+            const otherUser = await context.userFactory.createOne({profile: {isPublic: false}});
+            const session = await context.sessionFactory.createOne({user: otherUser});
+
+            const response = await makeRequest(user.username, session.token);
+            expect(response.statusCode).to.equal(200);
+            expect(response.json()).toEqual(userSerializer.serialize(user, {hiddenFields: ["email"]}));
+        });
+    });
+})

@@ -1,6 +1,9 @@
 import {z} from "zod";
 import UserService from "@/src/services/UserService.js";
 import {FastifyReply, FastifyRequest} from "fastify";
+import {NotFoundAPIError} from "@/src/utils/errors/NotFoundAPIError.js";
+import {profileSerializer} from "@/src/schemas/serializers/ProfileSerializer.js";
+import {userSerializer} from "@/src/schemas/serializers/UserSerializer.js";
 
 class UserController {
 
@@ -28,6 +31,19 @@ class UserController {
         const token = await userService.authenticateUser(body.username, body.password);
 
         reply.status(201).send({authToken: token});
+    }
+
+    async getUser(request: FastifyRequest, reply: FastifyReply) {
+        const validator = z.object({
+            username: z.string().min(4).max(20).regex(/^[A-Za-z0-9]*$/).or(z.literal("me"))
+        });
+        const pathParams = validator.parse(request.params);
+        const userService = new UserService(request.em);
+        const user = await userService.getUser(pathParams.username, request.user);
+        // private user don't exist to the outside
+        if (!user || (!user.profile.isPublic && user !== request.user))
+            throw new NotFoundAPIError("User");
+        reply.status(200).send(userSerializer.serialize(user, {hiddenFields: request.user !== user ? ["email"] : []}));
     }
 }
 

@@ -2,7 +2,7 @@ import {beforeEach, describe, expect, test} from "vitest";
 import {faker} from "@faker-js/faker";
 import {orm} from "@/src/server.js";
 import {LanguageFactory} from "@/src/seeders/factories/LanguageFactory.js";
-import {buildQueryString, fetchRequest} from "@/tests/acceptance/api/utils.js";
+import {buildQueryString, fetchRequest} from "@/tests/api/utils.js";
 import {UserFactory} from "@/src/seeders/factories/UserFactory.js";
 import {SessionFactory} from "@/src/seeders/factories/SessionFactory.js";
 import {InjectOptions} from "light-my-request";

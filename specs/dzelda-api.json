@@ -25,7 +25,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/UserDetails"
+                  "$ref": "#/components/schemas/User"
                 }
               },
               "application/xml": {
@@ -150,6 +150,39 @@
           "description": ""
         },
         "security": []
+      }
+    },
+    "/users/{username}": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/username"
+        }
+      ],
+      "get": {
+        "summary": "Your GET endpoint",
+        "tags": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        },
+        "operationId": "get-users-username"
       }
     },
     "/sessions": {
@@ -1232,82 +1265,6 @@
           "description": ""
         }
       }
-    },
-    "/users/{username}/profile/": {
-      "get": {
-        "summary": "Get User Profile",
-        "tags": [],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProfileDetails"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "x-examples": {},
-                  "properties": {
-                    "code": {
-                      "type": "integer",
-                      "enum": [
-                        400
-                      ]
-                    },
-                    "status": {
-                      "type": "string",
-                      "enum": [
-                        "Bad Request"
-                      ]
-                    },
-                    "message": {
-                      "type": "string"
-                    },
-                    "details": {
-                      "type": "string"
-                    },
-                    "fields": {
-                      "type": "object",
-                      "properties": {
-                        "username": {
-                          "type": "object",
-                          "properties": {
-                            "message": {
-                              "type": "string"
-                            }
-                          }
-                        }
-                      }
-                    }
-                  }
-                },
-                "examples": {}
-              }
-            }
-          },
-          "401": {
-            "$ref": "#/components/responses/Unauthenticated"
-          },
-          "404": {
-            "$ref": "#/components/responses/NotFound"
-          }
-        },
-        "operationId": "get-users-me-profile",
-        "description": ""
-      },
-      "parameters": [
-        {
-          "$ref": "#/components/parameters/username"
-        }
-      ]
     },
     "/users/{username}/languages": {
       "parameters": [
@@ -2724,9 +2681,12 @@
   },
   "components": {
     "schemas": {
-      "UserDetails": {
+      "User": {
         "type": "object",
         "x-examples": {},
+        "x-stoplight": {
+          "id": "e6b459c238b81"
+        },
         "properties": {
           "username": {
             "type": "string",
@@ -2741,7 +2701,11 @@
           "profile": {
             "$ref": "#/components/schemas/ProfileDetails"
           }
-        }
+        },
+        "required": [
+          "username",
+          "profile"
+        ]
       },
       "ProfileDetails": {
         "type": "object",
@@ -2766,7 +2730,14 @@
           "isPublic": {
             "type": "boolean"
           }
-        }
+        },
+        "required": [
+          "id",
+          "languagesLearning",
+          "profilePicture",
+          "bio",
+          "isPublic"
+        ]
       },
       "LanguageList": {
         "type": "object",
@@ -2904,7 +2875,8 @@
           "learnersCount": {
             "type": "integer"
           }
-        }
+        },
+        "title": ""
       },
       "CourseList": {
         "type": "object",
