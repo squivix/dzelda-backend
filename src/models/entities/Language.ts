@@ -1,4 +1,4 @@
-import {Collection, Entity, ManyToMany, OneToMany, Property, types} from "@mikro-orm/core";
+import {Collection, Entity, Formula, ManyToMany, OneToMany, Property, types} from "@mikro-orm/core";
 import {CustomBaseEntity} from "@/src/models/entities/CustomBaseEntity.js";
 import {Course} from "@/src/models/entities/Course.js";
 import {Vocab} from "@/src/models/entities/Vocab.js";
@@ -9,7 +9,7 @@ import {MapLearnerLanguage} from "@/src/models/entities/MapLearnerLanguage.js";
 
 @Entity()
 export class Language extends CustomBaseEntity {
-    @Property({type: types.string, length: 4, unique:true})
+    @Property({type: types.string, length: 4, unique: true})
     code!: string;
 
     @Property({type: types.string, length: 255})
@@ -64,5 +64,13 @@ export class Language extends CustomBaseEntity {
         hidden: true
     })
     learners: Collection<Profile> = new Collection<Profile>(this);
+
+
+    @Formula((alias: string) => `(SELECT COUNT(learner_id) FROM map_learner_language WHERE language_id=${alias}.id)`, {
+        type: "number"
+    })
+    learnersCount!: number;
+
+
 }
 

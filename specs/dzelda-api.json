@@ -2720,18 +2720,6 @@
           }
         ]
       }
-    },
-    "/lessons/{lessonId}/phrases": {
-      "parameters": [
-        {
-          "schema": {
-            "type": "integer"
-          },
-          "name": "lessonId",
-          "in": "path",
-          "required": true
-        }
-      ]
     }
   },
   "components": {
@@ -2783,6 +2771,7 @@
       "LanguageList": {
         "type": "object",
         "x-examples": {},
+        "examples": [],
         "properties": {
           "id": {
             "type": "integer"
@@ -2814,6 +2803,14 @@
           },
           "levelThresholds": {
             "type": "object",
+            "required": [
+              "beginner1",
+              "beginner2",
+              "intermediate1",
+              "intermediate2",
+              "advanced1",
+              "advanced2"
+            ],
             "properties": {
               "beginner1": {
                 "type": "integer"
@@ -2838,7 +2835,16 @@
           "learnersCount": {
             "type": "integer"
           }
-        }
+        },
+        "required": [
+          "id",
+          "code",
+          "name",
+          "greeting",
+          "isSupported",
+          "levelThresholds",
+          "learnersCount"
+        ]
       },
       "LanguageDetails": {
         "type": "object",

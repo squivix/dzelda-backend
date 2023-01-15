@@ -1,11 +1,10 @@
-import {beforeEach, describe, expect, test} from "vitest";
+import {describe, expect, test} from "vitest";
 import {faker} from "@faker-js/faker";
 import {orm} from "@/src/server.js";
 import {UserFactory} from "@/src/seeders/factories/UserFactory.js";
 import {SessionFactory} from "@/src/seeders/factories/SessionFactory.js";
 import {InjectOptions} from "light-my-request";
 import {fetchRequest} from "@/tests/acceptance/api/utils.js";
-import {truncateDb} from "@/tests/utils.js";
 
 // beforeEach(truncateDb);
 
@@ -50,9 +49,10 @@ describe(`GET users/:username/profile/`, function () {
         expect(response.json()).toEqual(user.profile.toObject());
     });
     test(`test if username is me and not authenticated as user return 401`, async () => {
-        const user = await userFactory().createOne({profile: {isPublic: false}});
+        await userFactory().createOne({profile: {isPublic: false}});
 
         const response = await makeRequest("me");
+
         expect(response.statusCode).to.equal(401);
     });
     test(`test if username is me and authenticated as user return profile`, async () => {

@@ -9,8 +9,8 @@ import {InjectOptions} from "light-my-request";
 import {MapLearnerLanguage} from "@/src/models/entities/MapLearnerLanguage.js";
 import {Language} from "@/src/models/entities/Language.js";
 import {EntityRepository} from "@mikro-orm/core";
-import {truncateDb} from "@/tests/utils.js";
 import {ProfileFactory} from "@/src/seeders/factories/ProfileFactory.js";
+import {languageSerializer} from "@/src/schemas/serializers/LanguageSerializer.js";
 
 // beforeEach(truncateDb);
 
@@ -48,9 +48,10 @@ describe("GET /languages/", function () {
         await context.languageFactory.create(10);
 
         const response = await makeRequest();
-        const languages = await context.languageRepo.find({});
+
+        const languages = await context.languageRepo.find({}, {refresh: true});
         expect(response.statusCode).to.equal(200);
-        expect(response.json()).toEqual(languages.map(l => l.toObject()));
+        expect(response.json()).toEqual(languageSerializer.serializeList(languages));
     });
 
     test<LocalTestContext>("If there are invalid filters return all languages", async (context) => {
@@ -58,9 +59,9 @@ describe("GET /languages/", function () {
 
         const response = await makeRequest({[faker.datatype.string()]: faker.random.word()});
 
-        const languages = await context.languageRepo.find({});
+        const languages = await context.languageRepo.find({}, {refresh: true});
         expect(response.statusCode).to.equal(200);
-        expect(response.json()).toEqual(languages.map(l => l.toObject()));
+        expect(response.json()).toEqual(languageSerializer.serializeList(languages));
     });
 
     describe("If there are filters languages that match those filters", async () => {
@@ -70,9 +71,10 @@ describe("GET /languages/", function () {
                 await context.languageFactory.create(5, {isSupported: false});
 
                 const response = await makeRequest({isSupported: true});
-                const supportedLanguages = await context.languageRepo.find({isSupported: true});
+
+                const supportedLanguages = await context.languageRepo.find({isSupported: true}, {refresh: true});
                 expect(response.statusCode).to.equal(200);
-                expect(response.json()).toEqual(supportedLanguages.map(l => l.toObject()));
+                expect(response.json()).toEqual(languageSerializer.serializeList(supportedLanguages));
             });
             test<LocalTestContext>("If isSupported filter is false return only unsupported languages", async (context) => {
                 await context.languageFactory.create(5, {isSupported: true});
@@ -80,9 +82,9 @@ describe("GET /languages/", function () {
 
                 const response = await makeRequest({isSupported: false});
 
-                const unsupportedLanguages = await context.languageRepo.find({isSupported: false});
+                const unsupportedLanguages = await context.languageRepo.find({isSupported: false}, {refresh: true});
                 expect(response.statusCode).to.equal(200);
-                expect(response.json()).toEqual(unsupportedLanguages.map(l => l.toObject()));
+                expect(response.json()).toEqual(languageSerializer.serializeList(unsupportedLanguages));
             });
             test<LocalTestContext>("If isSupported filter is invalid return 400", async (context) => {
                 await context.languageFactory.create(5, {isSupported: true});
@@ -113,43 +115,48 @@ describe("GET users/:username/languages/", function () {
     });
     test<LocalTestContext>(`If username exists and is not public and not authenticated as user return 404`, async (context) => {
         const user = await context.userFactory.createOne({profile: {isPublic: false}});
-        const languages = await context.languageFactory.create(10, {learners: user.profile});
+        await context.languageFactory.create(10, {learners: user.profile});
 
         const response = await makeRequest(user.username);
         expect(response.statusCode).to.equal(404);
     });
     test<LocalTestContext>(`If username exists and is public return languages`, async (context) => {
         const user = await context.userFactory.createOne({profile: {isPublic: true}});
-        const languages = await context.languageFactory.create(10, {learners: user.profile});
+        await context.languageFactory.create(10, {learners: user.profile});
         const response = await makeRequest(user.username);
+
+        const languages = await context.languageRepo.find({learners: user.profile}, {refresh: true});
         expect(response.statusCode).to.equal(200);
-        expect(response.json()).toEqual(languages.map(l => l.toObject()));
+        expect(response.json()).toEqual(languageSerializer.serializeList(languages));
     });
     test<LocalTestContext>(`If username exists and is not public but authenticated as user return languages`, async (context) => {
         const user = await context.userFactory.createOne({profile: {isPublic: false}});
-        const languages = await context.languageFactory.create(10, {learners: user.profile});
+        await context.languageFactory.create(10, {learners: user.profile});
         const session = await context.sessionFactory.createOne({user: user});
 
         const response = await makeRequest(user.username, session.token);
-        expect(response.statusCode).to.equal(200);
 
-        expect(response.json()).toEqual(languages.map(l => l.toObject()));
+        const languages = await context.languageRepo.find({learners: user.profile}, {refresh: true});
+        expect(response.statusCode).to.equal(200);
+        expect(response.json()).toEqual(languageSerializer.serializeList(languages));
     });
     test<LocalTestContext>(`If username is me and not authenticated as user return 401`, async (context) => {
         const user = await context.userFactory.createOne({profile: {isPublic: false}});
-        const languages = await context.languageFactory.create(10, {learners: user.profile});
+        await context.languageFactory.create(10, {learners: user.profile});
 
         const response = await makeRequest("me");
         expect(response.statusCode).to.equal(401);
     });
     test<LocalTestContext>(`If username is me and authenticated as user return languages`, async (context) => {
         const user = await context.userFactory.createOne({profile: {isPublic: false}});
-        const languages = await context.languageFactory.create(10, {learners: user.profile});
+        await context.languageFactory.create(10, {learners: user.profile});
         const session = await context.sessionFactory.createOne({user: user});
 
         const response = await makeRequest("me", session.token);
+
+        const languages = await context.languageRepo.find({learners: user.profile}, {refresh: true});
         expect(response.statusCode).to.equal(200);
-        expect(response.json()).toEqual(languages.map(l => l.toObject()));
+        expect(response.json()).toEqual(languageSerializer.serializeList(languages));
     });
 });
 
@@ -188,12 +195,16 @@ describe("POST users/:username/languages/", function () {
             const language = await context.languageFactory.createOne();
 
             const response = await makeRequest("me", {code: language.code}, session.token);
-            const mapping = await context.mapLearnerLanguageRepo.findOne({learner: currentUser.profile, language: language});
+
+            const mapping = await context.mapLearnerLanguageRepo.findOne({
+                learner: currentUser.profile,
+                language: language
+            }, {populate: ["language"], refresh: true});
 
             expect(response.statusCode).to.equal(201);
             expect(mapping).not.toBeNull();
             if (mapping != null)
-                expect(response.json()).toEqual(mapping.toObject());
+                expect(response.json()).toEqual(languageSerializer.serialize(mapping.language));
         });
         test<LocalTestContext>("If username is not me and authenticated as user with username return 201", async (context) => {
             const currentUser = await context.userFactory.createOne();
@@ -202,11 +213,14 @@ describe("POST users/:username/languages/", function () {
             const language = await context.languageFactory.createOne();
 
             const response = await makeRequest(currentUser.username, {code: language.code}, session.token);
-            const mapping = await context.mapLearnerLanguageRepo.findOne({learner: currentUser.profile, language: language});
+            const mapping = await context.mapLearnerLanguageRepo.findOne({
+                learner: currentUser.profile,
+                language: language
+            }, {populate: ["language"], refresh: true});
             expect(response.statusCode).to.equal(201);
             expect(mapping).not.toBeNull();
             if (mapping != null)
-                expect(response.json()).toEqual(mapping.toObject());
+                expect(response.json()).toEqual(languageSerializer.serialize(mapping.language));
         });
     });
     test<LocalTestContext>("If language with code does not exist return 404", async (context) => {

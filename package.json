@@ -18,7 +18,8 @@
     "premigrate": "npm run clean",
     "dev": "concurrently \"npm run watch-compile\" \"npm run watch-dev\"",
     "watch-compile": "swc src -w --out-dir build/src",
-    "watch-dev": "nodemon --watch \"build/src/**/*\" -e js ./build/src/main.js"
+    "watch-dev": "nodemon --watch \"build/src/**/*\" -e js ./build/src/main.js",
+    "make-schema": "npx openapi-typescript specs/dzelda-api.json --output specs/schema.ts"
   },
   "author": "squivix <devintheamateurdevin@gmail.com> (https://github.com/squivix)",
   "license": "MIT",
@@ -48,6 +49,7 @@
     "eslint-import-resolver-typescript": "^3.5.2",
     "eslint-plugin-import": "^2.26.0",
     "nodemon": "^2.0.20",
+    "openapi-typescript": "^6.1.0",
     "tsx": "^3.12.1",
     "typescript": "^4.8.4",
     "vite": "^3.2.1",

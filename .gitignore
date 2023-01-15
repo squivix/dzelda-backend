@@ -4,3 +4,4 @@ coverage
 npm-debug.log
 .env
 .nyc_output
+specs/schema.ts
