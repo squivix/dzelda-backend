@@ -18,7 +18,7 @@ class ProfileController {
         const userService = new UserService(request.em);
         const user = await userService.getUser(pathParams.username, request.user);
         // private user don't exist to the outside
-        if (!user.profile.isPublic && user !== request.user)
+        if (!user || (!user.profile.isPublic && user !== request.user))
             throw new NotFoundAPIError("User");
         else
             reply.status(200).send(user.profile);

@@ -3,8 +3,7 @@ import {z} from "zod";
 import LanguageService from "@/src/services/LanguageService.js";
 import {NotFoundAPIError} from "@/src/utils/errors/NotFoundAPIError.js";
 import UserService from "@/src/services/UserService.js";
-import {UnauthorizedAPIError} from "@/src/utils/errors/UnauthorizedAPIError.js";
-import {NotFoundError} from "@mikro-orm/core";
+import {ForbiddenAPIError} from "@/src/utils/errors/ForbiddenAPIError.js";
 
 class LanguageController {
     async getLanguages(request: FastifyRequest, reply: FastifyReply) {
@@ -28,7 +27,7 @@ class LanguageController {
         const pathParams = validator.parse(request.params);
         const userService = new UserService(request.em);
         const user = await userService.getUser(pathParams.username, request.user);
-        if (!user.profile.isPublic && user !== request.user)
+        if (!user || (!user.profile.isPublic && user !== request.user))
             throw new NotFoundAPIError("User");
 
         const languageService = new LanguageService(request.em);
@@ -43,16 +42,9 @@ class LanguageController {
         });
         const pathParams = pathParamsValidator.parse(request.params);
         const userService = new UserService(request.em);
-        let user;
-        try {
-            user = await userService.getUser(pathParams.username, request.user);
-        } catch (e) {
-            //do not expose if the user exists or not
-            if (e instanceof NotFoundError)
-                throw new UnauthorizedAPIError();
-        }
-        if (user !== request.user)
-            throw new UnauthorizedAPIError();
+        const user = await userService.getUser(pathParams.username, request.user);
+        if (!user || user !== request.user)
+            throw new ForbiddenAPIError();
 
         const bodyValidator = z.object({
             code: z.string().min(2).max(4).regex(/^[A-Za-z0-9]*$/)
@@ -63,7 +55,7 @@ class LanguageController {
         if (language == null)
             throw new NotFoundAPIError("Language");
 
-        const newLanguageMapping = await userService.addLanguageToUser(user, language);
+        const newLanguageMapping = await languageService.addLanguageToUser(user, language);
         reply.status(201).send(newLanguageMapping);
     }
 }

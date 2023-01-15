@@ -2,6 +2,7 @@ import {Language} from "@/src/models/entities/Language.js";
 import {EntityManager, EntityRepository} from "@mikro-orm/core";
 import {User} from "@/src/models/entities/auth/User.js";
 import {cleanObject} from "@/src/utils/utils.js";
+import {MapLearnerLanguage} from "@/src/models/entities/MapLearnerLanguage.js";
 
 class LanguageService {
     em: EntityManager;
@@ -28,6 +29,14 @@ class LanguageService {
         const language = await this.languageRepo.findOneOrFail({code});
         await this.em.flush();
         return language;
+    }
+
+
+    async addLanguageToUser(user: User, language: Language) {
+        const mapping = new MapLearnerLanguage(user.profile, language);
+        await this.em.persist(mapping);
+        await this.em.flush();
+        return mapping;
     }
 }
 

@@ -2,7 +2,7 @@ import {APIError} from "@/src/utils/errors/APIError.js";
 import {StatusCodes} from "http-status-codes";
 import {AnonymousUser} from "@/src/models/entities/auth/User.js";
 
-export class AuthenticationAPIError extends APIError {
+export class UnauthenticatedAPIError extends APIError {
     constructor(user: AnonymousUser | null) {
         if (user instanceof AnonymousUser) {
             super(StatusCodes.UNAUTHORIZED,

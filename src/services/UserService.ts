@@ -8,7 +8,7 @@ import {StatusCodes} from "http-status-codes";
 import {APIError} from "@/src/utils/errors/APIError.js";
 import {EntityManager, EntityRepository} from "@mikro-orm/core";
 import {MapLearnerLanguage} from "@/src/models/entities/MapLearnerLanguage.js";
-import {AuthenticationAPIError} from "@/src/utils/errors/AuthenticationAPIError.js";
+import {UnauthenticatedAPIError} from "@/src/utils/errors/UnauthenticatedAPIError.js";
 
 
 class UserService {
@@ -37,22 +37,6 @@ class UserService {
         return newUser;
     }
 
-    async getUser(username: "me" | string, authenticatedUser: User | AnonymousUser | null) {
-        let user: User;
-        if (username == "me") {
-            if (!authenticatedUser || authenticatedUser instanceof AnonymousUser)
-                throw new AuthenticationAPIError(authenticatedUser);
-            user = authenticatedUser;
-        } else
-            user = await this.em.findOneOrFail(User, {username: username}, {populate: ["profile", "profile.languagesLearning"]});
-
-        return user;
-    }
-
-    async getUserBySession(sessionToken: string) {
-        return await this.em.findOne(User, {session: {token: sessionToken}}, {populate: ["profile", "profile.languagesLearning"]});
-    }
-
     async authenticateUser(username: string, password: string) {
         const user = await this.userRepo.findOne({username: username});
 
@@ -70,12 +54,22 @@ class UserService {
         }
     }
 
-    async addLanguageToUser(user: User, language: Language) {
-        const mapping = new MapLearnerLanguage(user.profile, language);
-        await this.em.persist(mapping);
-        await this.em.flush();
-        return mapping;
+    async getUser(username: "me" | string, authenticatedUser: User | AnonymousUser | null) {
+        let user: User | null;
+        if (username == "me") {
+            if (!authenticatedUser || authenticatedUser instanceof AnonymousUser)
+                throw new UnauthenticatedAPIError(authenticatedUser);
+            user = authenticatedUser;
+        } else
+            user = await this.em.findOne(User, {username: username}, {populate: ["profile", "profile.languagesLearning"]});
+
+        return user;
     }
+
+    async getUserBySession(sessionToken: string) {
+        return await this.em.findOne(User, {session: {token: sessionToken}}, {populate: ["profile", "profile.languagesLearning"]});
+    }
+
 }
 
 export default UserService;
