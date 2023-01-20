@@ -7,3 +7,4 @@ npm-debug.log
 specs/schema.ts
 /public/media/
 /data/
+.idea
