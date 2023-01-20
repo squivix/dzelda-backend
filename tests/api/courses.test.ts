@@ -7,6 +7,7 @@ import {EntityRepository} from "@mikro-orm/core";
 import {ProfileFactory} from "@/src/seeders/factories/ProfileFactory.js";
 import {CourseFactory} from "@/src/seeders/factories/CourseFactory.js";
 import {Course} from "@/src/models/entities/Course.js";
+import {courseSerializer} from "@/src/schemas/serializers/CourseSerializer.js";
 
 // beforeEach(truncateDb);
 
@@ -41,9 +42,9 @@ describe("GET /courses/", function () {
         await context.courseFactory.create(10);
 
         const response = await makeRequest();
-        const courses = await context.courseRepo.find({}, {populate: ["addedBy"]});
+        const courses = await context.courseRepo.find({}, {populate: ["addedBy.user", "lessons", "lessons.vocabs"]});
         expect(response.statusCode).to.equal(200);
-        expect(response.json()).toEqual(courses.map(c => ({...c.toObject(["lessons"]), language: c.language.id})));
-    });
+        expect(response.json()).toEqual(courseSerializer.serializeList(courses));
+    })
 
 });

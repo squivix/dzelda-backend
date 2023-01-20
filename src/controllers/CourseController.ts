@@ -11,8 +11,8 @@ class CourseController {
 
         const filters = {};
 
-        const languages = await courseService.getCourses(filters);
-        reply.send(languages);
+        const courses = await courseService.getCourses(filters);
+        reply.send(courses);
     }
 }
 

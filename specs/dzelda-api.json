@@ -159,7 +159,7 @@
         }
       ],
       "get": {
-        "summary": "Your GET endpoint",
+        "summary": "Get User",
         "tags": [],
         "responses": {
           "200": {
@@ -1192,7 +1192,8 @@
                       }
                     }
                   }
-                }
+                },
+                "examples": {}
               }
             }
           },
@@ -1264,6 +1265,242 @@
           },
           "description": ""
         }
+      }
+    },
+    "/vocabs": {
+      "post": {
+        "summary": "Create Vocab",
+        "operationId": "post-vocabs",
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VocabDetails"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "x-examples": {},
+                  "properties": {
+                    "code": {
+                      "type": "integer",
+                      "enum": [
+                        400
+                      ]
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "Bad Request"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "type": "string"
+                    },
+                    "fields": {
+                      "type": "object",
+                      "properties": {
+                        "languageCode": {
+                          "type": "object",
+                          "properties": {
+                            "message": {
+                              "type": "string"
+                            }
+                          }
+                        },
+                        "text": {
+                          "type": "object",
+                          "properties": {
+                            "message": {
+                              "type": "string"
+                            }
+                          }
+                        },
+                        "isPhrase": {
+                          "type": "object",
+                          "properties": {
+                            "message": {
+                              "type": "string"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "examples": {}
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "x-examples": {},
+                "properties": {
+                  "languageCode": {
+                    "type": "string"
+                  },
+                  "text": {
+                    "type": "string"
+                  },
+                  "isPhrase": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/meanings": {
+      "post": {
+        "summary": "Create Meaning",
+        "operationId": "post-meanings",
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeaningDetails"
+                },
+                "examples": {}
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "x-examples": {
+                    "Example 1": {
+                      "code": 400,
+                      "status": "Bad Request",
+                      "message": "string",
+                      "details": "string",
+                      "fields": {
+                        "text": {
+                          "message": "string"
+                        },
+                        "vocabId": {
+                          "message": "string"
+                        },
+                        "languageCode": {
+                          "message": "string"
+                        }
+                      }
+                    }
+                  },
+                  "properties": {
+                    "code": {
+                      "type": "integer",
+                      "enum": [
+                        400
+                      ]
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "Bad Request"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "type": "string"
+                    },
+                    "fields": {
+                      "type": "object",
+                      "properties": {
+                        "text": {
+                          "type": "object",
+                          "properties": {
+                            "message": {
+                              "type": "string"
+                            }
+                          }
+                        },
+                        "vocabId": {
+                          "type": "object",
+                          "properties": {
+                            "message": {
+                              "type": "string"
+                            }
+                          }
+                        },
+                        "languageCode": {
+                          "type": "object",
+                          "properties": {
+                            "message": {
+                              "type": "string"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "examples": {}
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "text": {
+                    "type": "string"
+                  },
+                  "vocabId": {
+                    "type": "integer"
+                  },
+                  "languageCode": {
+                    "type": "string"
+                  }
+                },
+                "x-examples": {}
+              }
+            }
+          },
+          "description": ""
+        },
+        "description": ""
       }
     },
     "/users/{username}/languages": {
@@ -1626,128 +1863,31 @@
         "description": ""
       }
     },
-    "/vocabs": {
-      "post": {
-        "summary": "Create Vocab",
-        "operationId": "post-vocabs",
+    "/users/{username}/courses": {
+      "parameters": [
+        {
+          "schema": {
+            "type": "string"
+          },
+          "name": "username",
+          "in": "path",
+          "required": true
+        }
+      ],
+      "get": {
+        "summary": "Get User Courses Learning",
+        "tags": [],
         "responses": {
           "200": {
-            "description": "OK"
-          },
-          "201": {
-            "description": "Created",
+            "description": "OK",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/VocabDetails"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "x-examples": {},
-                  "properties": {
-                    "code": {
-                      "type": "integer",
-                      "enum": [
-                        400
-                      ]
-                    },
-                    "status": {
-                      "type": "string",
-                      "enum": [
-                        "Bad Request"
-                      ]
-                    },
-                    "message": {
-                      "type": "string"
-                    },
-                    "details": {
-                      "type": "string"
-                    },
-                    "fields": {
-                      "type": "object",
-                      "properties": {
-                        "languageCode": {
-                          "type": "object",
-                          "properties": {
-                            "message": {
-                              "type": "string"
-                            }
-                          }
-                        },
-                        "text": {
-                          "type": "object",
-                          "properties": {
-                            "message": {
-                              "type": "string"
-                            }
-                          }
-                        },
-                        "isPhrase": {
-                          "type": "object",
-                          "properties": {
-                            "message": {
-                              "type": "string"
-                            }
-                          }
-                        }
-                      }
-                    }
-                  }
-                },
-                "examples": {}
-              }
-            }
-          },
-          "401": {
-            "$ref": "#/components/responses/Unauthenticated"
-          },
-          "404": {
-            "$ref": "#/components/responses/NotFound"
-          }
-        },
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "x-examples": {},
-                "properties": {
-                  "languageCode": {
-                    "type": "string"
-                  },
-                  "text": {
-                    "type": "string"
-                  },
-                  "isPhrase": {
-                    "type": "boolean"
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CourseList"
                   }
                 }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/meanings": {
-      "post": {
-        "summary": "Create Meaning",
-        "operationId": "post-meanings",
-        "responses": {
-          "201": {
-            "description": "Created",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/MeaningDetails"
-                },
-                "examples": {}
               }
             }
           },
@@ -1764,13 +1904,7 @@
                       "message": "string",
                       "details": "string",
                       "fields": {
-                        "text": {
-                          "message": "string"
-                        },
-                        "vocabId": {
-                          "message": "string"
-                        },
-                        "languageCode": {
+                        "username": {
                           "message": "string"
                         }
                       }
@@ -1798,23 +1932,7 @@
                     "fields": {
                       "type": "object",
                       "properties": {
-                        "text": {
-                          "type": "object",
-                          "properties": {
-                            "message": {
-                              "type": "string"
-                            }
-                          }
-                        },
-                        "vocabId": {
-                          "type": "object",
-                          "properties": {
-                            "message": {
-                              "type": "string"
-                            }
-                          }
-                        },
-                        "languageCode": {
+                        "username": {
                           "type": "object",
                           "properties": {
                             "message": {
@@ -1825,16 +1943,301 @@
                       }
                     }
                   }
-                },
-                "examples": {}
+                }
               }
             }
           },
           "401": {
-            "description": "Unauthorized"
+            "$ref": "#/components/responses/Unauthenticated"
           },
           "404": {
             "$ref": "#/components/responses/NotFound"
+          }
+        },
+        "operationId": "get-users-username-courses",
+        "description": "",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 2,
+              "maxLength": 4
+            },
+            "in": "query",
+            "name": "language"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 4,
+              "maxLength": 20
+            },
+            "in": "query",
+            "name": "addedBy"
+          },
+          {
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": [
+                  "beginner1",
+                  "beginner2",
+                  "intermediate1",
+                  "intermediate2",
+                  "advanced1",
+                  "advanced2"
+                ]
+              },
+              "minItems": 0,
+              "maxItems": 6
+            },
+            "in": "query",
+            "name": "level"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "searchQuery"
+          }
+        ]
+      }
+    },
+    "/users/{username}/lessons": {
+      "parameters": [
+        {
+          "schema": {
+            "type": "string"
+          },
+          "name": "username",
+          "in": "path",
+          "required": true
+        }
+      ],
+      "get": {
+        "summary": "Get User Lessons Learning",
+        "tags": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/LessonList"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "x-examples": {
+                    "Example 1": {
+                      "code": 400,
+                      "status": "Bad Request",
+                      "message": "string",
+                      "details": "string",
+                      "fields": {
+                        "username": {
+                          "message": "string"
+                        }
+                      }
+                    }
+                  },
+                  "properties": {
+                    "code": {
+                      "type": "integer",
+                      "enum": [
+                        400
+                      ]
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "Bad Request"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "type": "string"
+                    },
+                    "fields": {
+                      "type": "object",
+                      "properties": {
+                        "username": {
+                          "type": "object",
+                          "properties": {
+                            "message": {
+                              "type": "string"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        },
+        "operationId": "get-users-username-lessons",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 2,
+              "maxLength": 4
+            },
+            "in": "query",
+            "name": "language"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "searchQuery"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 4,
+              "maxLength": 20
+            },
+            "in": "query",
+            "name": "addedBy"
+          },
+          {
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": [
+                  "beginner1",
+                  "beginner2",
+                  "intermediate1",
+                  "intermediate2",
+                  "advanced1",
+                  "advanced2"
+                ]
+              },
+              "minItems": 0,
+              "maxItems": 6
+            },
+            "in": "query",
+            "name": "level"
+          },
+          {
+            "schema": {
+              "type": "boolean"
+            },
+            "in": "query",
+            "name": "hasAudio"
+          }
+        ]
+      },
+      "post": {
+        "summary": "Add Lesson To Learning",
+        "operationId": "post-users-username-lessons",
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LessonDetails"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "x-examples": {
+                    "Example 1": {
+                      "code": 400,
+                      "status": "Bad Request",
+                      "message": "string",
+                      "details": "string",
+                      "fields": {
+                        "lessonId": {
+                          "message": "string"
+                        },
+                        "username": {
+                          "message": "string"
+                        }
+                      }
+                    }
+                  },
+                  "properties": {
+                    "code": {
+                      "type": "integer",
+                      "enum": [
+                        400
+                      ]
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "Bad Request"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "type": "string"
+                    },
+                    "fields": {
+                      "type": "object",
+                      "properties": {
+                        "lessonId": {
+                          "type": "object",
+                          "properties": {
+                            "message": {
+                              "type": "string"
+                            }
+                          }
+                        },
+                        "username": {
+                          "type": "object",
+                          "properties": {
+                            "message": {
+                              "type": "string"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
           }
         },
         "requestBody": {
@@ -1843,23 +2246,14 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "text": {
-                    "type": "string"
-                  },
-                  "vocabId": {
+                  "lessonId": {
                     "type": "integer"
-                  },
-                  "languageCode": {
-                    "type": "string"
                   }
-                },
-                "x-examples": {}
+                }
               }
             }
-          },
-          "description": ""
-        },
-        "description": ""
+          }
+        }
       }
     },
     "/users/{username}/vocabs": {
@@ -2548,28 +2942,6 @@
         "description": ""
       }
     },
-    "/users/me/dictionaries": {
-      "get": {
-        "summary": "Get User Dictionaries",
-        "tags": [],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/DictionaryList"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "operationId": "get-users-me-dictionaries"
-      }
-    },
     "/lessons/{lessonId}/vocabs": {
       "parameters": [
         {
@@ -2676,6 +3048,33 @@
             "name": "isPhrase"
           }
         ]
+      }
+    },
+    "/users/{username}/dictionaries": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/username"
+        }
+      ],
+      "get": {
+        "summary": "Your GET endpoint",
+        "tags": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DictionaryList"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "operationId": "get-users-username-dictionaries"
       }
     }
   },
@@ -2914,8 +3313,65 @@
           },
           "addedBy": {
             "type": "string"
+          },
+          "vocabsByLevel": {
+            "type": "object",
+            "required": [
+              "ignored",
+              "new",
+              "level1",
+              "level2",
+              "level3",
+              "level4",
+              "learned",
+              "known"
+            ],
+            "properties": {
+              "ignored": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "new": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "level1": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "level2": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "level3": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "level4": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "learned": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "known": {
+                "type": "integer",
+                "minimum": 0
+              }
+            }
           }
-        }
+        },
+        "required": [
+          "id",
+          "title",
+          "description",
+          "image",
+          "isPublic",
+          "level",
+          "language",
+          "addedBy"
+        ]
       },
       "CourseDetails": {
         "type": "object",
@@ -2962,6 +3418,16 @@
           },
           "vocabsByLevel": {
             "type": "object",
+            "required": [
+              "ignored",
+              "new",
+              "level1",
+              "level2",
+              "level3",
+              "level4",
+              "learned",
+              "known"
+            ],
             "properties": {
               "ignored": {
                 "type": "integer",
@@ -2997,7 +3463,19 @@
               }
             }
           }
-        }
+        },
+        "required": [
+          "id",
+          "title",
+          "description",
+          "image",
+          "isPublic",
+          "level",
+          "language",
+          "addedBy",
+          "lessons",
+          "vocabsByLevel"
+        ]
       },
       "LessonList": {
         "title": "LessonList",
@@ -3296,7 +3774,7 @@
     },
     "responses": {
       "Unauthenticated": {
-        "description": "Example response",
+        "description": "",
         "content": {
           "application/json": {
             "schema": {
@@ -3329,7 +3807,7 @@
         "headers": {}
       },
       "NotFound": {
-        "description": "Example response",
+        "description": "",
         "content": {
           "application/json": {
             "schema": {
@@ -3360,7 +3838,7 @@
         }
       },
       "Forbidden": {
-        "description": "Example response",
+        "description": "",
         "content": {
           "application/json": {
             "schema": {

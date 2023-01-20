@@ -1,4 +1,4 @@
-import {Entity, Enum, ManyToOne, OneToMany, Property, types} from "@mikro-orm/core";
+import {Collection, Entity, Enum, ManyToOne, OneToMany, Property, types} from "@mikro-orm/core";
 import {CustomBaseEntity} from "@/src/models/entities/CustomBaseEntity.js";
 import {Language} from "@/src/models/entities/Language.js";
 import {Profile} from "@/src/models/entities/Profile.js";
@@ -29,5 +29,5 @@ export class Course extends CustomBaseEntity {
     level!: LanguageLevel;
 
     @OneToMany({entity: () => Lesson, mappedBy: (lesson) => lesson.course})
-    lessons!: Lesson;
+    lessons: Collection<Lesson> = new Collection<Lesson>(this);
 }

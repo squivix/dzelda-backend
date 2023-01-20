@@ -7,6 +7,7 @@ import {randomEnum} from "@/tests/utils";
 import {LanguageFactory} from "@/src/seeders/factories/LanguageFactory";
 import {ProfileFactory} from "@/src/seeders/factories/ProfileFactory";
 import {UserFactory} from "@/src/seeders/factories/UserFactory";
+import {LessonFactory} from "@/src/seeders/factories/LessonFactory.js";
 
 export class CourseFactory extends CustomFactory<Course> {
     readonly model = Course;
@@ -22,7 +23,11 @@ export class CourseFactory extends CustomFactory<Course> {
             addedBy: {
                 ...ProfileFactory.makeDefinition(faker),
                 user: {...UserFactory.makeDefinition(faker), profile: null}
-            }
+            },
+            lessons: [...Array(faker.datatype.number({min: 0, max: 10}))].map((v, i) => ({
+                ...LessonFactory.makeDefinition(faker),
+                orderInCourse: i
+            }))
         }
     }
 }

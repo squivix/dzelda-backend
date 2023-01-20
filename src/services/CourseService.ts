@@ -1,6 +1,7 @@
 import {EntityManager, EntityRepository} from "@mikro-orm/core";
 import {cleanObject} from "@/src/utils/utils.js";
 import {Course} from "@/src/models/entities/Course.js";
+import {courseSerializer} from "@/src/schemas/serializers/CourseSerializer.js";
 
 class CourseService {
     em: EntityManager;
@@ -12,9 +13,9 @@ class CourseService {
     }
 
     async getCourses(filters: {}) {
-        const courses = await this.courseRepo.find(cleanObject(filters), {populate: ["addedBy"]});
+        const courses = await this.courseRepo.find(cleanObject(filters), {populate: ["addedBy.user", "lessons", "lessons.vocabs"]});
         await this.em.flush();
-        return courses;
+        return courseSerializer.serializeList(courses);
     }
 }
 
