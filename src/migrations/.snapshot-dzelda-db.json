@@ -154,8 +154,18 @@
           "length": 255,
           "mappedType": "string"
         },
-        "link": {
-          "name": "link",
+        "lookup_link": {
+          "name": "lookup_link",
+          "type": "varchar(500)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "length": 500,
+          "mappedType": "string"
+        },
+        "dictionary_link": {
+          "name": "dictionary_link",
           "type": "varchar(500)",
           "unsigned": false,
           "autoincrement": false,
@@ -513,8 +523,8 @@
           "nullable": false,
           "mappedType": "integer"
         },
-        "learner_id": {
-          "name": "learner_id",
+        "language_id": {
+          "name": "language_id",
           "type": "int",
           "unsigned": false,
           "autoincrement": false,
@@ -522,8 +532,8 @@
           "nullable": false,
           "mappedType": "integer"
         },
-        "language_id": {
-          "name": "language_id",
+        "learner_id": {
+          "name": "learner_id",
           "type": "int",
           "unsigned": false,
           "autoincrement": false,
@@ -557,18 +567,6 @@
       ],
       "checks": [],
       "foreignKeys": {
-        "map_learner_language_learner_id_foreign": {
-          "constraintName": "map_learner_language_learner_id_foreign",
-          "columnNames": [
-            "learner_id"
-          ],
-          "localTableName": "public.map_learner_language",
-          "referencedColumnNames": [
-            "id"
-          ],
-          "referencedTableName": "public.profile",
-          "updateRule": "cascade"
-        },
         "map_learner_language_language_id_foreign": {
           "constraintName": "map_learner_language_language_id_foreign",
           "columnNames": [
@@ -579,6 +577,18 @@
             "id"
           ],
           "referencedTableName": "public.language",
+          "updateRule": "cascade"
+        },
+        "map_learner_language_learner_id_foreign": {
+          "constraintName": "map_learner_language_learner_id_foreign",
+          "columnNames": [
+            "learner_id"
+          ],
+          "localTableName": "public.map_learner_language",
+          "referencedColumnNames": [
+            "id"
+          ],
+          "referencedTableName": "public.profile",
           "updateRule": "cascade"
         }
       }
@@ -594,8 +604,8 @@
           "nullable": false,
           "mappedType": "integer"
         },
-        "learner_id": {
-          "name": "learner_id",
+        "dictionary_id": {
+          "name": "dictionary_id",
           "type": "int",
           "unsigned": false,
           "autoincrement": false,
@@ -603,8 +613,8 @@
           "nullable": false,
           "mappedType": "integer"
         },
-        "dictionary_id": {
-          "name": "dictionary_id",
+        "learner_id": {
+          "name": "learner_id",
           "type": "int",
           "unsigned": false,
           "autoincrement": false,
@@ -638,18 +648,6 @@
       ],
       "checks": [],
       "foreignKeys": {
-        "map_learner_dictionary_learner_id_foreign": {
-          "constraintName": "map_learner_dictionary_learner_id_foreign",
-          "columnNames": [
-            "learner_id"
-          ],
-          "localTableName": "public.map_learner_dictionary",
-          "referencedColumnNames": [
-            "id"
-          ],
-          "referencedTableName": "public.profile",
-          "updateRule": "cascade"
-        },
         "map_learner_dictionary_dictionary_id_foreign": {
           "constraintName": "map_learner_dictionary_dictionary_id_foreign",
           "columnNames": [
@@ -661,70 +659,17 @@
           ],
           "referencedTableName": "public.dictionary",
           "updateRule": "cascade"
-        }
-      }
-    },
-    {
-      "columns": {
-        "dictionary_id": {
-          "name": "dictionary_id",
-          "type": "int",
-          "unsigned": false,
-          "autoincrement": false,
-          "primary": false,
-          "nullable": false,
-          "mappedType": "integer"
         },
-        "profile_id": {
-          "name": "profile_id",
-          "type": "int",
-          "unsigned": false,
-          "autoincrement": false,
-          "primary": false,
-          "nullable": false,
-          "mappedType": "integer"
-        }
-      },
-      "name": "dictionary_learners",
-      "schema": "public",
-      "indexes": [
-        {
-          "keyName": "dictionary_learners_pkey",
+        "map_learner_dictionary_learner_id_foreign": {
+          "constraintName": "map_learner_dictionary_learner_id_foreign",
           "columnNames": [
-            "dictionary_id",
-            "profile_id"
+            "learner_id"
           ],
-          "composite": true,
-          "primary": true,
-          "unique": true
-        }
-      ],
-      "checks": [],
-      "foreignKeys": {
-        "dictionary_learners_dictionary_id_foreign": {
-          "constraintName": "dictionary_learners_dictionary_id_foreign",
-          "columnNames": [
-            "dictionary_id"
-          ],
-          "localTableName": "public.dictionary_learners",
-          "referencedColumnNames": [
-            "id"
-          ],
-          "referencedTableName": "public.dictionary",
-          "deleteRule": "cascade",
-          "updateRule": "cascade"
-        },
-        "dictionary_learners_profile_id_foreign": {
-          "constraintName": "dictionary_learners_profile_id_foreign",
-          "columnNames": [
-            "profile_id"
-          ],
-          "localTableName": "public.dictionary_learners",
+          "localTableName": "public.map_learner_dictionary",
           "referencedColumnNames": [
             "id"
           ],
           "referencedTableName": "public.profile",
-          "deleteRule": "cascade",
           "updateRule": "cascade"
         }
       }
@@ -1257,8 +1202,8 @@
           "nullable": false,
           "mappedType": "integer"
         },
-        "learner_id": {
-          "name": "learner_id",
+        "meaning_id": {
+          "name": "meaning_id",
           "type": "int",
           "unsigned": false,
           "autoincrement": false,
@@ -1266,8 +1211,8 @@
           "nullable": false,
           "mappedType": "integer"
         },
-        "meaning_id": {
-          "name": "meaning_id",
+        "learner_id": {
+          "name": "learner_id",
           "type": "int",
           "unsigned": false,
           "autoincrement": false,
@@ -1301,18 +1246,6 @@
       ],
       "checks": [],
       "foreignKeys": {
-        "map_learner_meaning_learner_id_foreign": {
-          "constraintName": "map_learner_meaning_learner_id_foreign",
-          "columnNames": [
-            "learner_id"
-          ],
-          "localTableName": "public.map_learner_meaning",
-          "referencedColumnNames": [
-            "id"
-          ],
-          "referencedTableName": "public.profile",
-          "updateRule": "cascade"
-        },
         "map_learner_meaning_meaning_id_foreign": {
           "constraintName": "map_learner_meaning_meaning_id_foreign",
           "columnNames": [
@@ -1323,6 +1256,18 @@
             "id"
           ],
           "referencedTableName": "public.meaning",
+          "updateRule": "cascade"
+        },
+        "map_learner_meaning_learner_id_foreign": {
+          "constraintName": "map_learner_meaning_learner_id_foreign",
+          "columnNames": [
+            "learner_id"
+          ],
+          "localTableName": "public.map_learner_meaning",
+          "referencedColumnNames": [
+            "id"
+          ],
+          "referencedTableName": "public.profile",
           "updateRule": "cascade"
         }
       }
@@ -1338,8 +1283,8 @@
           "nullable": false,
           "mappedType": "integer"
         },
-        "lesson_id": {
-          "name": "lesson_id",
+        "vocab_id": {
+          "name": "vocab_id",
           "type": "int",
           "unsigned": false,
           "autoincrement": false,
@@ -1347,8 +1292,8 @@
           "nullable": false,
           "mappedType": "integer"
         },
-        "vocab_id": {
-          "name": "vocab_id",
+        "lesson_id": {
+          "name": "lesson_id",
           "type": "int",
           "unsigned": false,
           "autoincrement": false,
@@ -1382,18 +1327,6 @@
       ],
       "checks": [],
       "foreignKeys": {
-        "map_lesson_vocab_lesson_id_foreign": {
-          "constraintName": "map_lesson_vocab_lesson_id_foreign",
-          "columnNames": [
-            "lesson_id"
-          ],
-          "localTableName": "public.map_lesson_vocab",
-          "referencedColumnNames": [
-            "id"
-          ],
-          "referencedTableName": "public.lesson",
-          "updateRule": "cascade"
-        },
         "map_lesson_vocab_vocab_id_foreign": {
           "constraintName": "map_lesson_vocab_vocab_id_foreign",
           "columnNames": [
@@ -1404,6 +1337,18 @@
             "id"
           ],
           "referencedTableName": "public.vocab",
+          "updateRule": "cascade"
+        },
+        "map_lesson_vocab_lesson_id_foreign": {
+          "constraintName": "map_lesson_vocab_lesson_id_foreign",
+          "columnNames": [
+            "lesson_id"
+          ],
+          "localTableName": "public.map_lesson_vocab",
+          "referencedColumnNames": [
+            "id"
+          ],
+          "referencedTableName": "public.lesson",
           "updateRule": "cascade"
         }
       }
@@ -1419,8 +1364,8 @@
           "nullable": false,
           "mappedType": "integer"
         },
-        "learner_id": {
-          "name": "learner_id",
+        "vocab_id": {
+          "name": "vocab_id",
           "type": "int",
           "unsigned": false,
           "autoincrement": false,
@@ -1428,8 +1373,8 @@
           "nullable": false,
           "mappedType": "integer"
         },
-        "vocab_id": {
-          "name": "vocab_id",
+        "learner_id": {
+          "name": "learner_id",
           "type": "int",
           "unsigned": false,
           "autoincrement": false,
@@ -1463,18 +1408,6 @@
       ],
       "checks": [],
       "foreignKeys": {
-        "map_learner_vocab_learner_id_foreign": {
-          "constraintName": "map_learner_vocab_learner_id_foreign",
-          "columnNames": [
-            "learner_id"
-          ],
-          "localTableName": "public.map_learner_vocab",
-          "referencedColumnNames": [
-            "id"
-          ],
-          "referencedTableName": "public.profile",
-          "updateRule": "cascade"
-        },
         "map_learner_vocab_vocab_id_foreign": {
           "constraintName": "map_learner_vocab_vocab_id_foreign",
           "columnNames": [
@@ -1485,6 +1418,18 @@
             "id"
           ],
           "referencedTableName": "public.vocab",
+          "updateRule": "cascade"
+        },
+        "map_learner_vocab_learner_id_foreign": {
+          "constraintName": "map_learner_vocab_learner_id_foreign",
+          "columnNames": [
+            "learner_id"
+          ],
+          "localTableName": "public.map_learner_vocab",
+          "referencedColumnNames": [
+            "id"
+          ],
+          "referencedTableName": "public.profile",
           "updateRule": "cascade"
         }
       }

@@ -1,12 +1,12 @@
 import {Faker} from "@mikro-orm/seeder";
 import {EntityData} from "@mikro-orm/core";
 import {CustomFactory} from "@/src/seeders/factories/CustomFactory.js";
-import {Course} from "@/src/models/entities/Course";
-import {LanguageLevel} from "@/src/models/enums/LanguageLevel";
-import {randomEnum} from "@/tests/utils";
-import {LanguageFactory} from "@/src/seeders/factories/LanguageFactory";
-import {ProfileFactory} from "@/src/seeders/factories/ProfileFactory";
-import {UserFactory} from "@/src/seeders/factories/UserFactory";
+import {Course} from "@/src/models/entities/Course.js";
+import {LanguageLevel} from "@/src/models/enums/LanguageLevel.js";
+import {randomEnum} from "@/tests/utils.js";
+import {LanguageFactory} from "@/src/seeders/factories/LanguageFactory.js";
+import {ProfileFactory} from "@/src/seeders/factories/ProfileFactory.js";
+import {UserFactory} from "@/src/seeders/factories/UserFactory.js";
 import {LessonFactory} from "@/src/seeders/factories/LessonFactory.js";
 
 export class CourseFactory extends CustomFactory<Course> {

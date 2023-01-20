@@ -39,7 +39,9 @@ export class Lesson extends CustomBaseEntity {
     @ManyToMany({
         entity: () => Profile,
         inversedBy: (profile: Profile) => profile.lessonsLearning,
-        pivotEntity: () => MapLearnerLesson
+        pivotEntity: () => MapLearnerLesson,
+        joinColumn: "lesson_id",
+        inverseJoinColumn: "learner_id",
     })
     learners: Collection<Profile> = new Collection<Profile>(this);
 }

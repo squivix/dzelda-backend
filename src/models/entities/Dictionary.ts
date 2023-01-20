@@ -2,6 +2,7 @@ import {Entity, ManyToMany, ManyToOne, Property, types} from "@mikro-orm/core";
 import {CustomBaseEntity} from "@/src/models/entities/CustomBaseEntity.js";
 import {Language} from "@/src/models/entities/Language.js";
 import {Profile} from "@/src/models/entities/Profile.js";
+import {MapLearnerDictionary} from "@/src/models/entities/MapLearnerDictionary.js";
 
 @Entity()
 export class Dictionary extends CustomBaseEntity {
@@ -12,11 +13,20 @@ export class Dictionary extends CustomBaseEntity {
     name!: string;
 
     @Property({type: types.string, length: 500})
-    link!: string;
+    lookupLink!: string;
+
+    @Property({type: types.string, length: 500})
+    dictionaryLink!: string;
 
     @Property({type: types.boolean, default: false})
     isDefault!: boolean;
 
-    @ManyToMany({entity: () => Profile, inversedBy: (user: Profile) => user.dictionariesSaved})
+    @ManyToMany({
+        entity: () => Profile,
+        inversedBy: (user: Profile) => user.dictionariesSaved,
+        pivotEntity: () => MapLearnerDictionary,
+        joinColumn: "dictionary_id",
+        inverseJoinColumn: "learner_id"
+    })
     learners!: Profile;
 }

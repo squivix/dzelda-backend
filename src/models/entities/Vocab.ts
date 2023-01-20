@@ -32,7 +32,9 @@ export class Vocab extends CustomBaseEntity {
     @ManyToMany({
         entity: () => Profile,
         inversedBy: (profile: Profile) => profile.vocabsLearning,
-        pivotEntity: () => MapLearnerVocab
+        pivotEntity: () => MapLearnerVocab,
+        joinColumn: "vocab_id",
+        inverseJoinColumn: "learner_id",
     })
     learners: Collection<Profile> = new Collection<Profile>(this);
 

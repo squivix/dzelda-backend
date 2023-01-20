@@ -16,11 +16,12 @@ import {Lesson} from "@/src/models/entities/Lesson.js";
 import {Session} from "@/src/models/entities/auth/Session.js";
 import {Vocab} from "@/src/models/entities/Vocab.js";
 import {MapLearnerLanguage} from "@/src/models/entities/MapLearnerLanguage.js";
+import {DatabaseSeeder} from "@/src/seeders/DatabaseSeeder.js";
 
 dotenv.config();
 
 const devOptions: Options = {
-    type:"postgresql",
+    type: "postgresql",
     dbName: process.env.DB_NAME,
     user: process.env.DB_USER,
     password: process.env.DB_PASSWORD,
@@ -37,6 +38,10 @@ const devOptions: Options = {
         path: "build/src/migrations",
         pathTs: "src/migrations",
     },
+    seeder: {
+        path: "build/src/seeders/",
+        pathTs: "src/seeders/",
+    }
 };
 
 const testOptions: Options = {

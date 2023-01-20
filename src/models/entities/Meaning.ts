@@ -27,6 +27,8 @@ export class Meaning extends CustomBaseEntity {
         entity: () => Profile,
         inversedBy: (learner: Profile) => learner.meaningsLearning,
         pivotEntity: () => MapLearnerMeaning,
+        joinColumn: "meaning_id",
+        inverseJoinColumn: "learner_id"
     })
     learners: Collection<Profile> = new Collection<Profile>(this);
 }
