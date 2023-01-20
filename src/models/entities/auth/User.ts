@@ -1,11 +1,10 @@
-import {Entity, EntityRepositoryType, OneToOne, Property, types, Unique} from "@mikro-orm/core";
+import {Entity, OneToOne, Property, types, Unique} from "@mikro-orm/core";
 import {CustomBaseEntity} from "@/src/models/entities/CustomBaseEntity.js";
 import {Profile} from "@/src/models/entities/Profile.js";
-import UserRepo from "@/src/models/repos/auth/UserRepo.js";
 import {Session} from "@/src/models/entities/auth/Session.js";
 
 
-@Entity({customRepository: () => UserRepo})
+@Entity()
 export class User extends CustomBaseEntity {
     //TODO hide id
     constructor(username: string, email: string, password: string) {
@@ -43,8 +42,6 @@ export class User extends CustomBaseEntity {
 
     @OneToOne({entity: () => Session, mappedBy: (session: Session) => session.user, hidden: true})
     session!: Session;
-
-    [EntityRepositoryType]?: UserRepo;
 }
 
 
