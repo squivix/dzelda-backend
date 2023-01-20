@@ -17,8 +17,8 @@ export class DatabaseSeeder extends Seeder {
             DictionarySeeder,
             CourseSeeder,
             VocabSeeder,
-            LessonSeeder,
-            MeaningSeeder,
+            // LessonSeeder,
+            // MeaningSeeder,
         ]);
     }
 }
