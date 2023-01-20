@@ -3,6 +3,7 @@ import {Dictionary} from "@/src/models/entities/Dictionary.js";
 import {Seeder} from "@mikro-orm/seeder";
 import fs from "fs-extra";
 import {DictionaryFactory} from "@/src/seeders/factories/DictionaryFactory.js";
+import {syncIdSequence} from "@/src/seeders/utils.js";
 
 export class DictionarySeeder extends Seeder {
     static readonly FILE_NAME = "dictionaries.json";
@@ -26,6 +27,7 @@ export class DictionarySeeder extends Seeder {
             }))
         })
         await em.flush();
+        await syncIdSequence(em, "dictionary")
         console.log("done");
     }
 }

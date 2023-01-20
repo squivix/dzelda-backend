@@ -3,6 +3,7 @@ import {Seeder} from "@mikro-orm/seeder";
 import fs from "fs-extra";
 import {LanguageFactory} from "@/src/seeders/factories/LanguageFactory.js";
 import {Language} from "@/src/models/entities/Language.js";
+import {syncIdSequence} from "@/src/seeders/utils.js";
 
 export class LanguageSeeder extends Seeder {
     static readonly FILE_NAME = "languages.json";
@@ -24,10 +25,11 @@ export class LanguageSeeder extends Seeder {
                 flag: languageData.flag,
                 flagEmoji: languageData.flagEmoji,
                 isSupported: languageData.isSupported,
-                learners:languageData.learners
+                learners: languageData.learners
             }))
         })
         await em.flush();
+        await syncIdSequence(em, "language")
         console.log("done");
     }
 }

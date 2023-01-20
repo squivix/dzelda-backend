@@ -16,7 +16,6 @@ import {Lesson} from "@/src/models/entities/Lesson.js";
 import {Session} from "@/src/models/entities/auth/Session.js";
 import {Vocab} from "@/src/models/entities/Vocab.js";
 import {MapLearnerLanguage} from "@/src/models/entities/MapLearnerLanguage.js";
-import {DatabaseSeeder} from "@/src/seeders/DatabaseSeeder.js";
 
 dotenv.config();
 

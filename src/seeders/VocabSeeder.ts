@@ -3,6 +3,7 @@ import {Seeder} from "@mikro-orm/seeder";
 import fs from "fs-extra";
 import {VocabFactory} from "@/src/seeders/factories/VocabFactory.js";
 import {Vocab} from "@/src/models/entities/Vocab.js";
+import {syncIdSequence} from "@/src/seeders/utils.js";
 
 export class VocabSeeder extends Seeder {
     static readonly FILE_NAME = "vocabs.json";
@@ -24,6 +25,7 @@ export class VocabSeeder extends Seeder {
             }))
         })
         await em.flush();
+        await syncIdSequence(em, "vocab")
         console.log("done");
     }
 }

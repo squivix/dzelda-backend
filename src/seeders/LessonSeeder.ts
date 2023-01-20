@@ -3,6 +3,11 @@ import {Seeder} from "@mikro-orm/seeder";
 import fs from "fs-extra";
 import {LessonFactory} from "@/src/seeders/factories/LessonFactory.js";
 import {Lesson} from "@/src/models/entities/Lesson.js";
+import {parsers} from "@/src/utils/parsers/parsers.js";
+import {Language} from "@/src/models/entities/Language.js";
+import {Vocab} from "@/src/models/entities/Vocab.js";
+import {syncIdSequence} from "@/src/seeders/utils.js";
+import {MapLessonVocab} from "@/src/models/entities/MapLessonVocab.js";
 
 export class LessonSeeder extends Seeder {
     static readonly FILE_NAME = "lessons.json";
@@ -27,6 +32,18 @@ export class LessonSeeder extends Seeder {
                 learners: lessonData.learners
             }))
         })
+        await em.flush();
+        await syncIdSequence(em, "lesson")
+
+        await Promise.all(lessons.map(async (lessonData: EntityData<Lesson>) => {
+            const language = await em.findOneOrFail(Language, {courses: {lessons: lessonData.id}});
+            const lessonWords = parsers[language.code].parseText(lessonData.text!!);
+
+            await em.upsertMany(Vocab, lessonWords.map(word => ({text: word, language: language.id})));
+            const lessonVocabs = await em.find(Vocab, {text: lessonWords, language: language.id})
+
+            await em.insertMany(MapLessonVocab, lessonVocabs.map(vocab => ({lesson: lessonData.id, vocab: vocab.id})));
+        }))
         await em.flush();
         console.log("done");
     }

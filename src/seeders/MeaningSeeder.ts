@@ -3,6 +3,7 @@ import {Seeder} from "@mikro-orm/seeder";
 import fs from "fs-extra";
 import {Meaning} from "@/src/models/entities/Meaning.js";
 import {MeaningFactory} from "@/src/seeders/factories/MeaningFactory.js";
+import {syncIdSequence} from "@/src/seeders/utils.js";
 
 export class MeaningSeeder extends Seeder {
     static readonly FILE_NAME = "meanings.json";
@@ -26,6 +27,7 @@ export class MeaningSeeder extends Seeder {
             }))
         })
         await em.flush();
+        await syncIdSequence(em, "meaning")
         console.log("done");
     }
 }

@@ -3,6 +3,7 @@ import {Seeder} from "@mikro-orm/seeder";
 import fs from "fs-extra";
 import {User} from "@/src/models/entities/auth/User.js";
 import {UserFactory} from "@/src/seeders/factories/UserFactory.js";
+import {syncIdSequence} from "@/src/seeders/utils.js";
 
 export class UserSeeder extends Seeder {
     static readonly FILE_NAME = "users.json";
@@ -28,6 +29,7 @@ export class UserSeeder extends Seeder {
             }))
         })
         await em.flush();
+        await syncIdSequence(em, "user")
         console.log("done");
     }
 }

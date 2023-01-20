@@ -3,6 +3,7 @@ import {Seeder} from "@mikro-orm/seeder";
 import fs from "fs-extra";
 import {Course} from "@/src/models/entities/Course.js";
 import {CourseFactory} from "@/src/seeders/factories/CourseFactory.js";
+import {syncIdSequence} from "@/src/seeders/utils.js";
 
 export class CourseSeeder extends Seeder {
     static readonly FILE_NAME = "courses.json";
@@ -27,6 +28,7 @@ export class CourseSeeder extends Seeder {
             }))
         })
         await em.flush();
+        await syncIdSequence(em, "course")
         console.log("done");
     }
 }

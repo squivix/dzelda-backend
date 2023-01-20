@@ -9,3 +9,8 @@ export function cleanObject(obj: { [x: string | number | symbol]: unknown; }) {
     });
     return obj;
 }
+
+//from https://stackoverflow.com/a/9310752/14200676
+export function escapeRegExp(text: string) {
+    return text.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&");
+}
