@@ -1,4 +1,4 @@
-enum VocabLevel {
+export enum VocabLevel {
     IGNORED = -1,
     NEW = 0,
     LEVEL_1 = 1,
