@@ -4,8 +4,10 @@ import {Language} from "@/src/models/entities/Language.js";
 import {Profile} from "@/src/models/entities/Profile.js";
 import {LanguageLevel} from "@/src/models/enums/LanguageLevel.js";
 import {Lesson} from "@/src/models/entities/Lesson.js";
+import {VocabLevel} from "@/src/models/enums/VocabLevel.js";
+import {CourseRepo} from "@/src/models/repos/CourseRepo.js";
 
-@Entity()
+@Entity({customRepository: () => CourseRepo})
 export class Course extends CustomBaseEntity {
     @Property({type: types.string, length: 255})
     title!: string;
@@ -30,4 +32,8 @@ export class Course extends CustomBaseEntity {
 
     @OneToMany({entity: () => Lesson, mappedBy: (lesson) => lesson.course})
     lessons: Collection<Lesson> = new Collection<Lesson>(this);
+
+    //annotated properties
+    @Property({persist: false, type: types.json})
+    vocabsByLevel?: Record<VocabLevel, number>;
 }

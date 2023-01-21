@@ -1,5 +1,5 @@
 import {LanguageLevel} from "@/src/models/enums/LanguageLevel.js";
-import {VocabsByLevelCount} from "@/src/schemas/interfaces/VocabsByLevelCount.js";
+import {VocabLevel} from "@/src/models/enums/VocabLevel.js";
 
 export interface CourseListSchema {
     id: number;
@@ -12,5 +12,5 @@ export interface CourseListSchema {
     level: LanguageLevel;
     language: number;
     addedBy: string;
-    vocabsByLevel: VocabsByLevelCount
+    vocabsByLevel: Record<VocabLevel, number>
 }

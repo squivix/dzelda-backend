@@ -1,6 +1,6 @@
-import {VocabsByLevelCount} from "@/src/schemas/interfaces/VocabsByLevelCount.js";
+import {VocabLevel} from "@/src/models/enums/VocabLevel.js";
 
 export interface LessonListSchema {
-    vocabsByLevel: VocabsByLevelCount
+    vocabsByLevel: Record<VocabLevel, number>
 
 }

@@ -5,7 +5,6 @@ import {CourseDetailsSchema} from "@/src/schemas/interfaces/CourseDetailsSchema.
 import {languageSerializer} from "@/src/schemas/serializers/LanguageSerializer.js";
 import {profileSerializer} from "@/src/schemas/serializers/ProfileSerializer.js";
 import {lessonSerializer} from "@/src/schemas/serializers/LessonSerializer.js";
-import {VocabsByLevelCount} from "@/src/schemas/interfaces/VocabsByLevelCount.js";
 
 
 class CourseSerializer extends CustomEntitySerializer<Course, CourseListSchema | CourseDetailsSchema> {
@@ -13,20 +12,6 @@ class CourseSerializer extends CustomEntitySerializer<Course, CourseListSchema |
         mode,
         hiddenFields
     }: { mode?: SerializationMode; hiddenFields?: (keyof CourseListSchema | CourseDetailsSchema)[] } = {}): CourseListSchema | CourseDetailsSchema {
-        const lessons = lessonSerializer.serializeList(course.lessons.getItems());
-        const vocabsByLevel = lessons.reduce((a, l) => {
-            (Object.keys(a) as Array<keyof VocabsByLevelCount>).forEach((k) => a[k] += l.vocabsByLevel[k])
-            return a;
-        }, {
-            ignored: 0,
-            new: 0,
-            level1: 0,
-            level2: 0,
-            level3: 0,
-            level4: 0,
-            learned: 0,
-            known: 0,
-        })
         if (mode === SerializationMode.LIST) {
             return {
                 id: course.id,
@@ -37,7 +22,7 @@ class CourseSerializer extends CustomEntitySerializer<Course, CourseListSchema |
                 level: course.level,
                 language: course.language.id,
                 addedBy: course.addedBy.user.username,
-                vocabsByLevel
+                vocabsByLevel: course.vocabsByLevel!
             };
         } else {
             return {
@@ -49,8 +34,8 @@ class CourseSerializer extends CustomEntitySerializer<Course, CourseListSchema |
                 level: course.level,
                 language: languageSerializer.serialize(course.language),
                 addedBy: profileSerializer.serialize(course.addedBy),
-                lessons: lessons,
-                vocabsByLevel
+                lessons: lessonSerializer.serializeList(course.lessons.getItems()),
+                vocabsByLevel: course.vocabsByLevel!
             };
         }
     }

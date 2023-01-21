@@ -1,6 +1,7 @@
 import {FastifyReply, FastifyRequest} from "fastify";
 import {z} from "zod";
 import CourseService from "@/src/services/CourseService.js";
+import {AnonymousUser, User} from "@/src/models/entities/auth/User.js";
 
 class CourseController {
     async getCourses(request: FastifyRequest, reply: FastifyReply) {
@@ -10,8 +11,11 @@ class CourseController {
         const courseService = new CourseService(request.em);
 
         const filters = {};
-
-        const courses = await courseService.getCourses(filters);
+        if (!request.user || request.user instanceof AnonymousUser) {
+            reply.status(401).send();
+            return;
+        }
+        const courses = await courseService.getCourses(filters, request.user.id);
         reply.send(courses);
     }
 }

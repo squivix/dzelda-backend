@@ -9,16 +9,7 @@ class LessonSerializer extends CustomEntitySerializer<Lesson, LessonListSchema |
         hiddenFields
     }: { mode?: SerializationMode; hiddenFields?: (keyof LessonListSchema | LessonDetailsSchema)[] }): LessonListSchema | LessonDetailsSchema {
         return {
-            vocabsByLevel: {
-                ignored: 0,
-                new: 0,
-                level1: 0,
-                level2: 0,
-                level3: 0,
-                level4: 0,
-                learned: 0,
-                known: 0,
-            }
+            vocabsByLevel: lesson.vocabsByLevel!
         };
     }
 }

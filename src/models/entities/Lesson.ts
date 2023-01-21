@@ -47,8 +47,7 @@ export class Lesson extends CustomBaseEntity {
     })
     learners: Collection<Profile> = new Collection<Profile>(this);
 
-
+    //annotated properties
     @Property({persist: false, type: types.json})
     vocabsByLevel?: Record<VocabLevel, number>;
-    // vocabsByLevel?: Object;
 }
