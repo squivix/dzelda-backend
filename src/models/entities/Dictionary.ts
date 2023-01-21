@@ -1,10 +1,11 @@
-import {Entity, ManyToMany, ManyToOne, Property, types} from "@mikro-orm/core";
+import {Entity, Index, ManyToMany, ManyToOne, Property, types} from "@mikro-orm/core";
 import {CustomBaseEntity} from "@/src/models/entities/CustomBaseEntity.js";
 import {Language} from "@/src/models/entities/Language.js";
 import {Profile} from "@/src/models/entities/Profile.js";
 import {MapLearnerDictionary} from "@/src/models/entities/MapLearnerDictionary.js";
 
 @Entity()
+@Index({properties: ['language']})
 export class Dictionary extends CustomBaseEntity {
     @ManyToOne({entity: () => Language, inversedBy: (language) => language.dictionaries})
     language!: Language;

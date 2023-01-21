@@ -14,7 +14,7 @@ class CourseService {
     }
 
     async getCourses(filters: {}, userId: number) {
-        const courses = await this.courseRepo.find(cleanObject(filters), {populate: ["addedBy.user", "lessons", "lessons.vocabs"]});
+        const courses = await this.courseRepo.find(cleanObject(filters), {populate: ["addedBy.user"]});
 
         return courseSerializer.serializeList(await this.courseRepo.annotateVocabsByLevel(courses, userId));
     }
