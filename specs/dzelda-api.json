@@ -14,6 +14,40 @@
       "url": "http://localhost:3000"
     }
   ],
+  "tags": [
+    {
+      "name": "user",
+      "description": "Related to the user resource."
+    },
+    {
+      "name": "auth",
+      "description": "Related to authentication: sign up, login, password reset, etc."
+    },
+    {
+      "name": "language",
+      "description": "Related to the language resource."
+    },
+    {
+      "name": "course",
+      "description": "Related to the course resource."
+    },
+    {
+      "name": "lesson",
+      "description": "Related to the lesson resource."
+    },
+    {
+      "name": "vocab",
+      "description": "Related to the vocab resource."
+    },
+    {
+      "name": "meaning",
+      "description": "Related to the meaning resource."
+    },
+    {
+      "name": "dictionary",
+      "description": "Related to the dictionary resource."
+    }
+  ],
   "paths": {
     "/users": {
       "post": {
@@ -21,7 +55,7 @@
         "operationId": "post-users",
         "responses": {
           "201": {
-            "description": "Created",
+            "description": "Created\n\nA new user is created and returned. If `initialLanguage` is supplied, that language is added to the languages the user is learning.",
             "content": {
               "application/json": {
                 "schema": {
@@ -37,81 +71,13 @@
             }
           },
           "400": {
-            "description": "Bad Request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "code": {
-                      "type": "integer",
-                      "enum": [
-                        400
-                      ]
-                    },
-                    "status": {
-                      "type": "string",
-                      "enum": [
-                        "Bad Request"
-                      ]
-                    },
-                    "message": {
-                      "type": "string"
-                    },
-                    "details": {
-                      "type": "string"
-                    },
-                    "fields": {
-                      "type": "object",
-                      "properties": {
-                        "username": {
-                          "type": "object",
-                          "properties": {
-                            "message": {
-                              "type": "string"
-                            }
-                          }
-                        },
-                        "password": {
-                          "type": "object",
-                          "properties": {
-                            "message": {
-                              "type": "string"
-                            }
-                          }
-                        },
-                        "email": {
-                          "type": "object",
-                          "properties": {
-                            "message": {
-                              "type": "string"
-                            }
-                          }
-                        },
-                        "initialLanguage": {
-                          "type": "object",
-                          "properties": {
-                            "message": {
-                              "type": "string"
-                            }
-                          }
-                        }
-                      }
-                    }
-                  },
-                  "required": [
-                    "code",
-                    "status",
-                    "message",
-                    "details"
-                  ]
-                },
-                "examples": {}
-              }
-            }
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
           }
         },
-        "description": "Create a new user",
+        "description": "Create a new user.",
         "requestBody": {
           "content": {
             "application/json": {
@@ -149,7 +115,11 @@
           },
           "description": ""
         },
-        "security": []
+        "security": [],
+        "tags": [
+          "auth",
+          "user"
+        ]
       }
     },
     "/users/{username}": {
@@ -160,10 +130,12 @@
       ],
       "get": {
         "summary": "Get User",
-        "tags": [],
+        "tags": [
+          "user"
+        ],
         "responses": {
           "200": {
-            "description": "OK",
+            "description": "OK\n\nReturns user info if user is logged in and username is \"me\" or if it belongs to the currently logged in user.",
             "content": {
               "application/json": {
                 "schema": {
@@ -173,7 +145,7 @@
             }
           },
           "400": {
-            "description": "Bad Request"
+            "$ref": "#/components/responses/BadRequest"
           },
           "401": {
             "$ref": "#/components/responses/Unauthenticated"
@@ -182,7 +154,8 @@
             "$ref": "#/components/responses/NotFound"
           }
         },
-        "operationId": "get-users-username"
+        "operationId": "get-users-username",
+        "description": "Get user details, including profile."
       }
     },
     "/sessions": {
@@ -191,7 +164,7 @@
         "operationId": "post-sessions",
         "responses": {
           "200": {
-            "description": "OK",
+            "description": "OK\n\nUser is logged in. Returns authentication token.",
             "content": {
               "application/json": {
                 "schema": {
@@ -206,99 +179,10 @@
             }
           },
           "400": {
-            "description": "Bad Request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "x-examples": {},
-                  "properties": {
-                    "code": {
-                      "type": "integer",
-                      "enum": [
-                        400
-                      ]
-                    },
-                    "status": {
-                      "type": "string",
-                      "enum": [
-                        "Bad Request"
-                      ]
-                    },
-                    "message": {
-                      "type": "string"
-                    },
-                    "details": {
-                      "type": "string"
-                    },
-                    "fields": {
-                      "type": "object",
-                      "properties": {
-                        "username": {
-                          "type": "object",
-                          "properties": {
-                            "message": {
-                              "type": "string"
-                            }
-                          }
-                        },
-                        "password": {
-                          "type": "object",
-                          "properties": {
-                            "message": {
-                              "type": "string"
-                            }
-                          }
-                        }
-                      }
-                    }
-                  },
-                  "required": [
-                    "code",
-                    "status",
-                    "message",
-                    "details"
-                  ]
-                }
-              }
-            }
+            "$ref": "#/components/responses/BadRequest"
           },
           "401": {
-            "description": "Unauthorized",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "x-examples": {},
-                  "properties": {
-                    "code": {
-                      "type": "integer",
-                      "enum": [
-                        401
-                      ]
-                    },
-                    "status": {
-                      "type": "string",
-                      "enum": [
-                        "Unauthorized"
-                      ]
-                    },
-                    "message": {
-                      "type": "string",
-                      "enum": [
-                        "Username and/or password is incorrect"
-                      ]
-                    },
-                    "details": {
-                      "type": "string",
-                      "enum": [
-                        "The username and/or password you entered is incorrect"
-                      ]
-                    }
-                  }
-                }
-              }
-            }
+            "$ref": "#/components/responses/Unauthenticated"
           }
         },
         "description": "Authenticate the user",
@@ -325,16 +209,21 @@
             }
           },
           "description": ""
-        }
+        },
+        "tags": [
+          "auth"
+        ]
       }
     },
     "/languages": {
       "get": {
         "summary": "Get Languages",
-        "tags": [],
+        "tags": [
+          "language"
+        ],
         "responses": {
           "200": {
-            "description": "OK",
+            "description": "OK\n\nReturns a list of languages that match query.",
             "content": {
               "application/json": {
                 "schema": {
@@ -347,49 +236,7 @@
             }
           },
           "400": {
-            "description": "Bad Request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "x-examples": {},
-                  "properties": {
-                    "code": {
-                      "type": "integer",
-                      "enum": [
-                        400
-                      ]
-                    },
-                    "status": {
-                      "type": "string",
-                      "enum": [
-                        "Bad Request"
-                      ]
-                    },
-                    "message": {
-                      "type": "string"
-                    },
-                    "details": {
-                      "type": "string"
-                    },
-                    "fields": {
-                      "type": "object",
-                      "properties": {
-                        "isSupported": {
-                          "type": "object",
-                          "properties": {
-                            "message": {
-                              "type": "string"
-                            }
-                          }
-                        }
-                      }
-                    }
-                  }
-                },
-                "examples": {}
-              }
-            }
+            "$ref": "#/components/responses/BadRequest"
           }
         },
         "operationId": "get-languages",
@@ -409,10 +256,12 @@
     "/courses": {
       "get": {
         "summary": "Get Courses",
-        "tags": [],
+        "tags": [
+          "course"
+        ],
         "responses": {
           "200": {
-            "description": "OK",
+            "description": "OK\n\nReturns a list of courses that match query. If the user is logged in `vocabLevels` are appended to eaech of them to show how many vocabs of each level the course has.",
             "content": {
               "application/json": {
                 "schema": {
@@ -425,73 +274,7 @@
             }
           },
           "400": {
-            "description": "Bad Request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "x-examples": {},
-                  "properties": {
-                    "code": {
-                      "type": "integer",
-                      "enum": [
-                        400
-                      ]
-                    },
-                    "status": {
-                      "type": "string",
-                      "enum": [
-                        "Bad Request"
-                      ]
-                    },
-                    "message": {
-                      "type": "string"
-                    },
-                    "details": {
-                      "type": "string"
-                    },
-                    "fields": {
-                      "type": "object",
-                      "properties": {
-                        "language": {
-                          "type": "object",
-                          "properties": {
-                            "message": {
-                              "type": "string"
-                            }
-                          }
-                        },
-                        "addedBy": {
-                          "type": "object",
-                          "properties": {
-                            "message": {
-                              "type": "string"
-                            }
-                          }
-                        },
-                        "level": {
-                          "type": "object",
-                          "properties": {
-                            "message": {
-                              "type": "string"
-                            }
-                          }
-                        },
-                        "searchQuery": {
-                          "type": "object",
-                          "properties": {
-                            "message": {
-                              "type": "string"
-                            }
-                          }
-                        }
-                      }
-                    }
-                  }
-                },
-                "examples": {}
-              }
-            }
+            "$ref": "#/components/responses/BadRequest"
           }
         },
         "operationId": "get-courses",
@@ -542,14 +325,15 @@
             "in": "query",
             "name": "searchQuery"
           }
-        ]
+        ],
+        "security": []
       },
       "post": {
         "summary": "Create Course",
         "operationId": "post-courses",
         "responses": {
           "201": {
-            "description": "Created",
+            "description": "Created\n\nA new course is created and returned.",
             "content": {
               "application/json": {
                 "schema": {
@@ -560,80 +344,7 @@
             }
           },
           "400": {
-            "description": "Bad Request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "x-examples": {},
-                  "properties": {
-                    "code": {
-                      "type": "integer",
-                      "enum": [
-                        400
-                      ]
-                    },
-                    "status": {
-                      "type": "string",
-                      "enum": [
-                        "Bad Request"
-                      ]
-                    },
-                    "message": {
-                      "type": "string"
-                    },
-                    "details": {
-                      "type": "string"
-                    },
-                    "fields": {
-                      "type": "object",
-                      "properties": {
-                        "language": {
-                          "type": "object",
-                          "properties": {
-                            "message": {
-                              "type": "string"
-                            }
-                          }
-                        },
-                        "title": {
-                          "type": "object",
-                          "properties": {
-                            "message": {
-                              "type": "string"
-                            }
-                          }
-                        },
-                        "description": {
-                          "type": "object",
-                          "properties": {
-                            "message": {
-                              "type": "string"
-                            }
-                          }
-                        },
-                        "isPublic": {
-                          "type": "object",
-                          "properties": {
-                            "message": {
-                              "type": "string"
-                            }
-                          }
-                        },
-                        "image": {
-                          "type": "object",
-                          "properties": {
-                            "message": {
-                              "type": "string"
-                            }
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
+            "$ref": "#/components/responses/BadRequest"
           },
           "401": {
             "$ref": "#/components/responses/Unauthenticated"
@@ -676,7 +387,10 @@
           },
           "description": ""
         },
-        "description": ""
+        "description": "Create a new course.",
+        "tags": [
+          "course"
+        ]
       }
     },
     "/courses/{courseId}": {
@@ -692,10 +406,12 @@
       ],
       "get": {
         "summary": "Get Course",
-        "tags": [],
+        "tags": [
+          "course"
+        ],
         "responses": {
           "200": {
-            "description": "OK",
+            "description": "OK\n\nReturns the course with `courseId`.",
             "content": {
               "application/json": {
                 "schema": {
@@ -705,48 +421,7 @@
             }
           },
           "400": {
-            "description": "Bad Request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "x-examples": {},
-                  "properties": {
-                    "code": {
-                      "type": "integer",
-                      "enum": [
-                        400
-                      ]
-                    },
-                    "status": {
-                      "type": "string",
-                      "enum": [
-                        "Bad Request"
-                      ]
-                    },
-                    "message": {
-                      "type": "string"
-                    },
-                    "details": {
-                      "type": "string"
-                    },
-                    "fields": {
-                      "type": "object",
-                      "properties": {
-                        "courseId": {
-                          "type": "object",
-                          "properties": {
-                            "message": {
-                              "type": "string"
-                            }
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
+            "$ref": "#/components/responses/BadRequest"
           },
           "401": {
             "$ref": "#/components/responses/Unauthenticated"
@@ -756,14 +431,14 @@
           }
         },
         "operationId": "get-courses-courseId",
-        "description": ""
+        "description": "Get course details."
       },
       "put": {
         "summary": "Update Course",
         "operationId": "put-courses-courseId",
         "responses": {
           "200": {
-            "description": "OK",
+            "description": "OK\n\nUpdates the course and returns it.",
             "content": {
               "application/json": {
                 "schema": {
@@ -773,81 +448,7 @@
             }
           },
           "400": {
-            "description": "Bad Request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "x-examples": {},
-                  "properties": {
-                    "code": {
-                      "type": "integer",
-                      "enum": [
-                        400
-                      ]
-                    },
-                    "status": {
-                      "type": "string",
-                      "enum": [
-                        "Bad Request"
-                      ]
-                    },
-                    "message": {
-                      "type": "string"
-                    },
-                    "details": {
-                      "type": "string"
-                    },
-                    "fields": {
-                      "type": "object",
-                      "properties": {
-                        "title": {
-                          "type": "object",
-                          "properties": {
-                            "message": {
-                              "type": "string"
-                            }
-                          }
-                        },
-                        "description": {
-                          "type": "object",
-                          "properties": {
-                            "message": {
-                              "type": "string"
-                            }
-                          }
-                        },
-                        "isPublic": {
-                          "type": "object",
-                          "properties": {
-                            "message": {
-                              "type": "string"
-                            }
-                          }
-                        },
-                        "image": {
-                          "type": "object",
-                          "properties": {
-                            "message": {
-                              "type": "string"
-                            }
-                          }
-                        },
-                        "lessonIds": {
-                          "type": "object",
-                          "properties": {
-                            "message": {
-                              "type": "string"
-                            }
-                          }
-                        }
-                      }
-                    }
-                  }
-                },
-                "examples": {}
-              }
-            }
+            "$ref": "#/components/responses/BadRequest"
           },
           "401": {
             "$ref": "#/components/responses/Unauthenticated"
@@ -859,7 +460,7 @@
             "$ref": "#/components/responses/NotFound"
           }
         },
-        "description": "",
+        "description": "Update course details.",
         "requestBody": {
           "content": {
             "multipart/form-data": {
@@ -904,13 +505,18 @@
               }
             }
           }
-        }
+        },
+        "tags": [
+          "course"
+        ]
       }
     },
     "/lessons": {
       "get": {
         "summary": "Get Lessons",
-        "tags": [],
+        "tags": [
+          "lesson"
+        ],
         "responses": {
           "200": {
             "description": "OK",
@@ -924,6 +530,9 @@
                 }
               }
             }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
           }
         },
         "operationId": "get-lessons",
@@ -998,86 +607,13 @@
             }
           },
           "400": {
-            "description": "Bad Request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "x-examples": {},
-                  "properties": {
-                    "code": {
-                      "type": "integer",
-                      "enum": [
-                        400
-                      ]
-                    },
-                    "status": {
-                      "type": "string",
-                      "enum": [
-                        "Bad Request"
-                      ]
-                    },
-                    "message": {
-                      "type": "string"
-                    },
-                    "details": {
-                      "type": "string"
-                    },
-                    "fields": {
-                      "type": "object",
-                      "properties": {
-                        "title": {
-                          "type": "object",
-                          "properties": {
-                            "message": {
-                              "type": "string"
-                            }
-                          }
-                        },
-                        "text": {
-                          "type": "object",
-                          "properties": {
-                            "message": {
-                              "type": "string"
-                            }
-                          }
-                        },
-                        "courseId": {
-                          "type": "object",
-                          "properties": {
-                            "message": {
-                              "type": "string"
-                            }
-                          }
-                        },
-                        "image": {
-                          "type": "object",
-                          "properties": {
-                            "message": {
-                              "type": "string"
-                            }
-                          }
-                        },
-                        "audio": {
-                          "type": "object",
-                          "properties": {
-                            "message": {
-                              "type": "string"
-                            }
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
+            "$ref": "#/components/responses/BadRequest"
           },
           "401": {
             "$ref": "#/components/responses/Unauthenticated"
           }
         },
-        "description": "",
+        "description": "Create a new lesson.",
         "requestBody": {
           "content": {
             "multipart/form-data": {
@@ -1118,7 +654,10 @@
               }
             }
           }
-        }
+        },
+        "tags": [
+          "lesson"
+        ]
       }
     },
     "/lessons/{lessonId}": {
@@ -1134,7 +673,9 @@
       ],
       "get": {
         "summary": "Get Lesson",
-        "tags": [],
+        "tags": [
+          "lesson"
+        ],
         "responses": {
           "200": {
             "description": "OK",
@@ -1147,49 +688,7 @@
             }
           },
           "400": {
-            "description": "Bad Request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "x-examples": {},
-                  "properties": {
-                    "code": {
-                      "type": "integer",
-                      "enum": [
-                        400
-                      ]
-                    },
-                    "status": {
-                      "type": "string",
-                      "enum": [
-                        "Bad Request"
-                      ]
-                    },
-                    "message": {
-                      "type": "string"
-                    },
-                    "details": {
-                      "type": "string"
-                    },
-                    "fields": {
-                      "type": "object",
-                      "properties": {
-                        "lessonId": {
-                          "type": "object",
-                          "properties": {
-                            "message": {
-                              "type": "string"
-                            }
-                          }
-                        }
-                      }
-                    }
-                  }
-                },
-                "examples": {}
-              }
-            }
+            "$ref": "#/components/responses/BadRequest"
           },
           "401": {
             "$ref": "#/components/responses/Unauthenticated"
@@ -1198,7 +697,8 @@
             "$ref": "#/components/responses/NotFound"
           }
         },
-        "operationId": "get-lessons-lessonId"
+        "operationId": "get-lessons-lessonId",
+        "description": "Get lesson details."
       },
       "put": {
         "summary": "Update Lesson",
@@ -1213,6 +713,9 @@
                 }
               }
             }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
           },
           "401": {
             "$ref": "#/components/responses/Unauthenticated"
@@ -1258,7 +761,11 @@
             }
           },
           "description": ""
-        }
+        },
+        "tags": [
+          "lesson"
+        ],
+        "description": "Update lesson details."
       }
     },
     "/vocabs": {
@@ -1280,65 +787,7 @@
             }
           },
           "400": {
-            "description": "Bad Request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "x-examples": {},
-                  "properties": {
-                    "code": {
-                      "type": "integer",
-                      "enum": [
-                        400
-                      ]
-                    },
-                    "status": {
-                      "type": "string",
-                      "enum": [
-                        "Bad Request"
-                      ]
-                    },
-                    "message": {
-                      "type": "string"
-                    },
-                    "details": {
-                      "type": "string"
-                    },
-                    "fields": {
-                      "type": "object",
-                      "properties": {
-                        "languageCode": {
-                          "type": "object",
-                          "properties": {
-                            "message": {
-                              "type": "string"
-                            }
-                          }
-                        },
-                        "text": {
-                          "type": "object",
-                          "properties": {
-                            "message": {
-                              "type": "string"
-                            }
-                          }
-                        },
-                        "isPhrase": {
-                          "type": "object",
-                          "properties": {
-                            "message": {
-                              "type": "string"
-                            }
-                          }
-                        }
-                      }
-                    }
-                  }
-                },
-                "examples": {}
-              }
-            }
+            "$ref": "#/components/responses/BadRequest"
           },
           "401": {
             "$ref": "#/components/responses/Unauthenticated"
@@ -1367,7 +816,11 @@
               }
             }
           }
-        }
+        },
+        "tags": [
+          "vocab"
+        ],
+        "description": "Create new vocab."
       }
     },
     "/meanings": {
@@ -1387,83 +840,7 @@
             }
           },
           "400": {
-            "description": "Bad Request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "x-examples": {
-                    "Example 1": {
-                      "code": 400,
-                      "status": "Bad Request",
-                      "message": "string",
-                      "details": "string",
-                      "fields": {
-                        "text": {
-                          "message": "string"
-                        },
-                        "vocabId": {
-                          "message": "string"
-                        },
-                        "languageCode": {
-                          "message": "string"
-                        }
-                      }
-                    }
-                  },
-                  "properties": {
-                    "code": {
-                      "type": "integer",
-                      "enum": [
-                        400
-                      ]
-                    },
-                    "status": {
-                      "type": "string",
-                      "enum": [
-                        "Bad Request"
-                      ]
-                    },
-                    "message": {
-                      "type": "string"
-                    },
-                    "details": {
-                      "type": "string"
-                    },
-                    "fields": {
-                      "type": "object",
-                      "properties": {
-                        "text": {
-                          "type": "object",
-                          "properties": {
-                            "message": {
-                              "type": "string"
-                            }
-                          }
-                        },
-                        "vocabId": {
-                          "type": "object",
-                          "properties": {
-                            "message": {
-                              "type": "string"
-                            }
-                          }
-                        },
-                        "languageCode": {
-                          "type": "object",
-                          "properties": {
-                            "message": {
-                              "type": "string"
-                            }
-                          }
-                        }
-                      }
-                    }
-                  }
-                },
-                "examples": {}
-              }
-            }
+            "$ref": "#/components/responses/BadRequest"
           },
           "401": {
             "description": "Unauthorized"
@@ -1494,7 +871,10 @@
           },
           "description": ""
         },
-        "description": ""
+        "description": "Create a new meaning.",
+        "tags": [
+          "meaning"
+        ]
       }
     },
     "/users/{username}/languages": {
@@ -1505,7 +885,9 @@
       ],
       "get": {
         "summary": "Get User Languages",
-        "tags": [],
+        "tags": [
+          "language"
+        ],
         "responses": {
           "200": {
             "description": "OK",
@@ -1521,48 +903,7 @@
             }
           },
           "400": {
-            "description": "Bad Request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "x-examples": {},
-                  "properties": {
-                    "code": {
-                      "type": "integer",
-                      "enum": [
-                        400
-                      ]
-                    },
-                    "status": {
-                      "type": "string",
-                      "enum": [
-                        "Bad Request"
-                      ]
-                    },
-                    "message": {
-                      "type": "string"
-                    },
-                    "details": {
-                      "type": "string"
-                    },
-                    "fields": {
-                      "type": "object",
-                      "properties": {
-                        "username": {
-                          "type": "object",
-                          "properties": {
-                            "message": {
-                              "type": "string"
-                            }
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
+            "$ref": "#/components/responses/BadRequest"
           },
           "401": {
             "$ref": "#/components/responses/Unauthenticated"
@@ -1571,7 +912,8 @@
             "$ref": "#/components/responses/NotFound"
           }
         },
-        "operationId": "get-users-username-languages"
+        "operationId": "get-users-username-languages",
+        "description": "Get a list of langauges the user is learning."
       },
       "post": {
         "summary": "Add Language To User",
@@ -1588,56 +930,7 @@
             }
           },
           "400": {
-            "description": "Bad Request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "x-examples": {},
-                  "properties": {
-                    "code": {
-                      "type": "integer",
-                      "enum": [
-                        400
-                      ]
-                    },
-                    "status": {
-                      "type": "string",
-                      "enum": [
-                        "Bad Request"
-                      ]
-                    },
-                    "message": {
-                      "type": "string"
-                    },
-                    "details": {
-                      "type": "string"
-                    },
-                    "fields": {
-                      "type": "object",
-                      "properties": {
-                        "username": {
-                          "type": "object",
-                          "properties": {
-                            "message": {
-                              "type": "string"
-                            }
-                          }
-                        },
-                        "languageCode": {
-                          "type": "object",
-                          "properties": {
-                            "message": {
-                              "type": "string"
-                            }
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
+            "$ref": "#/components/responses/BadRequest"
           },
           "401": {
             "$ref": "#/components/responses/Unauthenticated"
@@ -1649,7 +942,7 @@
             "$ref": "#/components/responses/NotFound"
           }
         },
-        "description": "",
+        "description": "Add a language to languages the user is learning.",
         "requestBody": {
           "content": {
             "application/json": {
@@ -1664,7 +957,10 @@
               }
             }
           }
-        }
+        },
+        "tags": [
+          "language"
+        ]
       }
     },
     "/users/{username}/languages/{languageCode}": {
@@ -1682,7 +978,7 @@
         }
       ],
       "patch": {
-        "summary": "",
+        "summary": "Update User Language",
         "operationId": "patch-users-username-languages-languageCode",
         "responses": {
           "200": {
@@ -1696,64 +992,7 @@
             }
           },
           "400": {
-            "description": "Bad Request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "x-examples": {},
-                  "properties": {
-                    "code": {
-                      "type": "integer",
-                      "enum": [
-                        400
-                      ]
-                    },
-                    "status": {
-                      "type": "string",
-                      "enum": [
-                        "Bad Request"
-                      ]
-                    },
-                    "message": {
-                      "type": "string"
-                    },
-                    "details": {
-                      "type": "string"
-                    },
-                    "fields": {
-                      "type": "object",
-                      "properties": {
-                        "username": {
-                          "type": "object",
-                          "properties": {
-                            "message": {
-                              "type": "string"
-                            }
-                          }
-                        },
-                        "lastOpened": {
-                          "type": "object",
-                          "properties": {
-                            "message": {
-                              "type": "string"
-                            }
-                          }
-                        },
-                        "languageCode": {
-                          "type": "object",
-                          "properties": {
-                            "message": {
-                              "type": "string"
-                            }
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
+            "$ref": "#/components/responses/BadRequest"
           },
           "401": {
             "$ref": "#/components/responses/Unauthenticated"
@@ -1765,7 +1004,7 @@
             "$ref": "#/components/responses/NotFound"
           }
         },
-        "description": "",
+        "description": "Updates user language last time opneed timestamp.",
         "requestBody": {
           "content": {
             "application/json": {
@@ -1783,7 +1022,10 @@
               }
             }
           }
-        }
+        },
+        "tags": [
+          "language"
+        ]
       },
       "delete": {
         "summary": "Delete Language From User",
@@ -1793,56 +1035,7 @@
             "description": "No Content"
           },
           "400": {
-            "description": "Bad Request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "x-examples": {},
-                  "properties": {
-                    "code": {
-                      "type": "integer",
-                      "enum": [
-                        400
-                      ]
-                    },
-                    "status": {
-                      "type": "string",
-                      "enum": [
-                        "Bad Request"
-                      ]
-                    },
-                    "message": {
-                      "type": "string"
-                    },
-                    "details": {
-                      "type": "string"
-                    },
-                    "fields": {
-                      "type": "object",
-                      "properties": {
-                        "username": {
-                          "type": "object",
-                          "properties": {
-                            "message": {
-                              "type": "string"
-                            }
-                          }
-                        },
-                        "languageCode": {
-                          "type": "object",
-                          "properties": {
-                            "message": {
-                              "type": "string"
-                            }
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
+            "$ref": "#/components/responses/BadRequest"
           },
           "401": {
             "$ref": "#/components/responses/Unauthenticated"
@@ -1854,7 +1047,10 @@
             "$ref": "#/components/responses/NotFound"
           }
         },
-        "description": ""
+        "description": "Remove a language from list of languages the user is learning.",
+        "tags": [
+          "language"
+        ]
       }
     },
     "/users/{username}/courses": {
@@ -1870,7 +1066,9 @@
       ],
       "get": {
         "summary": "Get User Courses Learning",
-        "tags": [],
+        "tags": [
+          "course"
+        ],
         "responses": {
           "200": {
             "description": "OK",
@@ -1886,60 +1084,7 @@
             }
           },
           "400": {
-            "description": "Bad Request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "x-examples": {
-                    "Example 1": {
-                      "code": 400,
-                      "status": "Bad Request",
-                      "message": "string",
-                      "details": "string",
-                      "fields": {
-                        "username": {
-                          "message": "string"
-                        }
-                      }
-                    }
-                  },
-                  "properties": {
-                    "code": {
-                      "type": "integer",
-                      "enum": [
-                        400
-                      ]
-                    },
-                    "status": {
-                      "type": "string",
-                      "enum": [
-                        "Bad Request"
-                      ]
-                    },
-                    "message": {
-                      "type": "string"
-                    },
-                    "details": {
-                      "type": "string"
-                    },
-                    "fields": {
-                      "type": "object",
-                      "properties": {
-                        "username": {
-                          "type": "object",
-                          "properties": {
-                            "message": {
-                              "type": "string"
-                            }
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
+            "$ref": "#/components/responses/BadRequest"
           },
           "401": {
             "$ref": "#/components/responses/Unauthenticated"
@@ -1949,7 +1094,7 @@
           }
         },
         "operationId": "get-users-username-courses",
-        "description": "",
+        "description": "Get the list of courses the user is learning.",
         "parameters": [
           {
             "schema": {
@@ -2012,7 +1157,9 @@
       ],
       "get": {
         "summary": "Get User Lessons Learning",
-        "tags": [],
+        "tags": [
+          "lesson"
+        ],
         "responses": {
           "200": {
             "description": "OK",
@@ -2028,60 +1175,7 @@
             }
           },
           "400": {
-            "description": "Bad Request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "x-examples": {
-                    "Example 1": {
-                      "code": 400,
-                      "status": "Bad Request",
-                      "message": "string",
-                      "details": "string",
-                      "fields": {
-                        "username": {
-                          "message": "string"
-                        }
-                      }
-                    }
-                  },
-                  "properties": {
-                    "code": {
-                      "type": "integer",
-                      "enum": [
-                        400
-                      ]
-                    },
-                    "status": {
-                      "type": "string",
-                      "enum": [
-                        "Bad Request"
-                      ]
-                    },
-                    "message": {
-                      "type": "string"
-                    },
-                    "details": {
-                      "type": "string"
-                    },
-                    "fields": {
-                      "type": "object",
-                      "properties": {
-                        "username": {
-                          "type": "object",
-                          "properties": {
-                            "message": {
-                              "type": "string"
-                            }
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
+            "$ref": "#/components/responses/BadRequest"
           },
           "401": {
             "$ref": "#/components/responses/Unauthenticated"
@@ -2144,7 +1238,8 @@
             "in": "query",
             "name": "hasAudio"
           }
-        ]
+        ],
+        "description": "Get the list of lessons the user is learning."
       },
       "post": {
         "summary": "Add Lesson To Learning",
@@ -2161,71 +1256,7 @@
             }
           },
           "400": {
-            "description": "Bad Request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "x-examples": {
-                    "Example 1": {
-                      "code": 400,
-                      "status": "Bad Request",
-                      "message": "string",
-                      "details": "string",
-                      "fields": {
-                        "lessonId": {
-                          "message": "string"
-                        },
-                        "username": {
-                          "message": "string"
-                        }
-                      }
-                    }
-                  },
-                  "properties": {
-                    "code": {
-                      "type": "integer",
-                      "enum": [
-                        400
-                      ]
-                    },
-                    "status": {
-                      "type": "string",
-                      "enum": [
-                        "Bad Request"
-                      ]
-                    },
-                    "message": {
-                      "type": "string"
-                    },
-                    "details": {
-                      "type": "string"
-                    },
-                    "fields": {
-                      "type": "object",
-                      "properties": {
-                        "lessonId": {
-                          "type": "object",
-                          "properties": {
-                            "message": {
-                              "type": "string"
-                            }
-                          }
-                        },
-                        "username": {
-                          "type": "object",
-                          "properties": {
-                            "message": {
-                              "type": "string"
-                            }
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
+            "$ref": "#/components/responses/BadRequest"
           },
           "401": {
             "$ref": "#/components/responses/Unauthenticated"
@@ -2247,7 +1278,11 @@
               }
             }
           }
-        }
+        },
+        "tags": [
+          "lesson"
+        ],
+        "description": "Add a lesson to list of lessons the user is learning."
       }
     },
     "/users/{username}/vocabs": {
@@ -2258,7 +1293,9 @@
       ],
       "get": {
         "summary": "Get User Vocabs",
-        "tags": [],
+        "tags": [
+          "vocab"
+        ],
         "responses": {
           "200": {
             "description": "OK",
@@ -2274,91 +1311,14 @@
             }
           },
           "400": {
-            "description": "Bad Request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "x-examples": {
-                    "Example 1": {
-                      "code": 400,
-                      "status": "Bad Request",
-                      "message": "string",
-                      "details": "string",
-                      "fields": {
-                        "username": {
-                          "message": "string"
-                        }
-                      }
-                    }
-                  },
-                  "properties": {
-                    "code": {
-                      "type": "integer",
-                      "enum": [
-                        400
-                      ]
-                    },
-                    "status": {
-                      "type": "string",
-                      "enum": [
-                        "Bad Request"
-                      ]
-                    },
-                    "message": {
-                      "type": "string"
-                    },
-                    "details": {
-                      "type": "string"
-                    },
-                    "fields": {
-                      "type": "object",
-                      "properties": {
-                        "username": {
-                          "type": "object",
-                          "properties": {
-                            "message": {
-                              "type": "string"
-                            }
-                          }
-                        },
-                        "languageCode": {
-                          "type": "object",
-                          "properties": {
-                            "message": {
-                              "type": "string"
-                            }
-                          }
-                        },
-                        "level": {
-                          "type": "object",
-                          "properties": {
-                            "message": {
-                              "type": "string"
-                            }
-                          }
-                        },
-                        "searchQuery": {
-                          "type": "object",
-                          "properties": {
-                            "message": {
-                              "type": "string"
-                            }
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
+            "$ref": "#/components/responses/BadRequest"
           },
           "403": {
             "$ref": "#/components/responses/Forbidden"
           }
         },
         "operationId": "get-users-username-vocabs",
-        "description": "",
+        "description": "Get list of saved user vocabs.",
         "parameters": [
           {
             "schema": {
@@ -2413,82 +1373,7 @@
             }
           },
           "400": {
-            "description": "Bad Request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "x-examples": {
-                    "Example 1": {
-                      "code": 400,
-                      "status": "Bad Request",
-                      "message": "string",
-                      "details": "string",
-                      "fields": {
-                        "username": {
-                          "type": "string"
-                        },
-                        "vocabId": {
-                          "type": "string"
-                        },
-                        "level": {
-                          "type": "string"
-                        }
-                      }
-                    }
-                  },
-                  "properties": {
-                    "code": {
-                      "type": "integer",
-                      "enum": [
-                        400
-                      ]
-                    },
-                    "status": {
-                      "type": "string",
-                      "enum": [
-                        "Bad Request"
-                      ]
-                    },
-                    "message": {
-                      "type": "string"
-                    },
-                    "details": {
-                      "type": "string"
-                    },
-                    "fields": {
-                      "type": "object",
-                      "properties": {
-                        "username": {
-                          "type": "object",
-                          "properties": {
-                            "message": {
-                              "type": "string"
-                            }
-                          }
-                        },
-                        "vocabId": {
-                          "type": "object",
-                          "properties": {
-                            "message": {
-                              "type": "string"
-                            }
-                          }
-                        },
-                        "level": {
-                          "type": "object",
-                          "properties": {
-                            "message": {
-                              "type": "string"
-                            }
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
+            "$ref": "#/components/responses/BadRequest"
           },
           "401": {
             "$ref": "#/components/responses/Unauthenticated"
@@ -2517,12 +1402,19 @@
                       4,
                       5
                     ]
+                  },
+                  "notes": {
+                    "type": "string"
                   }
                 }
               }
             }
           }
-        }
+        },
+        "tags": [
+          "vocab"
+        ],
+        "description": "Update user saved vocab details (level, notes). "
       },
       "get": {
         "summary": "Get User Vocab",
@@ -2539,74 +1431,7 @@
             }
           },
           "400": {
-            "description": "Bad Request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "x-examples": {
-                    "Example 1": {
-                      "code": 400,
-                      "status": "Bad Request",
-                      "message": "string",
-                      "details": "string",
-                      "fields": {
-                        "username": {
-                          "type": "string"
-                        },
-                        "vocabId": {
-                          "type": "string"
-                        },
-                        "level": {
-                          "type": "string"
-                        }
-                      }
-                    }
-                  },
-                  "properties": {
-                    "code": {
-                      "type": "integer",
-                      "enum": [
-                        400
-                      ]
-                    },
-                    "status": {
-                      "type": "string",
-                      "enum": [
-                        "Bad Request"
-                      ]
-                    },
-                    "message": {
-                      "type": "string"
-                    },
-                    "details": {
-                      "type": "string"
-                    },
-                    "fields": {
-                      "type": "object",
-                      "properties": {
-                        "username": {
-                          "type": "object",
-                          "properties": {
-                            "message": {
-                              "type": "string"
-                            }
-                          }
-                        },
-                        "vocabId": {
-                          "type": "object",
-                          "properties": {
-                            "message": {
-                              "type": "string"
-                            }
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
+            "$ref": "#/components/responses/BadRequest"
           },
           "401": {
             "$ref": "#/components/responses/Unauthenticated"
@@ -2617,18 +1442,30 @@
           "404": {
             "$ref": "#/components/responses/NotFound"
           }
-        }
+        },
+        "tags": [
+          "vocab"
+        ],
+        "description": "Get user vocab details."
       }
     },
-    "/users/{username}/meanings/": {
+    "/users/{username}/meanings": {
       "parameters": [
         {
-          "$ref": "#/components/parameters/username"
+          "name": "username",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9]*$"
+          }
         }
       ],
       "get": {
-        "summary": "Your GET endpoint",
-        "tags": [],
+        "summary": "Get User Meanings",
+        "tags": [
+          "meaning"
+        ],
         "responses": {
           "200": {
             "description": "OK",
@@ -2644,71 +1481,7 @@
             }
           },
           "400": {
-            "description": "Bad Request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "x-examples": {
-                    "Example 1": {
-                      "code": 400,
-                      "status": "Bad Request",
-                      "message": "string",
-                      "details": "string",
-                      "fields": {
-                        "username": {
-                          "message": "invalid"
-                        },
-                        "vocabId": {
-                          "message": "invalid"
-                        }
-                      }
-                    }
-                  },
-                  "properties": {
-                    "code": {
-                      "type": "integer",
-                      "enum": [
-                        400
-                      ]
-                    },
-                    "status": {
-                      "type": "string",
-                      "enum": [
-                        "Bad Request"
-                      ]
-                    },
-                    "message": {
-                      "type": "string"
-                    },
-                    "details": {
-                      "type": "string"
-                    },
-                    "fields": {
-                      "type": "object",
-                      "properties": {
-                        "username": {
-                          "type": "object",
-                          "properties": {
-                            "message": {
-                              "type": "string"
-                            }
-                          }
-                        },
-                        "vocabId": {
-                          "type": "object",
-                          "properties": {
-                            "message": {
-                              "type": "string"
-                            }
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
+            "$ref": "#/components/responses/BadRequest"
           },
           "401": {
             "$ref": "#/components/responses/Unauthenticated"
@@ -2726,7 +1499,8 @@
             "in": "query",
             "name": "vocabId"
           }
-        ]
+        ],
+        "description": "Get a list of saved user meanings."
       },
       "post": {
         "summary": "Add Meaning To User",
@@ -2743,71 +1517,7 @@
             }
           },
           "400": {
-            "description": "Bad Request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "x-examples": {
-                    "Example 1": {
-                      "code": 400,
-                      "status": "Bad Request",
-                      "message": "string",
-                      "details": "string",
-                      "fields": {
-                        "username": {
-                          "message": "invalid"
-                        },
-                        "meaningId": {
-                          "message": "invalid"
-                        }
-                      }
-                    }
-                  },
-                  "properties": {
-                    "code": {
-                      "type": "integer",
-                      "enum": [
-                        400
-                      ]
-                    },
-                    "status": {
-                      "type": "string",
-                      "enum": [
-                        "Bad Request"
-                      ]
-                    },
-                    "message": {
-                      "type": "string"
-                    },
-                    "details": {
-                      "type": "string"
-                    },
-                    "fields": {
-                      "type": "object",
-                      "properties": {
-                        "username": {
-                          "type": "object",
-                          "properties": {
-                            "message": {
-                              "type": "string"
-                            }
-                          }
-                        },
-                        "meaningId": {
-                          "type": "object",
-                          "properties": {
-                            "message": {
-                              "type": "string"
-                            }
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
+            "$ref": "#/components/responses/BadRequest"
           },
           "401": {
             "$ref": "#/components/responses/Unauthenticated"
@@ -2832,7 +1542,11 @@
               }
             }
           }
-        }
+        },
+        "tags": [
+          "meaning"
+        ],
+        "description": "Adds a meaning to the saved user meanings."
       }
     },
     "/users/{username}/meanings/{meaningId}": {
@@ -2857,71 +1571,7 @@
             "description": "No Content"
           },
           "400": {
-            "description": "Bad Request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "x-examples": {
-                    "Example 1": {
-                      "code": 400,
-                      "status": "Bad Request",
-                      "message": "string",
-                      "details": "string",
-                      "fields": {
-                        "username": {
-                          "message": "invalid"
-                        },
-                        "meaningId": {
-                          "message": "invalid"
-                        }
-                      }
-                    }
-                  },
-                  "properties": {
-                    "code": {
-                      "type": "integer",
-                      "enum": [
-                        400
-                      ]
-                    },
-                    "status": {
-                      "type": "string",
-                      "enum": [
-                        "Bad Request"
-                      ]
-                    },
-                    "message": {
-                      "type": "string"
-                    },
-                    "details": {
-                      "type": "string"
-                    },
-                    "fields": {
-                      "type": "object",
-                      "properties": {
-                        "username": {
-                          "type": "object",
-                          "properties": {
-                            "message": {
-                              "type": "string"
-                            }
-                          }
-                        },
-                        "meaningId": {
-                          "type": "object",
-                          "properties": {
-                            "message": {
-                              "type": "string"
-                            }
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
+            "$ref": "#/components/responses/BadRequest"
           },
           "401": {
             "$ref": "#/components/responses/Unauthenticated"
@@ -2933,7 +1583,10 @@
             "$ref": "#/components/responses/NotFound"
           }
         },
-        "description": ""
+        "description": "Removes meaning from list of saved user meanings.",
+        "tags": [
+          "meaning"
+        ]
       }
     },
     "/lessons/{lessonId}/vocabs": {
@@ -2949,7 +1602,9 @@
       ],
       "get": {
         "summary": "Get Lesson Vocabs",
-        "tags": [],
+        "tags": [
+          "vocab"
+        ],
         "responses": {
           "200": {
             "description": "OK",
@@ -2962,68 +1617,7 @@
             }
           },
           "400": {
-            "description": "Bad Request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "x-examples": {
-                    "Example 1": {
-                      "code": 400,
-                      "status": "Bad Request",
-                      "message": "string",
-                      "details": "string",
-                      "fields": {
-                        "lessonId": {
-                          "message": "invalid"
-                        }
-                      }
-                    }
-                  },
-                  "properties": {
-                    "code": {
-                      "type": "integer",
-                      "enum": [
-                        400
-                      ]
-                    },
-                    "status": {
-                      "type": "string",
-                      "enum": [
-                        "Bad Request"
-                      ]
-                    },
-                    "message": {
-                      "type": "string"
-                    },
-                    "details": {
-                      "type": "string"
-                    },
-                    "fields": {
-                      "type": "object",
-                      "properties": {
-                        "lessonId": {
-                          "type": "object",
-                          "properties": {
-                            "message": {
-                              "type": "string"
-                            }
-                          }
-                        },
-                        "isPhrase": {
-                          "type": "object",
-                          "properties": {
-                            "message": {
-                              "type": "string"
-                            }
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
+            "$ref": "#/components/responses/BadRequest"
           },
           "401": {
             "$ref": "#/components/responses/Unauthenticated"
@@ -3041,7 +1635,8 @@
             "in": "query",
             "name": "isPhrase"
           }
-        ]
+        ],
+        "description": "Get a list of vocabs in a lesson."
       }
     },
     "/users/{username}/dictionaries": {
@@ -3051,8 +1646,10 @@
         }
       ],
       "get": {
-        "summary": "Your GET endpoint",
-        "tags": [],
+        "summary": "",
+        "tags": [
+          "dictionary"
+        ],
         "responses": {
           "200": {
             "description": "OK",
@@ -3066,9 +1663,22 @@
                 }
               }
             }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
           }
         },
-        "operationId": "get-users-username-dictionaries"
+        "operationId": "get-users-username-dictionaries",
+        "description": "Gets a list of user dictionaries."
       }
     }
   },
@@ -3913,6 +2523,46 @@
           }
         },
         "headers": {}
+      },
+      "BadRequest": {
+        "description": "Bad Request\n\nAt least some fields are invalid or required fields are missing.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "code": {
+                  "type": "integer",
+                  "enum": [
+                    400
+                  ]
+                },
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "Bad Request"
+                  ]
+                },
+                "message": {
+                  "type": "string"
+                },
+                "details": {
+                  "type": "string"
+                },
+                "fields": {
+                  "type": "object",
+                  "minProperties": 1
+                }
+              },
+              "required": [
+                "code",
+                "status",
+                "message",
+                "details"
+              ]
+            }
+          }
+        }
       }
     },
     "parameters": {
@@ -3922,7 +2572,8 @@
         "required": true,
         "schema": {
           "type": "string",
-          "pattern": "^[A-Za-z0-9]*$"
+          "pattern": "^[A-Za-z0-9]*$",
+          "maxLength": 20
         }
       }
     }
