@@ -1,5 +1,5 @@
 import {CustomBaseEntity} from "@/src/models/entities/CustomBaseEntity.js";
-import {Collection, Entity, ManyToMany, ManyToOne, Property, types} from "@mikro-orm/core";
+import {Collection, Entity, Index, ManyToMany, ManyToOne, Property, types} from "@mikro-orm/core";
 import {Course} from "@/src/models/entities/Course.js";
 import {Vocab} from "@/src/models/entities/Vocab.js";
 import {MapLessonVocab} from "@/src/models/entities/MapLessonVocab.js";
@@ -9,6 +9,7 @@ import {LessonRepo} from "@/src/models/repos/LessonRepo.js";
 import {VocabLevel} from "@/src/models/enums/VocabLevel.js";
 
 @Entity({customRepository: () => LessonRepo})
+@Index({properties: ['course']})
 export class Lesson extends CustomBaseEntity {
     @Property({type: types.string, length: 124})
     title!: string;

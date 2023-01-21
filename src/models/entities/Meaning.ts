@@ -1,4 +1,4 @@
-import {Collection, Entity, ManyToMany, ManyToOne, Property, types, Unique} from "@mikro-orm/core";
+import {Collection, Entity, Index, ManyToMany, ManyToOne, Property, types, Unique} from "@mikro-orm/core";
 import {CustomBaseEntity} from "@/src/models/entities/CustomBaseEntity.js";
 import {Vocab} from "@/src/models/entities/Vocab.js";
 import {Profile} from "@/src/models/entities/Profile.js";
@@ -7,6 +7,9 @@ import {MapLearnerMeaning} from "@/src/models/entities/MapLearnerMeaning.js";
 
 @Entity()
 @Unique({properties: ["vocab", "text", "language"]})
+@Index({properties: ['vocab']})
+@Index({properties: ['language']})
+@Index({properties: ['addedBy']})
 export class Meaning extends CustomBaseEntity {
     @Property({type: types.string, length: 1000})
     text!: string;

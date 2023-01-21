@@ -189,6 +189,15 @@
       "schema": "public",
       "indexes": [
         {
+          "keyName": "dictionary_language_id_index",
+          "columnNames": [
+            "language_id"
+          ],
+          "composite": false,
+          "primary": false,
+          "unique": false
+        },
+        {
           "keyName": "dictionary_pkey",
           "columnNames": [
             "id"
@@ -766,6 +775,24 @@
       "schema": "public",
       "indexes": [
         {
+          "keyName": "course_added_by_id_index",
+          "columnNames": [
+            "added_by_id"
+          ],
+          "composite": false,
+          "primary": false,
+          "unique": false
+        },
+        {
+          "keyName": "course_language_id_index",
+          "columnNames": [
+            "language_id"
+          ],
+          "composite": false,
+          "primary": false,
+          "unique": false
+        },
+        {
           "keyName": "course_pkey",
           "columnNames": [
             "id"
@@ -890,6 +917,15 @@
       "name": "lesson",
       "schema": "public",
       "indexes": [
+        {
+          "keyName": "lesson_course_id_index",
+          "columnNames": [
+            "course_id"
+          ],
+          "composite": false,
+          "primary": false,
+          "unique": false
+        },
         {
           "keyName": "lesson_pkey",
           "columnNames": [
@@ -1032,6 +1068,15 @@
       "schema": "public",
       "indexes": [
         {
+          "keyName": "vocab_language_id_index",
+          "columnNames": [
+            "language_id"
+          ],
+          "composite": false,
+          "primary": false,
+          "unique": false
+        },
+        {
           "keyName": "vocab_language_id_text_unique",
           "columnNames": [
             "language_id",
@@ -1130,6 +1175,33 @@
       "name": "meaning",
       "schema": "public",
       "indexes": [
+        {
+          "keyName": "meaning_added_by_id_index",
+          "columnNames": [
+            "added_by_id"
+          ],
+          "composite": false,
+          "primary": false,
+          "unique": false
+        },
+        {
+          "keyName": "meaning_language_id_index",
+          "columnNames": [
+            "language_id"
+          ],
+          "composite": false,
+          "primary": false,
+          "unique": false
+        },
+        {
+          "keyName": "meaning_vocab_id_index",
+          "columnNames": [
+            "vocab_id"
+          ],
+          "composite": false,
+          "primary": false,
+          "unique": false
+        },
         {
           "keyName": "meaning_vocab_id_text_language_id_unique",
           "columnNames": [

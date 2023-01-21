@@ -3,7 +3,7 @@ import {Lesson} from "@/src/models/entities/Lesson.js";
 import {VocabLevel} from "@/src/models/enums/VocabLevel.js";
 import {numericEnumValues} from "@/src/utils/utils.js";
 
-export class LessonRepo extends EntityRepository<Lesson> {
+export class    LessonRepo extends EntityRepository<Lesson> {
 
     async annotateVocabsByLevel(lessons: Lesson[], userId: number) {
         const query = `SELECT json_object_agg(outq.id, outq.vocabLevels) AS vocab_levels_by_lesson
