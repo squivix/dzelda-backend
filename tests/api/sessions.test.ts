@@ -4,7 +4,6 @@ import {orm, passwordHasher} from "@/src/server.js";
 import {UserFactory} from "@/src/seeders/factories/UserFactory.js";
 import {Session} from "@/src/models/entities/auth/Session.js";
 import {fetchRequest} from "@/tests/api/utils.js";
-import {truncateDb} from "@/tests/utils.js";
 import {EntityRepository} from "@mikro-orm/core";
 
 // beforeEach(truncateDb);
@@ -49,7 +48,7 @@ describe("POST /sessions", function () {
             expect(response.json()).toEqual({authToken: session.token});
     });
 
-    describe("If fields is incorrect return 401", async () => {
+    describe("If a field is incorrect return 401", async () => {
         test<LocalTestContext>("If username is incorrect return 401", async (context) => {
             const password = faker.random.alphaNumeric(20);
             const user = await context.userFactory.createOne({password: await passwordHasher.hash(password)});

@@ -183,6 +183,17 @@ describe("POST /users", function () {
             });
         });
     });
+
+    test<LocalTestContext>("If initialLanguage does not exist return 404", async (context) => {
+        const newUser = context.userFactory.makeOne();
+        const response = await makeRequest({
+            username: newUser.username,
+            password: newUser.password,
+            email: newUser.email,
+            initialLanguage: faker.random.alpha({count: 4}),
+        });
+        expect(response.statusCode).to.equal(404);
+    });
 });
 
 /**{@link UserController#getUser}*/
@@ -196,27 +207,29 @@ describe("GET /users/:username/", function () {
             options.headers = {authorization: `Bearer ${authToken}`};
         return await fetchRequest(options);
     };
+    describe("If user is logged in as requested user return user with email", () => {
+        test<LocalTestContext>("If username is me and authenticated return user with email", async (context) => {
+            const user = await context.userFactory.createOne();
+            const session = await context.sessionFactory.createOne({user: user});
+
+            const response = await makeRequest("me", session.token);
+            expect(response.statusCode).to.equal(200);
+            expect(response.json()).toEqual(userSerializer.serialize(user));
+        });
+        test<LocalTestContext>("If username is not me and authenticated as user with username return user with email", async (context) => {
+            const user = await context.userFactory.createOne();
+            const session = await context.sessionFactory.createOne({user: user});
+
+            const response = await makeRequest(user.username, session.token);
+            expect(response.statusCode).to.equal(200);
+            expect(response.json()).toEqual(userSerializer.serialize(user));
+        });
+    })
     test<LocalTestContext>("If username is me and not authenticated return 401", async (context) => {
         await context.userFactory.createOne({profile: {isPublic: true}});
 
         const response = await makeRequest("me");
         expect(response.statusCode).to.equal(401);
-    });
-    test<LocalTestContext>("If username is me and authenticated return user with email", async (context) => {
-        const user = await context.userFactory.createOne();
-        const session = await context.sessionFactory.createOne({user: user});
-
-        const response = await makeRequest("me", session.token);
-        expect(response.statusCode).to.equal(200);
-        expect(response.json()).toEqual(userSerializer.serialize(user));
-    });
-    test<LocalTestContext>("If username is not me and authenticated as user return user with email", async (context) => {
-        const user = await context.userFactory.createOne();
-        const session = await context.sessionFactory.createOne({user: user});
-
-        const response = await makeRequest(user.username, session.token);
-        expect(response.statusCode).to.equal(200);
-        expect(response.json()).toEqual(userSerializer.serialize(user));
     });
     describe("If profile is not public and not authenticated as user return 404", () => {
         test<LocalTestContext>("If not authenticated return 404", async (context) => {
@@ -251,5 +264,20 @@ describe("GET /users/:username/", function () {
             expect(response.statusCode).to.equal(200);
             expect(response.json()).toEqual(userSerializer.serialize(user, {hiddenFields: ["email"]}));
         });
+    });
+    test<LocalTestContext>("If user with username does not exist return 404", async (context) => {
+        const user = context.userFactory.makeOne();
+
+        const response = await makeRequest(user.username);
+
+        expect(response.statusCode).to.equal(404);
+    });
+
+    test<LocalTestContext>("If username is invalid return 404", async (context) => {
+        const user = context.userFactory.makeOne();
+
+        const response = await makeRequest("invalid username");
+
+        expect(response.statusCode).to.equal(404);
     });
 })

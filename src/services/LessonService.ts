@@ -3,7 +3,6 @@ import {Lesson} from "@/src/models/entities/Lesson.js";
 import {SqlEntityManager} from "@mikro-orm/postgresql";
 import {LessonRepo} from "@/src/models/repos/LessonRepo.js";
 import {AnonymousUser, User} from "@/src/models/entities/auth/User.js";
-import lessonService from "@/src/services/LessonService.js";
 import {lessonSerializer} from "@/src/schemas/serializers/LessonSerializer.js";
 
 class LessonService {
