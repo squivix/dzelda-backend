@@ -8,6 +8,7 @@ import {ProfileFactory} from "@/src/seeders/factories/ProfileFactory.js";
 import {CourseFactory} from "@/src/seeders/factories/CourseFactory.js";
 import {Course} from "@/src/models/entities/Course.js";
 import {courseSerializer} from "@/src/schemas/serializers/CourseSerializer.js";
+import {CourseRepo} from "@/src/models/repos/CourseRepo.js";
 
 // beforeEach(truncateDb);
 
@@ -15,7 +16,7 @@ interface LocalTestContext {
     userFactory: UserFactory;
     profileFactory: ProfileFactory;
     sessionFactory: SessionFactory;
-    courseRepo: EntityRepository<Course>;
+    courseRepo: CourseRepo;
     courseFactory: CourseFactory;
 }
 
@@ -26,7 +27,7 @@ beforeEach<LocalTestContext>((context) => {
     context.profileFactory = new ProfileFactory(context.em);
     context.sessionFactory = new SessionFactory(context.em);
     context.courseFactory = new CourseFactory(context.em);
-    context.courseRepo = context.em.getRepository(Course);
+    context.courseRepo = context.em.getRepository(Course) as CourseRepo;
 });
 
 /**@link CourseController#getCourses*/
@@ -42,9 +43,18 @@ describe("GET /courses/", function () {
         await context.courseFactory.create(10);
 
         const response = await makeRequest();
-        const courses = await context.courseRepo.find({}, {populate: ["addedBy.user", "lessons", "lessons.vocabs"]});
+        const courses = await context.courseRepo.find({}, {populate: ["addedBy.user"]});
         expect(response.statusCode).to.equal(200);
         expect(response.json()).toEqual(courseSerializer.serializeList(courses));
     })
+
+    // TODD: test<LocalTestContext>("If logged in return courses with vocab levels for user", async (context) => {
+    //     await context.courseFactory.create(10);
+    //
+    //     const response = await makeRequest();
+    //     const courses = await context.courseRepo.find({}, {populate: ["addedBy.user"]});
+    //     expect(response.statusCode).to.equal(200);
+    //     expect(response.json()).toEqual(courseSerializer.serializeList(courses));
+    // })
 
 });

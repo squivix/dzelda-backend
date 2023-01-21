@@ -12,5 +12,5 @@ export interface CourseListSchema {
     level: LanguageLevel;
     language: number;
     addedBy: string;
-    vocabsByLevel: Record<VocabLevel, number>
+    vocabsByLevel?: Record<VocabLevel, number>
 }

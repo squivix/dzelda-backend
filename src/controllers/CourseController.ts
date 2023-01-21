@@ -11,11 +11,7 @@ class CourseController {
         const courseService = new CourseService(request.em);
 
         const filters = {};
-        if (!request.user || request.user instanceof AnonymousUser) {
-            reply.status(401).send();
-            return;
-        }
-        const courses = await courseService.getCourses(filters, request.user.id);
+        const courses = await courseService.getCourses(filters, request.user);
         reply.send(courses);
     }
 }

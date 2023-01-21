@@ -22,7 +22,7 @@ class CourseSerializer extends CustomEntitySerializer<Course, CourseListSchema |
                 level: course.level,
                 language: course.language.id,
                 addedBy: course.addedBy.user.username,
-                vocabsByLevel: course.vocabsByLevel!
+                vocabsByLevel: course.vocabsByLevel
             };
         } else {
             return {
@@ -35,7 +35,7 @@ class CourseSerializer extends CustomEntitySerializer<Course, CourseListSchema |
                 language: languageSerializer.serialize(course.language),
                 addedBy: profileSerializer.serialize(course.addedBy),
                 lessons: lessonSerializer.serializeList(course.lessons.getItems()),
-                vocabsByLevel: course.vocabsByLevel!
+                vocabsByLevel: course.vocabsByLevel
             };
         }
     }

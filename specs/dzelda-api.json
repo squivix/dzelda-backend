@@ -492,9 +492,6 @@
                 "examples": {}
               }
             }
-          },
-          "401": {
-            "$ref": "#/components/responses/Unauthenticated"
           }
         },
         "operationId": "get-courses",
@@ -927,9 +924,6 @@
                 }
               }
             }
-          },
-          "401": {
-            "$ref": "#/components/responses/Unauthenticated"
           }
         },
         "operationId": "get-lessons",
@@ -3316,50 +3310,50 @@
           },
           "vocabsByLevel": {
             "type": "object",
-            "required": [
-              "ignored",
-              "new",
-              "level1",
-              "level2",
-              "level3",
-              "level4",
-              "learned",
-              "known"
-            ],
             "properties": {
-              "ignored": {
+              "0": {
                 "type": "integer",
                 "minimum": 0
               },
-              "new": {
+              "1": {
                 "type": "integer",
                 "minimum": 0
               },
-              "level1": {
+              "2": {
                 "type": "integer",
                 "minimum": 0
               },
-              "level2": {
+              "3": {
                 "type": "integer",
                 "minimum": 0
               },
-              "level3": {
+              "4": {
                 "type": "integer",
                 "minimum": 0
               },
-              "level4": {
+              "5": {
                 "type": "integer",
                 "minimum": 0
               },
-              "learned": {
+              "6": {
                 "type": "integer",
                 "minimum": 0
               },
-              "known": {
+              "-1": {
                 "type": "integer",
                 "minimum": 0
               }
-            }
+            },
+            "required": [
+              "-1",
+              "0",
+              "1",
+              "2",
+              "3",
+              "4",
+              "5",
+              "6"
+            ]
           }
         },
         "required": [
@@ -3419,45 +3413,45 @@
           "vocabsByLevel": {
             "type": "object",
             "required": [
-              "ignored",
-              "new",
-              "level1",
-              "level2",
-              "level3",
-              "level4",
-              "learned",
-              "known"
+              "0",
+              "1",
+              "2",
+              "3",
+              "4",
+              "5",
+              "6",
+              "-1"
             ],
             "properties": {
-              "ignored": {
+              "0": {
                 "type": "integer",
                 "minimum": 0
               },
-              "new": {
+              "1": {
                 "type": "integer",
                 "minimum": 0
               },
-              "level1": {
+              "2": {
                 "type": "integer",
                 "minimum": 0
               },
-              "level2": {
+              "3": {
                 "type": "integer",
                 "minimum": 0
               },
-              "level3": {
+              "4": {
                 "type": "integer",
                 "minimum": 0
               },
-              "level4": {
+              "5": {
                 "type": "integer",
                 "minimum": 0
               },
-              "learned": {
+              "6": {
                 "type": "integer",
                 "minimum": 0
               },
-              "known": {
+              "-1": {
                 "type": "integer",
                 "minimum": 0
               }
@@ -3473,8 +3467,7 @@
           "level",
           "language",
           "addedBy",
-          "lessons",
-          "vocabsByLevel"
+          "lessons"
         ]
       },
       "LessonList": {
@@ -3490,13 +3483,6 @@
           },
           "title": {
             "type": "string"
-          },
-          "text": {
-            "type": "string"
-          },
-          "audio": {
-            "type": "string",
-            "format": "uri"
           },
           "image": {
             "type": "string",
@@ -3515,33 +3501,59 @@
           "vocabsByLevel": {
             "type": "object",
             "properties": {
-              "ignored": {
-                "type": "integer"
+              "0": {
+                "type": "integer",
+                "minimum": 0
               },
-              "new": {
-                "type": "integer"
+              "1": {
+                "type": "integer",
+                "minimum": 0
               },
-              "level1": {
-                "type": "integer"
+              "2": {
+                "type": "integer",
+                "minimum": 0
               },
-              "level2": {
-                "type": "integer"
+              "3": {
+                "type": "integer",
+                "minimum": 0
               },
-              "level3": {
-                "type": "integer"
+              "4": {
+                "type": "integer",
+                "minimum": 0
               },
-              "level4": {
-                "type": "integer"
+              "5": {
+                "type": "integer",
+                "minimum": 0
               },
-              "learned": {
-                "type": "integer"
+              "6": {
+                "type": "integer",
+                "minimum": 0
               },
-              "known": {
-                "type": "integer"
+              "-1": {
+                "type": "integer",
+                "minimum": 0
               }
-            }
+            },
+            "required": [
+              "0",
+              "1",
+              "2",
+              "3",
+              "4",
+              "5",
+              "6",
+              "-1"
+            ]
           }
-        }
+        },
+        "required": [
+          "id",
+          "title",
+          "image",
+          "course",
+          "orderInCourse",
+          "addedOn"
+        ]
       },
       "LessonDetails": {
         "title": "LessonDetails",
@@ -3580,33 +3592,61 @@
           "vocabsByLevel": {
             "type": "object",
             "properties": {
-              "ignored": {
-                "type": "integer"
+              "0": {
+                "type": "integer",
+                "minimum": 0
               },
-              "new": {
-                "type": "integer"
+              "1": {
+                "type": "integer",
+                "minimum": 0
               },
-              "level1": {
-                "type": "integer"
+              "2": {
+                "type": "integer",
+                "minimum": 0
               },
-              "level2": {
-                "type": "integer"
+              "3": {
+                "type": "integer",
+                "minimum": 0
               },
-              "level3": {
-                "type": "integer"
+              "4": {
+                "type": "integer",
+                "minimum": 0
               },
-              "level4": {
-                "type": "integer"
+              "5": {
+                "type": "integer",
+                "minimum": 0
               },
-              "learned": {
-                "type": "integer"
+              "6": {
+                "type": "integer",
+                "minimum": 0
               },
-              "known": {
-                "type": "integer"
+              "-1": {
+                "type": "integer",
+                "minimum": 0
               }
-            }
+            },
+            "required": [
+              "0",
+              "1",
+              "2",
+              "3",
+              "4",
+              "5",
+              "6",
+              "-1"
+            ]
           }
-        }
+        },
+        "required": [
+          "id",
+          "title",
+          "text",
+          "audio",
+          "image",
+          "course",
+          "orderInCourse",
+          "addedOn"
+        ]
       },
       "VocabList": {
         "type": "object",

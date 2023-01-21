@@ -11,12 +11,8 @@ class LessonController {
         const lessonService = new LessonService(request.em);
 
         const filters = {};
-        if (!request.user || request.user instanceof AnonymousUser) {
-            reply.status(401).send();
-            return
-        }
-        const courses = await lessonService.getLessons(filters, request.user);
-        reply.send(courses);
+        const lessons = await lessonService.getLessons(filters, request.user);
+        reply.send(lessons);
     }
 }
 

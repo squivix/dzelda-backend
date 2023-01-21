@@ -16,5 +16,5 @@ export interface CourseDetailsSchema {
     language: LanguageDetailsSchema;
     addedBy: ProfileDetailsSchema;
     lessons: LessonListSchema[];
-    vocabsByLevel: Record<VocabLevel, number>
+    vocabsByLevel?: Record<VocabLevel, number>
 }
