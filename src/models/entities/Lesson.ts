@@ -5,8 +5,10 @@ import {Vocab} from "@/src/models/entities/Vocab.js";
 import {MapLessonVocab} from "@/src/models/entities/MapLessonVocab.js";
 import {Profile} from "@/src/models/entities/Profile.js";
 import {MapLearnerLesson} from "@/src/models/entities/MapLearnerLesson.js";
+import {LessonRepo} from "@/src/models/repos/LessonRepo.js";
+import {VocabLevel} from "@/src/models/enums/VocabLevel.js";
 
-@Entity()
+@Entity({customRepository: () => LessonRepo})
 export class Lesson extends CustomBaseEntity {
     @Property({type: types.string, length: 124})
     title!: string;
@@ -44,4 +46,9 @@ export class Lesson extends CustomBaseEntity {
         inverseJoinColumn: "learner_id",
     })
     learners: Collection<Profile> = new Collection<Profile>(this);
+
+
+    @Property({persist: false, type: types.json})
+    vocabsByLevel?: Record<VocabLevel, number>;
+    // vocabsByLevel?: Object;
 }

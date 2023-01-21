@@ -53,6 +53,7 @@
     "fs-extra": "^11.1.0",
     "nodemon": "^2.0.20",
     "openapi-typescript": "^6.1.0",
+    "postgresql-to-knex": "^1.2.6",
     "tsx": "^3.12.1",
     "typescript": "^4.8.4",
     "vite": "^3.2.1",
