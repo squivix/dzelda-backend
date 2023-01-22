@@ -10,7 +10,7 @@ import {MapLearnerLanguage} from "@/src/models/entities/MapLearnerLanguage.js";
 import {Language} from "@/src/models/entities/Language.js";
 import {EntityRepository} from "@mikro-orm/core";
 import {ProfileFactory} from "@/src/seeders/factories/ProfileFactory.js";
-import {languageSerializer} from "@/src/schemas/serializers/LanguageSerializer.js";
+import {languageSerializer} from "@/src/schemas/response/serializers/LanguageSerializer.js";
 
 // beforeEach(truncateDb);
 

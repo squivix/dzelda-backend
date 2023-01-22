@@ -1,7 +1,7 @@
-import {CustomEntitySerializer, SerializationMode} from "@/src/schemas/serializers/EntitySerializer.js";
+import {CustomEntitySerializer, SerializationMode} from "@/src/schemas/response/serializers/EntitySerializer.js";
 import {Profile} from "@/src/models/entities/Profile.js";
-import {ProfileDetailsSchema} from "@/src/schemas/interfaces/ProfileDetailsSchema.js";
-import {languageSerializer} from "@/src/schemas/serializers/LanguageSerializer.js";
+import {ProfileDetailsSchema} from "@/src/schemas/response/interfaces/ProfileDetailsSchema.js";
+import {languageSerializer} from "@/src/schemas/response/serializers/LanguageSerializer.js";
 
 
 class ProfileSerializer extends CustomEntitySerializer<Profile, ProfileDetailsSchema> {

@@ -1,10 +1,10 @@
-import {CustomEntitySerializer, SerializationMode} from "@/src/schemas/serializers/EntitySerializer.js";
-import {LessonListSchema} from "@/src/schemas/interfaces/LessonListSchema.js";
+import {CustomEntitySerializer, SerializationMode} from "@/src/schemas/response/serializers/EntitySerializer.js";
+import {LessonListSchema} from "@/src/schemas/response/interfaces/LessonListSchema.js";
 import {Lesson} from "@/src/models/entities/Lesson.js";
-import {LessonDetailsSchema} from "@/src/schemas/interfaces/LessonDetailsSchema.js";
-import {CourseListSchema} from "@/src/schemas/interfaces/CourseListSchema.js";
-import {courseSerializer} from "@/src/schemas/serializers/CourseSerializer.js";
-import {CourseDetailsSchema} from "@/src/schemas/interfaces/CourseDetailsSchema.js";
+import {LessonDetailsSchema} from "@/src/schemas/response/interfaces/LessonDetailsSchema.js";
+import {CourseListSchema} from "@/src/schemas/response/interfaces/CourseListSchema.js";
+import {courseSerializer} from "@/src/schemas/response/serializers/CourseSerializer.js";
+import {CourseDetailsSchema} from "@/src/schemas/response/interfaces/CourseDetailsSchema.js";
 
 class LessonSerializer extends CustomEntitySerializer<Lesson, LessonListSchema | LessonDetailsSchema> {
     override serialize(lesson: Lesson, {

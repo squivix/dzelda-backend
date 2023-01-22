@@ -4,6 +4,7 @@ import LanguageService from "@/src/services/LanguageService.js";
 import {NotFoundAPIError} from "@/src/utils/errors/NotFoundAPIError.js";
 import UserService from "@/src/services/UserService.js";
 import {ForbiddenAPIError} from "@/src/utils/errors/ForbiddenAPIError.js";
+import {usernameValidator} from "@/src/validators/userValidator.js";
 
 class LanguageController {
     async getLanguages(request: FastifyRequest, reply: FastifyReply) {
@@ -22,7 +23,7 @@ class LanguageController {
 
     async getUserLanguages(request: FastifyRequest, reply: FastifyReply) {
         const validator = z.object({
-            username: z.string().min(4).max(20).regex(/^[A-Za-z0-9]*$/).or(z.literal("me"))
+            username: usernameValidator
         });
         const pathParams = validator.parse(request.params);
         const userService = new UserService(request.em);
@@ -38,7 +39,7 @@ class LanguageController {
 
     async addLanguageToUser(request: FastifyRequest, reply: FastifyReply) {
         const pathParamsValidator = z.object({
-            username: z.string().min(4).max(20).regex(/^[A-Za-z0-9]*$/).or(z.literal("me"))
+            username: usernameValidator,
         });
         const pathParams = pathParamsValidator.parse(request.params);
         const userService = new UserService(request.em);

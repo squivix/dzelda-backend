@@ -10,3 +10,9 @@ export function randomEnum(enumeration: any) {
     const enumKey = values[Math.floor(Math.random() * values.length)];
     return enumeration[enumKey];
 }
+
+export function randomCase(val: string) {
+    return val.toLowerCase().split('').map(function (c) {
+        return Math.random() < .5 ? c : c.toUpperCase();
+    }).join('');
+}

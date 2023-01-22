@@ -3,7 +3,7 @@ import {EntityManager, EntityRepository} from "@mikro-orm/core";
 import {User} from "@/src/models/entities/auth/User.js";
 import {cleanObject} from "@/src/utils/utils.js";
 import {MapLearnerLanguage} from "@/src/models/entities/MapLearnerLanguage.js";
-import {languageSerializer} from "@/src/schemas/serializers/LanguageSerializer.js";
+import {languageSerializer} from "@/src/schemas/response/serializers/LanguageSerializer.js";
 
 class LanguageService {
     em: EntityManager;

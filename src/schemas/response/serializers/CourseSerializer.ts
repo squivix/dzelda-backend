@@ -1,10 +1,12 @@
-import {CustomEntitySerializer, SerializationMode} from "@/src/schemas/serializers/EntitySerializer.js";
+import {CustomEntitySerializer, SerializationMode} from "@/src/schemas/response/serializers/EntitySerializer.js";
 import {Course} from "@/src/models/entities/Course.js";
-import {CourseListSchema} from "@/src/schemas/interfaces/CourseListSchema.js";
-import {CourseDetailsSchema} from "@/src/schemas/interfaces/CourseDetailsSchema.js";
-import {languageSerializer} from "@/src/schemas/serializers/LanguageSerializer.js";
-import {profileSerializer} from "@/src/schemas/serializers/ProfileSerializer.js";
-import {lessonSerializer} from "@/src/schemas/serializers/LessonSerializer.js";
+import {CourseListSchema} from "@/src/schemas/response/interfaces/CourseListSchema.js";
+import {CourseDetailsSchema} from "@/src/schemas/response/interfaces/CourseDetailsSchema.js";
+import {languageSerializer} from "@/src/schemas/response/serializers/LanguageSerializer.js";
+import {profileSerializer} from "@/src/schemas/response/serializers/ProfileSerializer.js";
+import {lessonSerializer} from "@/src/schemas/response/serializers/LessonSerializer.js";
+import {LessonListSchema} from "@/src/schemas/response/interfaces/LessonListSchema.js";
+import {cleanObject} from "@/src/utils/utils.js";
 
 
 class CourseSerializer extends CustomEntitySerializer<Course, CourseListSchema | CourseDetailsSchema> {
@@ -34,7 +36,7 @@ class CourseSerializer extends CustomEntitySerializer<Course, CourseListSchema |
                 level: course.level,
                 language: languageSerializer.serialize(course.language),
                 addedBy: profileSerializer.serialize(course.addedBy),
-                lessons: lessonSerializer.serializeList(course.lessons.getItems()),
+                lessons: lessonSerializer.serializeList(course.lessons.getItems()) as LessonListSchema[],
                 vocabsByLevel: course.vocabsByLevel
             };
         }

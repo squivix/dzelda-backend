@@ -2,15 +2,16 @@ import {z} from "zod";
 import UserService from "@/src/services/UserService.js";
 import {FastifyReply, FastifyRequest} from "fastify";
 import {NotFoundAPIError} from "@/src/utils/errors/NotFoundAPIError.js";
-import {profileSerializer} from "@/src/schemas/serializers/ProfileSerializer.js";
-import {userSerializer} from "@/src/schemas/serializers/UserSerializer.js";
+import {profileSerializer} from "@/src/schemas/response/serializers/ProfileSerializer.js";
+import {userSerializer} from "@/src/schemas/response/serializers/UserSerializer.js";
+import {usernameValidator} from "@/src/validators/userValidator.js";
 
 class UserController {
 
     async signUp(request: FastifyRequest, reply: FastifyReply) {
         const validator = z.object({
             email: z.string().max(256).email(),
-            username: z.string().min(4).max(20).regex(/^[A-Za-z0-9]*$/),
+            username: usernameValidator,
             password: z.string().min(8),
             initialLanguage: z.optional(z.string().min(2).max(4))
         }).strict();
@@ -23,7 +24,7 @@ class UserController {
 
     async login(request: FastifyRequest, reply: FastifyReply) {
         const validator = z.object({
-            username: z.string().min(4).max(20).regex(/^[A-Za-z0-9]*$/),
+            username: usernameValidator,
             password: z.string().min(8),
         }).strict();
         const body = validator.parse(request.body);
@@ -35,7 +36,7 @@ class UserController {
 
     async getUser(request: FastifyRequest, reply: FastifyReply) {
         const validator = z.object({
-            username: z.string().min(4).max(20).regex(/^[A-Za-z0-9]*$/).or(z.literal("me"))
+            username: usernameValidator,
         });
         const pathParams = validator.parse(request.params);
         const userService = new UserService(request.em);

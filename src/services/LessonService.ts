@@ -4,7 +4,7 @@ import {SqlEntityManager} from "@mikro-orm/postgresql";
 import {LessonRepo} from "@/src/models/repos/LessonRepo.js";
 import {AnonymousUser, User} from "@/src/models/entities/auth/User.js";
 import lessonService from "@/src/services/LessonService.js";
-import {lessonSerializer} from "@/src/schemas/serializers/LessonSerializer.js";
+import {lessonSerializer} from "@/src/schemas/response/serializers/LessonSerializer.js";
 
 class LessonService {
     em: SqlEntityManager;

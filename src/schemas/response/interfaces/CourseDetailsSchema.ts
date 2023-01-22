@@ -1,6 +1,6 @@
-import {LanguageDetailsSchema} from "@/src/schemas/interfaces/LanguageDetailsSchema.js";
-import {ProfileDetailsSchema} from "@/src/schemas/interfaces/ProfileDetailsSchema.js";
-import {LessonListSchema} from "@/src/schemas/interfaces/LessonListSchema.js";
+import {LanguageDetailsSchema} from "@/src/schemas/response/interfaces/LanguageDetailsSchema.js";
+import {ProfileDetailsSchema} from "@/src/schemas/response/interfaces/ProfileDetailsSchema.js";
+import {LessonListSchema} from "@/src/schemas/response/interfaces/LessonListSchema.js";
 import {LanguageLevel} from "@/src/models/enums/LanguageLevel.js";
 import {VocabLevel} from "@/src/models/enums/VocabLevel.js";
 
