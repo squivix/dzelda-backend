@@ -86,12 +86,15 @@ describe("GET /languages/", function () {
                 expect(response.statusCode).to.equal(200);
                 expect(response.json()).toEqual(languageSerializer.serializeList(unsupportedLanguages));
             });
-            test<LocalTestContext>("If isSupported filter is invalid return 400", async (context) => {
+            test<LocalTestContext>("If isSupported filter is invalid, ignore it", async (context) => {
                 await context.languageFactory.create(5, {isSupported: true});
                 await context.languageFactory.create(5, {isSupported: false});
 
                 const response = await makeRequest({isSupported: "Invalid data"});
-                expect(response.statusCode).to.equal(400);
+
+                const allLanguages = await context.languageRepo.find({}, {refresh: true});
+                expect(response.statusCode).to.equal(200);
+                expect(response.json()).toEqual(languageSerializer.serializeList(allLanguages));
             });
         });
     });

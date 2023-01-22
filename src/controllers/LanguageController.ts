@@ -4,14 +4,15 @@ import LanguageService from "@/src/services/LanguageService.js";
 import {NotFoundAPIError} from "@/src/utils/errors/NotFoundAPIError.js";
 import UserService from "@/src/services/UserService.js";
 import {ForbiddenAPIError} from "@/src/utils/errors/ForbiddenAPIError.js";
+import {parseIgnoreInvalidFields} from "@/src/utils/utils.js";
+
 
 class LanguageController {
-    async getLanguages(request: FastifyRequest, reply: FastifyReply) {
+    async getLanguages(request: FastifyRequest<{ Querystring: Record<string, any> }>, reply: FastifyReply) {
         const validator = z.object({
             isSupported: z.string().regex(/(true|false)/ig).transform(v => v.toLowerCase() == "true").optional()
         });
-
-        const queryParams = validator.parse(request.query);
+        const queryParams = parseIgnoreInvalidFields(validator, request.query);
         const languageService = new LanguageService(request.em);
 
         const filters = {isSupported: queryParams.isSupported};
