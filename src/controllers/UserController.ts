@@ -2,6 +2,7 @@ import {z} from "zod";
 import UserService from "@/src/services/UserService.js";
 import {FastifyReply, FastifyRequest} from "fastify";
 import {NotFoundAPIError} from "@/src/utils/errors/NotFoundAPIError.js";
+import {profileSerializer} from "@/src/schemas/serializers/ProfileSerializer.js";
 import {userSerializer} from "@/src/schemas/serializers/UserSerializer.js";
 
 class UserController {
@@ -36,11 +37,7 @@ class UserController {
         const validator = z.object({
             username: z.string().min(4).max(20).regex(/^[A-Za-z0-9]*$/).or(z.literal("me"))
         });
-        let pathParamsParse = validator.safeParse(request.params);
-        if (!pathParamsParse.success)
-            throw new NotFoundAPIError("User");
-        const pathParams = pathParamsParse.data;
-
+        const pathParams = validator.parse(request.params);
         const userService = new UserService(request.em);
         const user = await userService.getUser(pathParams.username, request.user);
         // private user don't exist to the outside
