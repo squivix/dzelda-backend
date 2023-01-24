@@ -1,10 +1,14 @@
 import {FastifyReply, FastifyRequest} from "fastify";
 import {z} from "zod";
 import CourseService from "@/src/services/CourseService.js";
-import {AnonymousUser} from "@/src/models/entities/auth/User.js";
+import {AnonymousUser, User} from "@/src/models/entities/auth/User.js";
 import {languageCodeValidator} from "@/src/validators/languageValidators.js";
 import {usernameValidator} from "@/src/validators/userValidator.js";
 import {UnauthenticatedAPIError} from "@/src/utils/errors/UnauthenticatedAPIError.js";
+import {courseDescriptionValidator, courseTitleValidator} from "@/src/validators/courseValidator.js";
+import LanguageService from "@/src/services/LanguageService.js";
+import {ValidationAPIError} from "@/src/utils/errors/ValidationAPIError.js";
+import {LanguageLevel} from "@/src/models/enums/LanguageLevel.js";
 
 class CourseController {
     async getCourses(request: FastifyRequest, reply: FastifyReply) {
@@ -21,9 +25,35 @@ class CourseController {
         }
 
         const courseService = new CourseService(request.em);
-
         const courses = await courseService.getCourses(queryParams, request.user);
         reply.send(courses);
+    }
+
+    async createCourse(request: FastifyRequest, reply: FastifyReply) {
+        const bodyValidator = z.object({
+            language: languageCodeValidator,
+            title: courseTitleValidator,
+            description: courseDescriptionValidator.optional(),
+            isPublic: z.boolean().optional(),
+            level: z.nativeEnum(LanguageLevel).optional()
+        });
+        const body = bodyValidator.parse((request.body as any).data);
+
+        const languageService = new LanguageService(request.em);
+        const language = await languageService.getLanguage(body.language)
+        if (!language)
+            throw new ValidationAPIError({language: {message: "language not found"}});
+
+        const courseService = new CourseService(request.em);
+        const course = await courseService.createCourse({
+            language: language,
+            title: body.title,
+            description: body.description,
+            isPublic: body.isPublic,
+            image: request.files?.["image"]?.[0]?.path,
+            level: body.level
+        }, request.user as User);
+        reply.status(201).send(course);
     }
 }
 

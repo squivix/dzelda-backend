@@ -3,6 +3,9 @@ import {Course} from "@/src/models/entities/Course.js";
 import {courseSerializer} from "@/src/schemas/response/serializers/CourseSerializer.js";
 import {CourseRepo} from "@/src/models/repos/CourseRepo.js";
 import {AnonymousUser, User} from "@/src/models/entities/auth/User.js";
+import {Language} from "@/src/models/entities/Language.js";
+import {defaultVocabsByLevel, VocabLevel} from "@/src/models/enums/VocabLevel.js";
+import {LanguageLevel} from "@/src/models/enums/LanguageLevel.js";
 
 class CourseService {
     em: EntityManager;
@@ -34,6 +37,24 @@ class CourseService {
             courses = await this.courseRepo.annotateVocabsByLevel(courses, user.id)
 
         return courseSerializer.serializeList(courses);
+    }
+
+    async createCourse(fields: {
+        language: Language, title: string, description?: string, isPublic?: boolean, image?: string, level?: LanguageLevel
+    }, user: User) {
+        const newCourse = new Course({
+            title: fields.title,
+            addedBy: user.profile,
+            language: fields.language,
+            description: fields.description,
+            image: fields.image,
+            isPublic: fields.isPublic,
+            level: fields.level
+        })
+        this.em.persist(newCourse);
+        await this.em.flush();
+        newCourse.vocabsByLevel = defaultVocabsByLevel();
+        return courseSerializer.serialize(newCourse);
     }
 }
 

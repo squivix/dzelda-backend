@@ -1,3 +1,5 @@
+import {numericEnumValues} from "@/src/utils/utils.js";
+
 export enum VocabLevel {
     IGNORED = -1,
     NEW = 0,
@@ -7,4 +9,8 @@ export enum VocabLevel {
     LEVEL_4 = 4,
     LEARNED = 5,
     KNOWN = 5,
+}
+
+export function defaultVocabsByLevel() {
+    return numericEnumValues(VocabLevel).reduce((a, v) => ({...a, [v]: 0}), {}) as Record<VocabLevel, number>
 }

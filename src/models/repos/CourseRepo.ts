@@ -1,7 +1,8 @@
 import {EntityRepository} from "@mikro-orm/postgresql";
-import {VocabLevel} from "@/src/models/enums/VocabLevel.js";
+import {defaultVocabsByLevel, VocabLevel} from "@/src/models/enums/VocabLevel.js";
 import {numericEnumValues} from "@/src/utils/utils.js";
 import {Course} from "@/src/models/entities/Course.js";
+import CourseService from "@/src/services/CourseService.js";
 
 export class CourseRepo extends EntityRepository<Course> {
 
@@ -19,8 +20,9 @@ FROM (SELECT subq.course_id                          AS id,
             GROUP BY lesson.course_id, mlv2.level 
             ORDER BY lesson.course_id) AS subq 
       GROUP BY subq.course_id) as outq`;
+
         const vocabsLevelsByCourse = (await this.em.execute(query))[0].vocab_levels_by_course
-        const defaultCounts = numericEnumValues(VocabLevel).reduce((a, v) => ({...a, [v]: 0}), {})
+        const defaultCounts = defaultVocabsByLevel();
         courses.forEach(course => {
             course.vocabsByLevel = Object.assign({}, defaultCounts, vocabsLevelsByCourse?.[course.id] ?? {});
         })

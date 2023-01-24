@@ -1,6 +1,6 @@
 import {beforeEach, describe, expect, test} from "vitest";
 import {orm} from "@/src/server.js";
-import {buildQueryString, fetchRequest} from "@/tests/api/utils.js";
+import {buildQueryString, fetchRequest, fetchWithFileUrls} from "@/tests/api/utils.js";
 import {UserFactory} from "@/src/seeders/factories/UserFactory.js";
 import {SessionFactory} from "@/src/seeders/factories/SessionFactory.js";
 import {ProfileFactory} from "@/src/seeders/factories/ProfileFactory.js";
@@ -12,15 +12,20 @@ import {InjectOptions} from "light-my-request";
 import {LanguageFactory} from "@/src/seeders/factories/LanguageFactory.js";
 import {faker} from "@faker-js/faker";
 import {randomCase} from "@/tests/utils.js";
+import {LanguageLevel} from "@/src/models/enums/LanguageLevel.js";
+import {defaultVocabsByLevel} from "@/src/models/enums/VocabLevel.js";
+// @ts-ignore
+import formAutoContent from "form-auto-content";
 
 // beforeEach(truncateDb);
+
 
 interface LocalTestContext {
     userFactory: UserFactory;
     profileFactory: ProfileFactory;
     sessionFactory: SessionFactory;
     courseRepo: CourseRepo;
-    langaugeFactory: LanguageFactory;
+    languageFactory: LanguageFactory;
     courseFactory: CourseFactory;
 }
 
@@ -31,7 +36,7 @@ beforeEach<LocalTestContext>((context) => {
     context.profileFactory = new ProfileFactory(context.em);
     context.sessionFactory = new SessionFactory(context.em);
     context.courseFactory = new CourseFactory(context.em);
-    context.langaugeFactory = new LanguageFactory(context.em);
+    context.languageFactory = new LanguageFactory(context.em);
     context.courseRepo = context.em.getRepository(Course) as CourseRepo;
 });
 
@@ -57,7 +62,7 @@ describe("GET /courses/", function () {
     })
     describe("test languageCode filter", () => {
         test<LocalTestContext>("If language filter is valid and language exists only return public courses in that language", async (context) => {
-            const language = await context.langaugeFactory.createOne();
+            const language = await context.languageFactory.createOne();
             await context.courseFactory.create(5, {language: language});
             await context.courseFactory.create(5);
 
@@ -199,4 +204,99 @@ describe("GET /courses/", function () {
         expect(response.json()).toEqual(courseSerializer.serializeList(courses));
     });
 
+});
+
+
+/**@link CourseController#createCourse*/
+describe("POST /courses/", function () {
+    const makeRequest = async (body: { data: object; files: { image: string } }, authToken?: string) => {
+        return await fetchWithFileUrls({
+            options: {
+                method: "POST",
+                url: "courses/",
+                body: {
+                    data: body.data,
+                    files: [{key: "image", url: body.files.image, name: "course-image", type: "image"}]
+                },
+            },
+            authToken: authToken
+        })
+    };
+
+    describe("If all fields are valid a new course should be created and return 201", () => {
+        test<LocalTestContext>("If optional fields are missing use default values", async (context) => {
+            const user = await context.userFactory.createOne();
+            const session = await context.sessionFactory.createOne({user: user});
+            const language = await context.languageFactory.createOne()
+
+
+            const newCourse = context.courseFactory.makeOne({
+                description: "",
+                isPublic: true,
+                lessons: [],
+                addedBy: user.profile,
+                language: language,
+                level: LanguageLevel.ADVANCED_1,
+                image: "",
+                vocabsByLevel: defaultVocabsByLevel()
+            });
+
+            const response = await makeRequest({
+                data: {
+                    title: newCourse.title,
+                    language: language.code,
+                },
+                files: {image: newCourse.image}
+            }, session.token);
+
+            expect(response.statusCode).to.equal(201);
+            expect(response.json()).toEqual(expect.objectContaining(courseSerializer.serialize(newCourse)));
+        });
+        test<LocalTestContext>("If optional fields are provided use provided values", async (context) => {
+            const user = await context.userFactory.createOne();
+            const session = await context.sessionFactory.createOne({user: user});
+            const language = await context.languageFactory.createOne()
+
+            const newCourse = context.courseFactory.makeOne({
+                addedBy: user.profile,
+                language: language,
+                lessons: [],
+                vocabsByLevel: defaultVocabsByLevel()
+            });
+            const response = await makeRequest({
+                data: {
+                    title: newCourse.title,
+                    description: newCourse.description,
+                    language: language.code,
+                    isPublic: newCourse.isPublic,
+                    level: newCourse.level,
+                },
+                files: {image: newCourse.image}
+            }, session.token);
+
+            expect(response.statusCode).to.equal(201);
+            expect(response.json()).toEqual(expect.objectContaining(courseSerializer.serialize(newCourse, {hiddenFields: ["image"]})));
+        });
+    })
+
+    test<LocalTestContext>("If user not logged in return 401", async (context) => {
+        const language = await context.languageFactory.createOne()
+        const newCourse = context.courseFactory.makeOne({language: language});
+
+        const response = await makeRequest({
+            data: {
+                title: newCourse.title,
+                language: language.code,
+            },
+            files: {image: newCourse.image}
+        });
+
+        expect(response.statusCode).to.equal(401);
+    });
+    describe("If required fields are missing return 400", async () => {
+
+    });
+    describe("If fields are invalid return 400", async () => {
+
+    });
 });

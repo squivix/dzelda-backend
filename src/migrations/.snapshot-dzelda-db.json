@@ -712,6 +712,7 @@
           "primary": false,
           "nullable": false,
           "length": 500,
+          "default": "''",
           "mappedType": "string"
         },
         "language_id": {
@@ -729,9 +730,9 @@
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
-          "nullable": true,
+          "nullable": false,
           "length": 500,
-          "default": "null",
+          "default": "''",
           "mappedType": "string"
         },
         "is_public": {
@@ -760,6 +761,7 @@
           "autoincrement": false,
           "primary": false,
           "nullable": false,
+          "default": "'advanced1'",
           "enumItems": [
             "beginner1",
             "beginner2",
@@ -867,9 +869,9 @@
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
-          "nullable": true,
+          "nullable": false,
           "length": 500,
-          "default": "null",
+          "default": "''",
           "mappedType": "string"
         },
         "image": {
@@ -878,9 +880,9 @@
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
-          "nullable": true,
+          "nullable": false,
           "length": 500,
-          "default": "null",
+          "default": "''",
           "mappedType": "string"
         },
         "course_id": {

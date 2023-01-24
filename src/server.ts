@@ -7,6 +7,7 @@ import {MikroORM} from "@mikro-orm/postgresql";
 import fastifyStatic from "@fastify/static";
 import path from 'path';
 import {fileURLToPath} from 'node:url';
+import multer from "fastify-multer";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -17,12 +18,11 @@ export const passwordHasher: PasswordHasher = new PKDF2Hasher();
 
 export const server = Fastify({logger: {transport: {target: "@fastify/one-line-logger"}}});
 export const orm = await MikroORM.init(options);
-
 server.register(fastifyStatic, {
     root: path.join(__dirname, "..", "..", "public"),
     prefix: '/public/',
 })
+server.register(multer.contentParser)
 server.register(rootRouter, {prefix: API_ROOT});
 
 server.setErrorHandler(errorHandler);
-

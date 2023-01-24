@@ -1,6 +1,6 @@
 import { Migration } from '@mikro-orm/migrations';
 
-export class Migration20230121101614 extends Migration {
+export class Migration20230123080353 extends Migration {
 
   async up(): Promise<void> {
     this.addSql('create table "language" ("id" serial primary key, "code" varchar(4) not null, "name" varchar(255) not null, "greeting" varchar(255) not null, "flag" varchar(500) null default null, "flag_circular" varchar(500) null default null, "flag_emoji" varchar(32) null default null, "is_supported" boolean not null default false, "level_thresholds" jsonb not null default \'{"beginner1": 0,"beginner2": 1000,"intermediate1": 5000,"intermediate2": 12000,"advanced1": 20000,"advanced2": 30000}\');');
@@ -26,11 +26,11 @@ export class Migration20230121101614 extends Migration {
     this.addSql('create table "map_learner_dictionary" ("id" serial primary key, "dictionary_id" int not null, "learner_id" int not null);');
     this.addSql('alter table "map_learner_dictionary" add constraint "map_learner_dictionary_learner_id_dictionary_id_unique" unique ("learner_id", "dictionary_id");');
 
-    this.addSql('create table "course" ("id" serial primary key, "title" varchar(255) not null, "description" varchar(500) not null, "language_id" int not null, "image" varchar(500) null default null, "is_public" boolean not null default true, "added_by_id" int not null, "level" text check ("level" in (\'beginner1\', \'beginner2\', \'intermediate1\', \'intermediate2\', \'advanced1\', \'advanced2\')) not null);');
+    this.addSql('create table "course" ("id" serial primary key, "title" varchar(255) not null, "description" varchar(500) not null default \'\', "language_id" int not null, "image" varchar(500) not null default \'\', "is_public" boolean not null default true, "added_by_id" int not null, "level" text check ("level" in (\'beginner1\', \'beginner2\', \'intermediate1\', \'intermediate2\', \'advanced1\', \'advanced2\')) not null default \'advanced1\');');
     this.addSql('create index "course_added_by_id_index" on "course" ("added_by_id");');
     this.addSql('create index "course_language_id_index" on "course" ("language_id");');
 
-    this.addSql('create table "lesson" ("id" serial primary key, "title" varchar(124) not null, "text" text not null, "audio" varchar(500) null default null, "image" varchar(500) null default null, "course_id" int not null, "order_in_course" int not null default 0, "added_on" timestamptz(0) not null default now());');
+    this.addSql('create table "lesson" ("id" serial primary key, "title" varchar(124) not null, "text" text not null, "audio" varchar(500) not null default \'\', "image" varchar(500) not null default \'\', "course_id" int not null, "order_in_course" int not null default 0, "added_on" timestamptz(0) not null default now());');
     this.addSql('create index "lesson_course_id_index" on "lesson" ("course_id");');
 
     this.addSql('create table "map_learner_lesson" ("id" serial primary key, "lesson_id" int not null, "learner_id" int not null);');

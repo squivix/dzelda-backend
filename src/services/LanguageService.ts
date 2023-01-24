@@ -27,7 +27,7 @@ class LanguageService {
     }
 
     async getLanguage(code: string) {
-        const language = await this.languageRepo.findOneOrFail({code});
+        const language = await this.languageRepo.findOne({code});
         await this.em.flush();
         return language;
     }

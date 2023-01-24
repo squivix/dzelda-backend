@@ -11,16 +11,32 @@ import {CourseRepo} from "@/src/models/repos/CourseRepo.js";
 @Index({properties: ['language']})
 @Index({properties: ['addedBy']})
 export class Course extends CustomBaseEntity {
+    constructor({title, language, addedBy, description, image, isPublic, level}:
+                    { addedBy: Profile; language: Language; title: string; description?: string; image?: string; isPublic?: boolean; level?: LanguageLevel }) {
+        super();
+        this.title = title;
+        this.language = language;
+        this.addedBy = addedBy;
+        if (description !== undefined)
+            this.description = description;
+        if (image !== undefined)
+            this.image = image;
+        if (isPublic !== undefined)
+            this.isPublic = isPublic;
+        if (level !== undefined)
+            this.level = level;
+    }
+
     @Property({type: types.string, length: 255})
     title!: string;
 
-    @Property({type: types.string, length: 500})
+    @Property({type: types.string, length: 500, default: ""})
     description!: string;
 
     @ManyToOne({entity: () => Language, inversedBy: (language) => language.courses})
     language!: Language;
 
-    @Property({type: types.string, length: 500, nullable: true, default: null})
+    @Property({type: types.string, length: 500, default: ""})
     image!: string;
 
     @Property({type: types.boolean, default: true})
@@ -29,7 +45,7 @@ export class Course extends CustomBaseEntity {
     @ManyToOne({entity: () => Profile, inversedBy: (profile) => profile.coursesAdded})
     addedBy!: Profile;
 
-    @Enum({items: () => LanguageLevel, type: types.enum})
+    @Enum({items: () => LanguageLevel, type: types.enum, default: LanguageLevel.ADVANCED_1})
     level!: LanguageLevel;
 
     @OneToMany({entity: () => Lesson, mappedBy: (lesson) => lesson.course})

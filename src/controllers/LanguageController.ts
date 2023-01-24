@@ -53,7 +53,7 @@ class LanguageController {
         const body = bodyValidator.parse(request.body);
         const languageService = new LanguageService(request.em);
         const language = await languageService.getLanguage(body.code);
-        if (language == null)
+        if (!language)
             throw new NotFoundAPIError("Language");
 
         const newLanguageMapping = await languageService.addLanguageToUser(user, language);

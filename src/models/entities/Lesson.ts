@@ -17,10 +17,10 @@ export class Lesson extends CustomBaseEntity {
     @Property({type: types.text, length: 50_000})
     text!: string;
 
-    @Property({type: types.string, length: 500, nullable: true, default: null})
+    @Property({type: types.string, length: 500, default: ""})
     audio!: string;
 
-    @Property({type: types.string, length: 500, nullable: true, default: null})
+    @Property({type: types.string, length: 500, default: ""})
     image!: string;
 
     @ManyToOne({entity: () => Course, inversedBy: (course) => course.lessons})

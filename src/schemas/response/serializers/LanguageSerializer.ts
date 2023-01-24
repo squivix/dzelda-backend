@@ -18,7 +18,7 @@ class LanguageSerializer extends CustomEntitySerializer<Language, LanguageListSc
             flagEmoji: language.flagEmoji,
             isSupported: language.isSupported,
             levelThresholds: language.levelThresholds,
-            learnersCount: Number(language.learnersCount)
+            learnersCount: Number(language.learnersCount ?? language?.learners?.count())
         }
     }
 }

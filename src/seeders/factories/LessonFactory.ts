@@ -13,6 +13,7 @@ export class LessonFactory extends CustomFactory<Lesson> {
             title: faker.random.words(faker.datatype.number({min: 4, max: 10})),
             text: faker.random.words(faker.datatype.number({min: 50, max: 100})),
             image: faker.image.imageUrl(100, 100),
+            audio: "https://upload.wikimedia.org/wikipedia/commons/d/de/Lorem_ipsum.ogg"
         };
     }
 

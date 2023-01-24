@@ -13,9 +13,10 @@ class CourseSerializer extends CustomEntitySerializer<Course, CourseListSchema |
     serialize(course: Course, {
         mode,
         hiddenFields
-    }: { mode?: SerializationMode; hiddenFields?: (keyof CourseListSchema | CourseDetailsSchema)[] } = {}): CourseListSchema | CourseDetailsSchema {
+    }: { mode?: SerializationMode; hiddenFields?: (keyof CourseListSchema | keyof CourseDetailsSchema)[] } = {}): CourseListSchema | CourseDetailsSchema {
+        let coursePojo;
         if (mode === SerializationMode.LIST) {
-            return {
+            coursePojo = {
                 id: course.id,
                 title: course.title,
                 description: course.description,
@@ -27,7 +28,7 @@ class CourseSerializer extends CustomEntitySerializer<Course, CourseListSchema |
                 vocabsByLevel: course.vocabsByLevel
             };
         } else {
-            return {
+            coursePojo = {
                 id: course.id,
                 title: course.title,
                 description: course.description,
@@ -40,6 +41,12 @@ class CourseSerializer extends CustomEntitySerializer<Course, CourseListSchema |
                 vocabsByLevel: course.vocabsByLevel
             };
         }
+        if (hiddenFields) {
+            for (const field of hiddenFields)
+                delete coursePojo[field];
+        }
+
+        return cleanObject(coursePojo);
     }
 }
 
