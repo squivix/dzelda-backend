@@ -16,6 +16,7 @@ import {LanguageLevel} from "@/src/models/enums/LanguageLevel.js";
 import {defaultVocabsByLevel} from "@/src/models/enums/VocabLevel.js";
 // @ts-ignore
 import formAutoContent from "form-auto-content";
+import fs from "fs-extra";
 
 // beforeEach(truncateDb);
 
@@ -209,14 +210,16 @@ describe("GET /courses/", function () {
 
 /**@link CourseController#createCourse*/
 describe("POST /courses/", function () {
-    const makeRequest = async (body: { data: object; files: { image: string } }, authToken?: string) => {
+    const makeRequest = async ({data, files = {}}: {
+        data: object; files?: { [key: string]: { value: string | Buffer; name: string, mimeType?: string, fallbackType: "image" | "audio" } | "" }
+    }, authToken?: string) => {
         return await fetchWithFileUrls({
             options: {
                 method: "POST",
                 url: "courses/",
                 body: {
-                    data: body.data,
-                    files: [{key: "image", url: body.files.image, name: "course-image", type: "image"}]
+                    data: data,
+                    files: files
                 },
             },
             authToken: authToken
@@ -246,7 +249,7 @@ describe("POST /courses/", function () {
                     title: newCourse.title,
                     language: language.code,
                 },
-                files: {image: newCourse.image}
+                files: {image: ""}
             }, session.token);
 
             expect(response.statusCode).to.equal(201);
@@ -271,11 +274,12 @@ describe("POST /courses/", function () {
                     isPublic: newCourse.isPublic,
                     level: newCourse.level,
                 },
-                files: {image: newCourse.image}
+                files: {image: {value: newCourse.image, fallbackType: "image", name: "course-image"}}
             }, session.token);
 
             expect(response.statusCode).to.equal(201);
             expect(response.json()).toEqual(expect.objectContaining(courseSerializer.serialize(newCourse, {hiddenFields: ["image"]})));
+            expect(fs.existsSync(response.json().image))
         });
     })
 
@@ -288,13 +292,12 @@ describe("POST /courses/", function () {
                 title: newCourse.title,
                 language: language.code,
             },
-            files: {image: newCourse.image}
+            files: {image: ""}
         });
 
         expect(response.statusCode).to.equal(401);
     });
     describe("If required fields are missing return 400", async () => {
-
     });
     describe("If fields are invalid return 400", async () => {
 
