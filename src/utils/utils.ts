@@ -1,4 +1,9 @@
 import {z, ZodRawShape} from "zod";
+import imageSize from "image-size";
+import {UnsupportedMediaTypeAPIError} from "@/src/utils/errors/UnsupportedMediaTypeAPIError.js";
+import {fileMimeTypes} from "@/src/middlewares/fileUploadMiddleWare.js";
+import {ValidationAPIError} from "@/src/utils/errors/ValidationAPIError.js";
+import {File} from "fastify-multer/src/interfaces.js";
 
 export function toCapitalizedCase(string: string) {
     return string.charAt(0).toUpperCase() + string.slice(1);
@@ -30,4 +35,19 @@ export function parseIgnoreInvalidFields<T extends ZodRawShape>(validator: z.Zod
             delete value?.[k];
     })
     return validator.parse(value);
+}
+
+export function validateSquareImage(image: Partial<File>, imageFieldName = "image") {
+    if (!image.path)
+        return
+    let dimensions;
+    try {
+        dimensions = imageSize(image.path);
+    } catch (e) {
+        if (e instanceof TypeError)
+            throw new UnsupportedMediaTypeAPIError(imageFieldName, fileMimeTypes["image"]);
+    }
+    if (dimensions && dimensions.width !== dimensions.height)
+        throw new ValidationAPIError({image: {message: "image width and height must be the same"}});
+
 }

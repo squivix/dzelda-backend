@@ -9,6 +9,7 @@ import {courseDescriptionValidator, courseTitleValidator} from "@/src/validators
 import LanguageService from "@/src/services/LanguageService.js";
 import {ValidationAPIError} from "@/src/utils/errors/ValidationAPIError.js";
 import {LanguageLevel} from "@/src/models/enums/LanguageLevel.js";
+import {validateSquareImage} from "@/src/utils/utils.js";
 
 class CourseController {
     async getCourses(request: FastifyRequest, reply: FastifyReply) {
@@ -35,9 +36,13 @@ class CourseController {
             title: courseTitleValidator,
             description: courseDescriptionValidator.optional(),
             isPublic: z.boolean().optional(),
-            level: z.nativeEnum(LanguageLevel).optional()
+            level: z.nativeEnum(LanguageLevel).optional(),
         });
         const body = bodyValidator.parse((request.body as any).data);
+        const image = request.files?.["image"]?.[0];
+        if (image && image.path)
+            validateSquareImage(image)
+
 
         const languageService = new LanguageService(request.em);
         const language = await languageService.getLanguage(body.language)
@@ -50,7 +55,7 @@ class CourseController {
             title: body.title,
             description: body.description,
             isPublic: body.isPublic,
-            image: request.files?.["image"]?.[0]?.path,
+            image: image?.path,
             level: body.level
         }, request.user as User);
         reply.status(201).send(course);

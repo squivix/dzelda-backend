@@ -42,7 +42,7 @@ class CourseService {
     async createCourse(fields: {
         language: Language, title: string, description?: string, isPublic?: boolean, image?: string, level?: LanguageLevel
     }, user: User) {
-        const newCourse = new Course({
+        const newCourse = await this.courseRepo.create({
             title: fields.title,
             addedBy: user.profile,
             language: fields.language,
@@ -51,8 +51,6 @@ class CourseService {
             isPublic: fields.isPublic,
             level: fields.level
         })
-        this.em.persist(newCourse);
-        await this.em.flush();
         newCourse.vocabsByLevel = defaultVocabsByLevel();
         return courseSerializer.serialize(newCourse);
     }

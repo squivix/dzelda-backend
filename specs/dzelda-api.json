@@ -275,6 +275,9 @@
           },
           "400": {
             "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
           }
         },
         "operationId": "get-courses",
@@ -287,7 +290,7 @@
               "maxLength": 4
             },
             "in": "query",
-            "name": "language"
+            "name": "languageCode"
           },
           {
             "schema": {
@@ -348,6 +351,12 @@
           },
           "401": {
             "$ref": "#/components/responses/Unauthenticated"
+          },
+          "413": {
+            "$ref": "#/components/responses/RequestTooLarge"
+          },
+          "415": {
+            "$ref": "#/components/responses/UnsupportedMediaType"
           }
         },
         "requestBody": {
@@ -370,6 +379,9 @@
                       },
                       "isPublic": {
                         "type": "boolean"
+                      },
+                      "level": {
+                        "type": "string"
                       }
                     },
                     "required": [
@@ -2424,7 +2436,7 @@
     },
     "responses": {
       "Unauthenticated": {
-        "description": "",
+        "description": "User is not authenticated or invalid authentication credentials.",
         "content": {
           "application/json": {
             "schema": {
@@ -2457,7 +2469,7 @@
         "headers": {}
       },
       "NotFound": {
-        "description": "",
+        "description": "Resource not found.",
         "content": {
           "application/json": {
             "schema": {
@@ -2488,7 +2500,7 @@
         }
       },
       "Forbidden": {
-        "description": "",
+        "description": "User is not allowed to perform this operation.",
         "content": {
           "application/json": {
             "schema": {
@@ -2525,7 +2537,7 @@
         "headers": {}
       },
       "BadRequest": {
-        "description": "Bad Request\n\nAt least some fields are invalid or required fields are missing.",
+        "description": "Bad Request\n\nSome fields are invalid or required fields are missing.",
         "content": {
           "application/json": {
             "schema": {
@@ -2561,6 +2573,70 @@
                 "details"
               ]
             }
+          }
+        }
+      },
+      "UnsupportedMediaType": {
+        "description": "Unexpected media type or file mime type",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "x-examples": {},
+              "properties": {
+                "code": {
+                  "type": "integer",
+                  "enum": [
+                    415
+                  ]
+                },
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "Unsupported Media Type"
+                  ]
+                },
+                "message": {
+                  "type": "string"
+                },
+                "details": {
+                  "type": "string"
+                }
+              }
+            },
+            "examples": {}
+          }
+        }
+      },
+      "RequestTooLarge": {
+        "description": "Uploaded files are too large.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "x-examples": {},
+              "properties": {
+                "code": {
+                  "type": "integer",
+                  "enum": [
+                    413
+                  ]
+                },
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "Unsupported Media Type"
+                  ]
+                },
+                "message": {
+                  "type": "string"
+                },
+                "details": {
+                  "type": "string"
+                }
+              }
+            },
+            "examples": {}
           }
         }
       }

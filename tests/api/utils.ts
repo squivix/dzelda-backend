@@ -54,7 +54,7 @@ export async function fetchWithFileUrls(
             headers?: http.IncomingHttpHeaders | http.OutgoingHttpHeaders;
             body: {
                 data: object,
-                files?: { [key: string]: { value: string | Buffer; name: string, mimeType?: string, fallbackType: "image" | "audio" } | "" };
+                files?: { [key: string]: { value: string | Buffer; name?: string, mimeType?: string, fallbackType?: "image" | "audio" } | "" };
             }
         }, authToken?: string
     }) {
@@ -89,7 +89,7 @@ export async function fetchWithFileUrls(
             formData[fileKey] = {
                 value: fileData,
                 options: {
-                    filename: `${file.name}.${mimeTypes.extension(fileType)}`,
+                    filename: `${file.name ?? "untitled"}.${mimeTypes.extension(fileType)}`,
                     contentType: fileType
                 }
             }

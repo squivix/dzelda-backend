@@ -11,12 +11,14 @@ import {CourseRepo} from "@/src/models/repos/CourseRepo.js";
 import {InjectOptions} from "light-my-request";
 import {LanguageFactory} from "@/src/seeders/factories/LanguageFactory.js";
 import {faker} from "@faker-js/faker";
-import {randomCase} from "@/tests/utils.js";
+import {randomCase, randomImage} from "@/tests/utils.js";
 import {LanguageLevel} from "@/src/models/enums/LanguageLevel.js";
 import {defaultVocabsByLevel} from "@/src/models/enums/VocabLevel.js";
 // @ts-ignore
 import formAutoContent from "form-auto-content";
 import fs from "fs-extra";
+import {createCanvas} from "canvas";
+import he from "@faker-js/faker/locales/he/index.js";
 
 // beforeEach(truncateDb);
 
@@ -211,7 +213,7 @@ describe("GET /courses/", function () {
 /**@link CourseController#createCourse*/
 describe("POST /courses/", function () {
     const makeRequest = async ({data, files = {}}: {
-        data: object; files?: { [key: string]: { value: string | Buffer; name: string, mimeType?: string, fallbackType: "image" | "audio" } | "" }
+        data: object; files?: { [key: string]: { value: string | Buffer; name: string, mimeType?: string, fallbackType?: "image" | "audio" } | "" }
     }, authToken?: string) => {
         return await fetchWithFileUrls({
             options: {
@@ -298,8 +300,229 @@ describe("POST /courses/", function () {
         expect(response.statusCode).to.equal(401);
     });
     describe("If required fields are missing return 400", async () => {
+        test<LocalTestContext>("If title is missing return 400", async (context) => {
+            const user = await context.userFactory.createOne();
+            const session = await context.sessionFactory.createOne({user: user});
+            const language = await context.languageFactory.createOne()
+
+            const response = await makeRequest({
+                data: {language: language.code},
+                files: {image: ""}
+            }, session.token);
+
+            expect(response.statusCode).to.equal(400);
+        });
+
+        test<LocalTestContext>("If language is missing return 400", async (context) => {
+            const user = await context.userFactory.createOne();
+            const session = await context.sessionFactory.createOne({user: user});
+
+            const newCourse = context.courseFactory.makeOne();
+            const response = await makeRequest({
+                data: {title: newCourse.title},
+                files: {image: ""}
+            }, session.token);
+
+            expect(response.statusCode).to.equal(400);
+        });
     });
-    describe("If fields are invalid return 400", async () => {
+
+    describe("If fields are invalid return 4xx code", async () => {
+        test<LocalTestContext>("If title is invalid return 400", async (context) => {
+            const user = await context.userFactory.createOne();
+            const session = await context.sessionFactory.createOne({user: user});
+            const language = await context.languageFactory.createOne();
+
+            const response = await makeRequest({
+                data: {
+                    title: faker.random.alpha(300),
+                    language: language.code,
+                },
+                files: {image: ""}
+            }, session.token);
+
+            expect(response.statusCode).to.equal(400);
+        });
+
+        test<LocalTestContext>("If language is invalid return 400", async (context) => {
+            const user = await context.userFactory.createOne();
+            const session = await context.sessionFactory.createOne({user: user});
+            const language = await context.languageFactory.createOne();
+            const newCourse = context.courseFactory.makeOne({language: language})
+
+            const response = await makeRequest({
+                data: {
+                    title: newCourse.title,
+                    language: faker.random.alphaNumeric(10),
+                },
+                files: {image: ""}
+            }, session.token);
+            expect(response.statusCode).to.equal(400);
+        });
+
+        test<LocalTestContext>("If language is not found return 400", async (context) => {
+            const user = await context.userFactory.createOne();
+            const session = await context.sessionFactory.createOne({user: user});
+            const language = await context.languageFactory.createOne();
+            const newCourse = context.courseFactory.makeOne({language: language})
+
+            const response = await makeRequest({
+                data: {
+                    title: newCourse.title,
+                    language: faker.random.alpha(4),
+                },
+                files: {image: ""}
+            }, session.token);
+
+            expect(response.statusCode).to.equal(400);
+        });
+
+
+        test<LocalTestContext>("If description is invalid return 400", async (context) => {
+            const user = await context.userFactory.createOne();
+            const session = await context.sessionFactory.createOne({user: user});
+            const language = await context.languageFactory.createOne();
+            const newCourse = context.courseFactory.makeOne({language: language})
+
+            const response = await makeRequest({
+                data: {
+                    title: newCourse.title,
+                    language: language.code,
+                    description: faker.random.alpha(600)
+                },
+                files: {image: ""}
+            }, session.token);
+
+            expect(response.statusCode).to.equal(400);
+        });
+
+        test<LocalTestContext>("If isPublic is invalid return 400", async (context) => {
+            const user = await context.userFactory.createOne();
+            const session = await context.sessionFactory.createOne({user: user});
+            const language = await context.languageFactory.createOne();
+            const newCourse = context.courseFactory.makeOne({language: language})
+
+            const response = await makeRequest({
+                data: {
+                    title: newCourse.title,
+                    language: language.code,
+                    isPublic: "kinda?"
+                },
+                files: {image: ""}
+            }, session.token);
+            expect(response.statusCode).to.equal(400);
+        });
+
+
+        test<LocalTestContext>("If level is invalid return 400", async (context) => {
+            const user = await context.userFactory.createOne();
+            const session = await context.sessionFactory.createOne({user: user});
+            const language = await context.languageFactory.createOne();
+            const newCourse = context.courseFactory.makeOne({language: language})
+
+            const response = await makeRequest({
+                data: {
+                    title: newCourse.title,
+                    language: language.code,
+                    level: "high"
+                },
+                files: {image: ""}
+            }, session.token);
+
+            expect(response.statusCode).to.equal(400);
+        });
+
+        describe("If image is invalid return 415", () => {
+            test<LocalTestContext>("If image is not a jpeg or png return 415", async (context) => {
+                const user = await context.userFactory.createOne();
+                const session = await context.sessionFactory.createOne({user: user});
+                const language = await context.languageFactory.createOne();
+                const newCourse = context.courseFactory.makeOne({language: language})
+
+                const response = await makeRequest({
+                    data: {
+                        title: newCourse.title,
+                        language: language.code,
+                    },
+                    files: {
+                        image: {
+                            value: "https://upload.wikimedia.org/wikipedia/commons/d/de/Lorem_ipsum.ogg",
+                            fallbackType: "audio",
+                            name: "course-image"
+                        }
+                    }
+                }, session.token);
+                expect(response.statusCode).to.equal(415);
+            });
+            test<LocalTestContext>("If image is in the right format but is malformed return 415", async (context) => {
+                const user = await context.userFactory.createOne();
+                const session = await context.sessionFactory.createOne({user: user});
+                const language = await context.languageFactory.createOne();
+                const newCourse = context.courseFactory.makeOne({language: language})
+
+                const response = await makeRequest({
+                    data: {
+                        title: newCourse.title,
+                        language: language.code,
+                    },
+                    files: {
+                        image: {
+                            //audio base 64 but with image mimetype
+                            value: Buffer.from("UklGRiwAAABXQVZFZm10IBAAAAABAAIARKwAABCxAgAEABAAZGF0YQgAAACwNvFldza4ZQ", "base64"),
+                            mimeType: "image/png",
+                            name: "course-image"
+                        }
+                    }
+                }, session.token);
+                expect(response.statusCode).to.equal(415);
+            });
+
+            test<LocalTestContext>("If the image file is more than 500KB return 413", async (context) => {
+                const user = await context.userFactory.createOne();
+                const session = await context.sessionFactory.createOne({user: user});
+                const language = await context.languageFactory.createOne();
+                const newCourse = context.courseFactory.makeOne({language: language})
+
+                const response = await makeRequest({
+                    data: {
+                        title: newCourse.title,
+                        language: language.code,
+                    },
+                    files: {
+                        image: {
+                            value: randomImage(1000, 1000),
+                            mimeType: "image/png",
+                            name: "course-image"
+                        }
+                    }
+                }, session.token);
+
+                expect(response.statusCode).to.equal(413);
+            });
+
+            test<LocalTestContext>("If the image is not square 400", async (context) => {
+                const user = await context.userFactory.createOne();
+                const session = await context.sessionFactory.createOne({user: user});
+                const language = await context.languageFactory.createOne();
+                const newCourse = context.courseFactory.makeOne({language: language})
+
+                const response = await makeRequest({
+                    data: {
+                        title: newCourse.title,
+                        language: language.code,
+                    },
+                    files: {
+                        image: {
+                            value: randomImage(256, 128),
+                            mimeType: "image/png",
+                            name: "course-image"
+                        }
+                    }
+                }, session.token);
+
+                expect(response.statusCode).to.equal(400);
+            });
+        })
 
     });
 });

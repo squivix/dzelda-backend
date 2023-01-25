@@ -4,6 +4,8 @@ import {FastifyError, FastifyReply, FastifyRequest} from "fastify";
 import {APIError} from "@/src/utils/errors/APIError.js";
 import {FieldsObject, ValidationAPIError} from "@/src/utils/errors/ValidationAPIError.js";
 import {NotFoundAPIError} from "@/src/utils/errors/NotFoundAPIError.js";
+import MulterError from "fastify-multer/lib/lib/multer-error.js";
+import {FilesTooLargeAPIError} from "@/src/utils/errors/FilesTooLargeAPIError.js";
 
 const isFastifyError = (error: Error): error is FastifyError => {
     return error.name === "FastifyError";
@@ -31,8 +33,10 @@ export const errorHandler = (error: Error, request: FastifyRequest, reply: Fasti
         const field = (error as any).detail?.match(/\(([^)]*)\)/)?.pop();
         if (field)
             apiError = new ValidationAPIError({[field]: {message: "not unique"}});
+    } else if (error instanceof MulterError && error.code === "LIMIT_FILE_SIZE") {
+        apiError = new FilesTooLargeAPIError();
     } else if (isFastifyError(error)) {
-        if (error.statusCode && error.statusCode! < 500)
+        if (error.statusCode && error.statusCode < 500)
             apiError = new APIError(error.statusCode, error.message)
     }
 
