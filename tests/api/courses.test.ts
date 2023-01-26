@@ -19,6 +19,7 @@ import formAutoContent from "form-auto-content";
 import fs from "fs-extra";
 import {createCanvas} from "canvas";
 import he from "@faker-js/faker/locales/he/index.js";
+import {userSerializer} from "@/src/schemas/response/serializers/UserSerializer.js";
 
 // beforeEach(truncateDb);
 
@@ -50,9 +51,7 @@ describe("GET /courses/", function () {
             method: "GET",
             url: `courses/${buildQueryString(queryParams)}`,
         };
-        if (authToken)
-            options.headers = {authorization: `Bearer ${authToken}`};
-        return await fetchRequest(options);
+        return await fetchRequest(options, authToken);
     };
 
     test<LocalTestContext>("If there are no filters return all public courses", async (context) => {
@@ -526,3 +525,68 @@ describe("POST /courses/", function () {
 
     });
 });
+
+
+/**@link CourseController#getCourse*/
+describe("GET /courses/:courseId", function () {
+    const makeRequest = async (courseId: number, authToken?: string) => {
+        const options: InjectOptions = {
+            method: "GET",
+            url: `courses/${courseId}`,
+        };
+        return await fetchRequest(options, authToken);
+    };
+    describe("If the course exists and is public return the course", () => {
+        test<LocalTestContext>("If the user is not logged in return course and lessons without vocab levels", async (context) => {
+            const course = await context.courseFactory.createOne({isPublic: true});
+
+            const response = await makeRequest(course.id);
+
+            expect(response.statusCode).to.equal(200);
+            expect(response.json()).toEqual(courseSerializer.serialize(course));
+        });
+        test<LocalTestContext>("If the user is logged in return course and lessons with vocab levels", async (context) => {
+            const user = await context.userFactory.createOne();
+            const session = await context.sessionFactory.createOne({user: user})
+            const course = await context.courseFactory.createOne({isPublic: true});
+
+            const response = await makeRequest(course.id, session.token);
+
+            await context.courseRepo.annotateVocabsByLevel([course], user.id);
+            expect(response.statusCode).to.equal(200);
+            expect(response.json()).toEqual(courseSerializer.serialize(course));
+        });
+    });
+    test<LocalTestContext>("If the course does not exist return 404", async (context) => {
+        const response = await makeRequest(Number(faker.random.numeric(8)));
+        expect(response.statusCode).to.equal(404);
+    });
+    test<LocalTestContext>("If the course is not public and the user is not logged in return 404", async (context) => {
+        const course = await context.courseFactory.createOne({isPublic: false});
+
+        const response = await makeRequest(course.id);
+
+        expect(response.statusCode).to.equal(404);
+    });
+    test<LocalTestContext>("If the course is not public and the user is logged in as a non-author return 404", async (context) => {
+        const author = await context.userFactory.createOne();
+        const course = await context.courseFactory.createOne({isPublic: false, addedBy: author.profile});
+        const otherUser = await context.userFactory.createOne();
+        const session = await context.sessionFactory.createOne({user: otherUser})
+
+        const response = await makeRequest(course.id, session.token);
+
+        expect(response.statusCode).to.equal(404);
+    });
+    test<LocalTestContext>("If the course is not public and the user is logged in as author return course with vocabs by level", async (context) => {
+        const author = await context.userFactory.createOne();
+        const course = await context.courseFactory.createOne({isPublic: false, addedBy: author.profile});
+        const session = await context.sessionFactory.createOne({user: author})
+
+        const response = await makeRequest(course.id, session.token);
+
+        await context.courseRepo.annotateVocabsByLevel([course], author.id);
+        expect(response.statusCode).to.equal(200);
+        expect(response.json()).toEqual(courseSerializer.serialize(course));
+    });
+})

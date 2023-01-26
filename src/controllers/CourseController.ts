@@ -10,6 +10,8 @@ import LanguageService from "@/src/services/LanguageService.js";
 import {ValidationAPIError} from "@/src/utils/errors/ValidationAPIError.js";
 import {LanguageLevel} from "@/src/models/enums/LanguageLevel.js";
 import {validateSquareImage} from "@/src/utils/utils.js";
+import {NotFoundAPIError} from "@/src/utils/errors/NotFoundAPIError.js";
+import {courseSerializer} from "@/src/schemas/response/serializers/CourseSerializer.js";
 
 class CourseController {
     async getCourses(request: FastifyRequest, reply: FastifyReply) {
@@ -27,7 +29,7 @@ class CourseController {
 
         const courseService = new CourseService(request.em);
         const courses = await courseService.getCourses(queryParams, request.user);
-        reply.send(courses);
+        reply.send(courseSerializer.serializeList(courses));
     }
 
     async createCourse(request: FastifyRequest, reply: FastifyReply) {
@@ -58,7 +60,19 @@ class CourseController {
             image: image?.path,
             level: body.level
         }, request.user as User);
-        reply.status(201).send(course);
+        reply.status(201).send(courseSerializer.serialize(course));
+    }
+
+    async getCourse(request: FastifyRequest, reply: FastifyReply) {
+        const validator = z.object({courseId: z.string().regex(/^\d+$/).transform(Number)});
+        const pathParams = validator.parse(request.params);
+
+        const courseService = new CourseService(request.em);
+        const course = await courseService.getCourse(pathParams.courseId, request.user);
+
+        if (!course || (!course.isPublic && request?.user?.profile !== course.addedBy))
+            throw new NotFoundAPIError("Course");
+        reply.status(200).send(courseSerializer.serialize(course));
     }
 }
 

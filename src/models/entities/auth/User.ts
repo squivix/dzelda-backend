@@ -47,4 +47,5 @@ export class User extends CustomBaseEntity {
 
 export class AnonymousUser {
     readonly username = "anonymous_user";
+    readonly profile: Profile | null = null;
 }

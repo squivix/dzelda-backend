@@ -19,7 +19,7 @@ class LessonService {
         let lessons = await this.lessonRepo.find({}, {populate: ["course", "course.addedBy.user"]});
         if (user && !(user instanceof AnonymousUser))
             lessons = await this.lessonRepo.annotateVocabsByLevel(lessons, user.id);
-        return lessonSerializer.serializeList(lessons);
+        return lessons;
     }
 }
 

@@ -6,6 +6,7 @@ import {AnonymousUser, User} from "@/src/models/entities/auth/User.js";
 import {Language} from "@/src/models/entities/Language.js";
 import {defaultVocabsByLevel, VocabLevel} from "@/src/models/enums/VocabLevel.js";
 import {LanguageLevel} from "@/src/models/enums/LanguageLevel.js";
+import {UnauthenticatedAPIError} from "@/src/utils/errors/UnauthenticatedAPIError.js";
 
 class CourseService {
     em: EntityManager;
@@ -36,7 +37,7 @@ class CourseService {
         if (courses.length > 0 && user && !(user instanceof AnonymousUser))
             courses = await this.courseRepo.annotateVocabsByLevel(courses, user.id)
 
-        return courseSerializer.serializeList(courses);
+        return courses;
     }
 
     async createCourse(fields: {
@@ -52,7 +53,14 @@ class CourseService {
             level: fields.level
         })
         newCourse.vocabsByLevel = defaultVocabsByLevel();
-        return courseSerializer.serialize(newCourse);
+        return newCourse;
+    }
+
+    async getCourse(courseId: number, user: User | AnonymousUser | null) {
+        let course = await this.courseRepo.findOne({id: courseId}, {populate: ["language", "addedBy", "addedBy.user", "addedBy.languagesLearning", "lessons"]});
+        if (course && user && !(user instanceof AnonymousUser))
+            await this.courseRepo.annotateVocabsByLevel([course], user.id);
+        return course;
     }
 }
 

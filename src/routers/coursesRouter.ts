@@ -7,11 +7,12 @@ export const coursesRouter: FastifyPluginCallback = function (fastify, options, 
     fastify.get(`/courses/`, CourseController.getCourses);
 
     fastify.post(`/courses/`, {
-        preHandler: [requiresAuth, ...uploadMiddleWares({
-            "image": {path: "public/media/courses/images", type: "image", maxSize: 500 * 1024}
-        })],
+        preHandler: [requiresAuth,
+            ...uploadMiddleWares({"image": {path: "public/media/courses/images", type: "image", maxSize: 500 * 1024}})],
         handler: CourseController.createCourse,
         onResponse: deleteFileOnFail
     });
+
+    fastify.get(`/courses/:courseId`, CourseController.getCourse);
     done();
 };

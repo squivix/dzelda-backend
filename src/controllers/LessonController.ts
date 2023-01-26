@@ -2,6 +2,7 @@ import {FastifyReply, FastifyRequest} from "fastify";
 import {z} from "zod";
 import LessonService from "@/src/services/LessonService.js";
 import {AnonymousUser} from "@/src/models/entities/auth/User.js";
+import {lessonSerializer} from "@/src/schemas/response/serializers/LessonSerializer.js";
 
 class LessonController {
     async getLessons(request: FastifyRequest, reply: FastifyReply) {
@@ -12,7 +13,7 @@ class LessonController {
 
         const filters = {};
         const lessons = await lessonService.getLessons(filters, request.user);
-        reply.send(lessons);
+        reply.send(lessonSerializer.serializeList(lessons));
     }
 }
 

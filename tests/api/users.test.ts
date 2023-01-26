@@ -186,15 +186,13 @@ describe("POST /users", function () {
 });
 
 /**{@link UserController#getUser}*/
-describe("GET /users/:username/", function () {
+describe("GET users/:username/", function () {
     const makeRequest = async (username: "me" | string, authToken?: string) => {
         const options: InjectOptions = {
             method: "GET",
             url: `users/${username}/`
         };
-        if (authToken)
-            options.headers = {authorization: `Bearer ${authToken}`};
-        return await fetchRequest(options);
+        return await fetchRequest(options, authToken);
     };
     test<LocalTestContext>("If username is me and not authenticated return 401", async (context) => {
         await context.userFactory.createOne({profile: {isPublic: true}});
@@ -251,5 +249,10 @@ describe("GET /users/:username/", function () {
             expect(response.statusCode).to.equal(200);
             expect(response.json()).toEqual(userSerializer.serialize(user, {hiddenFields: ["email"]}));
         });
+    });
+
+    test<LocalTestContext>("If username does not exist return 404", async (context) => {
+        const response = await makeRequest(faker.random.alpha({count: 20}));
+        expect(response.statusCode).to.equal(404);
     });
 })

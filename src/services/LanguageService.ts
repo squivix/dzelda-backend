@@ -17,13 +17,13 @@ class LanguageService {
     async getLanguages(filters: { isSupported: boolean | undefined }) {
         const languages = await this.languageRepo.find(cleanObject(filters));
         await this.em.flush();
-        return languageSerializer.serializeList(languages);
+        return languages;
     }
 
     async getUserLanguages(user: User, filters: {}) {
         const languages = await this.languageRepo.find({learners: user.profile, ...filters});
         await this.em.flush();
-        return languageSerializer.serializeList(languages);
+        return languages;
     }
 
     async getLanguage(code: string) {
@@ -37,7 +37,7 @@ class LanguageService {
         const mapping = new MapLearnerLanguage(user.profile, language);
         await this.em.persist(mapping);
         await this.em.flush();
-        return languageSerializer.serialize(await this.languageRepo.findOneOrFail(language, {refresh: true}));
+        return await this.languageRepo.findOneOrFail(language, {refresh: true});
     }
 
 }

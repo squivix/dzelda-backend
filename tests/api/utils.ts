@@ -5,7 +5,13 @@ import mimeTypes from "mime-types";
 import formAutoContent from "form-auto-content";
 import http from "http";
 
-export async function fetchRequest(options: InjectOptions) {
+export async function fetchRequest(options: InjectOptions, authToken?: string) {
+    if (authToken) {
+        if (options.headers)
+            options.headers.authorization = `Bearer ${authToken}`
+        else
+            options.headers = {authorization: `Bearer ${authToken}`}
+    }
     return await server.inject({
         ...options,
         url: `${API_ROOT}/${options.url}`
@@ -99,7 +105,5 @@ export async function fetchWithFileUrls(
         ...options,
         ...formAutoContent(formData)
     }
-    if (authToken)
-        options.headers!.authorization = `Bearer ${authToken}`
-    return await fetchRequest(options as InjectOptions);
+    return await fetchRequest(options as InjectOptions, authToken);
 }

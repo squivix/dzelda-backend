@@ -104,9 +104,7 @@ describe("GET users/:username/languages/", function () {
             method: "GET",
             url: `users/${username}/languages/`,
         };
-        if (authToken)
-            options.headers = {authorization: `Bearer ${authToken}`};
-        return await fetchRequest(options);
+        return await fetchRequest(options, authToken);
     };
 
     test<LocalTestContext>("If username does not exist return 404", async () => {
@@ -168,9 +166,7 @@ describe("POST users/:username/languages/", function () {
             url: `users/${username}/languages/`,
             payload: body,
         };
-        if (authToken)
-            options.headers = {authorization: `Bearer ${authToken}`};
-        return await fetchRequest(options);
+        return await fetchRequest(options, authToken);
     };
 
     describe("If not authenticated return 401", async () => {

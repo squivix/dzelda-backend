@@ -5,6 +5,7 @@ import {NotFoundAPIError} from "@/src/utils/errors/NotFoundAPIError.js";
 import UserService from "@/src/services/UserService.js";
 import {ForbiddenAPIError} from "@/src/utils/errors/ForbiddenAPIError.js";
 import {usernameValidator} from "@/src/validators/userValidator.js";
+import {languageSerializer} from "@/src/schemas/response/serializers/LanguageSerializer.js";
 
 class LanguageController {
     async getLanguages(request: FastifyRequest, reply: FastifyReply) {
@@ -18,7 +19,7 @@ class LanguageController {
         const filters = {isSupported: queryParams.isSupported};
 
         const languages = await languageService.getLanguages(filters);
-        reply.send(languages);
+        reply.send(languageSerializer.serializeList(languages));
     }
 
     async getUserLanguages(request: FastifyRequest, reply: FastifyReply) {
@@ -34,7 +35,7 @@ class LanguageController {
         const languageService = new LanguageService(request.em);
         const filters = {};
         const languages = await languageService.getUserLanguages(user, filters);
-        reply.send(languages);
+        reply.send(languageSerializer.serializeList(languages));
     }
 
     async addLanguageToUser(request: FastifyRequest, reply: FastifyReply) {
@@ -57,7 +58,7 @@ class LanguageController {
             throw new NotFoundAPIError("Language");
 
         const newLanguageMapping = await languageService.addLanguageToUser(user, language);
-        reply.status(201).send(newLanguageMapping);
+        reply.status(201).send(languageSerializer.serialize(newLanguageMapping));
     }
 }
 
