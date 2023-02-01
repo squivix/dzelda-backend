@@ -1,16 +1,15 @@
 import {API_ROOT, server} from "@/src/server.js";
 import {InjectOptions} from "light-my-request";
 import mimeTypes from "mime-types";
-// @ts-ignore
-import formAutoContent from "form-auto-content";
 import http from "http";
+import FormData from "form-data";
 
 export async function fetchRequest(options: InjectOptions, authToken?: string) {
     if (authToken) {
         if (options.headers)
-            options.headers.authorization = `Bearer ${authToken}`
+            options.headers.authorization = `Bearer ${authToken}`;
         else
-            options.headers = {authorization: `Bearer ${authToken}`}
+            options.headers = {authorization: `Bearer ${authToken}`};
     }
     return await server.inject({
         ...options,
@@ -53,25 +52,24 @@ const FALLBACK_AUDIO = {
 };
 
 
-export async function fetchWithFileUrls(
+export async function fetchWithFiles(
     {options, authToken}: {
         options: {
             method: string; url: string;
             headers?: http.IncomingHttpHeaders | http.OutgoingHttpHeaders;
             body: {
                 data: object,
-                files?: { [key: string]: { value: string | Buffer; name?: string, mimeType?: string, fallbackType?: "image" | "audio" } | "" };
+                files?: { [key: string]: { value: string | Buffer; fileName?: string, mimeType?: string, fallbackType?: "image" | "audio" } | "" };
             }
         }, authToken?: string
     }) {
-    const formData: { data: string; [key: string]: unknown; } = {data: JSON.stringify(options.body.data)};
+    // const formData: { data: string; [key: string]: unknown; } = {data: JSON.stringify(options.body.data)};
+    const formData = new FormData();
+    formData.append("data", JSON.stringify(options.body.data));
     if (!options.body.files)
         options.body.files = {};
     for (let [fileKey, file] of Object.entries(options.body.files)) {
-        //file field left empty
-        if (file === "")
-            formData[fileKey] = Buffer.from("");
-        else {
+        if (file !== "") {
             let fileData: Buffer, fileType: string;
             //file field buffer value and mime type explicitly provided
             if (file.value instanceof Buffer) {
@@ -82,28 +80,28 @@ export async function fetchWithFileUrls(
                 fileData = Buffer.from(file.fallbackType == "image" ? FALLBACK_IMAGE.data : FALLBACK_AUDIO.data, "base64");
                 fileType = file.fallbackType == "image" ? FALLBACK_IMAGE.type : FALLBACK_AUDIO.type;
                 try {
-                    const fileRes = await fetch(file.value)
+                    const fileRes = await fetch(file.value);
                     if (fileRes.ok) {
                         const fileBlob = await fileRes.blob();
                         fileData = Buffer.from(await fileBlob.arrayBuffer());
-                        fileType = fileBlob.type;
+                        fileType = file.mimeType ?? fileBlob.type;
                     }
                 } catch (e) {
                 }
             }
 
-            formData[fileKey] = {
-                value: fileData,
-                options: {
-                    filename: `${file.name ?? "untitled"}.${mimeTypes.extension(fileType)}`,
-                    contentType: fileType
-                }
-            }
+            formData.append(fileKey, fileData, {
+                filename: `${file.fileName ?? "untitled"}.${mimeTypes.extension(fileType)}`,
+                contentType: fileType
+            });
         }
     }
+
     options = {
         ...options,
-        ...formAutoContent(formData)
-    }
+        // @ts-ignore
+        payload: formData,
+        headers: formData.getHeaders()
+    };
     return await fetchRequest(options as InjectOptions, authToken);
 }

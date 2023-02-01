@@ -6,5 +6,6 @@ npm-debug.log
 .nyc_output
 specs/schema.ts
 /public/media/
+/public/uploads/
 /data/
 .idea

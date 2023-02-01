@@ -8,11 +8,12 @@ import {LanguageFactory} from "@/src/seeders/factories/LanguageFactory.js";
 import {ProfileFactory} from "@/src/seeders/factories/ProfileFactory.js";
 import {UserFactory} from "@/src/seeders/factories/UserFactory.js";
 import {LessonFactory} from "@/src/seeders/factories/LessonFactory.js";
+import {Lesson} from "@/src/models/entities/Lesson.js";
 
 export class CourseFactory extends CustomFactory<Course> {
     readonly model = Course;
 
-    protected definition(faker: Faker): EntityData<Course> {
+    public static makeDefinition(faker: Faker): EntityData<Course> {
         return {
             title: faker.random.words(faker.datatype.number({min: 4, max: 20})),
             description: faker.random.words(faker.datatype.number({min: 20, max: 30})),
@@ -28,6 +29,10 @@ export class CourseFactory extends CustomFactory<Course> {
                 ...LessonFactory.makeDefinition(faker),
                 orderInCourse: i
             }))
-        }
+        };
+    }
+
+    protected definition(faker: Faker): EntityData<Course> {
+        return CourseFactory.makeDefinition(faker);
     }
 }

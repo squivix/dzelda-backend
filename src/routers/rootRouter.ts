@@ -5,12 +5,14 @@ import {userRouter} from "@/src/routers/usersRouter.js";
 import {languageRouter} from "@/src/routers/languagesRouter.js";
 import {coursesRouter} from "@/src/routers/coursesRouter.js";
 import {lessonsRouter} from "@/src/routers/lessonsRouter.js";
+import FastifyFormidable from "fastify-formidable";
 
 const rootRouter: FastifyPluginCallback = function rootRouter(fastify, options, done) {
     fastify.decorateRequest("em", null);
     fastify.decorateRequest("user", null);
     fastify.addHook("preParsing", attachOrmEntityManagerMiddleware);
     fastify.addHook("preParsing", authMiddleware);
+
 
     fastify.register(userRouter);
     fastify.register(languageRouter);

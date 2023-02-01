@@ -6,12 +6,12 @@ import {languageCodeValidator} from "@/src/validators/languageValidators.js";
 import {usernameValidator} from "@/src/validators/userValidator.js";
 import {UnauthenticatedAPIError} from "@/src/utils/errors/UnauthenticatedAPIError.js";
 import {courseDescriptionValidator, courseTitleValidator} from "@/src/validators/courseValidator.js";
-import LanguageService from "@/src/services/LanguageService.js";
-import {ValidationAPIError} from "@/src/utils/errors/ValidationAPIError.js";
 import {LanguageLevel} from "@/src/models/enums/LanguageLevel.js";
-import {validateSquareImage} from "@/src/utils/utils.js";
 import {NotFoundAPIError} from "@/src/utils/errors/NotFoundAPIError.js";
 import {courseSerializer} from "@/src/schemas/response/serializers/CourseSerializer.js";
+import {ForbiddenAPIError} from "@/src/utils/errors/ForbiddenAPIError.js";
+import {ValidationAPIError} from "@/src/utils/errors/ValidationAPIError.js";
+import LanguageService from "@/src/services/LanguageService.js";
 
 class CourseController {
     async getCourses(request: FastifyRequest, reply: FastifyReply) {
@@ -34,31 +34,30 @@ class CourseController {
 
     async createCourse(request: FastifyRequest, reply: FastifyReply) {
         const bodyValidator = z.object({
-            language: languageCodeValidator,
-            title: courseTitleValidator,
-            description: courseDescriptionValidator.optional(),
-            isPublic: z.boolean().optional(),
-            level: z.nativeEnum(LanguageLevel).optional(),
+            data: z.object({
+                language: languageCodeValidator,
+                title: courseTitleValidator,
+                description: courseDescriptionValidator.optional(),
+                isPublic: z.boolean().optional(),
+                level: z.nativeEnum(LanguageLevel).optional(),
+            }),
+            image: z.string().optional(),
         });
-        const body = bodyValidator.parse((request.body as any).data);
-        const image = request.files?.["image"]?.[0];
-        if (image && image.path)
-            validateSquareImage(image)
-
+        const body = bodyValidator.parse(request.body);
 
         const languageService = new LanguageService(request.em);
-        const language = await languageService.getLanguage(body.language)
+        const language = await languageService.getLanguage(body.data.language)
         if (!language)
             throw new ValidationAPIError({language: {message: "language not found"}});
 
         const courseService = new CourseService(request.em);
         const course = await courseService.createCourse({
             language: language,
-            title: body.title,
-            description: body.description,
-            isPublic: body.isPublic,
-            image: image?.path,
-            level: body.level
+            title: body.data.title,
+            description: body.data.description,
+            isPublic: body.data.isPublic,
+            image: body.image,
+            level: body.data.level
         }, request.user as User);
         reply.status(201).send(courseSerializer.serialize(course));
     }
@@ -73,6 +72,42 @@ class CourseController {
         if (!course || (!course.isPublic && request?.user?.profile !== course.addedBy))
             throw new NotFoundAPIError("Course");
         reply.status(200).send(courseSerializer.serialize(course));
+    }
+
+    async updateCourse(request: FastifyRequest, reply: FastifyReply) {
+        const pathParamsValidator = z.object({courseId: z.string().regex(/^\d+$/).transform(Number)});
+        const pathParams = pathParamsValidator.parse(request.params);
+
+        const bodyValidator = z.object({
+            data: z.object({
+                title: courseTitleValidator,
+                description: courseDescriptionValidator,
+                isPublic: z.boolean(),
+                level: z.nativeEnum(LanguageLevel),
+                lessonsOrder: z.array(z.number())
+            }),
+            image: z.string().optional(),
+        });
+        const body = bodyValidator.parse(request.body);
+
+        const courseService = new CourseService(request.em);
+        const course = await courseService.getCourse(pathParams.courseId, request.user);
+
+        if (!course)
+            throw new NotFoundAPIError("Course");
+
+        if (request?.user?.profile !== course.addedBy)
+            throw course.isPublic ? new ForbiddenAPIError() : new NotFoundAPIError("Course");
+
+        const updatedCourse = await courseService.updateCourse(course, {
+            title: body.data.title,
+            description: body.data.description,
+            isPublic: body.data.isPublic,
+            image: body.image ?? "",
+            level: body.data.level,
+            lessonsOrder: body.data.lessonsOrder
+        }, request.user as User);
+        reply.status(200).send(courseSerializer.serialize(updatedCourse));
     }
 }
 

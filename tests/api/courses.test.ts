@@ -1,6 +1,6 @@
 import {beforeEach, describe, expect, test} from "vitest";
 import {orm} from "@/src/server.js";
-import {buildQueryString, fetchRequest, fetchWithFileUrls} from "@/tests/api/utils.js";
+import {buildQueryString, fetchRequest, fetchWithFiles} from "@/tests/api/utils.js";
 import {UserFactory} from "@/src/seeders/factories/UserFactory.js";
 import {SessionFactory} from "@/src/seeders/factories/SessionFactory.js";
 import {ProfileFactory} from "@/src/seeders/factories/ProfileFactory.js";
@@ -11,15 +11,14 @@ import {CourseRepo} from "@/src/models/repos/CourseRepo.js";
 import {InjectOptions} from "light-my-request";
 import {LanguageFactory} from "@/src/seeders/factories/LanguageFactory.js";
 import {faker} from "@faker-js/faker";
-import {randomCase, randomImage} from "@/tests/utils.js";
+import {randomCase, randomImage, shuffleArray} from "@/tests/utils.js";
 import {LanguageLevel} from "@/src/models/enums/LanguageLevel.js";
 import {defaultVocabsByLevel} from "@/src/models/enums/VocabLevel.js";
 // @ts-ignore
 import formAutoContent from "form-auto-content";
 import fs from "fs-extra";
-import {createCanvas} from "canvas";
-import he from "@faker-js/faker/locales/he/index.js";
-import {userSerializer} from "@/src/schemas/response/serializers/UserSerializer.js";
+import {LessonFactory} from "@/src/seeders/factories/LessonFactory.js";
+import courseService from "@/src/services/CourseService.js";
 
 // beforeEach(truncateDb);
 
@@ -31,6 +30,7 @@ interface LocalTestContext {
     courseRepo: CourseRepo;
     languageFactory: LanguageFactory;
     courseFactory: CourseFactory;
+    lessonFactory: LessonFactory;
 }
 
 beforeEach<LocalTestContext>((context) => {
@@ -40,12 +40,13 @@ beforeEach<LocalTestContext>((context) => {
     context.profileFactory = new ProfileFactory(context.em);
     context.sessionFactory = new SessionFactory(context.em);
     context.courseFactory = new CourseFactory(context.em);
+    context.lessonFactory = new LessonFactory(context.em);
     context.languageFactory = new LanguageFactory(context.em);
     context.courseRepo = context.em.getRepository(Course) as CourseRepo;
 });
 
 /**@link CourseController#getCourses*/
-describe("GET /courses/", function () {
+describe("GET courses/", function () {
     const makeRequest = async (queryParams: object = {}, authToken?: string) => {
         const options: InjectOptions = {
             method: "GET",
@@ -210,11 +211,11 @@ describe("GET /courses/", function () {
 
 
 /**@link CourseController#createCourse*/
-describe("POST /courses/", function () {
+describe("POST courses/", function () {
     const makeRequest = async ({data, files = {}}: {
-        data: object; files?: { [key: string]: { value: string | Buffer; name: string, mimeType?: string, fallbackType?: "image" | "audio" } | "" }
+        data: object; files?: { [key: string]: { value: string | Buffer; fileName: string, mimeType?: string, fallbackType?: "image" | "audio" } | "" }
     }, authToken?: string) => {
-        return await fetchWithFileUrls({
+        return await fetchWithFiles({
             options: {
                 method: "POST",
                 url: "courses/",
@@ -275,7 +276,7 @@ describe("POST /courses/", function () {
                     isPublic: newCourse.isPublic,
                     level: newCourse.level,
                 },
-                files: {image: {value: newCourse.image, fallbackType: "image", name: "course-image"}}
+                files: {image: {value: newCourse.image, fallbackType: "image", fileName: "course-image"}}
             }, session.token);
 
             expect(response.statusCode).to.equal(201);
@@ -339,7 +340,6 @@ describe("POST /courses/", function () {
                 },
                 files: {image: ""}
             }, session.token);
-
             expect(response.statusCode).to.equal(400);
         });
 
@@ -431,7 +431,7 @@ describe("POST /courses/", function () {
             expect(response.statusCode).to.equal(400);
         });
 
-        describe("If image is invalid return 415", () => {
+        describe("If image is invalid return 4xx", () => {
             test<LocalTestContext>("If image is not a jpeg or png return 415", async (context) => {
                 const user = await context.userFactory.createOne();
                 const session = await context.sessionFactory.createOne({user: user});
@@ -447,7 +447,7 @@ describe("POST /courses/", function () {
                         image: {
                             value: "https://upload.wikimedia.org/wikipedia/commons/d/de/Lorem_ipsum.ogg",
                             fallbackType: "audio",
-                            name: "course-image"
+                            fileName: "course-image"
                         }
                     }
                 }, session.token);
@@ -469,7 +469,7 @@ describe("POST /courses/", function () {
                             //audio base 64 but with image mimetype
                             value: Buffer.from("UklGRiwAAABXQVZFZm10IBAAAAABAAIARKwAABCxAgAEABAAZGF0YQgAAACwNvFldza4ZQ", "base64"),
                             mimeType: "image/png",
-                            name: "course-image"
+                            fileName: "course-image"
                         }
                     }
                 }, session.token);
@@ -491,7 +491,7 @@ describe("POST /courses/", function () {
                         image: {
                             value: randomImage(1000, 1000),
                             mimeType: "image/png",
-                            name: "course-image"
+                            fileName: "course-image"
                         }
                     }
                 }, session.token);
@@ -499,7 +499,7 @@ describe("POST /courses/", function () {
                 expect(response.statusCode).to.equal(413);
             });
 
-            test<LocalTestContext>("If the image is not square 400", async (context) => {
+            test<LocalTestContext>("If the image is not square return 400", async (context) => {
                 const user = await context.userFactory.createOne();
                 const session = await context.sessionFactory.createOne({user: user});
                 const language = await context.languageFactory.createOne();
@@ -514,7 +514,7 @@ describe("POST /courses/", function () {
                         image: {
                             value: randomImage(256, 128),
                             mimeType: "image/png",
-                            name: "course-image"
+                            fileName: "course-image"
                         }
                     }
                 }, session.token);
@@ -528,8 +528,8 @@ describe("POST /courses/", function () {
 
 
 /**@link CourseController#getCourse*/
-describe("GET /courses/:courseId", function () {
-    const makeRequest = async (courseId: number, authToken?: string) => {
+describe("GET courses/:courseId", function () {
+    const makeRequest = async (courseId: number | string, authToken?: string) => {
         const options: InjectOptions = {
             method: "GET",
             url: `courses/${courseId}`,
@@ -561,6 +561,10 @@ describe("GET /courses/:courseId", function () {
         const response = await makeRequest(Number(faker.random.numeric(8)));
         expect(response.statusCode).to.equal(404);
     });
+    test<LocalTestContext>("If course id is invalid return 400", async (context) => {
+        const response = await makeRequest(faker.random.alpha(8));
+        expect(response.statusCode).to.equal(400);
+    });
     test<LocalTestContext>("If the course is not public and the user is not logged in return 404", async (context) => {
         const course = await context.courseFactory.createOne({isPublic: false});
 
@@ -590,3 +594,54 @@ describe("GET /courses/:courseId", function () {
         expect(response.json()).toEqual(courseSerializer.serialize(course));
     });
 })
+
+/**@link CourseController#updateCourse*/
+describe("PUT courses/:courseId", function () {
+    const makeRequest = async (courseId: number | string, {data, files = {}}: {
+        data: object; files?: { [key: string]: { value: string | Buffer; fileName: string, mimeType?: string, fallbackType?: "image" | "audio" } | "" }
+    }, authToken?: string) => {
+        return await fetchWithFiles({
+            options: {
+                method: "PUT",
+                url: `courses/${courseId}`,
+                body: {
+                    data: data,
+                    files: files
+                },
+            },
+            authToken: authToken
+        })
+    };
+
+    test<LocalTestContext>("If the course exists, user is logged in as author and all fields are valid, update course and return 200", async (context) => {
+        const author = await context.userFactory.createOne();
+        const session = await context.sessionFactory.createOne({user: author})
+        const language = await context.languageFactory.createOne()
+        const course = await context.courseFactory.createOne({
+            addedBy: author.profile,
+            language: language,
+            lessons: []
+        });
+        const courseLessons = await context.lessonFactory.create(10, {course: course});
+        const updatedCourse = await context.courseFactory.makeOne({addedBy: author.profile, language: language});
+
+        const response = await makeRequest(course.id, {
+            data: {
+                title: updatedCourse.title,
+                description: updatedCourse.description,
+                isPublic: updatedCourse.isPublic,
+                level: updatedCourse.level,
+                lessonsOrder: shuffleArray(courseLessons).map(l => l.id)
+            },
+            files: {
+                image: {value: randomImage(100, 100, "image/png"), fileName: "course-image", mimeType: "image/png"}
+            }
+        }, session.token);
+
+        await context.courseRepo.populate(course, ["language", "addedBy", "addedBy.user", "addedBy.languagesLearning", "lessons"])
+        await context.courseRepo.annotateVocabsByLevel([course], author.id);
+        console.log(response.json())
+        expect(response.statusCode).to.equal(200);
+        expect(response.json()).toEqual(courseSerializer.serialize(updatedCourse, {hiddenFields: ["lessons"]}));
+    })
+});

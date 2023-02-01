@@ -36,7 +36,7 @@ beforeEach<LocalTestContext>((context) => {
 
 
 /**{@link UserController#signUp}*/
-describe("POST /users", function () {
+describe("POST users/", function () {
     const makeRequest = async (body: object) => {
         return await fetchRequest({
             method: "POST",

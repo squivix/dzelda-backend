@@ -36,7 +36,7 @@ beforeEach<LocalTestContext>((context) => {
 
 
 /**{@link LanguageController#getLanguages}*/
-describe("GET /languages/", function () {
+describe("GET languages/", function () {
     const makeRequest = async (queryParams: object = {}) => {
         return await fetchRequest({
             method: "GET",

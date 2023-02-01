@@ -3,6 +3,8 @@ import {User} from "@/src/models/entities/auth/User.js";
 import {EntityData} from "@mikro-orm/core";
 import {CustomFactory} from "@/src/seeders/factories/CustomFactory.js";
 import {Lesson} from "@/src/models/entities/Lesson.js";
+import {courseSerializer} from "@/src/schemas/response/serializers/CourseSerializer.js";
+import {CourseFactory} from "@/src/seeders/factories/CourseFactory.js";
 
 export class LessonFactory extends CustomFactory<Lesson> {
     readonly model = Lesson;

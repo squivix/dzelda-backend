@@ -489,7 +489,8 @@
                       "title",
                       "description",
                       "isPublic",
-                      "lessonIds"
+                      "lessonIds",
+                      "level"
                     ],
                     "properties": {
                       "title": {
@@ -506,6 +507,9 @@
                         "items": {
                           "type": "integer"
                         }
+                      },
+                      "level": {
+                        "type": "string"
                       }
                     }
                   }

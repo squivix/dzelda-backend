@@ -7,6 +7,7 @@ import {Language} from "@/src/models/entities/Language.js";
 import {defaultVocabsByLevel, VocabLevel} from "@/src/models/enums/VocabLevel.js";
 import {LanguageLevel} from "@/src/models/enums/LanguageLevel.js";
 import {UnauthenticatedAPIError} from "@/src/utils/errors/UnauthenticatedAPIError.js";
+import {NotFoundAPIError} from "@/src/utils/errors/NotFoundAPIError.js";
 
 class CourseService {
     em: EntityManager;
@@ -60,6 +61,18 @@ class CourseService {
         let course = await this.courseRepo.findOne({id: courseId}, {populate: ["language", "addedBy", "addedBy.user", "addedBy.languagesLearning", "lessons"]});
         if (course && user && !(user instanceof AnonymousUser))
             await this.courseRepo.annotateVocabsByLevel([course], user.id);
+        return course;
+    }
+
+    async updateCourse(course: Course, updatedCourseData: { title: string; description: string; isPublic: boolean; image: string; level: LanguageLevel; lessonsOrder: number[] }, user: User) {
+        course.title = updatedCourseData.title;
+        course.description = updatedCourseData.description;
+        course.isPublic = updatedCourseData.isPublic;
+        course.level = updatedCourseData.level;
+        course.image = updatedCourseData.image;
+        this.courseRepo.persist(course);
+        await this.courseRepo.flush();
+        await this.courseRepo.populate(course, ["language", "addedBy", "addedBy.user", "addedBy.languagesLearning", "lessons"]);
         return course;
     }
 }

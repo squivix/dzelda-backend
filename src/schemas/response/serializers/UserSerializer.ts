@@ -1,7 +1,8 @@
-import {CustomEntitySerializer, SerializationMode} from "@/src/schemas/response/serializers/EntitySerializer.js";
+import {CustomEntitySerializer} from "@/src/schemas/response/serializers/CustomEntitySerializer.js";
 import {User} from "@/src/models/entities/auth/User.js";
 import {UserSchema} from "@/src/schemas/response/interfaces/UserSchema.js";
 import {profileSerializer} from "@/src/schemas/response/serializers/ProfileSerializer.js";
+import {SerializationMode} from "@/src/schemas/response/serializers/ListDetailSerializer.js";
 
 
 class UserSerializer extends CustomEntitySerializer<User, UserSchema> {
@@ -11,7 +12,6 @@ class UserSerializer extends CustomEntitySerializer<User, UserSchema> {
     }: { mode?: SerializationMode; hiddenFields?: (keyof UserSchema)[] } = {}): UserSchema {
         const userPojo = {
             username: user.username,
-            /** Format: email */
             email: user.email,
             profile: profileSerializer.serialize(user.profile),
         }
