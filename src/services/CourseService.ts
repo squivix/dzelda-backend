@@ -60,9 +60,12 @@ class CourseService {
     }
 
     async getCourse(courseId: number, user: User | AnonymousUser | null) {
-        let course = await this.courseRepo.findOne({id: courseId}, {populate: ["language", "addedBy", "addedBy.user", "addedBy.languagesLearning", "lessons"]});
-        if (course && user && !(user instanceof AnonymousUser))
-            await this.courseRepo.annotateVocabsByLevel([course], user.id);
+        let course = await this.courseRepo.findOne({id: courseId}, {populate: ["language", "addedBy", "addedBy.user", "addedBy.languagesLearning"]});
+        if (course) {
+            await this.em.populate(course, ["lessons"], {orderBy: {lessons: {orderInCourse: 'asc'}}, refresh: true});
+            if (user && !(user instanceof AnonymousUser))
+                await this.courseRepo.annotateVocabsByLevel([course], user.id);
+        }
         return course;
     }
 
@@ -80,10 +83,7 @@ class CourseService {
         this.lessonRepo.persist(courseLessons);
         await this.courseRepo.flush();
 
-        await this.courseRepo.findOne({id: course.id}, {
-            populate: ["language", "addedBy", "addedBy.user", "addedBy.languagesLearning"]
-        });
-
+        await this.courseRepo.findOne({id: course.id}, {populate: ["language", "addedBy", "addedBy.user", "addedBy.languagesLearning"]});
         await this.em.populate(course, ["lessons"], {orderBy: {lessons: {orderInCourse: 'asc'}}, refresh: true});
         return course;
     }
