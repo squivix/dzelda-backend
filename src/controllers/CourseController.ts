@@ -84,9 +84,9 @@ class CourseController {
                 description: courseDescriptionValidator,
                 isPublic: z.boolean(),
                 level: z.nativeEnum(LanguageLevel),
-                lessonsOrder: z.array(z.number())
+                lessonsOrder: z.array(z.number()).refine(e => new Set(e).size === e.length)
             }),
-            image: z.string().optional(),
+            image: z.string().optional()
         });
         const body = bodyValidator.parse(request.body);
 
@@ -98,6 +98,11 @@ class CourseController {
 
         if (request?.user?.profile !== course.addedBy)
             throw course.isPublic ? new ForbiddenAPIError() : new NotFoundAPIError("Course");
+
+        const courseLessonIds = new Set(course.lessons.getItems().map(c => c.id))
+
+        if (!body.data.lessonsOrder.every(l => courseLessonIds.has(l)))
+            throw new ValidationAPIError({lessonsOrder: {message: "ids don't match course lessons: cannot add or remove lessons through this endpoint"}})
 
         const updatedCourse = await courseService.updateCourse(course, {
             title: body.data.title,

@@ -50,7 +50,6 @@
     "@types/node": "^18.11.2",
     "@typescript-eslint/eslint-plugin": "^5.42.1",
     "@typescript-eslint/parser": "^5.42.1",
-    "@vitest/ui": "^0.24.3",
     "canvas": "^2.11.0",
     "concurrently": "^7.5.0",
     "depcheck": "^1.4.3",
@@ -62,7 +61,7 @@
     "tsx": "^3.12.1",
     "typescript": "^4.8.4",
     "vite": "^3.2.1",
-    "vitest": "^0.24.3"
+    "vitest": "^0.28.4"
   },
   "mikro-orm": {
     "configPaths": [

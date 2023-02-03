@@ -1,4 +1,4 @@
-import {beforeEach, describe, expect, test} from "vitest";
+import {beforeEach, describe, expect, expectTypeOf, test, TestContext} from "vitest";
 import {orm} from "@/src/server.js";
 import {buildQueryString, fetchRequest, fetchWithFiles} from "@/tests/api/utils.js";
 import {UserFactory} from "@/src/seeders/factories/UserFactory.js";
@@ -14,20 +14,21 @@ import {faker} from "@faker-js/faker";
 import {randomCase, randomImage, shuffleArray} from "@/tests/utils.js";
 import {LanguageLevel} from "@/src/models/enums/LanguageLevel.js";
 import {defaultVocabsByLevel} from "@/src/models/enums/VocabLevel.js";
-// @ts-ignore
-import formAutoContent from "form-auto-content";
 import fs from "fs-extra";
 import {LessonFactory} from "@/src/seeders/factories/LessonFactory.js";
-import courseService from "@/src/services/CourseService.js";
+import {lessonSerializer} from "@/src/schemas/response/serializers/LessonSerializer.js";
+import {LessonRepo} from "@/src/models/repos/LessonRepo.js";
+import {Lesson} from "@/src/models/entities/Lesson.js";
 
 // beforeEach(truncateDb);
 
 
-interface LocalTestContext {
+interface LocalTestContext extends TestContext {
     userFactory: UserFactory;
     profileFactory: ProfileFactory;
     sessionFactory: SessionFactory;
     courseRepo: CourseRepo;
+    lessonRepo: LessonRepo;
     languageFactory: LanguageFactory;
     courseFactory: CourseFactory;
     lessonFactory: LessonFactory;
@@ -42,6 +43,7 @@ beforeEach<LocalTestContext>((context) => {
     context.courseFactory = new CourseFactory(context.em);
     context.lessonFactory = new LessonFactory(context.em);
     context.languageFactory = new LanguageFactory(context.em);
+    context.lessonRepo = context.em.getRepository(Lesson) as LessonRepo;
     context.courseRepo = context.em.getRepository(Course) as CourseRepo;
 });
 
@@ -622,8 +624,13 @@ describe("PUT courses/:courseId", function () {
             language: language,
             lessons: []
         });
-        const courseLessons = await context.lessonFactory.create(10, {course: course});
+        let lessonCounter = 0;
+        let courseLessons = await context.lessonFactory.each(l => {
+            l.orderInCourse = lessonCounter;
+            lessonCounter++;
+        }).create(10, {course: course});
         const updatedCourse = await context.courseFactory.makeOne({addedBy: author.profile, language: language});
+        const orderedLessonIds = shuffleArray(courseLessons).map(l => l.id);
 
         const response = await makeRequest(course.id, {
             data: {
@@ -631,17 +638,24 @@ describe("PUT courses/:courseId", function () {
                 description: updatedCourse.description,
                 isPublic: updatedCourse.isPublic,
                 level: updatedCourse.level,
-                lessonsOrder: shuffleArray(courseLessons).map(l => l.id)
+                lessonsOrder: orderedLessonIds
             },
             files: {
                 image: {value: randomImage(100, 100, "image/png"), fileName: "course-image", mimeType: "image/png"}
             }
         }, session.token);
 
+        courseLessons = await context.lessonRepo.find({id: orderedLessonIds}, {orderBy: {orderInCourse: 'asc'}, refresh: true})
         await context.courseRepo.populate(course, ["language", "addedBy", "addedBy.user", "addedBy.languagesLearning", "lessons"])
         await context.courseRepo.annotateVocabsByLevel([course], author.id);
-        console.log(response.json())
+
+        const responseBody = response.json();
         expect(response.statusCode).to.equal(200);
-        expect(response.json()).toEqual(courseSerializer.serialize(updatedCourse, {hiddenFields: ["lessons"]}));
+        expect(responseBody).toEqual(expect.objectContaining(courseSerializer.serialize(updatedCourse, {hiddenFields: ["lessons", "image"]})));
+        expect(fs.existsSync(responseBody.image))
+        expectTypeOf(responseBody.lessons).toBeArray();
+        const serializedLessons = lessonSerializer.serializeList(courseLessons, {hiddenFields: ["course"]})
+        for (let i = 0; i < responseBody.lessons.length; i++)
+            expect(responseBody.lessons[i]).toEqual(expect.objectContaining(serializedLessons[i]));
     })
 });

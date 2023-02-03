@@ -24,7 +24,7 @@ export function singleFileUploadMiddleWare(fields: { [fieldName: string]: { path
         formidableInstance.addListener("fileBegin", (formName: string, file: File) => {
             if (fields[formName]) {
                 const fileName = `${crypto.randomBytes(8).toString("hex")}-${Date.now()}`;
-                file.filepath = `${path.dirname(file.filepath)}/${fields[formName].path}/${fileName}.${path.extname(file.filepath)}`;
+                file.filepath = `${ROOT_UPLOAD_DIR}/${fields[formName].path}/${fileName}.${path.extname(file.filepath)}`;
             }
         })
         await request.parseMultipart(formidableInstance);
