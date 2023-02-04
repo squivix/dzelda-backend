@@ -69,12 +69,13 @@ class CourseService {
         return course;
     }
 
-    async updateCourse(course: Course, updatedCourseData: { title: string; description: string; isPublic: boolean; image: string; level: LanguageLevel; lessonsOrder: number[] }, user: User) {
+    async updateCourse(course: Course, updatedCourseData: { title: string; description: string; isPublic: boolean; image?: string; level: LanguageLevel; lessonsOrder: number[] }, user: User) {
         course.title = updatedCourseData.title;
         course.description = updatedCourseData.description;
         course.isPublic = updatedCourseData.isPublic;
         course.level = updatedCourseData.level;
-        course.image = updatedCourseData.image;
+        if (updatedCourseData.image !== undefined)
+            course.image = updatedCourseData.image;
 
         const idToOrder: Record<number, number> = updatedCourseData.lessonsOrder.reduce((acc, curr, index) => ({...acc, [curr]: index}), {});
         const courseLessons = course.lessons.getItems();

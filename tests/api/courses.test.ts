@@ -1,4 +1,4 @@
-import {beforeEach, describe, expect, expectTypeOf, test, TestContext} from "vitest";
+import {beforeEach, describe, expect, test, TestContext} from "vitest";
 import {orm} from "@/src/server.js";
 import {buildQueryString, fetchRequest, fetchWithFiles} from "@/tests/api/utils.js";
 import {UserFactory} from "@/src/seeders/factories/UserFactory.js";
@@ -16,7 +16,6 @@ import {LanguageLevel} from "@/src/models/enums/LanguageLevel.js";
 import {defaultVocabsByLevel} from "@/src/models/enums/VocabLevel.js";
 import fs from "fs-extra";
 import {LessonFactory} from "@/src/seeders/factories/LessonFactory.js";
-import {lessonSerializer} from "@/src/schemas/response/serializers/LessonSerializer.js";
 import {LessonRepo} from "@/src/models/repos/LessonRepo.js";
 import {Lesson} from "@/src/models/entities/Lesson.js";
 import {LessonListSchema} from "@/src/schemas/response/interfaces/LessonListSchema.js";
@@ -287,7 +286,6 @@ describe("POST courses/", function () {
             expect(fs.existsSync(response.json().image))
         });
     })
-
     test<LocalTestContext>("If user not logged in return 401", async (context) => {
         const language = await context.languageFactory.createOne()
         const newCourse = context.courseFactory.makeOne({language: language});
@@ -329,7 +327,6 @@ describe("POST courses/", function () {
             expect(response.statusCode).to.equal(400);
         });
     });
-
     describe("If fields are invalid return 4xx code", async () => {
         test<LocalTestContext>("If title is invalid return 400", async (context) => {
             const user = await context.userFactory.createOne();
@@ -345,7 +342,6 @@ describe("POST courses/", function () {
             }, session.token);
             expect(response.statusCode).to.equal(400);
         });
-
         test<LocalTestContext>("If language is invalid return 400", async (context) => {
             const user = await context.userFactory.createOne();
             const session = await context.sessionFactory.createOne({user: user});
@@ -361,7 +357,6 @@ describe("POST courses/", function () {
             }, session.token);
             expect(response.statusCode).to.equal(400);
         });
-
         test<LocalTestContext>("If language is not found return 400", async (context) => {
             const user = await context.userFactory.createOne();
             const session = await context.sessionFactory.createOne({user: user});
@@ -378,8 +373,6 @@ describe("POST courses/", function () {
 
             expect(response.statusCode).to.equal(400);
         });
-
-
         test<LocalTestContext>("If description is invalid return 400", async (context) => {
             const user = await context.userFactory.createOne();
             const session = await context.sessionFactory.createOne({user: user});
@@ -397,7 +390,6 @@ describe("POST courses/", function () {
 
             expect(response.statusCode).to.equal(400);
         });
-
         test<LocalTestContext>("If isPublic is invalid return 400", async (context) => {
             const user = await context.userFactory.createOne();
             const session = await context.sessionFactory.createOne({user: user});
@@ -414,8 +406,6 @@ describe("POST courses/", function () {
             }, session.token);
             expect(response.statusCode).to.equal(400);
         });
-
-
         test<LocalTestContext>("If level is invalid return 400", async (context) => {
             const user = await context.userFactory.createOne();
             const session = await context.sessionFactory.createOne({user: user});
@@ -433,7 +423,6 @@ describe("POST courses/", function () {
 
             expect(response.statusCode).to.equal(400);
         });
-
         describe("If image is invalid return 4xx", () => {
             test<LocalTestContext>("If image is not a jpeg or png return 415", async (context) => {
                 const user = await context.userFactory.createOne();
@@ -525,7 +514,6 @@ describe("POST courses/", function () {
                 expect(response.statusCode).to.equal(400);
             });
         })
-
     });
 });
 
@@ -601,7 +589,7 @@ describe("GET courses/:courseId", function () {
 /**@link CourseController#updateCourse*/
 describe("PUT courses/:courseId", function () {
     const makeRequest = async (courseId: number | string, {data, files = {}}: {
-        data: object; files?: { [key: string]: { value: string | Buffer; fileName: string, mimeType?: string, fallbackType?: "image" | "audio" } | "" }
+        data?: object; files?: { [key: string]: { value: string | Buffer; fileName: string, mimeType?: string, fallbackType?: "image" | "audio" } | "" }
     }, authToken?: string) => {
         return await fetchWithFiles({
             options: {
@@ -616,7 +604,76 @@ describe("PUT courses/:courseId", function () {
         })
     };
 
-    describe<LocalTestContext>("If the course exists, user is logged in as author and all fields are valid, update course and return 200", async () => {
+    describe("If the course exists, user is logged in as author and all fields are valid, update course and return 200", async () => {
+        test<LocalTestContext>("If new image is not provided, keep old image", async (context) => {
+            const author = await context.userFactory.createOne();
+            const session = await context.sessionFactory.createOne({user: author})
+            const language = await context.languageFactory.createOne()
+            let course = await context.courseFactory.createOne({addedBy: author.profile, language: language, lessons: []});
+
+            let lessonCounter = 0;
+            let courseLessons = await context.lessonFactory.each(l => {
+                l.orderInCourse = lessonCounter;
+                lessonCounter++;
+            }).create(10, {course: course});
+            const updatedCourse = await context.courseFactory.makeOne({addedBy: author.profile, language: language});
+            const shuffledLessonIds = shuffleArray(courseLessons).map(l => l.id);
+
+            const response = await makeRequest(course.id, {
+                data: {
+                    title: updatedCourse.title,
+                    description: updatedCourse.description,
+                    isPublic: updatedCourse.isPublic,
+                    level: updatedCourse.level,
+                    lessonsOrder: shuffledLessonIds
+                }
+            }, session.token);
+
+            course = await context.courseRepo.findOneOrFail({id: course.id}, {populate: ["language", "addedBy", "addedBy.user", "addedBy.languagesLearning"]})
+            await context.em.populate(course, ["lessons"], {orderBy: {lessons: {orderInCourse: "asc"}}})
+            await context.courseRepo.annotateVocabsByLevel([course], author.id);
+
+            expect(response.statusCode).to.equal(200);
+            expect(response.json()).toEqual(courseSerializer.serialize(course));
+            expect(fs.existsSync(course.image));
+            expect((response.json().lessons as LessonListSchema[]).map(l => l.id)).toEqual(shuffledLessonIds);
+        })
+        test<LocalTestContext>("If new image is blank clear course image", async (context) => {
+            const author = await context.userFactory.createOne();
+            const session = await context.sessionFactory.createOne({user: author})
+            const language = await context.languageFactory.createOne()
+            let course = await context.courseFactory.createOne({addedBy: author.profile, language: language, lessons: []});
+
+            let lessonCounter = 0;
+            let courseLessons = await context.lessonFactory.each(l => {
+                l.orderInCourse = lessonCounter;
+                lessonCounter++;
+            }).create(10, {course: course});
+            const updatedCourse = await context.courseFactory.makeOne({addedBy: author.profile, language: language});
+            const shuffledLessonIds = shuffleArray(courseLessons).map(l => l.id);
+
+            const response = await makeRequest(course.id, {
+                data: {
+                    title: updatedCourse.title,
+                    description: updatedCourse.description,
+                    isPublic: updatedCourse.isPublic,
+                    level: updatedCourse.level,
+                    lessonsOrder: shuffledLessonIds
+                },
+                files: {
+                    image: ""
+                }
+            }, session.token);
+
+            course = await context.courseRepo.findOneOrFail({id: course.id}, {populate: ["language", "addedBy", "addedBy.user", "addedBy.languagesLearning"]})
+            await context.em.populate(course, ["lessons"], {orderBy: {lessons: {orderInCourse: "asc"}}})
+            await context.courseRepo.annotateVocabsByLevel([course], author.id);
+
+            expect(response.statusCode).to.equal(200);
+            expect(response.json()).toEqual(courseSerializer.serialize(course));
+            expect(course.image).toEqual("");
+            expect((response.json().lessons as LessonListSchema[]).map(l => l.id)).toEqual(shuffledLessonIds);
+        })
         test<LocalTestContext>("If new image is provided, update image", async (context) => {
             const author = await context.userFactory.createOne();
             const session = await context.sessionFactory.createOne({user: author})
@@ -652,6 +709,628 @@ describe("PUT courses/:courseId", function () {
             expect(response.json()).toEqual(courseSerializer.serialize(course));
             expect(fs.existsSync(course.image));
             expect((response.json().lessons as LessonListSchema[]).map(l => l.id)).toEqual(shuffledLessonIds);
+        })
+    })
+    test<LocalTestContext>("If user not logged in return 401", async (context) => {
+        const author = await context.userFactory.createOne();
+        const language = await context.languageFactory.createOne()
+        const course = await context.courseFactory.createOne({addedBy: author.profile, language: language, lessons: [], image: ""});
+
+        let lessonCounter = 0;
+        let courseLessons = await context.lessonFactory.each(l => {
+            l.orderInCourse = lessonCounter;
+            lessonCounter++;
+        }).create(10, {course: course});
+        const updatedCourse = await context.courseFactory.makeOne({addedBy: author.profile, language: language});
+
+        const response = await makeRequest(course.id, {
+            data: {
+                title: updatedCourse.title,
+                description: updatedCourse.description,
+                isPublic: updatedCourse.isPublic,
+                level: updatedCourse.level,
+                lessonsOrder: shuffleArray(courseLessons).map(l => l.id)
+            },
+            files: {
+                image: {value: randomImage(100, 100, "image/png"), fileName: "course-image", mimeType: "image/png"}
+            }
+        });
+
+        expect(response.statusCode).to.equal(401);
+    });
+    test<LocalTestContext>("If course does not exist return 404", async (context) => {
+        const user = await context.userFactory.createOne();
+        const session = await context.sessionFactory.createOne({user: user});
+        const language = await context.languageFactory.createOne()
+        const updatedCourse = await context.courseFactory.makeOne({language: language});
+
+        const response = await makeRequest(faker.random.numeric(20), {
+            data: {
+                title: updatedCourse.title,
+                description: updatedCourse.description,
+                isPublic: updatedCourse.isPublic,
+                level: updatedCourse.level,
+                lessonsOrder: [1, 2, 3]
+            },
+            files: {
+                image: {value: randomImage(100, 100, "image/png"), fileName: "course-image", mimeType: "image/png"}
+            }
+        }, session.token);
+
+        expect(response.statusCode).to.equal(404);
+    });
+    test<LocalTestContext>("If course is not public and user is not author return 404", async (context) => {
+        const author = await context.userFactory.createOne();
+        const otherUser = await context.userFactory.createOne();
+        const session = await context.sessionFactory.createOne({user: otherUser});
+        const language = await context.languageFactory.createOne()
+        const course = await context.courseFactory.createOne({addedBy: author.profile, isPublic: false, language: language, lessons: [], image: ""});
+
+        let lessonCounter = 0;
+        let courseLessons = await context.lessonFactory.each(l => {
+            l.orderInCourse = lessonCounter;
+            lessonCounter++;
+        }).create(10, {course: course});
+        const updatedCourse = await context.courseFactory.makeOne({addedBy: author.profile, language: language});
+
+        const response = await makeRequest(course.id, {
+            data: {
+                title: updatedCourse.title,
+                description: updatedCourse.description,
+                isPublic: updatedCourse.isPublic,
+                level: updatedCourse.level,
+                lessonsOrder: shuffleArray(courseLessons).map(l => l.id)
+            },
+            files: {
+                image: {value: randomImage(100, 100, "image/png"), fileName: "course-image", mimeType: "image/png"}
+            }
+        }, session.token);
+
+        expect(response.statusCode).to.equal(404);
+    });
+    test<LocalTestContext>("If course is public but user is not author of course return 403", async (context) => {
+        const author = await context.userFactory.createOne();
+        const otherUser = await context.userFactory.createOne();
+        const session = await context.sessionFactory.createOne({user: otherUser});
+        const language = await context.languageFactory.createOne()
+        const course = await context.courseFactory.createOne({addedBy: author.profile, isPublic: true, language: language, lessons: [], image: ""});
+
+        let lessonCounter = 0;
+        let courseLessons = await context.lessonFactory.each(l => {
+            l.orderInCourse = lessonCounter;
+            lessonCounter++;
+        }).create(10, {course: course});
+        const updatedCourse = await context.courseFactory.makeOne({addedBy: author.profile, language: language});
+
+        const response = await makeRequest(course.id, {
+            data: {
+                title: updatedCourse.title,
+                description: updatedCourse.description,
+                isPublic: updatedCourse.isPublic,
+                level: updatedCourse.level,
+                lessonsOrder: shuffleArray(courseLessons).map(l => l.id)
+            },
+            files: {
+                image: {value: randomImage(100, 100, "image/png"), fileName: "course-image", mimeType: "image/png"}
+            }
+        }, session.token);
+
+        expect(response.statusCode).to.equal(403);
+    });
+    describe("If required fields are missing return 400", async () => {
+        test<LocalTestContext>("If title is missing return 400", async (context) => {
+            const author = await context.userFactory.createOne();
+            const session = await context.sessionFactory.createOne({user: author})
+            const language = await context.languageFactory.createOne()
+            const course = await context.courseFactory.createOne({addedBy: author.profile, language: language, lessons: [], image: ""});
+
+            let lessonCounter = 0;
+            let courseLessons = await context.lessonFactory.each(l => {
+                l.orderInCourse = lessonCounter;
+                lessonCounter++;
+            }).create(10, {course: course});
+            const updatedCourse = await context.courseFactory.makeOne({addedBy: author.profile, language: language});
+
+            const response = await makeRequest(course.id, {
+                data: {
+                    description: updatedCourse.description,
+                    isPublic: updatedCourse.isPublic,
+                    level: updatedCourse.level,
+                    lessonsOrder: shuffleArray(courseLessons).map(l => l.id)
+                },
+                files: {
+                    image: {value: randomImage(100, 100, "image/png"), fileName: "course-image", mimeType: "image/png"}
+                }
+            }, session.token);
+
+            expect(response.statusCode).to.equal(400);
+        })
+        test<LocalTestContext>("If description is missing return 400", async (context) => {
+            const author = await context.userFactory.createOne();
+            const session = await context.sessionFactory.createOne({user: author})
+            const language = await context.languageFactory.createOne()
+            const course = await context.courseFactory.createOne({addedBy: author.profile, language: language, lessons: [], image: ""});
+
+            let lessonCounter = 0;
+            let courseLessons = await context.lessonFactory.each(l => {
+                l.orderInCourse = lessonCounter;
+                lessonCounter++;
+            }).create(10, {course: course});
+            const updatedCourse = await context.courseFactory.makeOne({addedBy: author.profile, language: language});
+
+            const response = await makeRequest(course.id, {
+                data: {
+                    title: updatedCourse.title,
+                    isPublic: updatedCourse.isPublic,
+                    level: updatedCourse.level,
+                    lessonsOrder: shuffleArray(courseLessons).map(l => l.id)
+                },
+                files: {
+                    image: {value: randomImage(100, 100, "image/png"), fileName: "course-image", mimeType: "image/png"}
+                }
+            }, session.token);
+
+            expect(response.statusCode).to.equal(400);
+        })
+        test<LocalTestContext>("If isPublic is missing return 400", async (context) => {
+
+            const author = await context.userFactory.createOne();
+            const session = await context.sessionFactory.createOne({user: author})
+            const language = await context.languageFactory.createOne()
+            const course = await context.courseFactory.createOne({addedBy: author.profile, language: language, lessons: [], image: ""});
+
+            let lessonCounter = 0;
+            let courseLessons = await context.lessonFactory.each(l => {
+                l.orderInCourse = lessonCounter;
+                lessonCounter++;
+            }).create(10, {course: course});
+            const updatedCourse = await context.courseFactory.makeOne({addedBy: author.profile, language: language});
+
+            const response = await makeRequest(course.id, {
+                data: {
+                    title: updatedCourse.title,
+                    description: updatedCourse.description,
+                    level: updatedCourse.level,
+                    lessonsOrder: shuffleArray(courseLessons).map(l => l.id)
+                },
+                files: {
+                    image: {value: randomImage(100, 100, "image/png"), fileName: "course-image", mimeType: "image/png"}
+                }
+            }, session.token);
+
+            expect(response.statusCode).to.equal(400);
+        })
+        test<LocalTestContext>("If level is missing return 400", async (context) => {
+
+            const author = await context.userFactory.createOne();
+            const session = await context.sessionFactory.createOne({user: author})
+            const language = await context.languageFactory.createOne()
+            const course = await context.courseFactory.createOne({addedBy: author.profile, language: language, lessons: [], image: ""});
+
+            let lessonCounter = 0;
+            let courseLessons = await context.lessonFactory.each(l => {
+                l.orderInCourse = lessonCounter;
+                lessonCounter++;
+            }).create(10, {course: course});
+            const updatedCourse = await context.courseFactory.makeOne({addedBy: author.profile, language: language});
+
+            const response = await makeRequest(course.id, {
+                data: {
+                    title: updatedCourse.title,
+                    description: updatedCourse.description,
+                    isPublic: updatedCourse.isPublic,
+                    lessonsOrder: shuffleArray(courseLessons).map(l => l.id)
+                },
+                files: {
+                    image: {value: randomImage(100, 100, "image/png"), fileName: "course-image", mimeType: "image/png"}
+                }
+            }, session.token);
+
+            expect(response.statusCode).to.equal(400);
+        })
+        test<LocalTestContext>("If lessonsOrder is missing return 400", async (context) => {
+            const author = await context.userFactory.createOne();
+            const session = await context.sessionFactory.createOne({user: author})
+            const language = await context.languageFactory.createOne()
+            const course = await context.courseFactory.createOne({addedBy: author.profile, language: language, lessons: [], image: ""});
+
+            let lessonCounter = 0;
+            await context.lessonFactory.each(l => {
+                l.orderInCourse = lessonCounter;
+                lessonCounter++;
+            }).create(10, {course: course});
+            const updatedCourse = await context.courseFactory.makeOne({addedBy: author.profile, language: language});
+
+            const response = await makeRequest(course.id, {
+                data: {
+                    title: updatedCourse.title,
+                    description: updatedCourse.description,
+                    isPublic: updatedCourse.isPublic,
+                    level: updatedCourse.level,
+                },
+                files: {
+                    image: {value: randomImage(100, 100, "image/png"), fileName: "course-image", mimeType: "image/png"}
+                }
+            }, session.token);
+
+            expect(response.statusCode).to.equal(400);
+        })
+
+        test<LocalTestContext>("If data is missing return 400", async (context) => {
+            const author = await context.userFactory.createOne();
+            const session = await context.sessionFactory.createOne({user: author})
+            const language = await context.languageFactory.createOne()
+            const course = await context.courseFactory.createOne({addedBy: author.profile, language: language, lessons: [], image: ""});
+
+            let lessonCounter = 0;
+            await context.lessonFactory.each(l => {
+                l.orderInCourse = lessonCounter;
+                lessonCounter++;
+            }).create(10, {course: course});
+
+            const response = await makeRequest(course.id, {
+                files: {
+                    image: {value: randomImage(100, 100, "image/png"), fileName: "course-image", mimeType: "image/png"}
+                }
+            }, session.token);
+
+            expect(response.statusCode).to.equal(400);
+        })
+    })
+    describe("If fields are invalid return 4xx", async () => {
+        test<LocalTestContext>("If title is invalid return 400", async (context) => {
+            const author = await context.userFactory.createOne();
+            const session = await context.sessionFactory.createOne({user: author})
+            const language = await context.languageFactory.createOne()
+            const course = await context.courseFactory.createOne({addedBy: author.profile, language: language, lessons: [], image: ""});
+
+            let lessonCounter = 0;
+            let courseLessons = await context.lessonFactory.each(l => {
+                l.orderInCourse = lessonCounter;
+                lessonCounter++;
+            }).create(10, {course: course});
+            const updatedCourse = await context.courseFactory.makeOne({addedBy: author.profile, language: language});
+
+            const response = await makeRequest(course.id, {
+                data: {
+                    title: faker.random.alpha(300),
+                    description: updatedCourse.description,
+                    isPublic: updatedCourse.isPublic,
+                    level: updatedCourse.level,
+                    lessonsOrder: shuffleArray(courseLessons).map(l => l.id)
+                },
+                files: {
+                    image: {value: randomImage(100, 100, "image/png"), fileName: "course-image", mimeType: "image/png"}
+                }
+            }, session.token);
+
+            expect(response.statusCode).to.equal(400);
+        })
+        test<LocalTestContext>("If description is invalid return 400", async (context) => {
+            const author = await context.userFactory.createOne();
+            const session = await context.sessionFactory.createOne({user: author})
+            const language = await context.languageFactory.createOne()
+            const course = await context.courseFactory.createOne({addedBy: author.profile, language: language, lessons: [], image: ""});
+
+            let lessonCounter = 0;
+            let courseLessons = await context.lessonFactory.each(l => {
+                l.orderInCourse = lessonCounter;
+                lessonCounter++;
+            }).create(10, {course: course});
+            const updatedCourse = await context.courseFactory.makeOne({addedBy: author.profile, language: language});
+
+            const response = await makeRequest(course.id, {
+                data: {
+                    title: updatedCourse.title,
+                    description: faker.random.alpha(600),
+                    isPublic: updatedCourse.isPublic,
+                    level: updatedCourse.level,
+                    lessonsOrder: shuffleArray(courseLessons).map(l => l.id)
+                },
+                files: {
+                    image: {value: randomImage(100, 100, "image/png"), fileName: "course-image", mimeType: "image/png"}
+                }
+            }, session.token);
+
+            expect(response.statusCode).to.equal(400);
+        })
+        test<LocalTestContext>("If isPublic is invalid return 400", async (context) => {
+            const author = await context.userFactory.createOne();
+            const session = await context.sessionFactory.createOne({user: author})
+            const language = await context.languageFactory.createOne()
+            const course = await context.courseFactory.createOne({addedBy: author.profile, language: language, lessons: [], image: ""});
+
+            let lessonCounter = 0;
+            let courseLessons = await context.lessonFactory.each(l => {
+                l.orderInCourse = lessonCounter;
+                lessonCounter++;
+            }).create(10, {course: course});
+            const updatedCourse = await context.courseFactory.makeOne({addedBy: author.profile, language: language});
+
+            const response = await makeRequest(course.id, {
+                data: {
+                    title: updatedCourse.title,
+                    description: updatedCourse.description,
+                    isPublic: "kinda?",
+                    level: updatedCourse.level,
+                    lessonsOrder: shuffleArray(courseLessons).map(l => l.id)
+                },
+                files: {
+                    image: {value: randomImage(100, 100, "image/png"), fileName: "course-image", mimeType: "image/png"}
+                }
+            }, session.token);
+
+            expect(response.statusCode).to.equal(400);
+        })
+        test<LocalTestContext>("If level is invalid return 400", async (context) => {
+            const author = await context.userFactory.createOne();
+            const session = await context.sessionFactory.createOne({user: author})
+            const language = await context.languageFactory.createOne()
+            const course = await context.courseFactory.createOne({addedBy: author.profile, language: language, lessons: [], image: ""});
+
+            let lessonCounter = 0;
+            let courseLessons = await context.lessonFactory.each(l => {
+                l.orderInCourse = lessonCounter;
+                lessonCounter++;
+            }).create(10, {course: course});
+            const updatedCourse = await context.courseFactory.makeOne({addedBy: author.profile, language: language});
+
+            const response = await makeRequest(course.id, {
+                data: {
+                    title: updatedCourse.title,
+                    description: updatedCourse.description,
+                    isPublic: updatedCourse.isPublic,
+                    level: "high",
+                    lessonsOrder: shuffleArray(courseLessons).map(l => l.id)
+                },
+                files: {
+                    image: {value: randomImage(100, 100, "image/png"), fileName: "course-image", mimeType: "image/png"}
+                }
+            }, session.token);
+
+            expect(response.statusCode).to.equal(400);
+        })
+        describe("If lessonsOrder is invalid return 400", async () => {
+            test<LocalTestContext>("If lessonsOrder is not an array of integers return 400", async (context) => {
+                const author = await context.userFactory.createOne();
+                const session = await context.sessionFactory.createOne({user: author})
+                const language = await context.languageFactory.createOne()
+                const course = await context.courseFactory.createOne({addedBy: author.profile, language: language, lessons: [], image: ""});
+                const updatedCourse = await context.courseFactory.makeOne({addedBy: author.profile, language: language});
+
+                const response = await makeRequest(course.id, {
+                    data: {
+                        title: updatedCourse.title,
+                        description: updatedCourse.description,
+                        isPublic: updatedCourse.isPublic,
+                        level: updatedCourse.level,
+                        lessonsOrder: [1, 2, 3.5, -1, "42"]
+                    },
+                    files: {
+                        image: {value: randomImage(100, 100, "image/png"), fileName: "course-image", mimeType: "image/png"}
+                    }
+                }, session.token);
+
+                expect(response.statusCode).to.equal(400);
+            })
+            describe("If lessonsOrder is not a permutation of course lesson ids return 400", () => {
+                test<LocalTestContext>("If lessonsOrder has any new lesson ids return 400", async (context) => {
+                    const author = await context.userFactory.createOne();
+                    const session = await context.sessionFactory.createOne({user: author})
+                    const language = await context.languageFactory.createOne()
+                    const course = await context.courseFactory.createOne({addedBy: author.profile, language: language, lessons: [], image: ""});
+                    let lessonCounter = 0;
+                    let courseLessons = await context.lessonFactory.each(l => {
+                        l.orderInCourse = lessonCounter;
+                        lessonCounter++;
+                    }).create(10, {course: course});
+                    const updatedCourse = await context.courseFactory.makeOne({addedBy: author.profile, language: language});
+                    const otherLesson = await context.lessonFactory.createOne({course: await context.courseFactory.createOne()});
+
+                    const response = await makeRequest(course.id, {
+                        data: {
+                            title: updatedCourse.title,
+                            description: updatedCourse.description,
+                            isPublic: updatedCourse.isPublic,
+                            level: updatedCourse.level,
+                            lessonsOrder: [...shuffleArray(courseLessons.map(l => l.id)), otherLesson.id]
+                        },
+                        files: {
+                            image: {value: randomImage(100, 100, "image/png"), fileName: "course-image", mimeType: "image/png"}
+                        }
+                    }, session.token);
+
+                    expect(response.statusCode).to.equal(400);
+                })
+                test<LocalTestContext>("If lessonsOrder is missing lesson ids return 400", async (context) => {
+                    const author = await context.userFactory.createOne();
+                    const session = await context.sessionFactory.createOne({user: author})
+                    const language = await context.languageFactory.createOne()
+                    const course = await context.courseFactory.createOne({addedBy: author.profile, language: language, lessons: [], image: ""});
+                    let lessonCounter = 0;
+                    let courseLessons = await context.lessonFactory.each(l => {
+                        l.orderInCourse = lessonCounter;
+                        lessonCounter++;
+                    }).create(10, {course: course});
+                    const updatedCourse = await context.courseFactory.makeOne({addedBy: author.profile, language: language});
+                    const lessonOrder = shuffleArray(courseLessons).map(l => l.id);
+                    lessonOrder.splice(faker.datatype.number({max: courseLessons.length - 1}), faker.datatype.number({max: courseLessons.length}));
+
+                    const response = await makeRequest(course.id, {
+                        data: {
+                            title: updatedCourse.title,
+                            description: updatedCourse.description,
+                            isPublic: updatedCourse.isPublic,
+                            level: updatedCourse.level,
+                            lessonsOrder: lessonOrder
+                        },
+                        files: {
+                            image: {value: randomImage(100, 100, "image/png"), fileName: "course-image", mimeType: "image/png"}
+                        }
+                    }, session.token);
+
+                    expect(response.statusCode).to.equal(400);
+                })
+
+                test<LocalTestContext>("If lessonsOrder has any repeated ids return 400", async (context) => {
+                    const author = await context.userFactory.createOne();
+                    const session = await context.sessionFactory.createOne({user: author})
+                    const language = await context.languageFactory.createOne()
+                    const course = await context.courseFactory.createOne({addedBy: author.profile, language: language, lessons: [], image: ""});
+                    let lessonCounter = 0;
+                    let courseLessons = await context.lessonFactory.each(l => {
+                        l.orderInCourse = lessonCounter;
+                        lessonCounter++;
+                    }).create(10, {course: course});
+                    const updatedCourse = await context.courseFactory.makeOne({addedBy: author.profile, language: language});
+                    const lessonOrder = shuffleArray(courseLessons).map(l => l.id);
+                    lessonOrder.splice(faker.datatype.number({max: courseLessons.length - 1}), 0, lessonOrder[faker.datatype.number({max: courseLessons.length - 1})]);
+
+                    const response = await makeRequest(course.id, {
+                        data: {
+                            title: updatedCourse.title,
+                            description: updatedCourse.description,
+                            isPublic: updatedCourse.isPublic,
+                            level: updatedCourse.level,
+                            lessonsOrder: lessonOrder
+                        },
+                        files: {
+                            image: {value: randomImage(100, 100, "image/png"), fileName: "course-image", mimeType: "image/png"}
+                        }
+                    }, session.token);
+
+                    expect(response.statusCode).to.equal(400);
+                })
+            })
+        })
+
+        describe("If image is invalid return 4xx", () => {
+            test<LocalTestContext>("If image is not a jpeg or png return 415", async (context) => {
+                const author = await context.userFactory.createOne();
+                const session = await context.sessionFactory.createOne({user: author})
+                const language = await context.languageFactory.createOne()
+                const course = await context.courseFactory.createOne({addedBy: author.profile, language: language, lessons: [], image: ""});
+
+                let lessonCounter = 0;
+                let courseLessons = await context.lessonFactory.each(l => {
+                    l.orderInCourse = lessonCounter;
+                    lessonCounter++;
+                }).create(10, {course: course});
+                const updatedCourse = await context.courseFactory.makeOne({addedBy: author.profile, language: language});
+
+                const response = await makeRequest(course.id, {
+                    data: {
+                        title: faker.random.alpha(300),
+                        description: updatedCourse.description,
+                        isPublic: updatedCourse.isPublic,
+                        level: updatedCourse.level,
+                        lessonsOrder: shuffleArray(courseLessons).map(l => l.id)
+                    },
+                    files: {
+                        image: {
+                            value: "https://upload.wikimedia.org/wikipedia/commons/d/de/Lorem_ipsum.ogg",
+                            fallbackType: "audio",
+                            fileName: "course-image"
+                        }
+                    }
+                }, session.token);
+                expect(response.statusCode).to.equal(415);
+            });
+            test<LocalTestContext>("If image is in the right format but is malformed return 415", async (context) => {
+                const author = await context.userFactory.createOne();
+                const session = await context.sessionFactory.createOne({user: author})
+                const language = await context.languageFactory.createOne()
+                const course = await context.courseFactory.createOne({addedBy: author.profile, language: language, lessons: [], image: ""});
+
+                let lessonCounter = 0;
+                let courseLessons = await context.lessonFactory.each(l => {
+                    l.orderInCourse = lessonCounter;
+                    lessonCounter++;
+                }).create(10, {course: course});
+                const updatedCourse = await context.courseFactory.makeOne({addedBy: author.profile, language: language});
+
+                const response = await makeRequest(course.id, {
+                    data: {
+                        title: faker.random.alpha(300),
+                        description: updatedCourse.description,
+                        isPublic: updatedCourse.isPublic,
+                        level: updatedCourse.level,
+                        lessonsOrder: shuffleArray(courseLessons).map(l => l.id)
+                    },
+                    files: {
+                        image: {
+                            //audio base 64 but with image mimetype
+                            value: Buffer.from("UklGRiwAAABXQVZFZm10IBAAAAABAAIARKwAABCxAgAEABAAZGF0YQgAAACwNvFldza4ZQ", "base64"),
+                            mimeType: "image/png",
+                            fileName: "course-image"
+                        }
+                    }
+                }, session.token);
+
+                expect(response.statusCode).to.equal(415);
+            });
+            test<LocalTestContext>("If the image file is more than 500KB return 413", async (context) => {
+                const author = await context.userFactory.createOne();
+                const session = await context.sessionFactory.createOne({user: author})
+                const language = await context.languageFactory.createOne()
+                const course = await context.courseFactory.createOne({addedBy: author.profile, language: language, lessons: [], image: ""});
+
+                let lessonCounter = 0;
+                let courseLessons = await context.lessonFactory.each(l => {
+                    l.orderInCourse = lessonCounter;
+                    lessonCounter++;
+                }).create(10, {course: course});
+                const updatedCourse = await context.courseFactory.makeOne({addedBy: author.profile, language: language});
+
+                const response = await makeRequest(course.id, {
+                    data: {
+                        title: faker.random.alpha(300),
+                        description: updatedCourse.description,
+                        isPublic: updatedCourse.isPublic,
+                        level: updatedCourse.level,
+                        lessonsOrder: shuffleArray(courseLessons).map(l => l.id)
+                    },
+                    files: {
+                        image: {
+                            value: randomImage(1000, 1000),
+                            mimeType: "image/png",
+                            fileName: "course-image"
+                        }
+                    }
+                }, session.token);
+                expect(response.statusCode).to.equal(413);
+            });
+            test<LocalTestContext>("If the image is not square return 400", async (context) => {
+                const author = await context.userFactory.createOne();
+                const session = await context.sessionFactory.createOne({user: author})
+                const language = await context.languageFactory.createOne()
+                const course = await context.courseFactory.createOne({addedBy: author.profile, language: language, lessons: [], image: ""});
+
+                let lessonCounter = 0;
+                let courseLessons = await context.lessonFactory.each(l => {
+                    l.orderInCourse = lessonCounter;
+                    lessonCounter++;
+                }).create(10, {course: course});
+                const updatedCourse = await context.courseFactory.makeOne({addedBy: author.profile, language: language});
+
+                const response = await makeRequest(course.id, {
+                    data: {
+                        title: faker.random.alpha(300),
+                        description: updatedCourse.description,
+                        isPublic: updatedCourse.isPublic,
+                        level: updatedCourse.level,
+                        lessonsOrder: shuffleArray(courseLessons).map(l => l.id)
+                    },
+                    files: {
+                        image: {
+                            value: randomImage(256, 128),
+                            mimeType: "image/png",
+                            fileName: "course-image"
+                        }
+                    }
+                }, session.token);
+                expect(response.statusCode).to.equal(400);
+            });
         })
     })
 });

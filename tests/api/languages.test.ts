@@ -1,4 +1,4 @@
-import {beforeEach, describe, expect, test} from "vitest";
+import {beforeEach, describe, expect, test, TestContext} from "vitest";
 import {faker} from "@faker-js/faker";
 import {orm} from "@/src/server.js";
 import {LanguageFactory} from "@/src/seeders/factories/LanguageFactory.js";
@@ -14,7 +14,7 @@ import {languageSerializer} from "@/src/schemas/response/serializers/LanguageSer
 
 // beforeEach(truncateDb);
 
-interface LocalTestContext {
+interface LocalTestContext extends TestContext {
     userFactory: UserFactory;
     profileFactory: ProfileFactory;
     sessionFactory: SessionFactory;

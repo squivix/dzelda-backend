@@ -58,18 +58,20 @@ export async function fetchWithFiles(
             method: string; url: string;
             headers?: http.IncomingHttpHeaders | http.OutgoingHttpHeaders;
             body: {
-                data: object,
+                data?: object,
                 files?: { [key: string]: { value: string | Buffer; fileName?: string, mimeType?: string, fallbackType?: "image" | "audio" } | "" };
             }
         }, authToken?: string
     }) {
-    // const formData: { data: string; [key: string]: unknown; } = {data: JSON.stringify(options.body.data)};
     const formData = new FormData();
-    formData.append("data", JSON.stringify(options.body.data));
+    if (options.body.data)
+        formData.append("data", JSON.stringify(options.body.data));
     if (!options.body.files)
         options.body.files = {};
     for (let [fileKey, file] of Object.entries(options.body.files)) {
-        if (file !== "") {
+        if (file == "") {
+            formData.append(fileKey, "");
+        } else {
             let fileData: Buffer, fileType: string;
             //file field buffer value and mime type explicitly provided
             if (file.value instanceof Buffer) {

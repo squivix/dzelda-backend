@@ -4,8 +4,6 @@ import {FastifyError, FastifyReply, FastifyRequest} from "fastify";
 import {APIError} from "@/src/utils/errors/APIError.js";
 import {FieldsObject, ValidationAPIError} from "@/src/utils/errors/ValidationAPIError.js";
 import {NotFoundAPIError} from "@/src/utils/errors/NotFoundAPIError.js";
-import MulterError from "fastify-multer/lib/lib/multer-error.js";
-import {FilesTooLargeAPIError} from "@/src/utils/errors/FilesTooLargeAPIError.js";
 
 const isFastifyError = (error: Error): error is FastifyError => {
     return error.name === "FastifyError";

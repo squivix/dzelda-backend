@@ -1,4 +1,4 @@
-import {beforeEach, describe, expect, test} from "vitest";
+import {beforeEach, describe, expect, test, TestContext} from "vitest";
 import {faker} from "@faker-js/faker";
 import {User} from "@/src/models/entities/auth/User.js";
 import {UserFactory} from "@/src/seeders/factories/UserFactory.js";
@@ -14,7 +14,7 @@ import {SessionFactory} from "@/src/seeders/factories/SessionFactory.js";
 
 // beforeEach(truncateDb);
 
-interface LocalTestContext {
+interface LocalTestContext extends TestContext {
     userFactory: UserFactory;
     sessionFactory: SessionFactory;
     languageRepo: EntityRepository<Language>;
