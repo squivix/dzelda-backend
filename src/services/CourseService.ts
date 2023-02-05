@@ -3,7 +3,7 @@ import {Course} from "@/src/models/entities/Course.js";
 import {CourseRepo} from "@/src/models/repos/CourseRepo.js";
 import {AnonymousUser, User} from "@/src/models/entities/auth/User.js";
 import {Language} from "@/src/models/entities/Language.js";
-import {defaultVocabsByLevel} from "@/src/models/enums/VocabLevel.js";
+import {defaultVocabsByLevel, VocabLevel} from "@/src/models/enums/VocabLevel.js";
 import {LanguageLevel} from "@/src/models/enums/LanguageLevel.js";
 import {Lesson} from "@/src/models/entities/Lesson.js";
 import {LessonRepo} from "@/src/models/repos/LessonRepo.js";
@@ -20,7 +20,7 @@ class CourseService {
 
     }
 
-    async getCourses(filters: { languageCode?: string, addedBy?: string, searchQuery?: string }, user: User | AnonymousUser | null) {
+    async getCourses(filters: { languageCode?: string, addedBy?: string, searchQuery?: string, level?: LanguageLevel }, user: User | AnonymousUser | null) {
         const dbFilters: FilterQuery<Course> = {$and: []};
 
         if (user && user instanceof User)
@@ -28,12 +28,14 @@ class CourseService {
         else
             dbFilters.$and!.push({isPublic: true});
 
-        if (filters.languageCode)
+        if (filters.languageCode !== undefined)
             dbFilters.$and!.push({language: {code: filters.languageCode}});
-        if (filters.addedBy)
+        if (filters.addedBy !== undefined)
             dbFilters.$and!.push({addedBy: {user: {username: filters.addedBy}}});
-        if (filters.searchQuery)
+        if (filters.searchQuery !== undefined)
             dbFilters.$and!.push({$or: [{title: {$ilike: `%${filters.searchQuery}%`}}, {description: {$ilike: `%${filters.searchQuery}%`}}]});
+        if (filters.level !== undefined)
+            dbFilters.$and!.push({level: filters.level});
 
         let courses = await this.courseRepo.find(dbFilters, {populate: ["addedBy.user"]});
 

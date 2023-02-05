@@ -19,11 +19,12 @@ class CourseController {
             languageCode: languageCodeValidator.optional(),
             addedBy: usernameValidator.optional(),
             searchQuery: z.string().min(1).max(256).optional(),
+            level: z.nativeEnum(LanguageLevel).optional()
         });
         const queryParams = queryParamsValidator.parse(request.query);
         if (queryParams.addedBy == "me") {
             if (!request.user || request.user instanceof AnonymousUser)
-                throw new UnauthenticatedAPIError(request.user)
+                throw new UnauthenticatedAPIError(request.user);
             queryParams.addedBy = request.user?.username;
         }
 
@@ -46,7 +47,7 @@ class CourseController {
         const body = bodyValidator.parse(request.body);
 
         const languageService = new LanguageService(request.em);
-        const language = await languageService.getLanguage(body.data.language)
+        const language = await languageService.getLanguage(body.data.language);
         if (!language)
             throw new ValidationAPIError({language: {message: "language not found"}});
 
@@ -99,9 +100,9 @@ class CourseController {
         if (request?.user?.profile !== course.addedBy)
             throw course.isPublic ? new ForbiddenAPIError() : new NotFoundAPIError("Course");
 
-        const lessonOrderIdSet = new Set(body.data.lessonsOrder)
+        const lessonOrderIdSet = new Set(body.data.lessonsOrder);
         if (course.lessons.length !== body.data.lessonsOrder.length || !course.lessons.getItems().map(c => c.id).every(l => lessonOrderIdSet.has(l)))
-            throw new ValidationAPIError({lessonsOrder: {message: "ids don't match course lessons: cannot add or remove lessons through this endpoint"}})
+            throw new ValidationAPIError({lessonsOrder: {message: "ids don't match course lessons: cannot add or remove lessons through this endpoint"}});
 
         const updatedCourse = await courseService.updateCourse(course, {
             title: body.data.title,

@@ -7,6 +7,7 @@ import {usernameValidator} from "@/src/validators/userValidator.js";
 import {AnonymousUser} from "@/src/models/entities/auth/User.js";
 import {UnauthenticatedAPIError} from "@/src/utils/errors/UnauthenticatedAPIError.js";
 import {booleanStringValidator} from "@/src/validators/utilValidators.js";
+import {LanguageLevel} from "@/src/models/enums/LanguageLevel.js";
 
 class LessonController {
     async getLessons(request: FastifyRequest, reply: FastifyReply) {
@@ -14,6 +15,7 @@ class LessonController {
             languageCode: languageCodeValidator.optional(),
             addedBy: usernameValidator.optional(),
             searchQuery: z.string().min(1).max(256).optional(),
+            level: z.nativeEnum(LanguageLevel).optional(),
             hasAudio: booleanStringValidator.optional(),
         });
 
