@@ -7,6 +7,8 @@ import CourseService from "@/src/services/CourseService.js";
 export class CourseRepo extends EntityRepository<Course> {
 
     async annotateVocabsByLevel(courses: Course[], userId: number) {
+        if (courses.length === 0)
+            return courses;
         const query = `SELECT json_object_agg(outq.id, outq.vocab_levels) AS vocab_levels_by_course 
 FROM (SELECT subq.course_id                          AS id,
              json_object_agg(subq.level, subq.count) AS vocab_levels 
@@ -21,11 +23,11 @@ FROM (SELECT subq.course_id                          AS id,
             ORDER BY lesson.course_id) AS subq 
       GROUP BY subq.course_id) as outq`;
 
-        const vocabsLevelsByCourse = (await this.em.execute(query))[0].vocab_levels_by_course
+        const vocabsLevelsByCourse = (await this.em.execute(query))[0].vocab_levels_by_course;
         const defaultCounts = defaultVocabsByLevel();
         courses.forEach(course => {
             course.vocabsByLevel = Object.assign({}, defaultCounts, vocabsLevelsByCourse?.[course.id] ?? {});
-        })
+        });
         return courses;
     }
 

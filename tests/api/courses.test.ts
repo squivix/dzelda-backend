@@ -86,7 +86,6 @@ describe("GET courses/", function () {
             expect(response.statusCode).to.equal(200);
             expect(response.json()).toEqual([]);
         });
-
         test<LocalTestContext>("If language filter is invalid return 400", async (context) => {
             await context.courseFactory.create(10);
 
@@ -94,7 +93,6 @@ describe("GET courses/", function () {
             expect(response.statusCode).to.equal(400)
         });
     });
-
     describe("test addedBy filter", () => {
         test<LocalTestContext>("If addedBy filter is valid and user exists only return public courses added by that user", async (context) => {
             const user = await context.userFactory.createOne();
@@ -109,7 +107,6 @@ describe("GET courses/", function () {
             expect(response.statusCode).to.equal(200);
             expect(response.json()).toEqual(courseSerializer.serializeList(courses));
         });
-
         test<LocalTestContext>("If addedBy is me and signed in return courses added by that user", async (context) => {
             const user = await context.userFactory.createOne();
             const session = await context.sessionFactory.createOne({user: user});
@@ -125,8 +122,6 @@ describe("GET courses/", function () {
             expect(response.statusCode).to.equal(200);
             expect(response.json()).toEqual(courseSerializer.serializeList(courses));
         });
-
-
         test<LocalTestContext>("If addedBy is me and not signed in return 401", async (context) => {
             await context.courseFactory.create(10);
 
@@ -140,7 +135,6 @@ describe("GET courses/", function () {
             expect(response.statusCode).to.equal(200);
             expect(response.json()).toEqual([]);
         });
-
         test<LocalTestContext>("If addedBy filter is invalid return 400", async (context) => {
             await context.courseFactory.create(10);
 
@@ -163,7 +157,7 @@ describe("GET courses/", function () {
 
             const courses = await context.courseRepo.find({
                 isPublic: true,
-                $or: [{title: {$ilike: `%${searchQuery}5`}}, {description: {$ilike: `%${searchQuery}5`}}]
+                $or: [{title: {$ilike: `%${searchQuery}%`}}, {description: {$ilike: `%${searchQuery}%`}}]
             })
             expect(response.statusCode).to.equal(200);
             expect(response.json()).toEqual(courseSerializer.serializeList(courses));
@@ -210,7 +204,6 @@ describe("GET courses/", function () {
     });
 
 });
-
 
 /**@link CourseController#createCourse*/
 describe("POST courses/", function () {

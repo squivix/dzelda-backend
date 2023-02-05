@@ -3,9 +3,11 @@ import {Lesson} from "@/src/models/entities/Lesson.js";
 import {VocabLevel} from "@/src/models/enums/VocabLevel.js";
 import {numericEnumValues} from "@/src/utils/utils.js";
 
-export class    LessonRepo extends EntityRepository<Lesson> {
+export class LessonRepo extends EntityRepository<Lesson> {
 
     async annotateVocabsByLevel(lessons: Lesson[], userId: number) {
+        if (lessons.length === 0)
+            return lessons;
         const query = `SELECT json_object_agg(outq.id, outq.vocabLevels) AS vocab_levels_by_lesson
 FROM (SELECT subq.lesson_id                          AS id,
              json_object_agg(subq.level, subq.count) AS vocabLevels
@@ -19,11 +21,11 @@ FROM (SELECT subq.lesson_id                          AS id,
             ORDER BY mlv.lesson_id) AS subq
       GROUP BY subq.lesson_id) as outq`;
 
-        const vocabsLevelsByLesson = (await this.em.execute(query))[0].vocab_levels_by_lesson
-        const defaultCounts = numericEnumValues(VocabLevel).reduce((a, v) => ({...a, [v]: 0}), {})
+        const vocabsLevelsByLesson = (await this.em.execute(query))[0].vocab_levels_by_lesson;
+        const defaultCounts = numericEnumValues(VocabLevel).reduce((a, v) => ({...a, [v]: 0}), {});
         lessons.forEach(lesson => {
             lesson.vocabsByLevel = Object.assign({}, defaultCounts, vocabsLevelsByLesson?.[lesson.id] ?? {});
-        })
+        });
         return lessons;
     }
 
