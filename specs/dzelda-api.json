@@ -470,6 +470,12 @@
           },
           "404": {
             "$ref": "#/components/responses/NotFound"
+          },
+          "413": {
+            "$ref": "#/components/responses/RequestTooLarge"
+          },
+          "415": {
+            "$ref": "#/components/responses/UnsupportedMediaType"
           }
         },
         "description": "Update course details.",
@@ -489,7 +495,7 @@
                       "title",
                       "description",
                       "isPublic",
-                      "lessonIds",
+                      "lessonsOrder",
                       "level"
                     ],
                     "properties": {
@@ -502,7 +508,7 @@
                       "isPublic": {
                         "type": "boolean"
                       },
-                      "lessonIds": {
+                      "lessonsOrder": {
                         "type": "array",
                         "items": {
                           "type": "integer"
@@ -561,7 +567,7 @@
               "maxLength": 4
             },
             "in": "query",
-            "name": "language"
+            "name": "languageCode"
           },
           {
             "schema": {
