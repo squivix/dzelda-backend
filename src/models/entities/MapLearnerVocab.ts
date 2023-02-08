@@ -1,4 +1,4 @@
-import {Entity, Enum, ManyToOne, Property, types, Unique} from "@mikro-orm/core";
+import {Entity, Enum, ManyToOne, OptionalProps, Property, types, Unique} from "@mikro-orm/core";
 import {CustomBaseEntity} from "@/src/models/entities/CustomBaseEntity.js";
 import {Vocab} from "@/src/models/entities/Vocab.js";
 import {Profile} from "@/src/models/entities/Profile.js";
@@ -16,7 +16,9 @@ export class MapLearnerVocab extends CustomBaseEntity {
     @Enum({items: () => VocabLevel, type: types.enum, default: VocabLevel.LEVEL_1})
     level!: VocabLevel;
 
-    @Property({type: types.string, nullable: true})
-    notes?: string;
+    @Property({type: types.string, default: ""})
+    notes!: string;
+
+    [OptionalProps]?: "notes";
 
 }

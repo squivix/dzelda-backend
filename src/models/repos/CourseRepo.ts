@@ -24,7 +24,6 @@ FROM (SELECT subq.course_id                          AS id,
       GROUP BY subq.course_id) as outq`;
 
         const vocabsLevelsByCourse = (await this.em.execute(query))[0].vocab_levels_by_course;
-        console.log(vocabsLevelsByCourse)
         const defaultCounts = defaultVocabsByLevel();
         courses.forEach(course => course.vocabsByLevel = Object.assign({}, defaultCounts, vocabsLevelsByCourse?.[course.id] ?? {}));
         return courses;

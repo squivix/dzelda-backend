@@ -238,7 +238,7 @@ describe("GET users/:username/", function () {
 
             const response = await makeRequest(user.username);
             expect(response.statusCode).to.equal(200);
-            expect(response.json()).toEqual(userSerializer.serialize(user, {hiddenFields: ["email"]}));
+            expect(response.json()).toEqual(userSerializer.serialize(user, {ignore: ["email"]}));
         });
         test<LocalTestContext>("If authenticated as other user return user without email", async (context) => {
             const user = await context.userFactory.createOne({profile: {isPublic: true}});
@@ -247,7 +247,7 @@ describe("GET users/:username/", function () {
 
             const response = await makeRequest(user.username, session.token);
             expect(response.statusCode).to.equal(200);
-            expect(response.json()).toEqual(userSerializer.serialize(user, {hiddenFields: ["email"]}));
+            expect(response.json()).toEqual(userSerializer.serialize(user, {ignore: ["email"]}));
         });
     });
 

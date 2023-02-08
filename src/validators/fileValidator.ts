@@ -13,7 +13,7 @@ export function validateFileSize(file: File, fieldName: string, sizeInKb: number
 const fileMimeTypes = {
     image: ["image/jpeg", "image/png"],
 
-    audio: ["audio/wav", "audio/mpeg"]
+    audio: ["audio/wav", "audio/mpeg", "application/ogg"]
 }
 
 export function validateFileMimeType(file: File, fieldName: string, type: keyof typeof fileMimeTypes) {

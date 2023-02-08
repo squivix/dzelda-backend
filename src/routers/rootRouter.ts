@@ -8,6 +8,7 @@ import {lessonsRouter} from "@/src/routers/lessonsRouter.js";
 import FastifyFormidable from "fastify-formidable";
 
 const rootRouter: FastifyPluginCallback = function rootRouter(fastify, options, done) {
+    fastify.register(FastifyFormidable)
     fastify.decorateRequest("em", null);
     fastify.decorateRequest("user", null);
     fastify.addHook("preParsing", attachOrmEntityManagerMiddleware);

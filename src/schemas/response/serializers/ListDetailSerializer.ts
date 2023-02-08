@@ -8,15 +8,15 @@ export type CustomCallbackObject<T> = {
 export abstract class ListDetailSerializer<T, L, D> extends CustomEntitySerializer<T, L | D> {
     serializeList(entities: T[], {
         mode = SerializationMode.LIST,
-        hiddenFields = []
-    }: { mode?: SerializationMode, hiddenFields?: (keyof (L | D))[] } = {}): Partial<L | D>[] {
-        return entities.map(e => this.serialize(e, {mode, hiddenFields}));
+        ignore = []
+    }: { mode?: SerializationMode, ignore?: (keyof (L | D))[] } = {}): Partial<L | D>[] {
+        return entities.map(e => this.serialize(e, {mode, ignore}));
     }
 
     serialize(entity: T, {
         mode = SerializationMode.DETAIL,
-        hiddenFields = []
-    }: { mode?: SerializationMode, hiddenFields?: (keyof L | keyof D)[] } = {}) {
+        ignore = []
+    }: { mode?: SerializationMode, ignore?: (keyof L | keyof D)[] } = {}) {
         let definition: CustomCallbackObject<L> | CustomCallbackObject<D>;
         if (mode === SerializationMode.LIST)
             definition = this.listDefinition(entity);
@@ -24,7 +24,7 @@ export abstract class ListDetailSerializer<T, L, D> extends CustomEntitySerializ
             definition = this.detailDefinition(entity);
 
         const fieldsHidden: Partial<Record<(keyof L) | (keyof D), boolean>> = {};
-        hiddenFields.forEach(h => fieldsHidden[h] = true);
+        ignore.forEach(h => fieldsHidden[h] = true);
 
         //repetitive code because I don't understand union types :(
         if (mode === SerializationMode.LIST) {
@@ -32,14 +32,14 @@ export abstract class ListDetailSerializer<T, L, D> extends CustomEntitySerializ
             (Object.keys(definition) as Array<keyof L>).forEach(k => {
                 if (!fieldsHidden[k])
                     pojo[k] = (definition as CustomCallbackObject<L>)[k]();
-            })
+            });
             return cleanObject(pojo);
         } else {
             let pojo: Partial<D> = {};
             (Object.keys(definition) as Array<keyof D>).forEach(k => {
                 if (!fieldsHidden[k])
                     pojo[k] = (definition as CustomCallbackObject<D>)[k]();
-            })
+            });
             return cleanObject(pojo);
         }
     }

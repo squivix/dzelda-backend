@@ -11,22 +11,26 @@ import {orm} from "@/src/server.js";
 import {Lesson} from "@/src/models/entities/Lesson.js";
 import {Course} from "@/src/models/entities/Course.js";
 import {InjectOptions} from "light-my-request";
-import {buildQueryString, fetchRequest} from "@/tests/api/utils.js";
+import {buildQueryString, fetchRequest, fetchWithFiles} from "@/tests/api/utils.js";
 import {lessonSerializer} from "@/src/schemas/response/serializers/LessonSerializer.js";
 import {faker} from "@faker-js/faker";
 import {randomCase, randomEnum} from "@/tests/utils.js";
 import {LanguageLevel} from "@/src/models/enums/LanguageLevel.js";
-import {courseSerializer} from "@/src/schemas/response/serializers/CourseSerializer.js";
+import {Vocab} from "@/src/models/entities/Vocab.js";
+import {EntityRepository} from "@mikro-orm/core";
+import {parsers} from "@/src/utils/parsers/parsers.js";
+import {MapLessonVocab} from "@/src/models/entities/MapLessonVocab.js";
 
 interface LocalTestContext extends TestContext {
     userFactory: UserFactory;
     profileFactory: ProfileFactory;
     sessionFactory: SessionFactory;
-    courseRepo: CourseRepo;
-    lessonRepo: LessonRepo;
     languageFactory: LanguageFactory;
     lessonFactory: LessonFactory;
     courseFactory: CourseFactory;
+    courseRepo: CourseRepo;
+    lessonRepo: LessonRepo;
+    vocabRepo: EntityRepository<Vocab>;
 }
 
 beforeEach<LocalTestContext>((context) => {
@@ -38,6 +42,8 @@ beforeEach<LocalTestContext>((context) => {
     context.lessonFactory = new LessonFactory(context.em);
     context.courseFactory = new CourseFactory(context.em);
     context.languageFactory = new LanguageFactory(context.em);
+
+    context.vocabRepo = context.em.getRepository(Vocab);
     context.lessonRepo = context.em.getRepository(Lesson) as LessonRepo;
     context.courseRepo = context.em.getRepository(Course) as CourseRepo;
 });
@@ -282,5 +288,109 @@ describe("GET lessons/", () => {
         lessons = await context.lessonRepo.annotateVocabsByLevel(lessons, user.id);
         expect(response.statusCode).to.equal(200);
         expect(response.json()).toEqual(lessonSerializer.serializeList(lessons));
+    });
+});
+
+/**@link LessonController#createLesson*/
+describe("POST lessons/", () => {
+    const makeRequest = async ({data, files = {}}: {
+        data: object; files?: { [key: string]: { value: string | Buffer; fileName: string, mimeType?: string, fallbackType?: "image" | "audio" } | "" }
+    }, authToken?: string) => {
+        return await fetchWithFiles({
+            options: {
+                method: "POST",
+                url: "lessons/",
+                body: {
+                    data: data,
+                    files: files
+                },
+            },
+            authToken: authToken
+        });
+    };
+
+
+    describe("If all fields are valid a new course should be created and return 201", () => {
+        test<LocalTestContext>("If optional fields are missing use default values", async (context) => {
+            const user = await context.userFactory.createOne();
+            const session = await context.sessionFactory.createOne({user: user});
+            const course = await context.courseFactory.createOne({addedBy: user.profile, lessons: []});
+            let newLesson: Lesson | null = context.lessonFactory.makeOne({course: course});
+
+            const response = await makeRequest({
+                data: {
+                    title: newLesson.title,
+                    text: newLesson.text,
+                    courseId: course.id,
+                }
+            }, session.token);
+
+            expect(response.statusCode).to.equal(201);
+            newLesson = await context.lessonRepo.findOne({course: course}, {populate: ["course", "course.addedBy.user"]});
+            expect(newLesson).not.toBeNull();
+            if (!newLesson) return;
+            await context.lessonRepo.annotateVocabsByLevel([newLesson], user.id);
+            await context.courseRepo.annotateVocabsByLevel([newLesson.course], user.id);
+            expect(response.json()).toEqual(expect.objectContaining(lessonSerializer.serialize(newLesson)));
+
+            const parser = parsers["en"];
+            const lessonWordsText = parser.parseText(newLesson.text);
+            const lessonVocabs = await context.vocabRepo.find({text: lessonWordsText, language: course.language});
+            const lessonVocabMappings = await context.em.find(MapLessonVocab, {vocab: lessonVocabs, lesson: newLesson});
+
+            expect(lessonVocabs.length).toEqual(lessonWordsText.length);
+            expect(lessonVocabMappings.length).toEqual(lessonWordsText.length);
+        });
+        test<LocalTestContext>("If optional fields are provided use provided values", async (context) => {
+            const user = await context.userFactory.createOne();
+            const session = await context.sessionFactory.createOne({user: user});
+            const course = await context.courseFactory.createOne({addedBy: user.profile, lessons: []});
+            let newLesson: Lesson | null = context.lessonFactory.makeOne({course: course});
+
+            const response = await makeRequest({
+                data: {
+                    title: newLesson.title,
+                    text: newLesson.text,
+                    courseId: course.id,
+                }, files: {
+                    image: {value: newLesson.image, fallbackType: "image", fileName: "lesson-image"},
+                    audio: {value: newLesson.audio, fallbackType: "audio", fileName: "lesson-audio"},
+                }
+            }, session.token);
+
+            expect(response.statusCode).to.equal(201);
+            newLesson = await context.lessonRepo.findOne({course: course}, {populate: ["course", "course.addedBy.user"]});
+            expect(newLesson).not.toBeNull();
+            if (!newLesson) return;
+            await context.lessonRepo.annotateVocabsByLevel([newLesson], user.id);
+            await context.courseRepo.annotateVocabsByLevel([newLesson.course], user.id);
+            expect(response.json()).toEqual(expect.objectContaining(lessonSerializer.serialize(newLesson)));
+
+            const parser = parsers["en"];
+            const lessonWordsText = parser.parseText(newLesson.text);
+            const lessonVocabs = await context.vocabRepo.find({text: lessonWordsText, language: course.language});
+            const lessonVocabMappings = await context.em.find(MapLessonVocab, {vocab: lessonVocabs, lesson: newLesson});
+
+            expect(lessonVocabs.length).toEqual(lessonWordsText.length);
+            expect(lessonVocabMappings.length).toEqual(lessonWordsText.length);
+        });
+    });
+    test<LocalTestContext>("If user not logged in return 401", async (context) => {
+        const course = await context.courseFactory.createOne();
+        const newLesson = context.lessonFactory.makeOne({course: course});
+
+        const response = await makeRequest({
+            data: {
+                title: newLesson.title,
+                text: newLesson.text,
+                courseId: course.id,
+            }
+        });
+
+        expect(response.statusCode).to.equal(401);
+    });
+    describe("If required fields are missing return 400", async () => {
+    });
+    describe("If fields are invalid return 4xx code", async () => {
     });
 });

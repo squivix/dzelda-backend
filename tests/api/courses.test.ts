@@ -251,7 +251,6 @@ describe("POST courses/", function () {
             const session = await context.sessionFactory.createOne({user: user});
             const language = await context.languageFactory.createOne();
 
-
             const newCourse = context.courseFactory.makeOne({
                 description: "",
                 isPublic: true,
@@ -297,7 +296,7 @@ describe("POST courses/", function () {
             }, session.token);
 
             expect(response.statusCode).to.equal(201);
-            expect(response.json()).toEqual(expect.objectContaining(courseSerializer.serialize(newCourse, {hiddenFields: ["image"]})));
+            expect(response.json()).toEqual(expect.objectContaining(courseSerializer.serialize(newCourse, {ignore: ["image"]})));
             expect(fs.existsSync(response.json().image));
         });
     });

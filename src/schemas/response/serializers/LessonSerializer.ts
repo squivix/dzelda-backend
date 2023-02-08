@@ -30,7 +30,7 @@ class LessonSerializer extends ListDetailSerializer<Lesson, LessonListSchema, Le
             text: () => lesson.text,
             audio: () => lesson.audio,
             image: () => lesson.image,
-            course: () => courseSerializer.serialize(lesson.course, {mode: SerializationMode.DETAIL}) as CourseDetailsSchema,
+            course: () => courseSerializer.serialize(lesson.course, {mode: SerializationMode.LIST}) as CourseListSchema,
             orderInCourse: () => lesson.orderInCourse,
             addedOn: () => lesson.addedOn.toISOString(),
             vocabsByLevel: () => lesson.vocabsByLevel

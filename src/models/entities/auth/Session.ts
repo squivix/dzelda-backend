@@ -11,7 +11,6 @@ export class Session extends CustomBaseEntity {
     }
 
     @Property({type: types.string, length: 255})
-    @Unique()
     token!: string;
 
     @OneToOne({entity: () => User, inversedBy: (user: User) => user.session, owner: true})

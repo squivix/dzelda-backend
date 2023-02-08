@@ -98,7 +98,6 @@ export async function fetchWithFiles(
             });
         }
     }
-
     options = {
         ...options,
         // @ts-ignore

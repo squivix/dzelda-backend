@@ -12,6 +12,7 @@ import {courseSerializer} from "@/src/schemas/response/serializers/CourseSeriali
 import {ForbiddenAPIError} from "@/src/utils/errors/ForbiddenAPIError.js";
 import {ValidationAPIError} from "@/src/utils/errors/ValidationAPIError.js";
 import LanguageService from "@/src/services/LanguageService.js";
+import {numericStringValidator} from "@/src/validators/utilValidators.js";
 
 class CourseController {
     async getCourses(request: FastifyRequest, reply: FastifyReply) {
@@ -64,7 +65,7 @@ class CourseController {
     }
 
     async getCourse(request: FastifyRequest, reply: FastifyReply) {
-        const validator = z.object({courseId: z.string().regex(/^\d+$/).transform(Number)});
+        const validator = z.object({courseId: numericStringValidator});
         const pathParams = validator.parse(request.params);
 
         const courseService = new CourseService(request.em);
@@ -76,7 +77,7 @@ class CourseController {
     }
 
     async updateCourse(request: FastifyRequest, reply: FastifyReply) {
-        const pathParamsValidator = z.object({courseId: z.string().regex(/^\d+$/).transform(Number)});
+        const pathParamsValidator = z.object({courseId: numericStringValidator});
         const pathParams = pathParamsValidator.parse(request.params);
 
         const bodyValidator = z.object({

@@ -6,11 +6,7 @@ import {deleteFileOnFail, singleFileUploadMiddleWare} from "@/src/middlewares/fi
 import {courseImageValidator} from "@/src/validators/courseValidator.js";
 
 export const coursesRouter: FastifyPluginCallback = function (fastify, options, done) {
-    fastify.register(FastifyFormidable)
-
-
     fastify.get(`/courses/`, CourseController.getCourses);
-    // 500 * 1024
     fastify.post(`/courses/`, {
         preHandler: [requiresAuth,
             singleFileUploadMiddleWare({"image": {path: "courses/images", validate: courseImageValidator}})],

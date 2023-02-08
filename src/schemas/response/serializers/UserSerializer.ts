@@ -8,14 +8,14 @@ import {SerializationMode} from "@/src/schemas/response/serializers/ListDetailSe
 class UserSerializer extends CustomEntitySerializer<User, UserSchema> {
     serialize(user: User, {
         mode = SerializationMode.DETAIL,
-        hiddenFields = []
-    }: { mode?: SerializationMode; hiddenFields?: (keyof UserSchema)[] } = {}): UserSchema {
+        ignore = []
+    }: { mode?: SerializationMode; ignore?: (keyof UserSchema)[] } = {}): UserSchema {
         const userPojo = {
             username: user.username,
             email: user.email,
             profile: profileSerializer.serialize(user.profile),
         }
-        for (const field of hiddenFields)
+        for (const field of ignore)
             delete userPojo[field];
         return userPojo;
     }

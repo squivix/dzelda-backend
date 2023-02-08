@@ -8,7 +8,7 @@ import {MapLearnerVocab} from "@/src/models/entities/MapLearnerVocab.js";
 
 export class VocabSeeder extends Seeder {
     static readonly VOCABS_FILE_NAME = "vocabs.json";
-    static readonly MAP_LEARNER_VOCABS_FILE_NAME = "map_vocab_learners.json";
+    static readonly MAP_LEARNER_VOCABS_FILE_NAME = "map_learner_vocabs.json";
 
     async run(em: EntityManager, context: Dictionary): Promise<void> {
         if (!await fs.exists(`data/${VocabSeeder.VOCABS_FILE_NAME}`) || !await fs.exists(`data/${VocabSeeder.MAP_LEARNER_VOCABS_FILE_NAME}`))

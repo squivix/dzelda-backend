@@ -9,8 +9,8 @@ import {SerializationMode} from "@/src/schemas/response/serializers/ListDetailSe
 class ProfileSerializer extends CustomEntitySerializer<Profile, ProfileDetailsSchema> {
     serialize(profile: Profile, {
         mode,
-        hiddenFields
-    }: { mode?: SerializationMode; hiddenFields?: (keyof ProfileDetailsSchema)[] } = {}): ProfileDetailsSchema {
+        ignore
+    }: { mode?: SerializationMode; ignore?: (keyof ProfileDetailsSchema)[] } = {}): ProfileDetailsSchema {
         return {
             id: profile.id,
             languagesLearning: languageSerializer.serializeList(profile.languagesLearning.getItems()) as LanguageListSchema[],
