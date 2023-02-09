@@ -1,23 +1,23 @@
 import {File} from "fastify-formidable";
-import {validateFileMimeType, validateFileSize, validateImageAspectRatio} from "@/src/validators/fileValidator.js";
+import {validateFileSize, validateFileType, validateImageAspectRatio} from "@/src/validators/fileValidator.js";
 import {z} from "zod";
 
 export const lessonTitleValidator = z.string().min(1).max(124);
 export const lessonTextValidator = z.string().min(1).max(50_000);
 
-export function lessonImageValidator(imageFile?: File) {
+export async function lessonImageValidator(imageFile?: File) {
     const FIELD_NAME = "image";
     if (imageFile) {
-        validateFileMimeType(imageFile, FIELD_NAME, "image");
-        validateFileSize(imageFile, FIELD_NAME, 500);
-        validateImageAspectRatio(imageFile, FIELD_NAME, 1, 1);
+        await validateFileType(imageFile, FIELD_NAME, "image");
+        await validateFileSize(imageFile, FIELD_NAME, 500);
+        await validateImageAspectRatio(imageFile, FIELD_NAME, 1, 1);
     }
 }
 
-export function lessonAudioValidator(audioFile?: File) {
+export async function lessonAudioValidator(audioFile?: File) {
     const FIELD_NAME = "audio";
     if (audioFile) {
-        validateFileMimeType(audioFile, FIELD_NAME, "audio");
-        validateFileSize(audioFile, FIELD_NAME, 100 * 1024);
+        await validateFileType(audioFile, FIELD_NAME, "audio");
+        await validateFileSize(audioFile, FIELD_NAME, 100 * 1024);
     }
 }

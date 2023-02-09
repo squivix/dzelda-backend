@@ -5,34 +5,34 @@ import {ValidationAPIError} from "@/src/utils/errors/ValidationAPIError.js";
 import fs from "fs-extra";
 import formidable from "formidable";
 import path from "path";
-import crypto from "crypto"
+import crypto from "crypto";
 
 export const MAX_TOTAL_FILE_UPLOAD_SIZE = 500 * 1024 * 1024;
 export const ROOT_UPLOAD_DIR = "public/uploads";
 
-export function singleFileUploadMiddleWare(fields: { [fieldName: string]: { path: string, validate: (file?: File) => void } }): preHandlerHookHandler {
+export function singleFileUploadMiddleWare(fields: { [fieldName: string]: { path: string, validate: (file?: File) => Promise<void> } }): preHandlerHookHandler {
     return async (request) => {
         const formidableInstance = formidable({
             maxFileSize: MAX_TOTAL_FILE_UPLOAD_SIZE,
             uploadDir: ROOT_UPLOAD_DIR,
             keepExtensions: true
-        })
+        });
 
-        await fs.ensureDir(ROOT_UPLOAD_DIR)
-        await Promise.all(Object.values(fields).map(async f => await fs.ensureDir(`${ROOT_UPLOAD_DIR}/${f.path}`)))
+        await fs.ensureDir(ROOT_UPLOAD_DIR);
+        await Promise.all(Object.values(fields).map(async f => await fs.ensureDir(`${ROOT_UPLOAD_DIR}/${f.path}`)));
 
         formidableInstance.addListener("fileBegin", (formName: string, file: File) => {
             if (fields[formName]) {
                 const fileName = `${crypto.randomBytes(8).toString("hex")}-${Date.now()}`;
-                file.filepath = `${ROOT_UPLOAD_DIR}/${fields[formName].path}/${fileName}.${path.extname(file.filepath)}`;
+                file.filepath = `${ROOT_UPLOAD_DIR}/${fields[formName].path}/${fileName}${path.extname(file.filepath)}`;
             }
-        })
+        });
         await request.parseMultipart(formidableInstance);
 
         if (!request[kIsMultipart])
             throw new UnsupportedContentTypeAPIError("multipart/form-data");
 
-        Object.entries(fields).map(([fieldName, field]) => field.validate(request.files?.[fieldName] as File))
+        await Promise.all(Object.entries(fields).map(([fieldName, field]) => field.validate(request.files?.[fieldName] as File)));
         try {
             (request.body as any).data = JSON.parse((request.body as any).data);
         } catch (e) {
@@ -47,6 +47,6 @@ export const deleteFileOnFail: onResponseHookHandler = (request: FastifyRequest,
         Object.values(request.files).map(async field => {
             const files = field instanceof Array ? field : [field];
             await Promise.all(files.map(async file => await fs.remove(file.filepath)));
-        })
+        });
     }
-}
+};

@@ -1,6 +1,6 @@
 import {beforeEach, describe, expect, test, TestContext} from "vitest";
 import {orm} from "@/src/server.js";
-import {buildQueryString, fetchRequest, fetchWithFiles} from "@/tests/api/utils.js";
+import {buildQueryString, fetchRequest, fetchWithFiles, readSampleFile} from "@/tests/api/utils.js";
 import {UserFactory} from "@/src/seeders/factories/UserFactory.js";
 import {SessionFactory} from "@/src/seeders/factories/SessionFactory.js";
 import {ProfileFactory} from "@/src/seeders/factories/ProfileFactory.js";
@@ -230,7 +230,7 @@ describe("GET courses/", function () {
 /**@link CourseController#createCourse*/
 describe("POST courses/", function () {
     const makeRequest = async ({data, files = {}}: {
-        data: object; files?: { [key: string]: { value: string | Buffer; fileName: string, mimeType?: string, fallbackType?: "image" | "audio" } | "" }
+        data: object; files?: { [key: string]: { value: ""; } | { value: Buffer; fileName?: string, mimeType?: string } };
     }, authToken?: string) => {
         return await fetchWithFiles({
             options: {
@@ -267,7 +267,6 @@ describe("POST courses/", function () {
                     title: newCourse.title,
                     language: language.code,
                 },
-                files: {image: ""}
             }, session.token);
 
             expect(response.statusCode).to.equal(201);
@@ -292,7 +291,7 @@ describe("POST courses/", function () {
                     isPublic: newCourse.isPublic,
                     level: newCourse.level,
                 },
-                files: {image: {value: newCourse.image, fallbackType: "image", fileName: "course-image"}}
+                files: {image: readSampleFile("images/lorem-ipsum-69_8KB-1_1ratio.png")}
             }, session.token);
 
             expect(response.statusCode).to.equal(201);
@@ -308,8 +307,7 @@ describe("POST courses/", function () {
             data: {
                 title: newCourse.title,
                 language: language.code,
-            },
-            files: {image: ""}
+            }
         });
 
         expect(response.statusCode).to.equal(401);
@@ -321,21 +319,18 @@ describe("POST courses/", function () {
             const language = await context.languageFactory.createOne();
 
             const response = await makeRequest({
-                data: {language: language.code},
-                files: {image: ""}
+                data: {language: language.code}
             }, session.token);
 
             expect(response.statusCode).to.equal(400);
         });
-
         test<LocalTestContext>("If language is missing return 400", async (context) => {
             const user = await context.userFactory.createOne();
             const session = await context.sessionFactory.createOne({user: user});
 
             const newCourse = context.courseFactory.makeOne();
             const response = await makeRequest({
-                data: {title: newCourse.title},
-                files: {image: ""}
+                data: {title: newCourse.title}
             }, session.token);
 
             expect(response.statusCode).to.equal(400);
@@ -351,8 +346,7 @@ describe("POST courses/", function () {
                 data: {
                     title: faker.random.alpha(300),
                     language: language.code,
-                },
-                files: {image: ""}
+                }
             }, session.token);
             expect(response.statusCode).to.equal(400);
         });
@@ -366,8 +360,7 @@ describe("POST courses/", function () {
                 data: {
                     title: newCourse.title,
                     language: faker.random.alphaNumeric(10),
-                },
-                files: {image: ""}
+                }
             }, session.token);
             expect(response.statusCode).to.equal(400);
         });
@@ -381,8 +374,7 @@ describe("POST courses/", function () {
                 data: {
                     title: newCourse.title,
                     language: faker.random.alpha(4),
-                },
-                files: {image: ""}
+                }
             }, session.token);
 
             expect(response.statusCode).to.equal(400);
@@ -398,8 +390,7 @@ describe("POST courses/", function () {
                     title: newCourse.title,
                     language: language.code,
                     description: faker.random.alpha(600)
-                },
-                files: {image: ""}
+                }
             }, session.token);
 
             expect(response.statusCode).to.equal(400);
@@ -415,8 +406,7 @@ describe("POST courses/", function () {
                     title: newCourse.title,
                     language: language.code,
                     isPublic: "kinda?"
-                },
-                files: {image: ""}
+                }
             }, session.token);
             expect(response.statusCode).to.equal(400);
         });
@@ -431,8 +421,7 @@ describe("POST courses/", function () {
                     title: newCourse.title,
                     language: language.code,
                     level: "high"
-                },
-                files: {image: ""}
+                }
             }, session.token);
 
             expect(response.statusCode).to.equal(400);
@@ -450,33 +439,7 @@ describe("POST courses/", function () {
                         language: language.code,
                     },
                     files: {
-                        image: {
-                            value: "https://upload.wikimedia.org/wikipedia/commons/d/de/Lorem_ipsum.ogg",
-                            fallbackType: "audio",
-                            fileName: "course-image"
-                        }
-                    }
-                }, session.token);
-                expect(response.statusCode).to.equal(415);
-            });
-            test<LocalTestContext>("If image is in the right format but is malformed return 415", async (context) => {
-                const user = await context.userFactory.createOne();
-                const session = await context.sessionFactory.createOne({user: user});
-                const language = await context.languageFactory.createOne();
-                const newCourse = context.courseFactory.makeOne({language: language});
-
-                const response = await makeRequest({
-                    data: {
-                        title: newCourse.title,
-                        language: language.code,
-                    },
-                    files: {
-                        image: {
-                            //audio base 64 but with image mimetype
-                            value: Buffer.from("UklGRiwAAABXQVZFZm10IBAAAAABAAIARKwAABCxAgAEABAAZGF0YQgAAACwNvFldza4ZQ", "base64"),
-                            mimeType: "image/png",
-                            fileName: "course-image"
-                        }
+                        image: readSampleFile("images/audio-468_4KB.png")
                     }
                 }, session.token);
                 expect(response.statusCode).to.equal(415);
@@ -492,13 +455,7 @@ describe("POST courses/", function () {
                         title: newCourse.title,
                         language: language.code,
                     },
-                    files: {
-                        image: {
-                            value: randomImage(1000, 1000),
-                            mimeType: "image/png",
-                            fileName: "course-image"
-                        }
-                    }
+                    files: {image: readSampleFile("images/santa-barbara-1_8MB-1_1ratio.jpg")}
                 }, session.token);
 
                 expect(response.statusCode).to.equal(413);
@@ -515,16 +472,13 @@ describe("POST courses/", function () {
                         language: language.code,
                     },
                     files: {
-                        image: {
-                            value: randomImage(256, 128),
-                            mimeType: "image/png",
-                            fileName: "course-image"
-                        }
+                        image: readSampleFile("images/rectangle-5_2KB-2_1ratio.png")
                     }
                 }, session.token);
 
                 expect(response.statusCode).to.equal(400);
             });
+            // test<LocalTestContext>("If image is corrupted return 415", async (context) => {});
         });
     });
 });
@@ -539,6 +493,7 @@ describe("GET courses/:courseId", function () {
         };
         return await fetchRequest(options, authToken);
     };
+
     describe("If the course exists and is public return the course", () => {
         test<LocalTestContext>("If the user is not logged in return course and lessons without vocab levels", async (context) => {
             const course = await context.courseFactory.createOne({isPublic: true});
@@ -601,7 +556,7 @@ describe("GET courses/:courseId", function () {
 /**@link CourseController#updateCourse*/
 describe("PUT courses/:courseId", function () {
     const makeRequest = async (courseId: number | string, {data, files = {}}: {
-        data?: object; files?: { [key: string]: { value: string | Buffer; fileName: string, mimeType?: string, fallbackType?: "image" | "audio" } | "" }
+        data?: object; files?: { [key: string]: { value: ""; } | { value: Buffer; fileName?: string, mimeType?: string } };
     }, authToken?: string) => {
         return await fetchWithFiles({
             options: {
@@ -672,9 +627,7 @@ describe("PUT courses/:courseId", function () {
                     level: updatedCourse.level,
                     lessonsOrder: shuffledLessonIds
                 },
-                files: {
-                    image: ""
-                }
+                files: {image: {value: ""}}
             }, session.token);
 
             course = await context.courseRepo.findOneOrFail({id: course.id}, {populate: ["language", "addedBy", "addedBy.user", "addedBy.languagesLearning"]});
@@ -708,9 +661,7 @@ describe("PUT courses/:courseId", function () {
                     level: updatedCourse.level,
                     lessonsOrder: shuffledLessonIds
                 },
-                files: {
-                    image: {value: randomImage(100, 100, "image/png"), fileName: "course-image", mimeType: "image/png"}
-                }
+                files: {image: readSampleFile("images/lorem-ipsum-69_8KB-1_1ratio.png")}
             }, session.token);
 
             course = await context.courseRepo.findOneOrFail({id: course.id}, {populate: ["language", "addedBy", "addedBy.user", "addedBy.languagesLearning"]});
@@ -1265,45 +1216,7 @@ describe("PUT courses/:courseId", function () {
                         level: updatedCourse.level,
                         lessonsOrder: shuffleArray(courseLessons).map(l => l.id)
                     },
-                    files: {
-                        image: {
-                            value: "https://upload.wikimedia.org/wikipedia/commons/d/de/Lorem_ipsum.ogg",
-                            fallbackType: "audio",
-                            fileName: "course-image"
-                        }
-                    }
-                }, session.token);
-                expect(response.statusCode).to.equal(415);
-            });
-            test<LocalTestContext>("If image is in the right format but is malformed return 415", async (context) => {
-                const author = await context.userFactory.createOne();
-                const session = await context.sessionFactory.createOne({user: author});
-                const language = await context.languageFactory.createOne();
-                const course = await context.courseFactory.createOne({addedBy: author.profile, language: language, lessons: [], image: ""});
-
-                let lessonCounter = 0;
-                let courseLessons = await context.lessonFactory.each(l => {
-                    l.orderInCourse = lessonCounter;
-                    lessonCounter++;
-                }).create(10, {course: course});
-                const updatedCourse = await context.courseFactory.makeOne({addedBy: author.profile, language: language});
-
-                const response = await makeRequest(course.id, {
-                    data: {
-                        title: faker.random.alpha(300),
-                        description: updatedCourse.description,
-                        isPublic: updatedCourse.isPublic,
-                        level: updatedCourse.level,
-                        lessonsOrder: shuffleArray(courseLessons).map(l => l.id)
-                    },
-                    files: {
-                        image: {
-                            //audio base 64 but with image mimetype
-                            value: Buffer.from("UklGRiwAAABXQVZFZm10IBAAAAABAAIARKwAABCxAgAEABAAZGF0YQgAAACwNvFldza4ZQ", "base64"),
-                            mimeType: "image/png",
-                            fileName: "course-image"
-                        }
-                    }
+                    files: {image: readSampleFile("images/audio-468_4KB.png")}
                 }, session.token);
 
                 expect(response.statusCode).to.equal(415);
@@ -1330,11 +1243,7 @@ describe("PUT courses/:courseId", function () {
                         lessonsOrder: shuffleArray(courseLessons).map(l => l.id)
                     },
                     files: {
-                        image: {
-                            value: randomImage(1000, 1000),
-                            mimeType: "image/png",
-                            fileName: "course-image"
-                        }
+                        image: readSampleFile("images/santa-barbara-1_8MB-1_1ratio.jpg")
                     }
                 }, session.token);
                 expect(response.statusCode).to.equal(413);
@@ -1360,16 +1269,11 @@ describe("PUT courses/:courseId", function () {
                         level: updatedCourse.level,
                         lessonsOrder: shuffleArray(courseLessons).map(l => l.id)
                     },
-                    files: {
-                        image: {
-                            value: randomImage(256, 128),
-                            mimeType: "image/png",
-                            fileName: "course-image"
-                        }
-                    }
+                    files: {image: readSampleFile("images/rectangle-5_2KB-2_1ratio.png")}
                 }, session.token);
                 expect(response.statusCode).to.equal(400);
             });
+            // test<LocalTestContext>("If image is corrupted return 415", async (context) => {});
         });
     });
 });
