@@ -481,7 +481,6 @@ describe("POST courses/", function () {
                 }, session.token);
                 expect(response.statusCode).to.equal(415);
             });
-
             test<LocalTestContext>("If the image file is more than 500KB return 413", async (context) => {
                 const user = await context.userFactory.createOne();
                 const session = await context.sessionFactory.createOne({user: user});
@@ -504,7 +503,6 @@ describe("POST courses/", function () {
 
                 expect(response.statusCode).to.equal(413);
             });
-
             test<LocalTestContext>("If the image is not square return 400", async (context) => {
                 const user = await context.userFactory.createOne();
                 const session = await context.sessionFactory.createOne({user: user});

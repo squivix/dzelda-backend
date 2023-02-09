@@ -91,7 +91,7 @@ export async function fetchWithFiles(
                 } catch (e) {
                 }
             }
-
+console.log(fileType)
             formData.append(fileKey, fileData, {
                 filename: `${file.fileName ?? "untitled"}.${mimeTypes.extension(fileType)}`,
                 contentType: fileType
