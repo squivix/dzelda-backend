@@ -20,6 +20,7 @@ import {Vocab} from "@/src/models/entities/Vocab.js";
 import {EntityRepository} from "@mikro-orm/core";
 import {parsers} from "@/src/utils/parsers/parsers.js";
 import {MapLessonVocab} from "@/src/models/entities/MapLessonVocab.js";
+import {courseSerializer} from "@/src/schemas/response/serializers/CourseSerializer.js";
 
 interface LocalTestContext extends TestContext {
     userFactory: UserFactory;
@@ -597,3 +598,86 @@ describe("POST lessons/", () => {
         });
     });
 });
+
+/**@link LessonController#getLesson*/
+describe("GET lessons/:lessonId", () => {
+    const makeRequest = async (lessonId: number | string, authToken?: string) => {
+        const options: InjectOptions = {
+            method: "GET",
+            url: `lessons/${lessonId}`,
+        };
+        return await fetchRequest(options, authToken);
+    };
+
+    describe("If the lesson exists and is public return the lesson", () => {
+        test<LocalTestContext>("If the user is not logged in return lesson and course without vocab levels", async (context) => {
+            const lesson = await context.lessonFactory.createOne({course: await context.courseFactory.createOne({isPublic: true})});
+
+            const response = await makeRequest(lesson.id);
+
+            expect(response.statusCode).to.equal(200);
+            expect(response.json()).toEqual(lessonSerializer.serialize(lesson));
+        });
+        test<LocalTestContext>("If the user is logged in return lesson and course with vocab levels", async (context) => {
+            const user = await context.userFactory.createOne();
+            const session = await context.sessionFactory.createOne({user: user});
+            const lesson = await context.lessonFactory.createOne({course: await context.courseFactory.createOne({isPublic: true})});
+
+            const response = await makeRequest(lesson.id, session.token);
+
+            await context.lessonRepo.annotateVocabsByLevel([lesson], user.id);
+            await context.courseRepo.annotateVocabsByLevel([lesson.course], user.id);
+
+            expect(response.statusCode).to.equal(200);
+            expect(response.json()).toEqual(lessonSerializer.serialize(lesson));
+        });
+    });
+    test<LocalTestContext>("If the lesson does not exist return 404", async () => {
+        const response = await makeRequest(Number(faker.random.numeric(8)));
+        expect(response.statusCode).to.equal(404);
+    });
+    test<LocalTestContext>("If lesson id is invalid return 400", async () => {
+        const response = await makeRequest(faker.random.alpha(8));
+        expect(response.statusCode).to.equal(400);
+    });
+    test<LocalTestContext>("If the lesson is not public and the user is not logged in return 404", async (context) => {
+        const lesson = await context.lessonFactory.createOne({course: await context.courseFactory.createOne({isPublic: false})});
+
+        const response = await makeRequest(lesson.id);
+
+        expect(response.statusCode).to.equal(404);
+    });
+    test<LocalTestContext>("If the lesson is not public and the user is logged in as a non-author return 404", async (context) => {
+        const author = await context.userFactory.createOne();
+        const lesson = await context.lessonFactory.createOne({
+            course: await context.courseFactory.createOne({
+                isPublic: false,
+                addedBy: author.profile
+            })
+        });
+        const otherUser = await context.userFactory.createOne();
+        const session = await context.sessionFactory.createOne({user: otherUser});
+
+        const response = await makeRequest(lesson.id, session.token);
+
+        expect(response.statusCode).to.equal(404);
+    });
+    test<LocalTestContext>("If the lesson is not public and the user is logged in as author return lesson with vocabs by level", async (context) => {
+        const author = await context.userFactory.createOne();
+        const lesson = await context.lessonFactory.createOne({
+            course: await context.courseFactory.createOne({
+                isPublic: false,
+                addedBy: author.profile
+            })
+        });
+        const session = await context.sessionFactory.createOne({user: author});
+
+        const response = await makeRequest(lesson.id, session.token);
+
+        await context.lessonRepo.annotateVocabsByLevel([lesson], author.id);
+        await context.courseRepo.annotateVocabsByLevel([lesson.course], author.id);
+
+        expect(response.statusCode).to.equal(200);
+        expect(response.json()).toEqual(lessonSerializer.serialize(lesson));
+    });
+})

@@ -14,5 +14,6 @@ export const lessonsRouter: FastifyPluginCallback = function (fastify, options, 
         handler: LessonController.createLesson,
         onResponse: deleteFileOnFail
     });
+    fastify.get(`/lessons/:lessonId`, LessonController.getLesson);
     done();
 };

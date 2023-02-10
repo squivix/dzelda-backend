@@ -72,6 +72,17 @@ class LessonService {
         await this.courseRepo.annotateVocabsByLevel([newLesson.course], user.id);
         return newLesson;
     }
+
+    async getLesson(lessonId: number, user: User | AnonymousUser | null) {
+        let lesson = await this.lessonRepo.findOne({id: lessonId}, {populate: ["course", "course.addedBy.user"]});
+        if (lesson) {
+            if (user && !(user instanceof AnonymousUser)) {
+                await this.lessonRepo.annotateVocabsByLevel([lesson], user.id);
+                await this.courseRepo.annotateVocabsByLevel([lesson.course], user.id);
+            }
+        }
+        return lesson;
+    }
 }
 
 export default LessonService;
