@@ -1133,5 +1133,118 @@ describe("PUT lessons/:lessonId", () => {
                 expect(response.statusCode).to.equal(400);
             });
         });
+        describe("If image is invalid return 4xx", async () => {
+            test<LocalTestContext>("If image is not a jpeg or png return 415", async (context) => {
+                const author = await context.userFactory.createOne();
+                const session = await context.sessionFactory.createOne({user: author});
+                const language = await context.languageFactory.createOne();
+                const course = await context.courseFactory.createOne({addedBy: author.profile, language: language, lessons: []});
+                const newCourse = await context.courseFactory.createOne({addedBy: author.profile, language: language});
+                let lesson = await context.lessonFactory.createOne({course: course});
+
+                const updatedLesson = await context.lessonFactory.makeOne({course: course});
+
+                const response = await makeRequest(lesson.id, {
+                    data: {
+                        courseId: newCourse.id,
+                        title: updatedLesson.title,
+                        text: updatedLesson.text,
+                    },
+                    files: {image: readSampleFile("images/audio-468_4KB.png")}
+                }, session.token);
+
+                expect(response.statusCode).to.equal(415);
+            });
+            // test<LocalTestContext>("If image is corrupted return 415", async (context) => {});
+            test<LocalTestContext>("If the image file is more than 500KB return 413", async (context) => {
+                const author = await context.userFactory.createOne();
+                const session = await context.sessionFactory.createOne({user: author});
+                const language = await context.languageFactory.createOne();
+                const course = await context.courseFactory.createOne({addedBy: author.profile, language: language, lessons: []});
+                const newCourse = await context.courseFactory.createOne({addedBy: author.profile, language: language});
+                let lesson = await context.lessonFactory.createOne({course: course});
+
+                const updatedLesson = await context.lessonFactory.makeOne({course: course});
+
+                const response = await makeRequest(lesson.id, {
+                    data: {
+                        courseId: newCourse.id,
+                        title: updatedLesson.title,
+                        text: updatedLesson.text,
+                    },
+                    files: {image: readSampleFile("images/santa-barbara-1_8MB-1_1ratio.jpg")}
+                }, session.token);
+
+                expect(response.statusCode).to.equal(413);
+            });
+            test<LocalTestContext>("If the image is not square return 400", async (context) => {
+                const author = await context.userFactory.createOne();
+                const session = await context.sessionFactory.createOne({user: author});
+                const language = await context.languageFactory.createOne();
+                const course = await context.courseFactory.createOne({addedBy: author.profile, language: language, lessons: []});
+                const newCourse = await context.courseFactory.createOne({addedBy: author.profile, language: language});
+                let lesson = await context.lessonFactory.createOne({course: course});
+
+                const updatedLesson = await context.lessonFactory.makeOne({course: course});
+
+                const response = await makeRequest(lesson.id, {
+                    data: {
+                        courseId: newCourse.id,
+                        title: updatedLesson.title,
+                        text: updatedLesson.text,
+                    },
+                    files: {image: readSampleFile("images/rectangle-5_2KB-2_1ratio.png")}
+                }, session.token);
+
+                expect(response.statusCode).to.equal(400);
+            });
+        });
+        describe("If audio is invalid return 4xx", async () => {
+            test<LocalTestContext>("If audio is not a mpeg or wav or ogg return 415", async (context) => {
+                const author = await context.userFactory.createOne();
+                const session = await context.sessionFactory.createOne({user: author});
+                const language = await context.languageFactory.createOne();
+                const course = await context.courseFactory.createOne({addedBy: author.profile, language: language, lessons: []});
+                const newCourse = await context.courseFactory.createOne({addedBy: author.profile, language: language});
+                let lesson = await context.lessonFactory.createOne({course: course});
+
+                const updatedLesson = await context.lessonFactory.makeOne({course: course});
+
+                const response = await makeRequest(lesson.id, {
+                    data: {
+                        courseId: newCourse.id,
+                        title: updatedLesson.title,
+                        text: updatedLesson.text,
+                    },
+                    files: {audio: readSampleFile("audio/image-69_8KB.wav")}
+                }, session.token);
+
+                expect(response.statusCode).to.equal(415);
+            });
+            // test<LocalTestContext>("If audio is corrupted return 415", async (context) => {});
+            test<LocalTestContext>("If the audio file is more than 100MB return 413", async (context) => {
+                const author = await context.userFactory.createOne();
+                const session = await context.sessionFactory.createOne({user: author});
+                const language = await context.languageFactory.createOne();
+                const course = await context.courseFactory.createOne({addedBy: author.profile, language: language, lessons: []});
+                const newCourse = await context.courseFactory.createOne({addedBy: author.profile, language: language});
+                let lesson = await context.lessonFactory.createOne({course: course});
+
+                const updatedLesson = await context.lessonFactory.makeOne({course: course});
+
+                const response = await makeRequest(lesson.id, {
+                    data: {
+                        courseId: newCourse.id,
+                        title: updatedLesson.title,
+                        text: updatedLesson.text,
+                    },
+                    files: {
+                        audio: readSampleFile("audio/beethoven-174_1MB.wav")
+                    }
+                }, session.token);
+
+                expect(response.statusCode).to.equal(413);
+            });
+        });
     });
 })
