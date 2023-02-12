@@ -8,14 +8,12 @@ import {AnonymousUser, User} from "@/src/models/entities/auth/User.js";
 import {UnauthenticatedAPIError} from "@/src/utils/errors/UnauthenticatedAPIError.js";
 import {booleanStringValidator, numericStringValidator} from "@/src/validators/utilValidators.js";
 import {LanguageLevel} from "@/src/models/enums/LanguageLevel.js";
-import {courseDescriptionValidator, courseTitleValidator} from "@/src/validators/courseValidator.js";
-import LanguageService from "@/src/services/LanguageService.js";
 import {ValidationAPIError} from "@/src/utils/errors/ValidationAPIError.js";
 import CourseService from "@/src/services/CourseService.js";
-import {courseSerializer} from "@/src/schemas/response/serializers/CourseSerializer.js";
 import {lessonTextValidator, lessonTitleValidator} from "@/src/validators/lessonValidators.js";
 import {ForbiddenAPIError} from "@/src/utils/errors/ForbiddenAPIError.js";
 import {NotFoundAPIError} from "@/src/utils/errors/NotFoundAPIError.js";
+import {Course} from "@/src/models/entities/Course.js";
 
 class LessonController {
     async getLessons(request: FastifyRequest, reply: FastifyReply) {
@@ -54,7 +52,7 @@ class LessonController {
         const courseService = new CourseService(request.em);
         const course = await courseService.getCourse(body.data.courseId, request.user);
         if (!course || (!course.isPublic && course.addedBy !== request.user?.profile))
-            throw new ValidationAPIError({course: {message: "course not found"}});
+            throw new ValidationAPIError({course: {message: "not found"}});
         if (course.addedBy !== request.user?.profile)
             throw new ForbiddenAPIError();
 
@@ -79,6 +77,48 @@ class LessonController {
         if (!lesson || (!lesson.course.isPublic && request?.user?.profile !== lesson.course.addedBy))
             throw new NotFoundAPIError("Lesson");
         reply.status(200).send(lessonSerializer.serialize(lesson));
+    }
+
+    async updateLesson(request: FastifyRequest, reply: FastifyReply) {
+        const pathParamsValidator = z.object({lessonId: numericStringValidator});
+        const pathParams = pathParamsValidator.parse(request.params);
+
+        const bodyValidator = z.object({
+            data: z.object({
+                courseId: z.number().min(0),
+                title: lessonTitleValidator,
+                text: lessonTextValidator,
+            }),
+            image: z.string().optional(),
+            audio: z.string().optional()
+        });
+        const body = bodyValidator.parse(request.body);
+
+        const lessonService = new LessonService(request.em);
+        const lesson = await lessonService.getLesson(pathParams.lessonId, request.user);
+        if (!lesson)
+            throw new NotFoundAPIError("Course");
+        if (request?.user?.profile !== lesson.course.addedBy)
+            throw lesson.course.isPublic ? new ForbiddenAPIError() : new NotFoundAPIError("Lesson");
+
+        const courseService = new CourseService(request.em);
+        const newCourse = await courseService.getCourse(body.data.courseId, request.user);
+        if (!newCourse)
+            throw new ValidationAPIError({course: {message: "Not found"}});
+        if (request?.user?.profile !== newCourse.addedBy)
+            throw newCourse.isPublic ? new ForbiddenAPIError() : new ValidationAPIError({course: {message: "Not found"}});
+        if (newCourse.language !== lesson.course.language)
+            throw   new ValidationAPIError({course: {message: "Cannot move lesson to a course in a different language"}});
+
+        const updatedLesson = await lessonService.updateLesson(lesson, {
+            course: newCourse,
+            title: body.data.title,
+            text: body.data.text,
+            image: body.image,
+            audio: body.audio
+        }, request.user as User);
+        reply.status(200).send(lessonSerializer.serialize(updatedLesson));
+
     }
 }
 

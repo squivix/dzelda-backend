@@ -95,6 +95,7 @@ class CourseService {
             await this.courseRepo.annotateVocabsByLevel([course], user.id);
         return course;
     }
+
 }
 
 export default CourseService;

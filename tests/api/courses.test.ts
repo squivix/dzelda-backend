@@ -639,7 +639,7 @@ describe("PUT courses/:courseId", function () {
             expect(course.image).toEqual("");
             expect((response.json().lessons as LessonListSchema[]).map(l => l.id)).toEqual(shuffledLessonIds);
         });
-        test<LocalTestContext>("If new image is provided, update image", async (context) => {
+        test<LocalTestContext>("If new image is provided, update course image", async (context) => {
             const author = await context.userFactory.createOne();
             const session = await context.sessionFactory.createOne({user: author});
             const language = await context.languageFactory.createOne();

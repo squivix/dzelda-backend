@@ -61,7 +61,7 @@ class LessonService {
         const language = fields.course.language;
         //TODO replace default english for tests with specifying english in test and avoid collisions somehow...
         const parser = parsers[language.code] ?? parsers["en"];
-        const lessonWords = parser.parseText(fields.text);
+        const lessonWords = parser.parseText(`${fields.title} ${fields.text}`);
 
         await this.em.upsertMany(Vocab, lessonWords.map(word => ({text: word, language: language.id})));
         const lessonVocabs = await this.em.find(Vocab, {text: lessonWords, language: language.id});
@@ -80,6 +80,43 @@ class LessonService {
                 await this.lessonRepo.annotateVocabsByLevel([lesson], user.id);
                 await this.courseRepo.annotateVocabsByLevel([lesson.course], user.id);
             }
+        }
+        return lesson;
+    }
+
+    async updateLesson(lesson: Lesson, updatedLessonData: { title: string; text: string; course: Course, image?: string; audio?: string; }, user: User) {
+        const language = lesson.course.language;
+        if (lesson.title !== updatedLessonData.title || lesson.text !== updatedLessonData.text) {
+            lesson.title = updatedLessonData.title;
+            lesson.text = updatedLessonData.text;
+            //TODO replace default english for tests with specifying english in test and avoid collisions somehow...
+            const parser = parsers[language.code] ?? parsers["en"];
+            const lessonWords = parser.parseText(`${updatedLessonData.title} ${updatedLessonData.text}`);
+
+            await this.em.nativeDelete(MapLessonVocab, {lesson: lesson, vocab: {text: {$nin: lessonWords}}});
+            await this.em.upsertMany(Vocab, lessonWords.map(word => ({text: word, language: language.id})));
+            const lessonVocabs = await this.em.find(Vocab, {text: lessonWords, language: language.id});
+            await this.em.upsertMany(MapLessonVocab, lessonVocabs.map(vocab => ({lesson: lesson.id, vocab: vocab.id})));
+        }
+
+
+        if (lesson.course.id !== updatedLessonData.course.id) {
+            lesson.course = updatedLessonData.course;
+            lesson.orderInCourse = await updatedLessonData.course.lessons.loadCount(true)
+        }
+
+        if (updatedLessonData.image !== undefined)
+            lesson.image = updatedLessonData.image;
+
+        if (updatedLessonData.audio !== undefined)
+            lesson.audio = updatedLessonData.audio;
+
+        this.lessonRepo.persist(lesson);
+        await this.lessonRepo.flush();
+
+        if (user && !(user instanceof AnonymousUser)) {
+            await this.lessonRepo.annotateVocabsByLevel([lesson], user.id);
+            await this.courseRepo.annotateVocabsByLevel([lesson.course], user.id);
         }
         return lesson;
     }

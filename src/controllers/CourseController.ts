@@ -12,7 +12,7 @@ import {courseSerializer} from "@/src/schemas/response/serializers/CourseSeriali
 import {ForbiddenAPIError} from "@/src/utils/errors/ForbiddenAPIError.js";
 import {ValidationAPIError} from "@/src/utils/errors/ValidationAPIError.js";
 import LanguageService from "@/src/services/LanguageService.js";
-import {numericStringValidator} from "@/src/validators/utilValidators.js";
+import { numericStringValidator} from "@/src/validators/utilValidators.js";
 
 class CourseController {
     async getCourses(request: FastifyRequest, reply: FastifyReply) {

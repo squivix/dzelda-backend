@@ -15,5 +15,13 @@ export const lessonsRouter: FastifyPluginCallback = function (fastify, options, 
         onResponse: deleteFileOnFail
     });
     fastify.get(`/lessons/:lessonId`, LessonController.getLesson);
+    fastify.put(`/lessons/:lessonId`, {
+        preHandler: [requiresAuth, singleFileUploadMiddleWare({
+            "image": {path: "lessons/images", validate: lessonImageValidator},
+            "audio": {path: "lessons/audios", validate: lessonAudioValidator}
+        })],
+        handler: LessonController.updateLesson,
+        onResponse: deleteFileOnFail
+    });
     done();
 };
