@@ -1,8 +1,7 @@
 import {z} from "zod";
-import UserService from "@/src/services/UserService.js";
+import {UserService} from "@/src/services/UserService.js";
 import {FastifyReply, FastifyRequest} from "fastify";
 import {NotFoundAPIError} from "@/src/utils/errors/NotFoundAPIError.js";
-import {profileSerializer} from "@/src/schemas/response/serializers/ProfileSerializer.js";
 import {userSerializer} from "@/src/schemas/response/serializers/UserSerializer.js";
 import {usernameValidator} from "@/src/validators/userValidator.js";
 

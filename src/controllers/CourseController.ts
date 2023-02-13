@@ -1,6 +1,6 @@
 import {FastifyReply, FastifyRequest} from "fastify";
 import {z} from "zod";
-import CourseService from "@/src/services/CourseService.js";
+import {CourseService} from "@/src/services/CourseService.js";
 import {AnonymousUser, User} from "@/src/models/entities/auth/User.js";
 import {languageCodeValidator} from "@/src/validators/languageValidators.js";
 import {usernameValidator} from "@/src/validators/userValidator.js";
@@ -11,8 +11,8 @@ import {NotFoundAPIError} from "@/src/utils/errors/NotFoundAPIError.js";
 import {courseSerializer} from "@/src/schemas/response/serializers/CourseSerializer.js";
 import {ForbiddenAPIError} from "@/src/utils/errors/ForbiddenAPIError.js";
 import {ValidationAPIError} from "@/src/utils/errors/ValidationAPIError.js";
-import LanguageService from "@/src/services/LanguageService.js";
-import { numericStringValidator} from "@/src/validators/utilValidators.js";
+import {LanguageService} from "@/src/services/LanguageService.js";
+import {numericStringValidator} from "@/src/validators/utilValidators.js";
 
 class CourseController {
     async getCourses(request: FastifyRequest, reply: FastifyReply) {

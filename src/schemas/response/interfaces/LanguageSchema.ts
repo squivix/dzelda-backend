@@ -1,4 +1,6 @@
-export interface LanguageListSchema {
+import {LanguageLevel} from "@/src/models/enums/LanguageLevel.js";
+
+export interface LanguageSchema {
     id: number;
     code: string;
     name: string;
@@ -9,13 +11,6 @@ export interface LanguageListSchema {
     flagCircular?: string;
     flagEmoji?: string;
     isSupported: boolean;
-    levelThresholds: {
-        beginner1: number;
-        beginner2: number;
-        intermediate1: number;
-        intermediate2: number;
-        advanced1: number;
-        advanced2: number;
-    };
+    levelThresholds: Record<LanguageLevel, number>;
     learnersCount: number;
 }

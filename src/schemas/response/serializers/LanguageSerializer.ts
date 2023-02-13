@@ -1,11 +1,11 @@
 import {Language} from "@/src/models/entities/Language.js";
-import {LanguageListSchema} from "@/src/schemas/response/interfaces/LanguageListSchema.js";
-import {LanguageDetailsSchema} from "@/src/schemas/response/interfaces/LanguageDetailsSchema.js";
-import {CustomCallbackObject, ListDetailSerializer} from "@/src/schemas/response/serializers/ListDetailSerializer.js";
+import {LanguageSchema} from "@/src/schemas/response/interfaces/LanguageSchema.js";
+import {CustomCallbackObject, CustomEntitySerializer} from "@/src/schemas/response/serializers/CustomEntitySerializer.js";
 
-class LanguageSerializer extends ListDetailSerializer<Language, LanguageListSchema, LanguageDetailsSchema> {
+export class LanguageSerializer extends CustomEntitySerializer<Language, LanguageSchema> {
+    static readonly POPULATE_FIELDS = [] as const;
 
-    listDefinition(language: Language): CustomCallbackObject<LanguageListSchema> {
+    definition(language: Language): CustomCallbackObject<LanguageSchema> {
         return {
             id: () => language.id,
             code: () => language.code,
@@ -16,24 +16,10 @@ class LanguageSerializer extends ListDetailSerializer<Language, LanguageListSche
             flagEmoji: () => language.flagEmoji,
             isSupported: () => language.isSupported,
             levelThresholds: () => language.levelThresholds,
+            // TODO see if learnersCount could be done with populate
             learnersCount: () => Number(language.learnersCount ?? language?.learners?.count())
-        }
-    }
-
-    detailDefinition(language: Language): CustomCallbackObject<LanguageDetailsSchema> {
-        return {
-            id: () => language.id,
-            code: () => language.code,
-            name: () => language.name,
-            greeting: () => language.greeting,
-            flag: () => language.flag,
-            flagCircular: () => language.flagCircular,
-            flagEmoji: () => language.flagEmoji,
-            isSupported: () => language.isSupported,
-            levelThresholds: () => language.levelThresholds,
-            learnersCount: () => Number(language.learnersCount ?? language?.learners?.count())
-        }
+        };
     }
 }
 
-export const languageSerializer = new LanguageSerializer()
+export const languageSerializer = new LanguageSerializer();

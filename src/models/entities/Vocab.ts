@@ -6,10 +6,11 @@ import {Language} from "@/src/models/entities/Language.js";
 import {Meaning} from "@/src/models/entities/Meaning.js";
 import {Profile} from "@/src/models/entities/Profile.js";
 import {MapLearnerVocab} from "@/src/models/entities/MapLearnerVocab.js";
+import {VocabRepo} from "@/src/models/repos/VocabRepo.js";
 
-@Entity()
+@Entity({customRepository: () => VocabRepo})
 @Unique({properties: ["language", "text"]})
-@Index({properties: ['language']})
+@Index({properties: ["language"]})
 export class Vocab extends CustomBaseEntity {
     @Property({type: types.string, length: 255})
     text!: string;

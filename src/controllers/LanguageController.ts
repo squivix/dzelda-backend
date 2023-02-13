@@ -1,8 +1,8 @@
 import {FastifyReply, FastifyRequest} from "fastify";
 import {z} from "zod";
-import LanguageService from "@/src/services/LanguageService.js";
+import {LanguageService} from "@/src/services/LanguageService.js";
 import {NotFoundAPIError} from "@/src/utils/errors/NotFoundAPIError.js";
-import UserService from "@/src/services/UserService.js";
+import {UserService} from "@/src/services/UserService.js";
 import {ForbiddenAPIError} from "@/src/utils/errors/ForbiddenAPIError.js";
 import {usernameValidator} from "@/src/validators/userValidator.js";
 import {languageSerializer} from "@/src/schemas/response/serializers/LanguageSerializer.js";

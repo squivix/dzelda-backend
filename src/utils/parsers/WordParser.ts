@@ -6,4 +6,5 @@ export abstract class WordParser {
      * */
     abstract parseText(text: string): string[]
 
+    abstract combine(words: string[]): string
 }

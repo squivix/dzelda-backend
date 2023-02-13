@@ -7,7 +7,10 @@ export class VocabFactory extends CustomFactory<Vocab> {
     readonly model = Vocab;
 
     protected definition(faker: Faker): EntityData<Vocab> {
-        return {};
+        return {
+            text: faker.random.alpha(20),
+            isPhrase: faker.datatype.boolean()
+        };
     }
 
 

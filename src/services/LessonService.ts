@@ -10,7 +10,7 @@ import {Vocab} from "@/src/models/entities/Vocab.js";
 import {MapLessonVocab} from "@/src/models/entities/MapLessonVocab.js";
 import {CourseRepo} from "@/src/models/repos/CourseRepo.js";
 
-class LessonService {
+export class LessonService {
     em: SqlEntityManager;
     lessonRepo: LessonRepo;
     courseRepo: CourseRepo;
@@ -40,7 +40,7 @@ class LessonService {
         if (filters.level !== undefined)
             dbFilters.$and!.push({course: {level: filters.level}});
 
-        let lessons = await this.lessonRepo.find(dbFilters, {populate: ["course", "course.addedBy.user"]});
+        let lessons = await this.lessonRepo.find(dbFilters, {populate: ["course", "course.language", "course.addedBy.user"]});
 
         if (user && !(user instanceof AnonymousUser))
             lessons = await this.lessonRepo.annotateVocabsByLevel(lessons, user.id);
@@ -74,7 +74,7 @@ class LessonService {
     }
 
     async getLesson(lessonId: number, user: User | AnonymousUser | null) {
-        let lesson = await this.lessonRepo.findOne({id: lessonId}, {populate: ["course", "course.addedBy.user"]});
+        let lesson = await this.lessonRepo.findOne({id: lessonId}, {populate: ["course", "course.language", "course.addedBy.user"]});
         if (lesson) {
             if (user && !(user instanceof AnonymousUser)) {
                 await this.lessonRepo.annotateVocabsByLevel([lesson], user.id);
@@ -102,7 +102,7 @@ class LessonService {
 
         if (lesson.course.id !== updatedLessonData.course.id) {
             lesson.course = updatedLessonData.course;
-            lesson.orderInCourse = await updatedLessonData.course.lessons.loadCount(true)
+            lesson.orderInCourse = await updatedLessonData.course.lessons.loadCount(true);
         }
 
         if (updatedLessonData.image !== undefined)
@@ -121,5 +121,3 @@ class LessonService {
         return lesson;
     }
 }
-
-export default LessonService;

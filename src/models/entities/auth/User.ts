@@ -6,7 +6,6 @@ import {Session} from "@/src/models/entities/auth/Session.js";
 
 @Entity()
 export class User extends CustomBaseEntity {
-    //TODO hide id
     constructor(username: string, email: string, password: string) {
         super();
         this.username = username;

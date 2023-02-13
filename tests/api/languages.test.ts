@@ -15,9 +15,6 @@ import {languageSerializer} from "@/src/schemas/response/serializers/LanguageSer
 // beforeEach(truncateDb);
 
 interface LocalTestContext extends TestContext {
-    userFactory: UserFactory;
-    profileFactory: ProfileFactory;
-    sessionFactory: SessionFactory;
     languageRepo: EntityRepository<Language>;
     mapLearnerLanguageRepo: EntityRepository<MapLearnerLanguage>;
     languageFactory: LanguageFactory;

@@ -1,8 +1,7 @@
 import {VocabLevel} from "@/src/models/enums/VocabLevel.js";
-import {CourseDetailsSchema} from "@/src/schemas/response/interfaces/CourseDetailsSchema.js";
-import {CourseListSchema} from "@/src/schemas/response/interfaces/CourseListSchema.js";
+import {CourseSchema} from "@/src/schemas/response/interfaces/CourseSchema.js";
 
-export interface LessonDetailsSchema {
+export interface LessonSchema {
     id: number;
     title: string;
     text: string;
@@ -10,7 +9,7 @@ export interface LessonDetailsSchema {
     audio: string;
     /** Format: uri */
     image: string;
-    course: CourseListSchema;
+    course: Partial<CourseSchema>;
     orderInCourse: number;
     /** Format: date-time */
     addedOn: string;

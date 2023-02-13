@@ -8,7 +8,7 @@ import {LanguageLevel} from "@/src/models/enums/LanguageLevel.js";
 import {Lesson} from "@/src/models/entities/Lesson.js";
 import {LessonRepo} from "@/src/models/repos/LessonRepo.js";
 
-class CourseService {
+export class CourseService {
     em: EntityManager;
     courseRepo: CourseRepo;
     lessonRepo: LessonRepo;
@@ -17,7 +17,6 @@ class CourseService {
         this.em = em;
         this.courseRepo = this.em.getRepository(Course) as CourseRepo;
         this.lessonRepo = this.em.getRepository(Lesson) as LessonRepo;
-
     }
 
     async getCourses(filters: { languageCode?: string, addedBy?: string, searchQuery?: string, level?: LanguageLevel }, user: User | AnonymousUser | null) {
@@ -37,7 +36,7 @@ class CourseService {
         if (filters.level !== undefined)
             dbFilters.$and!.push({level: filters.level});
 
-        let courses = await this.courseRepo.find(dbFilters, {populate: ["addedBy.user"]});
+        let courses = await this.courseRepo.find(dbFilters, {populate: ["language", "addedBy.user"]});
 
         if (user && !(user instanceof AnonymousUser))
             courses = await this.courseRepo.annotateVocabsByLevel(courses, user.id);
@@ -62,7 +61,7 @@ class CourseService {
     }
 
     async getCourse(courseId: number, user: User | AnonymousUser | null) {
-        let course = await this.courseRepo.findOne({id: courseId}, {populate: ["language", "addedBy", "addedBy.user", "addedBy.languagesLearning"]});
+        let course = await this.courseRepo.findOne({id: courseId}, {populate: ["language", "addedBy", "addedBy.user"]});
         if (course) {
             await this.em.populate(course, ["lessons"], {orderBy: {lessons: {orderInCourse: "asc"}}, refresh: true});
             if (user && !(user instanceof AnonymousUser))
@@ -97,5 +96,3 @@ class CourseService {
     }
 
 }
-
-export default CourseService;

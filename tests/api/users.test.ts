@@ -12,11 +12,7 @@ import {InjectOptions} from "light-my-request";
 import {userSerializer} from "@/src/schemas/response/serializers/UserSerializer.js";
 import {SessionFactory} from "@/src/seeders/factories/SessionFactory.js";
 
-// beforeEach(truncateDb);
-
 interface LocalTestContext extends TestContext {
-    userFactory: UserFactory;
-    sessionFactory: SessionFactory;
     languageRepo: EntityRepository<Language>;
     userRepo: EntityRepository<User>;
     profileRepo: EntityRepository<Profile>;

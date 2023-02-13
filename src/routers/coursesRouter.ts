@@ -11,7 +11,7 @@ export const coursesRouter: FastifyPluginCallback = function (fastify, options, 
         preHandler: [requiresAuth,
             singleFileUploadMiddleWare({"image": {path: "courses/images", validate: courseImageValidator}})],
         handler: CourseController.createCourse,
-        onResponse: deleteFileOnFail
+        // onResponse: deleteFileOnFail
     });
 
     fastify.get(`/courses/:courseId`, CourseController.getCourse);

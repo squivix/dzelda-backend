@@ -5,7 +5,7 @@ import {cleanObject} from "@/src/utils/utils.js";
 import {MapLearnerLanguage} from "@/src/models/entities/MapLearnerLanguage.js";
 import {languageSerializer} from "@/src/schemas/response/serializers/LanguageSerializer.js";
 
-class LanguageService {
+export class LanguageService {
     em: EntityManager;
     languageRepo: EntityRepository<Language>;
 
@@ -41,5 +41,3 @@ class LanguageService {
     }
 
 }
-
-export default LanguageService;

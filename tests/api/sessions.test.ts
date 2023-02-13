@@ -6,10 +6,7 @@ import {Session} from "@/src/models/entities/auth/Session.js";
 import {fetchRequest} from "@/tests/api/utils.js";
 import {EntityRepository} from "@mikro-orm/core";
 
-// beforeEach(truncateDb);
-
 interface LocalTestContext extends TestContext {
-    userFactory: UserFactory;
     sessionRepo: EntityRepository<Session>;
 }
 

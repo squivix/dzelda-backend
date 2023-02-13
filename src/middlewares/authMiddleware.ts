@@ -1,5 +1,5 @@
 import {preHandlerAsyncHookHandler, preParsingAsyncHookHandler} from "fastify/types/hooks.js";
-import UserService from "@/src/services/UserService.js";
+import {UserService} from "@/src/services/UserService.js";
 import {AnonymousUser} from "@/src/models/entities/auth/User.js";
 import {UnauthenticatedAPIError} from "@/src/utils/errors/UnauthenticatedAPIError.js";
 

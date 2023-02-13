@@ -1,12 +1,10 @@
 import {EntityRepository} from "@mikro-orm/postgresql";
-import {defaultVocabsByLevel, VocabLevel} from "@/src/models/enums/VocabLevel.js";
-import {numericEnumValues} from "@/src/utils/utils.js";
+import {defaultVocabsByLevel} from "@/src/models/enums/VocabLevel.js";
 import {Course} from "@/src/models/entities/Course.js";
-import CourseService from "@/src/services/CourseService.js";
 
 export class CourseRepo extends EntityRepository<Course> {
 
-    async annotateVocabsByLevel(courses: Course[], userId: number) {
+    async annotateVocabsByLevel(courses: Course[], learnerId: number) {
         if (courses.length === 0)
             return courses;
         const query = `SELECT json_object_agg(outq.id, outq.vocab_levels) AS vocab_levels_by_course
@@ -16,7 +14,7 @@ FROM (SELECT subq.course_id                          AS id,
                    mlv2.level,
                    COUNT(*)
             FROM map_lesson_vocab mlv
-                     LEFT JOIN map_learner_vocab mlv2 on mlv.vocab_id = mlv2.vocab_id AND mlv2.learner_id = ${userId}
+                     LEFT JOIN map_learner_vocab mlv2 on mlv.vocab_id = mlv2.vocab_id AND mlv2.learner_id = ${learnerId}
                      LEFT JOIN lesson on mlv.lesson_id = lesson.id
             WHERE lesson.course_id IN (${courses.map(c=>c.id).join(",")})
             GROUP BY lesson.course_id, mlv2.level

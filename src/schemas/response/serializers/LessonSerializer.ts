@@ -1,36 +1,18 @@
-import {LessonListSchema} from "@/src/schemas/response/interfaces/LessonListSchema.js";
 import {Lesson} from "@/src/models/entities/Lesson.js";
-import {LessonDetailsSchema} from "@/src/schemas/response/interfaces/LessonDetailsSchema.js";
-import {CourseListSchema} from "@/src/schemas/response/interfaces/CourseListSchema.js";
+import {LessonSchema} from "@/src/schemas/response/interfaces/LessonSchema.js";
 import {courseSerializer} from "@/src/schemas/response/serializers/CourseSerializer.js";
-import {CourseDetailsSchema} from "@/src/schemas/response/interfaces/CourseDetailsSchema.js";
-import {
-    CustomCallbackObject,
-    ListDetailSerializer,
-    SerializationMode
-} from "@/src/schemas/response/serializers/ListDetailSerializer.js";
+import {CustomCallbackObject, CustomEntitySerializer} from "@/src/schemas/response/serializers/CustomEntitySerializer.js";
 
-class LessonSerializer extends ListDetailSerializer<Lesson, LessonListSchema, LessonDetailsSchema> {
-    listDefinition(lesson: Lesson): CustomCallbackObject<LessonListSchema> {
-        return {
-            id: () => lesson.id,
-            title: () => lesson.title,
-            image: () => lesson.image,
-            course: () => courseSerializer.serialize(lesson.course, {mode: SerializationMode.LIST}) as CourseListSchema,
-            orderInCourse: () => lesson.orderInCourse,
-            addedOn: () => lesson.addedOn.toISOString(),
-            vocabsByLevel: () => lesson.vocabsByLevel
-        };
-    }
+export class LessonSerializer extends CustomEntitySerializer<Lesson, LessonSchema> {
 
-    detailDefinition(lesson: Lesson): CustomCallbackObject<LessonDetailsSchema> {
+    definition(lesson: Lesson): CustomCallbackObject<LessonSchema> {
         return {
             id: () => lesson.id,
             title: () => lesson.title,
             text: () => lesson.text,
             audio: () => lesson.audio,
             image: () => lesson.image,
-            course: () => courseSerializer.serialize(lesson.course, {mode: SerializationMode.LIST}) as CourseListSchema,
+            course: () => courseSerializer.serialize(lesson.course, {ignore: ["lessons"]}),
             orderInCourse: () => lesson.orderInCourse,
             addedOn: () => lesson.addedOn.toISOString(),
             vocabsByLevel: () => lesson.vocabsByLevel
@@ -39,4 +21,4 @@ class LessonSerializer extends ListDetailSerializer<Lesson, LessonListSchema, Le
 
 }
 
-export const lessonSerializer = new LessonSerializer()
+export const lessonSerializer = new LessonSerializer();

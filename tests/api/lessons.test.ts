@@ -23,9 +23,6 @@ import {MapLessonVocab} from "@/src/models/entities/MapLessonVocab.js";
 import fs from "fs-extra";
 
 interface LocalTestContext extends TestContext {
-    userFactory: UserFactory;
-    profileFactory: ProfileFactory;
-    sessionFactory: SessionFactory;
     languageFactory: LanguageFactory;
     lessonFactory: LessonFactory;
     courseFactory: CourseFactory;
@@ -48,6 +45,7 @@ beforeEach<LocalTestContext>((context) => {
     context.lessonRepo = context.em.getRepository(Lesson) as LessonRepo;
     context.courseRepo = context.em.getRepository(Course) as CourseRepo;
 });
+
 /**@link LessonController#getLessons*/
 describe("GET lessons/", () => {
     const makeRequest = async (queryParams: object = {}, authToken?: string) => {
@@ -63,7 +61,8 @@ describe("GET lessons/", () => {
 
         const response = await makeRequest();
 
-        const lessons = await context.lessonRepo.find({course: {isPublic: true}}, {populate: ["course", "course.addedBy.user"]});
+        const lessons = await context.lessonRepo.find({course: {isPublic: true}}, {populate: ["course", "course.language", "course.addedBy.user"]});
+
         expect(response.statusCode).to.equal(200);
         expect(response.json()).toEqual(lessonSerializer.serializeList(lessons));
     });
@@ -208,7 +207,7 @@ describe("GET lessons/", () => {
                     level: level,
                     isPublic: true
                 }
-            }, {populate: ["course", "course.addedBy.user"]});
+            }, {populate: ["course", "course.language", "course.addedBy.user"]});
             expect(response.statusCode).to.equal(200);
             expect(response.json()).toEqual(lessonSerializer.serializeList(lessons));
         });
@@ -233,7 +232,7 @@ describe("GET lessons/", () => {
             let lessons = await context.lessonRepo.find({
                 audio: {$ne: ""},
                 course: {isPublic: true}
-            }, {populate: ["course", "course.addedBy.user"]});
+            }, {populate: ["course", "course.language", "course.addedBy.user"]});
             expect(response.statusCode).to.equal(200);
             expect(response.json()).toEqual(lessonSerializer.serializeList(lessons));
         });
@@ -249,7 +248,7 @@ describe("GET lessons/", () => {
             let lessons = await context.lessonRepo.find({
                 audio: "",
                 course: {isPublic: true}
-            }, {populate: ["course", "course.addedBy.user"]});
+            }, {populate: ["course", "course.language", "course.addedBy.user"]});
             expect(response.statusCode).to.equal(200);
             expect(response.json()).toEqual(lessonSerializer.serializeList(lessons));
         });
@@ -272,7 +271,7 @@ describe("GET lessons/", () => {
 
         const response = await makeRequest({}, session.token);
 
-        let lessons = await context.lessonRepo.find({course: {isPublic: true}}, {populate: ["course", "course.addedBy.user"]});
+        let lessons = await context.lessonRepo.find({course: {isPublic: true}}, {populate: ["course", "course.language", "course.addedBy.user"]});
         lessons = await context.lessonRepo.annotateVocabsByLevel(lessons, user.id);
         expect(response.statusCode).to.equal(200);
         expect(response.json()).toEqual(lessonSerializer.serializeList(lessons));
@@ -285,7 +284,7 @@ describe("GET lessons/", () => {
 
         const response = await makeRequest({}, session.token);
 
-        let lessons = await context.lessonRepo.find({$or: [{course: {isPublic: true}}, {course: {addedBy: user.profile}}]}, {populate: ["course", "course.addedBy.user"]});
+        let lessons = await context.lessonRepo.find({$or: [{course: {isPublic: true}}, {course: {addedBy: user.profile}}]}, {populate: ["course", "course.language", "course.addedBy.user"]});
         lessons = await context.lessonRepo.annotateVocabsByLevel(lessons, user.id);
         expect(response.statusCode).to.equal(200);
         expect(response.json()).toEqual(lessonSerializer.serializeList(lessons));
@@ -326,14 +325,14 @@ describe("POST lessons/", () => {
             }, session.token);
 
             expect(response.statusCode).to.equal(201);
-            newLesson = await context.lessonRepo.findOne({course: course}, {populate: ["course", "course.addedBy.user"]});
+            newLesson = await context.lessonRepo.findOne({course: course}, {populate: ["course", "course.language", "course.addedBy.user"]});
             expect(newLesson).not.toBeNull();
             if (!newLesson) return;
             await context.lessonRepo.annotateVocabsByLevel([newLesson], user.id);
             await context.courseRepo.annotateVocabsByLevel([newLesson.course], user.id);
             expect(response.json()).toEqual(expect.objectContaining(lessonSerializer.serialize(newLesson)));
 
-            const lessonWordsText = parsers["en"].parseText(`${newLesson.title} ${newLesson.text}`)
+            const lessonWordsText = parsers["en"].parseText(`${newLesson.title} ${newLesson.text}`);
             const lessonVocabs = await context.vocabRepo.find({text: lessonWordsText, language: course.language});
             const lessonVocabMappings = await context.em.find(MapLessonVocab, {vocab: lessonVocabs, lesson: newLesson});
 
@@ -358,14 +357,14 @@ describe("POST lessons/", () => {
             }, session.token);
 
             expect(response.statusCode).to.equal(201);
-            newLesson = await context.lessonRepo.findOne({course: course}, {populate: ["course", "course.addedBy.user"]});
+            newLesson = await context.lessonRepo.findOne({course: course}, {populate: ["course", "course.language", "course.addedBy.user"]});
             expect(newLesson).not.toBeNull();
             if (!newLesson) return;
             await context.lessonRepo.annotateVocabsByLevel([newLesson], user.id);
             await context.courseRepo.annotateVocabsByLevel([newLesson.course], user.id);
             expect(response.json()).toEqual(expect.objectContaining(lessonSerializer.serialize(newLesson)));
 
-            const lessonWordsText = parsers["en"].parseText(`${newLesson.title} ${newLesson.text}`)
+            const lessonWordsText = parsers["en"].parseText(`${newLesson.title} ${newLesson.text}`);
             const lessonVocabs = await context.vocabRepo.find({text: lessonWordsText, language: course.language});
             const lessonVocabMappings = await context.em.find(MapLessonVocab, {vocab: lessonVocabs, lesson: newLesson});
 
@@ -712,7 +711,7 @@ describe("GET lessons/:lessonId", () => {
         expect(response.statusCode).to.equal(200);
         expect(response.json()).toEqual(lessonSerializer.serialize(lesson));
     });
-})
+});
 /**@link LessonController#updateLesson*/
 describe("PUT lessons/:lessonId", () => {
     const makeRequest = async (lessonId: number | string, {data, files = {}}: {
@@ -765,7 +764,7 @@ describe("PUT lessons/:lessonId", () => {
             expect(lesson.orderInCourse).toEqual(await newCourse.lessons.loadCount() - 1);
 
 
-            const lessonWordsText = parsers["en"].parseText(`${updatedLesson.title} ${updatedLesson.text}`)
+            const lessonWordsText = parsers["en"].parseText(`${updatedLesson.title} ${updatedLesson.text}`);
             const lessonVocabs = await context.vocabRepo.find({text: lessonWordsText, language: course.language});
             const lessonVocabMappings = await context.em.find(MapLessonVocab, {vocab: lessonVocabs, lesson: lesson});
 
@@ -802,7 +801,7 @@ describe("PUT lessons/:lessonId", () => {
             expect(lesson.audio).toEqual("");
             expect(lesson.orderInCourse).toEqual(await newCourse.lessons.loadCount() - 1);
 
-            const lessonWordsText = parsers["en"].parseText(`${updatedLesson.title} ${updatedLesson.text}`)
+            const lessonWordsText = parsers["en"].parseText(`${updatedLesson.title} ${updatedLesson.text}`);
             const lessonVocabs = await context.vocabRepo.find({text: lessonWordsText, language: course.language});
             const lessonVocabMappings = await context.em.find(MapLessonVocab, {vocab: lessonVocabs, lesson: lesson});
 
@@ -844,7 +843,7 @@ describe("PUT lessons/:lessonId", () => {
             expect(lesson.audio).not.toEqual(oldLessonAudio);
             expect(lesson.orderInCourse).toEqual(await newCourse.lessons.loadCount() - 1);
 
-            const lessonWordsText = parsers["en"].parseText(`${updatedLesson.title} ${updatedLesson.text}`)
+            const lessonWordsText = parsers["en"].parseText(`${updatedLesson.title} ${updatedLesson.text}`);
             const lessonVocabs = await context.vocabRepo.find({text: lessonWordsText, language: course.language});
             const lessonVocabMappings = await context.em.find(MapLessonVocab, {vocab: lessonVocabs, lesson: lesson});
 
@@ -946,7 +945,7 @@ describe("PUT lessons/:lessonId", () => {
                 }
             }, session.token);
             expect(response.statusCode).to.equal(400);
-        })
+        });
         test<LocalTestContext>("If text is missing return 400", async (context) => {
             const author = await context.userFactory.createOne();
             const session = await context.sessionFactory.createOne({user: author});
@@ -964,7 +963,7 @@ describe("PUT lessons/:lessonId", () => {
                 }
             }, session.token);
             expect(response.statusCode).to.equal(400);
-        })
+        });
         test<LocalTestContext>("If courseId is missing return 400", async (context) => {
             const author = await context.userFactory.createOne();
             const session = await context.sessionFactory.createOne({user: author});
@@ -982,7 +981,7 @@ describe("PUT lessons/:lessonId", () => {
                 }
             }, session.token);
             expect(response.statusCode).to.equal(400);
-        })
+        });
         test<LocalTestContext>("If data is missing return 400", async (context) => {
             const author = await context.userFactory.createOne();
             const session = await context.sessionFactory.createOne({user: author});
@@ -992,7 +991,7 @@ describe("PUT lessons/:lessonId", () => {
 
             const response = await makeRequest(lesson.id, {}, session.token);
             expect(response.statusCode).to.equal(400);
-        })
+        });
     });
     describe("If fields are invalid return 4xx", async () => {
         test<LocalTestContext>("If title is invalid return 400", async (context) => {
@@ -1013,7 +1012,7 @@ describe("PUT lessons/:lessonId", () => {
                 }
             }, session.token);
             expect(response.statusCode).to.equal(400);
-        })
+        });
         test<LocalTestContext>("If text is invalid return 400", async (context) => {
             const author = await context.userFactory.createOne();
             const session = await context.sessionFactory.createOne({user: author});
@@ -1032,7 +1031,7 @@ describe("PUT lessons/:lessonId", () => {
                 }
             }, session.token);
             expect(response.statusCode).to.equal(400);
-        })
+        });
         describe("If course is invalid return 400", async () => {
             test<LocalTestContext>("If course id is not a number return 400", async (context) => {
                 const author = await context.userFactory.createOne();
@@ -1247,4 +1246,4 @@ describe("PUT lessons/:lessonId", () => {
             });
         });
     });
-})
+});

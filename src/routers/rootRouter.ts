@@ -6,9 +6,10 @@ import {languageRouter} from "@/src/routers/languagesRouter.js";
 import {coursesRouter} from "@/src/routers/coursesRouter.js";
 import {lessonsRouter} from "@/src/routers/lessonsRouter.js";
 import FastifyFormidable from "fastify-formidable";
+import {vocabRouter} from "@/src/routers/vocabRouter.js";
 
 const rootRouter: FastifyPluginCallback = function rootRouter(fastify, options, done) {
-    fastify.register(FastifyFormidable)
+    fastify.register(FastifyFormidable);
     fastify.decorateRequest("em", null);
     fastify.decorateRequest("user", null);
     fastify.addHook("preParsing", attachOrmEntityManagerMiddleware);
@@ -19,6 +20,7 @@ const rootRouter: FastifyPluginCallback = function rootRouter(fastify, options, 
     fastify.register(languageRouter);
     fastify.register(coursesRouter);
     fastify.register(lessonsRouter);
+    fastify.register(vocabRouter);
 
     done();
 };

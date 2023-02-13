@@ -3,8 +3,6 @@ import {User} from "@/src/models/entities/auth/User.js";
 import {EntityData, EntityManager} from "@mikro-orm/core";
 import {CustomFactory} from "@/src/seeders/factories/CustomFactory.js";
 import {Lesson} from "@/src/models/entities/Lesson.js";
-import {courseSerializer} from "@/src/schemas/response/serializers/CourseSerializer.js";
-import {CourseFactory} from "@/src/seeders/factories/CourseFactory.js";
 import {parsers} from "@/src/utils/parsers/parsers.js";
 import {Vocab} from "@/src/models/entities/Vocab.js";
 import {MapLessonVocab} from "@/src/models/entities/MapLessonVocab.js";

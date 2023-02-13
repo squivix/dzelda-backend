@@ -1,6 +1,6 @@
 import {FastifyReply, FastifyRequest} from "fastify";
 import {z} from "zod";
-import LessonService from "@/src/services/LessonService.js";
+import {LessonService} from "@/src/services/LessonService.js";
 import {lessonSerializer} from "@/src/schemas/response/serializers/LessonSerializer.js";
 import {languageCodeValidator} from "@/src/validators/languageValidators.js";
 import {usernameValidator} from "@/src/validators/userValidator.js";
@@ -9,7 +9,7 @@ import {UnauthenticatedAPIError} from "@/src/utils/errors/UnauthenticatedAPIErro
 import {booleanStringValidator, numericStringValidator} from "@/src/validators/utilValidators.js";
 import {LanguageLevel} from "@/src/models/enums/LanguageLevel.js";
 import {ValidationAPIError} from "@/src/utils/errors/ValidationAPIError.js";
-import CourseService from "@/src/services/CourseService.js";
+import {CourseService} from "@/src/services/CourseService.js";
 import {lessonTextValidator, lessonTitleValidator} from "@/src/validators/lessonValidators.js";
 import {ForbiddenAPIError} from "@/src/utils/errors/ForbiddenAPIError.js";
 import {NotFoundAPIError} from "@/src/utils/errors/NotFoundAPIError.js";

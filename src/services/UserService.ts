@@ -10,7 +10,7 @@ import {EntityManager, EntityRepository} from "@mikro-orm/core";
 import {UnauthenticatedAPIError} from "@/src/utils/errors/UnauthenticatedAPIError.js";
 
 
-class UserService {
+export class UserService {
     em: EntityManager;
     userRepo: EntityRepository<User>;
     profileRepo: EntityRepository<Profile>;
@@ -70,5 +70,3 @@ class UserService {
     }
 
 }
-
-export default UserService;

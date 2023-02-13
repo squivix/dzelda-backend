@@ -6,7 +6,7 @@ type ReplaceCharsMap = { [character: string]: string }
 export class SpaceBasedWordParser extends WordParser {
     notWordCharsRegex: RegExp;
     replaceCharsMap: ReplaceCharsMap;
-    ignoreCase: boolean
+    ignoreCase: boolean;
 
     constructor(wordChars: string = "", replaceCharsMap: ReplaceCharsMap = {}, ignoreCase: boolean = true) {
         super();
@@ -19,10 +19,10 @@ export class SpaceBasedWordParser extends WordParser {
         let parsedText = text;
 
         //replace special characters
-        Object.keys(this.replaceCharsMap).forEach(c => parsedText = parsedText.replace(c, this.replaceCharsMap[c]))
+        Object.keys(this.replaceCharsMap).forEach(c => parsedText = parsedText.replace(c, this.replaceCharsMap[c]));
 
         //replace all non word characters with a space
-        parsedText = parsedText.replace(this.notWordCharsRegex, " ")
+        parsedText = parsedText.replace(this.notWordCharsRegex, " ");
 
         //trim
         parsedText = parsedText.trim();
@@ -31,8 +31,12 @@ export class SpaceBasedWordParser extends WordParser {
             //change all to lowercase
             parsedText = parsedText.toLowerCase();
 
-        const wordSet = new Set(parsedText.split(" "))
+        const wordSet = new Set(parsedText.split(" "));
         return Array.from(wordSet);
+    }
+
+    combine(words: string[]): string {
+        return words.join(" ");
     }
 }
 

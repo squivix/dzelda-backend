@@ -5,7 +5,7 @@ import {numericEnumValues} from "@/src/utils/utils.js";
 
 export class LessonRepo extends EntityRepository<Lesson> {
 
-    async annotateVocabsByLevel(lessons: Lesson[], userId: number) {
+    async annotateVocabsByLevel(lessons: Lesson[], learnerId: number) {
         if (lessons.length === 0)
             return lessons;
         const query = `SELECT json_object_agg(outq.id, outq.vocabLevels) AS vocab_levels_by_lesson
@@ -15,7 +15,7 @@ FROM (SELECT subq.lesson_id                                                   AS
                    COUNT(*),
                    mlv.lesson_id
             FROM map_lesson_vocab mlv
-                     LEFT JOIN map_learner_vocab mlv2 on mlv.vocab_id = mlv2.vocab_id AND mlv2.learner_id = ${userId}
+                     LEFT JOIN map_learner_vocab mlv2 on mlv.vocab_id = mlv2.vocab_id AND mlv2.learner_id = ${learnerId}
             WHERE mlv.lesson_id IN (${lessons.map(l=>l.id).join(",")})
             GROUP BY mlv.lesson_id, mlv2.level
             ORDER BY mlv.lesson_id) AS subq

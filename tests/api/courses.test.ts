@@ -18,15 +18,9 @@ import fs from "fs-extra";
 import {LessonFactory} from "@/src/seeders/factories/LessonFactory.js";
 import {LessonRepo} from "@/src/models/repos/LessonRepo.js";
 import {Lesson} from "@/src/models/entities/Lesson.js";
-import {LessonListSchema} from "@/src/schemas/response/interfaces/LessonListSchema.js";
-
-// beforeEach(truncateDb);
-
+import {LessonSchema} from "@/src/schemas/response/interfaces/LessonSchema.js";
 
 interface LocalTestContext extends TestContext {
-    userFactory: UserFactory;
-    profileFactory: ProfileFactory;
-    sessionFactory: SessionFactory;
     courseRepo: CourseRepo;
     lessonRepo: LessonRepo;
     languageFactory: LanguageFactory;
@@ -61,7 +55,7 @@ describe("GET courses/", function () {
         await context.courseFactory.create(10);
 
         const response = await makeRequest();
-        const courses = await context.courseRepo.find({isPublic: true}, {populate: ["addedBy.user"]});
+        const courses = await context.courseRepo.find({isPublic: true}, {populate: ["language", "addedBy.user"]});
         expect(response.statusCode).to.equal(200);
         expect(response.json()).toEqual(courseSerializer.serializeList(courses));
     });
@@ -188,7 +182,7 @@ describe("GET courses/", function () {
             const courses = await context.courseRepo.find({
                 isPublic: true,
                 level: level
-            }, {populate: ["addedBy.user"]});
+            }, {populate: ["language", "addedBy.user"]});
             expect(response.statusCode).to.equal(200);
             expect(response.json()).toEqual(courseSerializer.serializeList(courses));
         });
@@ -207,7 +201,7 @@ describe("GET courses/", function () {
 
         const response = await makeRequest({}, session.token);
 
-        let courses = await context.courseRepo.find({isPublic: true}, {populate: ["addedBy.user"]});
+        let courses = await context.courseRepo.find({isPublic: true}, {populate: ["language", "addedBy.user"]});
         courses = await context.courseRepo.annotateVocabsByLevel(courses, user.id);
         expect(response.statusCode).to.equal(200);
         expect(response.json()).toEqual(courseSerializer.serializeList(courses));
@@ -219,7 +213,7 @@ describe("GET courses/", function () {
 
         const response = await makeRequest({}, session.token);
 
-        let courses = await context.courseRepo.find({$or: [{isPublic: true}, {addedBy: user.profile}]}, {populate: ["addedBy.user"]});
+        let courses = await context.courseRepo.find({$or: [{isPublic: true}, {addedBy: user.profile}]}, {populate: ["language", "addedBy.user"]});
         courses = await context.courseRepo.annotateVocabsByLevel(courses, user.id);
         expect(response.statusCode).to.equal(200);
         expect(response.json()).toEqual(courseSerializer.serializeList(courses));
@@ -603,7 +597,7 @@ describe("PUT courses/:courseId", function () {
             expect(response.statusCode).to.equal(200);
             expect(response.json()).toEqual(courseSerializer.serialize(course));
             expect(fs.existsSync(course.image));
-            expect((response.json().lessons as LessonListSchema[]).map(l => l.id)).toEqual(shuffledLessonIds);
+            expect(response.json().lessons.map((l: LessonSchema) => l.id)).toEqual(shuffledLessonIds);
         });
         test<LocalTestContext>("If new image is blank clear course image", async (context) => {
             const author = await context.userFactory.createOne();
@@ -637,7 +631,7 @@ describe("PUT courses/:courseId", function () {
             expect(response.statusCode).to.equal(200);
             expect(response.json()).toEqual(courseSerializer.serialize(course));
             expect(course.image).toEqual("");
-            expect((response.json().lessons as LessonListSchema[]).map(l => l.id)).toEqual(shuffledLessonIds);
+            expect(response.json().lessons.map((l: LessonSchema) => l.id)).toEqual(shuffledLessonIds);
         });
         test<LocalTestContext>("If new image is provided, update course image", async (context) => {
             const author = await context.userFactory.createOne();
@@ -671,7 +665,7 @@ describe("PUT courses/:courseId", function () {
             expect(response.statusCode).to.equal(200);
             expect(response.json()).toEqual(courseSerializer.serialize(course));
             expect(fs.existsSync(course.image));
-            expect((response.json().lessons as LessonListSchema[]).map(l => l.id)).toEqual(shuffledLessonIds);
+            expect(response.json().lessons.map((l: LessonSchema) => l.id)).toEqual(shuffledLessonIds);
         });
     });
     test<LocalTestContext>("If user not logged in return 401", async (context) => {

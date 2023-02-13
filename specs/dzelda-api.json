@@ -229,7 +229,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/LanguageList"
+                    "$ref": "#/components/schemas/Language"
                   }
                 }
               }
@@ -267,7 +267,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/CourseList"
+                    "$ref": "#/components/schemas/Course"
                   }
                 }
               }
@@ -340,7 +340,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/CourseDetails",
+                  "$ref": "#/components/schemas/Course",
                   "x-examples": {}
                 }
               }
@@ -427,7 +427,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/CourseDetails"
+                  "$ref": "#/components/schemas/Course"
                 }
               }
             }
@@ -454,7 +454,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/CourseDetails"
+                  "$ref": "#/components/schemas/Course"
                 }
               }
             }
@@ -547,7 +547,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/LessonList"
+                    "$ref": "#/components/schemas/Lesson"
                   }
                 }
               }
@@ -623,7 +623,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/LessonDetails"
+                  "$ref": "#/components/schemas/Lesson"
                 }
               }
             }
@@ -704,7 +704,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/LessonDetails"
+                  "$ref": "#/components/schemas/Lesson"
                 }
               }
             }
@@ -731,7 +731,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/LessonDetails"
+                  "$ref": "#/components/schemas/Lesson"
                 }
               }
             }
@@ -803,7 +803,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/VocabDetails"
+                  "$ref": "#/components/schemas/Vocab"
                 }
               }
             }
@@ -855,7 +855,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/MeaningDetails"
+                  "$ref": "#/components/schemas/Meaning"
                 },
                 "examples": {}
               }
@@ -918,7 +918,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/LanguageList"
+                    "$ref": "#/components/schemas/Language"
                   }
                 }
               }
@@ -946,7 +946,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/LanguageDetails"
+                  "$ref": "#/components/schemas/Language"
                 }
               }
             }
@@ -1008,7 +1008,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/LanguageDetails"
+                  "$ref": "#/components/schemas/Language"
                 }
               }
             }
@@ -1099,7 +1099,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/CourseList"
+                    "$ref": "#/components/schemas/Course"
                   }
                 }
               }
@@ -1190,7 +1190,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/LessonList"
+                    "$ref": "#/components/schemas/Lesson"
                   }
                 }
               }
@@ -1272,7 +1272,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/LessonDetails"
+                  "$ref": "#/components/schemas/Lesson"
                 }
               }
             }
@@ -1326,7 +1326,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/VocabList"
+                    "$ref": "#/components/schemas/Vocab"
                   }
                 }
               }
@@ -1389,7 +1389,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/VocabDetails"
+                  "$ref": "#/components/schemas/Vocab"
                 }
               }
             }
@@ -1447,7 +1447,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/VocabDetails"
+                  "$ref": "#/components/schemas/Vocab"
                 }
               }
             }
@@ -1496,7 +1496,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/MeaningList"
+                    "$ref": "#/components/schemas/Meaning"
                   }
                 }
               }
@@ -1533,7 +1533,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/MeaningDetails"
+                  "$ref": "#/components/schemas/Meaning"
                 }
               }
             }
@@ -1633,7 +1633,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/VocabList"
+                  "$ref": "#/components/schemas/Vocab"
                 }
               }
             }
@@ -1680,7 +1680,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/DictionaryList"
+                    "$ref": "#/components/schemas/Dictionary"
                   }
                 }
               }
@@ -1724,7 +1724,7 @@
             "format": "email"
           },
           "profile": {
-            "$ref": "#/components/schemas/ProfileDetails"
+            "$ref": "#/components/schemas/Profile"
           }
         },
         "required": [
@@ -1732,17 +1732,20 @@
           "profile"
         ]
       },
-      "ProfileDetails": {
+      "Profile": {
         "type": "object",
         "x-examples": {},
         "properties": {
           "id": {
             "type": "integer"
           },
+          "username": {
+            "type": "string"
+          },
           "languagesLearning": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/LanguageList"
+              "$ref": "#/components/schemas/Language"
             }
           },
           "profilePicture": {
@@ -1758,13 +1761,13 @@
         },
         "required": [
           "id",
-          "languagesLearning",
+          "username",
           "profilePicture",
           "bio",
           "isPublic"
         ]
       },
-      "LanguageList": {
+      "Language": {
         "type": "object",
         "x-examples": {},
         "examples": [],
@@ -1842,68 +1845,7 @@
           "learnersCount"
         ]
       },
-      "LanguageDetails": {
-        "type": "object",
-        "x-examples": {},
-        "properties": {
-          "id": {
-            "type": "integer"
-          },
-          "code": {
-            "type": "string",
-            "maxLength": 4,
-            "minLength": 2
-          },
-          "name": {
-            "type": "string"
-          },
-          "greeting": {
-            "type": "string"
-          },
-          "flag": {
-            "type": "string",
-            "format": "uri"
-          },
-          "flagCircular": {
-            "type": "string",
-            "format": "uri"
-          },
-          "flagEmoji": {
-            "type": "string"
-          },
-          "isSupported": {
-            "type": "boolean"
-          },
-          "levelThresholds": {
-            "type": "object",
-            "properties": {
-              "beginner1": {
-                "type": "integer"
-              },
-              "beginner2": {
-                "type": "integer"
-              },
-              "intermediate1": {
-                "type": "integer"
-              },
-              "intermediate2": {
-                "type": "integer"
-              },
-              "advanced1": {
-                "type": "integer"
-              },
-              "advanced2": {
-                "type": "integer"
-              }
-            }
-          },
-          "learnersCount": {
-            "type": "integer"
-          }
-        },
-        "title": ""
-      },
-      "CourseList": {
+      "Course": {
         "type": "object",
         "x-examples": {},
         "properties": {
@@ -1935,10 +1877,10 @@
             ]
           },
           "language": {
-            "type": "integer"
+            "$ref": "#/components/schemas/Language"
           },
           "addedBy": {
-            "type": "string"
+            "$ref": "#/components/schemas/Profile"
           },
           "vocabsByLevel": {
             "type": "object",
@@ -1977,14 +1919,14 @@
               }
             },
             "required": [
-              "-1",
               "0",
               "1",
               "2",
               "3",
               "4",
               "5",
-              "6"
+              "6",
+              "-1"
             ]
           }
         },
@@ -1999,198 +1941,9 @@
           "addedBy"
         ]
       },
-      "CourseDetails": {
-        "type": "object",
-        "x-examples": {},
-        "properties": {
-          "id": {
-            "type": "integer"
-          },
-          "title": {
-            "type": "string"
-          },
-          "description": {
-            "type": "string"
-          },
-          "image": {
-            "type": "string",
-            "format": "uri"
-          },
-          "isPublic": {
-            "type": "boolean"
-          },
-          "level": {
-            "type": "string",
-            "enum": [
-              "Beginner 1",
-              "Beginner 2",
-              "Intermediate 1",
-              "Intermediate 2",
-              "Advanced 1",
-              "Advanced 2"
-            ]
-          },
-          "language": {
-            "$ref": "#/components/schemas/LanguageDetails"
-          },
-          "addedBy": {
-            "$ref": "#/components/schemas/ProfileDetails"
-          },
-          "lessons": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/LessonList"
-            }
-          },
-          "vocabsByLevel": {
-            "type": "object",
-            "required": [
-              "0",
-              "1",
-              "2",
-              "3",
-              "4",
-              "5",
-              "6",
-              "-1"
-            ],
-            "properties": {
-              "0": {
-                "type": "integer",
-                "minimum": 0
-              },
-              "1": {
-                "type": "integer",
-                "minimum": 0
-              },
-              "2": {
-                "type": "integer",
-                "minimum": 0
-              },
-              "3": {
-                "type": "integer",
-                "minimum": 0
-              },
-              "4": {
-                "type": "integer",
-                "minimum": 0
-              },
-              "5": {
-                "type": "integer",
-                "minimum": 0
-              },
-              "6": {
-                "type": "integer",
-                "minimum": 0
-              },
-              "-1": {
-                "type": "integer",
-                "minimum": 0
-              }
-            }
-          }
-        },
-        "required": [
-          "id",
-          "title",
-          "description",
-          "image",
-          "isPublic",
-          "level",
-          "language",
-          "addedBy",
-          "lessons"
-        ]
-      },
-      "LessonList": {
-        "title": "LessonList",
+      "Lesson": {
         "x-stoplight": {
-          "id": "o75iqcx5nqky7"
-        },
-        "type": "object",
-        "examples": [],
-        "properties": {
-          "id": {
-            "type": "integer"
-          },
-          "title": {
-            "type": "string"
-          },
-          "image": {
-            "type": "string",
-            "format": "uri"
-          },
-          "course": {
-            "$ref": "#/components/schemas/CourseList"
-          },
-          "orderInCourse": {
-            "type": "integer"
-          },
-          "addedOn": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "vocabsByLevel": {
-            "type": "object",
-            "properties": {
-              "0": {
-                "type": "integer",
-                "minimum": 0
-              },
-              "1": {
-                "type": "integer",
-                "minimum": 0
-              },
-              "2": {
-                "type": "integer",
-                "minimum": 0
-              },
-              "3": {
-                "type": "integer",
-                "minimum": 0
-              },
-              "4": {
-                "type": "integer",
-                "minimum": 0
-              },
-              "5": {
-                "type": "integer",
-                "minimum": 0
-              },
-              "6": {
-                "type": "integer",
-                "minimum": 0
-              },
-              "-1": {
-                "type": "integer",
-                "minimum": 0
-              }
-            },
-            "required": [
-              "0",
-              "1",
-              "2",
-              "3",
-              "4",
-              "5",
-              "6",
-              "-1"
-            ]
-          }
-        },
-        "required": [
-          "id",
-          "title",
-          "image",
-          "course",
-          "orderInCourse",
-          "addedOn"
-        ]
-      },
-      "LessonDetails": {
-        "title": "LessonDetails",
-        "x-stoplight": {
-          "id": "o75iqcx5nqky7"
+          "id": "c1739f3034b3f"
         },
         "type": "object",
         "properties": {
@@ -2212,7 +1965,7 @@
             "format": "uri"
           },
           "course": {
-            "$ref": "#/components/schemas/CourseDetails"
+            "$ref": "#/components/schemas/Course"
           },
           "orderInCourse": {
             "type": "integer"
@@ -2280,43 +2033,7 @@
           "addedOn"
         ]
       },
-      "VocabList": {
-        "type": "object",
-        "x-examples": {},
-        "properties": {
-          "id": {
-            "type": "integer"
-          },
-          "text": {
-            "type": "string"
-          },
-          "isPhrase": {
-            "type": "boolean"
-          },
-          "level": {
-            "type": "integer"
-          },
-          "notes": {
-            "type": "null"
-          },
-          "language": {
-            "type": "string"
-          },
-          "userMeanings": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/MeaningList"
-            }
-          },
-          "allMeanings": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/MeaningList"
-            }
-          }
-        }
-      },
-      "VocabDetails": {
+      "Vocab": {
         "type": "object",
         "x-examples": {},
         "x-stoplight": {
@@ -2339,23 +2056,31 @@
             "type": "null"
           },
           "language": {
-            "$ref": "#/components/schemas/LanguageDetails"
+            "type": "integer"
           },
           "userMeanings": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/MeaningList"
+              "$ref": "#/components/schemas/Meaning"
             }
           },
           "allMeanings": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/MeaningList"
+              "$ref": "#/components/schemas/Meaning"
             }
           }
-        }
+        },
+        "required": [
+          "id",
+          "text",
+          "isPhrase",
+          "level",
+          "notes",
+          "language"
+        ]
       },
-      "MeaningList": {
+      "Meaning": {
         "type": "object",
         "x-examples": {},
         "properties": {
@@ -2366,54 +2091,42 @@
             "type": "string"
           },
           "vocab": {
-            "type": "integer"
+            "$ref": "#/components/schemas/Vocab"
           },
           "learnersCount": {
             "type": "integer"
           },
           "addedBy": {
-            "type": "string"
+            "$ref": "#/components/schemas/Profile"
           },
           "language": {
-            "type": "string"
+            "$ref": "#/components/schemas/Language"
           },
           "addedOn": {
             "type": "string",
             "format": "date-time"
           }
         },
-        "examples": []
+        "required": [
+          "id",
+          "text",
+          "vocab",
+          "learnersCount",
+          "addedBy",
+          "language",
+          "addedOn"
+        ]
       },
-      "MeaningDetails": {
+      "Dictionary": {
         "type": "object",
-        "x-examples": {},
-        "properties": {
-          "id": {
-            "type": "integer"
-          },
-          "text": {
-            "type": "string"
-          },
-          "vocab": {
-            "$ref": "#/components/schemas/VocabDetails"
-          },
-          "learnersCount": {
-            "type": "integer"
-          },
-          "addedBy": {
-            "$ref": "#/components/schemas/ProfileDetails"
-          },
-          "language": {
-            "$ref": "#/components/schemas/LanguageDetails"
-          },
-          "addedOn": {
-            "type": "string",
-            "format": "date-time"
+        "x-examples": {
+          "Example 1": {
+            "id": 1,
+            "name": "Google Translate",
+            "link": "translate.google.com",
+            "language": "en"
           }
-        }
-      },
-      "DictionaryList": {
-        "type": "object",
+        },
         "properties": {
           "id": {
             "type": "integer"
@@ -2428,14 +2141,12 @@
             "type": "string"
           }
         },
-        "x-examples": {
-          "Example 1": {
-            "id": 1,
-            "name": "Google Translate",
-            "link": "translate.google.com",
-            "language": "en"
-          }
-        }
+        "required": [
+          "id",
+          "name",
+          "link",
+          "language"
+        ]
       }
     },
     "securitySchemes": {
