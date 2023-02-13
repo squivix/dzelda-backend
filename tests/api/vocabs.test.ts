@@ -200,5 +200,20 @@ describe("POST vocabs/", () => {
             expect(response.statusCode).toEqual(400);
         });
     });
+    test<LocalTestContext>("If vocab with same text already exists for the language return 200", async (context) => {
+        const user = await context.userFactory.createOne();
+        const session = await context.sessionFactory.createOne({user: user});
+        const language = await context.languageFactory.createOne();
+        const oldVocab = await context.vocabFactory.createOne({language: language});
+        const newVocab = context.vocabFactory.makeOne({language: language, text: oldVocab.text});
+        const response = await makeRequest({
+            languageCode: language.code,
+            text: newVocab.text,
+            isPhrase: newVocab.isPhrase
+        }, session.token);
+
+        expect(response.statusCode).toEqual(200);
+        expect(response.json()).toEqual(vocabSerializer.serialize(oldVocab));
+    });
 
 });

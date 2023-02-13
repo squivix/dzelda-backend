@@ -7,13 +7,6 @@ import {LanguageService} from "@/src/services/LanguageService.js";
 import {VocabService} from "@/src/services/VocabService.js";
 import {vocabSerializer} from "@/src/schemas/response/serializers/VocabSerializer.js";
 import {parsers} from "@/src/utils/parsers/parsers.js";
-import {usernameValidator} from "@/src/validators/userValidator.js";
-import {LanguageLevel} from "@/src/models/enums/LanguageLevel.js";
-import {booleanStringValidator} from "@/src/validators/utilValidators.js";
-import {AnonymousUser} from "@/src/models/entities/auth/User.js";
-import {UnauthenticatedAPIError} from "@/src/utils/errors/UnauthenticatedAPIError.js";
-import {LessonService} from "@/src/services/LessonService.js";
-import {lessonSerializer} from "@/src/schemas/response/serializers/LessonSerializer.js";
 
 class VocabController {
     async createVocab(request: FastifyRequest, reply: FastifyReply) {
@@ -38,13 +31,19 @@ class VocabController {
         if (words.length > 1 && !body.isPhrase)
             throw new ValidationAPIError({text: {message: "more than 1 word, but isPhrase is false"}});
 
+        const vocabText = parser.combine(words);
         const vocabService = new VocabService(request.em);
-        const vocab = await vocabService.createVocab({
+        const existingVocab = await vocabService.getVocabByText({language: language, text: vocabText,});
+        if (existingVocab) {
+            reply.status(200).send(vocabSerializer.serialize(existingVocab));
+            return;
+        }
+        const newVocab = await vocabService.createVocab({
             language: language,
-            text: parser.combine(words),
+            text: vocabText,
             isPhrase: body.isPhrase
         });
-        reply.status(201).send(vocabSerializer.serialize(vocab));
+        reply.status(201).send(vocabSerializer.serialize(newVocab));
     }
 
     async getVocabs(request: FastifyRequest, reply: FastifyReply) {

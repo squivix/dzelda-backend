@@ -15,16 +15,6 @@ export class VocabService {
         this.vocabRepo = this.em.getRepository(Vocab);
     }
 
-    async createVocab(vocabData: { text: string; language: Language; isPhrase: boolean }) {
-        const newVocab = await this.vocabRepo.create({
-            text: vocabData.text,
-            language: vocabData.language,
-            isPhrase: vocabData.isPhrase
-        });
-        await this.em.flush();
-        return newVocab;
-    }
-
     async getVocabs(filters: {}, user: User | AnonymousUser | null) {
         let vocabs;
         if (user && !(user instanceof AnonymousUser)) {
@@ -35,4 +25,22 @@ export class VocabService {
         }
         return vocabs;
     }
+
+    async createVocab(vocabData: { text: string; language: Language; isPhrase: boolean }) {
+        const newVocab = await this.vocabRepo.create({
+            text: vocabData.text,
+            language: vocabData.language,
+            isPhrase: vocabData.isPhrase
+        });
+        await this.em.flush();
+        return newVocab;
+    }
+
+    async getVocabByText(vocabData: { text: string; language: Language }) {
+        return await this.vocabRepo.findOne({
+            text: vocabData.text,
+            language: vocabData.language
+        }, {populate:["meanings"]});
+    }
+
 }
