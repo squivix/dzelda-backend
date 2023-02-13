@@ -4,6 +4,6 @@ import {requiresAuth} from "@/src/middlewares/authMiddleware.js";
 
 export const vocabRouter: FastifyPluginCallback = function (fastify, options, done) {
     fastify.post(`/vocabs/`, {preHandler: requiresAuth, handler: vocabController.createVocab});
-    fastify.get(`/vocabs/`, vocabController.getVocabs);
+    // fastify.get(`/vocabs/`, vocabController.getVocabs);
     done();
 };

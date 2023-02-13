@@ -1133,7 +1133,8 @@ describe("PUT courses/:courseId", function () {
                     }).create(10, {course: course});
                     const updatedCourse = await context.courseFactory.makeOne({addedBy: author.profile, language: language});
                     const lessonOrder = shuffleArray(courseLessons).map(l => l.id);
-                    lessonOrder.splice(faker.datatype.number({max: courseLessons.length - 1}), faker.datatype.number({max: courseLessons.length}));
+                    lessonOrder.splice(faker.datatype.number({max: courseLessons.length - 1}),
+                        faker.datatype.number({min: 1, max: courseLessons.length}));
 
                     const response = await makeRequest(course.id, {
                         data: {

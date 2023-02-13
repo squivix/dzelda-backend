@@ -1,10 +1,14 @@
-import {VocabSchema} from "@/src/schemas/response/interfaces/VocabSchema.js";
+import {MapLearnerVocabSchema, VocabOnlySchema, VocabSchema} from "@/src/schemas/response/interfaces/VocabSchema.js";
 import {CustomCallbackObject, CustomEntitySerializer} from "@/src/schemas/response/serializers/CustomEntitySerializer.js";
 import {MapLearnerVocab} from "@/src/models/entities/MapLearnerVocab.js";
 import {meaningSerializer} from "@/src/schemas/response/serializers/MeaningSerializer.js";
 import {Vocab} from "@/src/models/entities/Vocab.js";
 
 class VocabSerializer extends CustomEntitySerializer<Vocab | MapLearnerVocab, VocabSchema> {
+
+    serialize(entity: Vocab | MapLearnerVocab, {ignore}: { ignore: (keyof VocabOnlySchema | keyof MapLearnerVocabSchema)[] } = {ignore: []}): Partial<VocabSchema> {
+        return super.serialize(entity, {ignore: ignore as (keyof VocabSchema)[]});
+    }
 
     definition(vocabOrMapping: Vocab | MapLearnerVocab): CustomCallbackObject<VocabSchema> {
         if (vocabOrMapping instanceof Vocab) {

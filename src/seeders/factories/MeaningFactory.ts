@@ -7,7 +7,9 @@ export class MeaningFactory extends CustomFactory<Meaning> {
     readonly model = Meaning;
 
     protected definition(faker: Faker): EntityData<Meaning> {
-        return {};
+        return {
+            text:faker.random.alpha({count:20})
+        };
     }
 
 

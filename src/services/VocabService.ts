@@ -36,11 +36,17 @@ export class VocabService {
         return newVocab;
     }
 
+    async getVocab(vocabId: number) {
+        return await this.vocabRepo.findOne({
+            id: vocabId
+        }, {populate: ["meanings"]});
+    }
+
     async getVocabByText(vocabData: { text: string; language: Language }) {
         return await this.vocabRepo.findOne({
             text: vocabData.text,
             language: vocabData.language
-        }, {populate:["meanings"]});
+        }, {populate: ["meanings"]});
     }
 
 }

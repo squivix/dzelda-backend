@@ -1,6 +1,6 @@
 import {MeaningSchema} from "@/src/schemas/response/interfaces/MeaningSchema.js";
 
-interface VocabOnlySchema {
+export interface VocabOnlySchema {
     id: number;
     text: string;
     isPhrase: boolean;
@@ -8,7 +8,7 @@ interface VocabOnlySchema {
     meanings: Partial<MeaningSchema>[];
 }
 
-interface MapLearnerVocabSchema {
+export interface MapLearnerVocabSchema {
     id: number;
     text: string;
     isPhrase: boolean;
@@ -19,4 +19,5 @@ interface MapLearnerVocabSchema {
     userMeanings?: Partial<MeaningSchema>[];
 }
 
-export type VocabSchema = VocabOnlySchema | MapLearnerVocabSchema;
+
+export type VocabSchema = VocabOnlySchema | MapLearnerVocabSchema
