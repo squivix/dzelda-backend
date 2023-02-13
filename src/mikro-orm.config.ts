@@ -40,7 +40,8 @@ const devOptions: Options = {
     seeder: {
         path: "build/src/seeders/",
         pathTs: "src/seeders/",
-    }
+    },
+    persistOnCreate: true,
 };
 
 const testOptions: Options = {

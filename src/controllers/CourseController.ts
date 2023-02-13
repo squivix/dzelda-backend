@@ -37,7 +37,7 @@ class CourseController {
     async createCourse(request: FastifyRequest, reply: FastifyReply) {
         const bodyValidator = z.object({
             data: z.object({
-                language: languageCodeValidator,
+                languageCode: languageCodeValidator,
                 title: courseTitleValidator,
                 description: courseDescriptionValidator.optional(),
                 isPublic: z.boolean().optional(),
@@ -48,7 +48,7 @@ class CourseController {
         const body = bodyValidator.parse(request.body);
 
         const languageService = new LanguageService(request.em);
-        const language = await languageService.getLanguage(body.data.language);
+        const language = await languageService.getLanguage(body.data.languageCode);
         if (!language)
             throw new ValidationAPIError({language: {message: "language not found"}});
 

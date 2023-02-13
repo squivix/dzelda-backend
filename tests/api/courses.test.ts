@@ -259,7 +259,7 @@ describe("POST courses/", function () {
             const response = await makeRequest({
                 data: {
                     title: newCourse.title,
-                    language: language.code,
+                    languageCode: language.code,
                 },
             }, session.token);
 
@@ -281,7 +281,7 @@ describe("POST courses/", function () {
                 data: {
                     title: newCourse.title,
                     description: newCourse.description,
-                    language: language.code,
+                    languageCode: language.code,
                     isPublic: newCourse.isPublic,
                     level: newCourse.level,
                 },
@@ -300,7 +300,7 @@ describe("POST courses/", function () {
         const response = await makeRequest({
             data: {
                 title: newCourse.title,
-                language: language.code,
+                languageCode: language.code,
             }
         });
 
@@ -313,7 +313,7 @@ describe("POST courses/", function () {
             const language = await context.languageFactory.createOne();
 
             const response = await makeRequest({
-                data: {language: language.code}
+                data: {languageCode: language.code}
             }, session.token);
 
             expect(response.statusCode).to.equal(400);
@@ -339,7 +339,7 @@ describe("POST courses/", function () {
             const response = await makeRequest({
                 data: {
                     title: faker.random.alpha(300),
-                    language: language.code,
+                    languageCode: language.code,
                 }
             }, session.token);
             expect(response.statusCode).to.equal(400);
@@ -353,7 +353,7 @@ describe("POST courses/", function () {
             const response = await makeRequest({
                 data: {
                     title: newCourse.title,
-                    language: faker.random.alphaNumeric(10),
+                    languageCode: faker.random.alphaNumeric(10),
                 }
             }, session.token);
             expect(response.statusCode).to.equal(400);
@@ -367,7 +367,7 @@ describe("POST courses/", function () {
             const response = await makeRequest({
                 data: {
                     title: newCourse.title,
-                    language: faker.random.alpha(4),
+                    languageCode: faker.random.alpha(4),
                 }
             }, session.token);
 
@@ -382,7 +382,7 @@ describe("POST courses/", function () {
             const response = await makeRequest({
                 data: {
                     title: newCourse.title,
-                    language: language.code,
+                    languageCode: language.code,
                     description: faker.random.alpha(600)
                 }
             }, session.token);
@@ -398,7 +398,7 @@ describe("POST courses/", function () {
             const response = await makeRequest({
                 data: {
                     title: newCourse.title,
-                    language: language.code,
+                    languageCode: language.code,
                     isPublic: "kinda?"
                 }
             }, session.token);
@@ -413,7 +413,7 @@ describe("POST courses/", function () {
             const response = await makeRequest({
                 data: {
                     title: newCourse.title,
-                    language: language.code,
+                    languageCode: language.code,
                     level: "high"
                 }
             }, session.token);
@@ -430,7 +430,7 @@ describe("POST courses/", function () {
                 const response = await makeRequest({
                     data: {
                         title: newCourse.title,
-                        language: language.code,
+                        languageCode: language.code,
                     },
                     files: {
                         image: readSampleFile("images/audio-468_4KB.png")
@@ -447,7 +447,7 @@ describe("POST courses/", function () {
                 const response = await makeRequest({
                     data: {
                         title: newCourse.title,
-                        language: language.code,
+                        languageCode: language.code,
                     },
                     files: {image: readSampleFile("images/santa-barbara-1_8MB-1_1ratio.jpg")}
                 }, session.token);
@@ -463,7 +463,7 @@ describe("POST courses/", function () {
                 const response = await makeRequest({
                     data: {
                         title: newCourse.title,
-                        language: language.code,
+                        languageCode: language.code,
                     },
                     files: {
                         image: readSampleFile("images/rectangle-5_2KB-2_1ratio.png")

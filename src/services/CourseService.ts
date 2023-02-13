@@ -57,6 +57,7 @@ export class CourseService {
             level: fields.level
         });
         newCourse.vocabsByLevel = defaultVocabsByLevel();
+        await this.em.flush();
         return newCourse;
     }
 

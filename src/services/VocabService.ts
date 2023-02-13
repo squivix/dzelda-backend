@@ -16,11 +16,13 @@ export class VocabService {
     }
 
     async createVocab(vocabData: { text: string; language: Language; isPhrase: boolean }) {
-        return this.vocabRepo.create({
+        const newVocab = await this.vocabRepo.create({
             text: vocabData.text,
             language: vocabData.language,
             isPhrase: vocabData.isPhrase
         });
+        await this.em.flush();
+        return newVocab;
     }
 
     async getVocabs(filters: {}, user: User | AnonymousUser | null) {

@@ -31,7 +31,7 @@ export class SpaceBasedWordParser extends WordParser {
             //change all to lowercase
             parsedText = parsedText.toLowerCase();
 
-        const wordSet = new Set(parsedText.split(" "));
+        const wordSet = new Set(parsedText.split(" ").filter(w => w !== ""));
         return Array.from(wordSet);
     }
 
