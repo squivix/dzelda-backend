@@ -34,3 +34,5 @@ export function shuffleArray<T>(array: T[]) {
 
     return array;
 }
+
+export const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))

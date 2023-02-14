@@ -1,4 +1,4 @@
-import {Entity, ManyToOne, Unique} from "@mikro-orm/core";
+import {Entity, ManyToOne, OptionalProps, Property, types, Unique} from "@mikro-orm/core";
 import {CustomBaseEntity} from "@/src/models/entities/CustomBaseEntity.js";
 import {Profile} from "@/src/models/entities/Profile.js";
 import {Language} from "@/src/models/entities/Language.js";
@@ -17,4 +17,12 @@ export class MapLearnerLanguage extends CustomBaseEntity {
 
     @ManyToOne({entity: () => Profile})
     learner!: Profile;
+
+    @Property({type: types.datetime, defaultRaw: "now()"})
+    addedOn!: Date
+
+    @Property({type: types.datetime, defaultRaw: "now()"})
+    lastOpened!: Date
+
+    [OptionalProps]?: "addedOn" | "lastOpened"
 }

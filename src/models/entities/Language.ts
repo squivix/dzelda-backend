@@ -6,8 +6,9 @@ import {Meaning} from "@/src/models/entities/Meaning.js";
 import {Dictionary} from "@/src/models/entities/Dictionary.js";
 import {Profile} from "@/src/models/entities/Profile.js";
 import {MapLearnerLanguage} from "@/src/models/entities/MapLearnerLanguage.js";
+import {LanguageRepo} from "@/src/models/repos/LanguageRepo.js";
 
-@Entity()
+@Entity({customRepository: () => LanguageRepo})
 export class Language extends CustomBaseEntity {
     @Property({type: types.string, length: 4, unique: true})
     code!: string;

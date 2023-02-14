@@ -3,11 +3,11 @@ import {EntityManager, EntityRepository} from "@mikro-orm/core";
 import {User} from "@/src/models/entities/auth/User.js";
 import {cleanObject} from "@/src/utils/utils.js";
 import {MapLearnerLanguage} from "@/src/models/entities/MapLearnerLanguage.js";
-import {languageSerializer} from "@/src/schemas/response/serializers/LanguageSerializer.js";
+import {LanguageRepo} from "@/src/models/repos/LanguageRepo.js";
 
 export class LanguageService {
     em: EntityManager;
-    languageRepo: EntityRepository<Language>;
+    languageRepo: LanguageRepo;
 
     constructor(em: EntityManager) {
         this.em = em;
@@ -21,9 +21,15 @@ export class LanguageService {
     }
 
     async getUserLanguages(user: User, filters: {}) {
-        const languages = await this.languageRepo.find({learners: user.profile, ...filters});
-        await this.em.flush();
-        return languages;
+        return await this.languageRepo.find({learners: user.profile, ...filters});
+    }
+
+    async getUserLanguage(code: string, user: User) {
+        return await this.em.findOne(MapLearnerLanguage, {language: {code}, learner: user.profile});
+    }
+
+    async updateUserLanguage(languageMapping: MapLearnerLanguage) {
+        return await this.languageRepo.updateUserLanguageTimeStamp(languageMapping);
     }
 
     async getLanguage(code: string) {

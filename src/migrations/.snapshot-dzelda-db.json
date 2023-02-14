@@ -388,15 +388,6 @@
       "indexes": [
         {
           "columnNames": [
-            "token"
-          ],
-          "composite": false,
-          "keyName": "session_token_unique",
-          "primary": false,
-          "unique": true
-        },
-        {
-          "columnNames": [
             "user_id"
           ],
           "composite": false,
@@ -549,6 +540,28 @@
           "primary": false,
           "nullable": false,
           "mappedType": "integer"
+        },
+        "added_on": {
+          "name": "added_on",
+          "type": "timestamptz(0)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "length": 6,
+          "default": "now()",
+          "mappedType": "datetime"
+        },
+        "last_opened": {
+          "name": "last_opened",
+          "type": "timestamptz(0)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "length": 6,
+          "default": "now()",
+          "mappedType": "datetime"
         }
       },
       "name": "map_learner_language",
@@ -1472,7 +1485,8 @@
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
-          "nullable": true,
+          "nullable": false,
+          "default": "''",
           "mappedType": "string"
         }
       },

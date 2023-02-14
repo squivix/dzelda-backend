@@ -7,6 +7,8 @@ import {ForbiddenAPIError} from "@/src/utils/errors/ForbiddenAPIError.js";
 import {usernameValidator} from "@/src/validators/userValidator.js";
 import {languageSerializer} from "@/src/schemas/response/serializers/LanguageSerializer.js";
 import {ValidationAPIError} from "@/src/utils/errors/ValidationAPIError.js";
+import {languageCodeValidator} from "@/src/validators/languageValidators.js";
+import {User} from "@/src/models/entities/auth/User.js";
 
 class LanguageController {
     async getLanguages(request: FastifyRequest, reply: FastifyReply) {
@@ -63,6 +65,30 @@ class LanguageController {
 
         const newLanguageMapping = await languageService.addLanguageToUser(user, language);
         reply.status(201).send(languageSerializer.serialize(newLanguageMapping));
+    }
+
+    async updateUserLanguage(request: FastifyRequest, reply: FastifyReply) {
+        const pathParamsValidator = z.object({
+            username: usernameValidator,
+            languageCode: languageCodeValidator
+        });
+        const pathParams = pathParamsValidator.parse(request.params);
+        const userService = new UserService(request.em);
+        const user = await userService.getUser(pathParams.username, request.user);
+        if (!user || user !== request.user)
+            throw new ForbiddenAPIError();
+
+        const bodyValidator = z.object({
+            lastOpened: z.literal("now")
+        });
+        bodyValidator.parse(request.body)
+
+        const languageService = new LanguageService(request.em);
+        const languageMapping = await languageService.getUserLanguage(pathParams.languageCode, request.user as User);
+        if (!languageMapping)
+            throw new ValidationAPIError({language: {message: "not found"}});
+        const updatedLanguageMapping = await languageService.updateUserLanguage(languageMapping)
+        reply.status(200).send(languageSerializer.serialize(updatedLanguageMapping));
     }
 }
 

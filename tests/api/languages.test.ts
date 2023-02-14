@@ -166,7 +166,6 @@ describe("POST users/:username/languages/", function () {
         return await fetchRequest(options, authToken);
     };
 
-
     describe("If user is logged in, and all fields are valid return 201", async () => {
         test<LocalTestContext>("If username is me and authenticated return 201", async (context) => {
             const currentUser = await context.userFactory.createOne();
@@ -266,3 +265,111 @@ describe("POST users/:username/languages/", function () {
         });
     });
 });
+/**{@link LanguageController#updateUserLanguage}*/
+describe("PATCH users/:username/languages/:languageCode", () => {
+    const makeRequest = async (username: "me" | string, languageCode: string, body: object, authToken?: string) => {
+        const options: InjectOptions = {
+            method: "PATCH",
+            url: `users/${username}/languages/${languageCode}/`,
+            payload: body,
+        };
+        return await fetchRequest(options, authToken);
+    };
+    describe("If user is logged in, and all fields are valid return 200", async () => {
+        test<LocalTestContext>("If username is me and authenticated return 200", async (context) => {
+            const user = await context.userFactory.createOne();
+            const session = await context.sessionFactory.createOne({user: user});
+            const language = await context.languageFactory.createOne({learners: user.profile});
+            const oldLastOpened = "2023-02-14T11:00:43.818Z";
+            await context.em.upsert(MapLearnerLanguage, {
+                learner: user.profile,
+                language: language,
+                addedOn: new Date(oldLastOpened),
+                lastOpened: new Date(oldLastOpened)
+            })
+            await context.em.flush();
+
+            const response = await makeRequest("me", language.code, {lastOpened: "now"}, session.token);
+
+            const mapping = await context.em.findOneOrFail(MapLearnerLanguage, {learner: user.profile, language: language})
+            expect(response.statusCode).to.equal(200);
+            expect(response.json()).toEqual(languageSerializer.serialize(mapping))
+            expect(oldLastOpened).not.toEqual(mapping.lastOpened.toISOString())
+        });
+        test<LocalTestContext>("If username is not me and authenticated as user with username return 200", async (context) => {
+            const user = await context.userFactory.createOne();
+            const session = await context.sessionFactory.createOne({user: user});
+            const language = await context.languageFactory.createOne({learners: user.profile});
+            const oldLastOpened = "2023-02-14T11:00:43.818Z";
+            await context.em.upsert(MapLearnerLanguage, {
+                learner: user.profile,
+                language: language,
+                addedOn: new Date(oldLastOpened),
+                lastOpened: new Date(oldLastOpened)
+            })
+            await context.em.flush();
+
+            const response = await makeRequest(user.username, language.code, {lastOpened: "now"}, session.token);
+
+            const mapping = await context.em.findOneOrFail(MapLearnerLanguage, {learner: user.profile, language: language})
+            expect(response.statusCode).to.equal(200);
+            expect(response.json()).toEqual(languageSerializer.serialize(mapping))
+            expect(oldLastOpened).not.toEqual(mapping.lastOpened.toISOString())
+        });
+    });
+    test<LocalTestContext>("If user is not logged in return 401", async (context) => {
+        const language = await context.languageFactory.createOne();
+
+        const response = await makeRequest("me", language.code, {lastOpened: "now"});
+
+        expect(response.statusCode).to.equal(401);
+    });
+    test<LocalTestContext>("If username does not belong the authenticated user return 403", async (context) => {
+        const user = await context.userFactory.createOne();
+        const otherUser = await context.userFactory.createOne();
+        const session = await context.sessionFactory.createOne({user: user});
+        const language = await context.languageFactory.createOne({learners: otherUser.profile});
+
+        const response = await makeRequest(otherUser.username, language.code, {lastOpened: "now"}, session.token);
+
+        expect(response.statusCode).to.equal(403);
+    });
+    test<LocalTestContext>("If languageCode is invalid return  400", async (context) => {
+        const user = await context.userFactory.createOne();
+        const session = await context.sessionFactory.createOne({user: user});
+
+        const response = await makeRequest(user.username, faker.random.alpha(5), {lastOpened: "now"}, session.token);
+
+        expect(response.statusCode).to.equal(400);
+    });
+
+    test<LocalTestContext>("If language is not found return  400", async (context) => {
+        const user = await context.userFactory.createOne();
+        const session = await context.sessionFactory.createOne({user: user});
+        const language = await context.languageFactory.makeOne();
+
+        const response = await makeRequest(user.username, language.code, {lastOpened: "now"}, session.token);
+
+        expect(response.statusCode).to.equal(400);
+    });
+
+    test<LocalTestContext>("If user is not learning language return  400", async (context) => {
+        const user = await context.userFactory.createOne();
+        const session = await context.sessionFactory.createOne({user: user});
+        const language = await context.languageFactory.createOne();
+
+        const response = await makeRequest(user.username, language.code, {lastOpened: "now"}, session.token);
+
+        expect(response.statusCode).to.equal(400);
+    });
+
+    test<LocalTestContext>("If lastOpened is not 'now' return  400", async (context) => {
+        const user = await context.userFactory.createOne();
+        const session = await context.sessionFactory.createOne({user: user});
+        const language = await context.languageFactory.createOne();
+
+        const response = await makeRequest(user.username, language.code, {lastOpened: "2023-02-14T11:00:43.818Z"}, session.token);
+
+        expect(response.statusCode).to.equal(400);
+    });
+})
