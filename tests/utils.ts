@@ -1,6 +1,4 @@
 import cp from "child_process";
-import {createCanvas} from "canvas";
-import {faker} from "@faker-js/faker";
 
 export function truncateDb() {
     cp.execSync(`${process.env.PWD}/scripts/truncate-test-db.sh`);
@@ -17,25 +15,6 @@ export function randomCase(val: string) {
     return val.toLowerCase().split('').map(function (c) {
         return Math.random() < .5 ? c : c.toUpperCase();
     }).join('');
-}
-
-export function randomImage(width: number, height: number, mimeType: "image/png" | "image/jpeg" = "image/png") {
-    const canvas = createCanvas(width, height);
-    const canvasContext = canvas.getContext("2d");
-    const imgData = canvasContext.getImageData(0, 0, canvas.width, canvas.height);
-
-    for (let i = 0; i < imgData.data.length; i += 4) {
-        imgData.data[i] = faker.datatype.number({min: 0, max: 255})
-        imgData.data[i + 1] = faker.datatype.number({min: 0, max: 255})
-        imgData.data[i + 2] = faker.datatype.number({min: 0, max: 255})
-        imgData.data[i + 3] = 255; // alpha
-    }
-    canvasContext.putImageData(imgData, 0, 0);
-    //typescript does not infer union types to overloaded functions. this is a workaround
-    if (mimeType === "image/jpeg")
-        return canvas.toBuffer("image/jpeg")
-    else
-        return canvas.toBuffer("image/png")
 }
 
 //from https://stackoverflow.com/a/2450976/14200676

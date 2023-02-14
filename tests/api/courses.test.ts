@@ -11,7 +11,7 @@ import {CourseRepo} from "@/src/models/repos/CourseRepo.js";
 import {InjectOptions} from "light-my-request";
 import {LanguageFactory} from "@/src/seeders/factories/LanguageFactory.js";
 import {faker} from "@faker-js/faker";
-import {randomCase, randomEnum, randomImage, shuffleArray} from "@/tests/utils.js";
+import {randomCase, randomEnum, shuffleArray} from "@/tests/utils.js";
 import {LanguageLevel} from "@/src/models/enums/LanguageLevel.js";
 import {defaultVocabsByLevel} from "@/src/models/enums/VocabLevel.js";
 import fs from "fs-extra";
@@ -687,9 +687,6 @@ describe("PUT courses/:courseId", function () {
                 isPublic: updatedCourse.isPublic,
                 level: updatedCourse.level,
                 lessonsOrder: shuffleArray(courseLessons).map(l => l.id)
-            },
-            files: {
-                image: {value: randomImage(100, 100, "image/png"), fileName: "course-image", mimeType: "image/png"}
             }
         });
 
@@ -708,9 +705,6 @@ describe("PUT courses/:courseId", function () {
                 isPublic: updatedCourse.isPublic,
                 level: updatedCourse.level,
                 lessonsOrder: [1, 2, 3]
-            },
-            files: {
-                image: {value: randomImage(100, 100, "image/png"), fileName: "course-image", mimeType: "image/png"}
             }
         }, session.token);
 
@@ -743,9 +737,6 @@ describe("PUT courses/:courseId", function () {
                 isPublic: updatedCourse.isPublic,
                 level: updatedCourse.level,
                 lessonsOrder: shuffleArray(courseLessons).map(l => l.id)
-            },
-            files: {
-                image: {value: randomImage(100, 100, "image/png"), fileName: "course-image", mimeType: "image/png"}
             }
         }, session.token);
 
@@ -778,9 +769,6 @@ describe("PUT courses/:courseId", function () {
                 isPublic: updatedCourse.isPublic,
                 level: updatedCourse.level,
                 lessonsOrder: shuffleArray(courseLessons).map(l => l.id)
-            },
-            files: {
-                image: {value: randomImage(100, 100, "image/png"), fileName: "course-image", mimeType: "image/png"}
             }
         }, session.token);
 
@@ -806,9 +794,6 @@ describe("PUT courses/:courseId", function () {
                     isPublic: updatedCourse.isPublic,
                     level: updatedCourse.level,
                     lessonsOrder: shuffleArray(courseLessons).map(l => l.id)
-                },
-                files: {
-                    image: {value: randomImage(100, 100, "image/png"), fileName: "course-image", mimeType: "image/png"}
                 }
             }, session.token);
 
@@ -833,9 +818,6 @@ describe("PUT courses/:courseId", function () {
                     isPublic: updatedCourse.isPublic,
                     level: updatedCourse.level,
                     lessonsOrder: shuffleArray(courseLessons).map(l => l.id)
-                },
-                files: {
-                    image: {value: randomImage(100, 100, "image/png"), fileName: "course-image", mimeType: "image/png"}
                 }
             }, session.token);
 
@@ -861,9 +843,6 @@ describe("PUT courses/:courseId", function () {
                     description: updatedCourse.description,
                     level: updatedCourse.level,
                     lessonsOrder: shuffleArray(courseLessons).map(l => l.id)
-                },
-                files: {
-                    image: {value: randomImage(100, 100, "image/png"), fileName: "course-image", mimeType: "image/png"}
                 }
             }, session.token);
 
@@ -889,9 +868,6 @@ describe("PUT courses/:courseId", function () {
                     description: updatedCourse.description,
                     isPublic: updatedCourse.isPublic,
                     lessonsOrder: shuffleArray(courseLessons).map(l => l.id)
-                },
-                files: {
-                    image: {value: randomImage(100, 100, "image/png"), fileName: "course-image", mimeType: "image/png"}
                 }
             }, session.token);
 
@@ -916,9 +892,6 @@ describe("PUT courses/:courseId", function () {
                     description: updatedCourse.description,
                     isPublic: updatedCourse.isPublic,
                     level: updatedCourse.level,
-                },
-                files: {
-                    image: {value: randomImage(100, 100, "image/png"), fileName: "course-image", mimeType: "image/png"}
                 }
             }, session.token);
 
@@ -939,7 +912,7 @@ describe("PUT courses/:courseId", function () {
 
             const response = await makeRequest(course.id, {
                 files: {
-                    image: {value: randomImage(100, 100, "image/png"), fileName: "course-image", mimeType: "image/png"}
+                    image: readSampleFile("images/lorem-ipsum-69_8KB-1_1ratio.png")
                 }
             }, session.token);
 
@@ -967,9 +940,6 @@ describe("PUT courses/:courseId", function () {
                     isPublic: updatedCourse.isPublic,
                     level: updatedCourse.level,
                     lessonsOrder: shuffleArray(courseLessons).map(l => l.id)
-                },
-                files: {
-                    image: {value: randomImage(100, 100, "image/png"), fileName: "course-image", mimeType: "image/png"}
                 }
             }, session.token);
 
@@ -995,9 +965,6 @@ describe("PUT courses/:courseId", function () {
                     isPublic: updatedCourse.isPublic,
                     level: updatedCourse.level,
                     lessonsOrder: shuffleArray(courseLessons).map(l => l.id)
-                },
-                files: {
-                    image: {value: randomImage(100, 100, "image/png"), fileName: "course-image", mimeType: "image/png"}
                 }
             }, session.token);
 
@@ -1023,9 +990,6 @@ describe("PUT courses/:courseId", function () {
                     isPublic: "kinda?",
                     level: updatedCourse.level,
                     lessonsOrder: shuffleArray(courseLessons).map(l => l.id)
-                },
-                files: {
-                    image: {value: randomImage(100, 100, "image/png"), fileName: "course-image", mimeType: "image/png"}
                 }
             }, session.token);
 
@@ -1051,9 +1015,6 @@ describe("PUT courses/:courseId", function () {
                     isPublic: updatedCourse.isPublic,
                     level: "high",
                     lessonsOrder: shuffleArray(courseLessons).map(l => l.id)
-                },
-                files: {
-                    image: {value: randomImage(100, 100, "image/png"), fileName: "course-image", mimeType: "image/png"}
                 }
             }, session.token);
 
@@ -1074,9 +1035,6 @@ describe("PUT courses/:courseId", function () {
                         isPublic: updatedCourse.isPublic,
                         level: updatedCourse.level,
                         lessonsOrder: [1, 2, 3.5, -1, "42"]
-                    },
-                    files: {
-                        image: {value: randomImage(100, 100, "image/png"), fileName: "course-image", mimeType: "image/png"}
                     }
                 }, session.token);
 
@@ -1108,9 +1066,6 @@ describe("PUT courses/:courseId", function () {
                             isPublic: updatedCourse.isPublic,
                             level: updatedCourse.level,
                             lessonsOrder: [...shuffleArray(courseLessons.map(l => l.id)), otherLesson.id]
-                        },
-                        files: {
-                            image: {value: randomImage(100, 100, "image/png"), fileName: "course-image", mimeType: "image/png"}
                         }
                     }, session.token);
 
@@ -1143,9 +1098,6 @@ describe("PUT courses/:courseId", function () {
                             isPublic: updatedCourse.isPublic,
                             level: updatedCourse.level,
                             lessonsOrder: lessonOrder
-                        },
-                        files: {
-                            image: {value: randomImage(100, 100, "image/png"), fileName: "course-image", mimeType: "image/png"}
                         }
                     }, session.token);
 
@@ -1178,9 +1130,6 @@ describe("PUT courses/:courseId", function () {
                             isPublic: updatedCourse.isPublic,
                             level: updatedCourse.level,
                             lessonsOrder: lessonOrder
-                        },
-                        files: {
-                            image: {value: randomImage(100, 100, "image/png"), fileName: "course-image", mimeType: "image/png"}
                         }
                     }, session.token);
 
