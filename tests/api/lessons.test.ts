@@ -56,8 +56,9 @@ describe("GET lessons/", () => {
         return await fetchRequest(options, authToken);
     };
     test<LocalTestContext>("If there are no filters and not logged in return all public lessons", async (context) => {
-        await context.lessonFactory.create(10, {course: await context.courseFactory.createOne({isPublic: false})});
-        await context.lessonFactory.create(10, {course: await context.courseFactory.createOne({isPublic: true})});
+        const language = await context.languageFactory.createOne();
+        await context.lessonFactory.create(10, {course: await context.courseFactory.createOne({language: language, isPublic: false})});
+        await context.lessonFactory.create(10, {course: await context.courseFactory.createOne({language: language, isPublic: true})});
 
         const response = await makeRequest();
 
@@ -68,15 +69,16 @@ describe("GET lessons/", () => {
     });
     describe("test languageCode filter", () => {
         test<LocalTestContext>("If language filter is valid and language exists only return public lessons in that language", async (context) => {
-            const language = await context.languageFactory.createOne();
-            await context.lessonFactory.create(5, {course: await context.courseFactory.createOne({language: language})});
-            await context.lessonFactory.create(5, {course: await context.courseFactory.createOne({})});
+            const language1 = await context.languageFactory.createOne();
+            const language2 = await context.languageFactory.createOne();
+            await context.lessonFactory.create(5, {course: await context.courseFactory.createOne({language: language1})});
+            await context.lessonFactory.create(5, {course: await context.courseFactory.createOne({language: language2})});
 
-            const response = await makeRequest({languageCode: language.code});
+            const response = await makeRequest({languageCode: language1.code});
 
             const lessons = await context.lessonRepo.find({
                 course: {
-                    language: language,
+                    language: language1,
                     isPublic: true
                 }
             }, {populate: ["course", "course.addedBy.user"]});
@@ -86,7 +88,7 @@ describe("GET lessons/", () => {
         test<LocalTestContext>("If language does not exist return empty lessons list", async (context) => {
             const language = await context.languageFactory.createOne();
             await context.lessonFactory.create(5, {course: await context.courseFactory.createOne({language: language})});
-            await context.lessonFactory.create(5, {course: await context.courseFactory.createOne({})});
+            await context.lessonFactory.create(5, {course: await context.courseFactory.createOne({language: await context.languageFactory.createOne()})});
 
             const response = await makeRequest({languageCode: faker.random.alpha({count: 4})});
 
@@ -94,10 +96,6 @@ describe("GET lessons/", () => {
             expect(response.json()).toEqual([]);
         });
         test<LocalTestContext>("If language filter is invalid return 400", async (context) => {
-            const language = await context.languageFactory.createOne();
-            await context.lessonFactory.create(5, {course: await context.courseFactory.createOne({language: language})});
-            await context.lessonFactory.create(5, {course: await context.courseFactory.createOne({})});
-
             const response = await makeRequest({languageCode: 12345});
 
             expect(response.statusCode).to.equal(400);
@@ -106,8 +104,9 @@ describe("GET lessons/", () => {
     describe("test addedBy filter", () => {
         test<LocalTestContext>("If addedBy filter is valid and user exists only return public lessons added by that user", async (context) => {
             const user = await context.userFactory.createOne();
-            await context.lessonFactory.create(5, {course: await context.courseFactory.createOne({addedBy: user.profile})});
-            await context.lessonFactory.create(5, {course: await context.courseFactory.createOne({})});
+            const language = await context.languageFactory.createOne()
+            await context.lessonFactory.create(5, {course: await context.courseFactory.createOne({language: language, addedBy: user.profile})});
+            await context.lessonFactory.create(5, {course: await context.courseFactory.createOne({language: language})});
 
             const response = await makeRequest({addedBy: user.username});
 
@@ -123,8 +122,13 @@ describe("GET lessons/", () => {
         test<LocalTestContext>("If addedBy is me and signed in return lessons added by that user", async (context) => {
             const user = await context.userFactory.createOne();
             const session = await context.sessionFactory.createOne({user: user});
-            await context.lessonFactory.create(5, {course: await context.courseFactory.createOne({addedBy: user.profile})});
-            await context.lessonFactory.create(5, {course: await context.courseFactory.createOne({})});
+            await context.lessonFactory.create(5, {
+                course: await context.courseFactory.createOne({
+                    language: await context.languageFactory.createOne(),
+                    addedBy: user.profile
+                })
+            });
+            await context.lessonFactory.create(5, {course: await context.courseFactory.createOne({language: await context.languageFactory.createOne(),})});
 
             const response = await makeRequest({addedBy: "me"}, session.token);
 
@@ -136,14 +140,14 @@ describe("GET lessons/", () => {
             expect(response.json()).toEqual(lessonSerializer.serializeList(lessons));
         });
         test<LocalTestContext>("If addedBy is me and not signed in return 401", async (context) => {
-            await context.lessonFactory.create(10, {course: await context.courseFactory.createOne()});
+            await context.lessonFactory.create(10, {course: await context.courseFactory.createOne({language: await context.languageFactory.createOne(),})});
 
             const response = await makeRequest({addedBy: "me"});
 
             expect(response.statusCode).to.equal(401);
         });
         test<LocalTestContext>("If user does not exist return empty course list", async (context) => {
-            await context.lessonFactory.create(10, {course: await context.courseFactory.createOne()});
+            await context.lessonFactory.create(10, {course: await context.courseFactory.createOne({language: await context.languageFactory.createOne(),})});
 
             const response = await makeRequest({addedBy: faker.random.alpha({count: 20})});
 
@@ -151,15 +155,14 @@ describe("GET lessons/", () => {
             expect(response.json()).toEqual([]);
         });
         test<LocalTestContext>("If addedBy filter is invalid return 400", async (context) => {
-            await context.courseFactory.create(10);
-
             const response = await makeRequest({addedBy: "!@#%#%^#^!"});
             expect(response.statusCode).to.equal(400);
         });
     });
     describe("test searchQuery filter", () => {
         test<LocalTestContext>("If searchQuery is valid return lessons with query in title", async (context) => {
-            const courses = await context.courseFactory.create(3);
+            const language = await context.languageFactory.createOne();
+            const courses = await context.courseFactory.create(3, {language: language});
             const searchQuery = "search query";
             for (let i = 0; i < 10; i++) {
                 await context.lessonFactory.createOne({
@@ -179,14 +182,12 @@ describe("GET lessons/", () => {
             expect(response.json()).toEqual(lessonSerializer.serializeList(lessons));
         });
         test<LocalTestContext>("If searchQuery is invalid return 400", async (context) => {
-            await context.lessonFactory.create(10, {course: await context.courseFactory.createOne()});
-
             const response = await makeRequest({searchQuery: faker.random.alpha({count: 300})});
 
             expect(response.statusCode).to.equal(400);
         });
         test<LocalTestContext>("If no lessons match search query return empty list", async (context) => {
-            await context.lessonFactory.create(10, {course: await context.courseFactory.createOne()});
+            await context.lessonFactory.create(10, {course: await context.courseFactory.createOne({language: await context.languageFactory.createOne()})});
 
             const response = await makeRequest({searchQuery: faker.random.alpha({count: 200})});
 
@@ -195,10 +196,11 @@ describe("GET lessons/", () => {
         });
     });
     describe("test level filter", () => {
-        test<LocalTestContext>("If the level is valid return courses in that level", async (context) => {
+        test<LocalTestContext>("If the level is valid return lessons in that level", async (context) => {
             const level = randomEnum(LanguageLevel);
-            await context.lessonFactory.create(5, {course: await context.courseFactory.createOne({level: level})});
-            await context.lessonFactory.create(5, {course: await context.courseFactory.createOne({})});
+            const language = await context.languageFactory.createOne()
+            await context.lessonFactory.create(5, {course: await context.courseFactory.createOne({language: language, level: level})});
+            await context.lessonFactory.create(5, {course: await context.courseFactory.createOne({language: language})});
 
             const response = await makeRequest({level: level});
 
@@ -212,8 +214,6 @@ describe("GET lessons/", () => {
             expect(response.json()).toEqual(lessonSerializer.serializeList(lessons));
         });
         test<LocalTestContext>("If the level is invalid return 400", async (context) => {
-            await context.lessonFactory.create(10, {course: await context.courseFactory.createOne({isPublic: true})});
-
             const response = await makeRequest({level: "hard"});
 
             expect(response.statusCode).to.equal(400);
@@ -221,11 +221,12 @@ describe("GET lessons/", () => {
     });
     describe("test hasAudio filter", () => {
         test<LocalTestContext>("If hasAudio is true return lessons with audio", async (context) => {
+            const language = await context.languageFactory.createOne();
             await context.lessonFactory.create(5, {
-                course: await context.courseFactory.createOne({isPublic: true}),
+                course: await context.courseFactory.createOne({language, isPublic: true}),
                 audio: "https://upload.wikimedia.org/wikipedia/commons/d/de/Lorem_ipsum.ogg"
             });
-            await context.lessonFactory.create(5, {course: await context.courseFactory.createOne({isPublic: true}), audio: ""});
+            await context.lessonFactory.create(5, {course: await context.courseFactory.createOne({language: language, isPublic: true}), audio: ""});
 
             const response = await makeRequest({hasAudio: true});
 
@@ -237,11 +238,12 @@ describe("GET lessons/", () => {
             expect(response.json()).toEqual(lessonSerializer.serializeList(lessons));
         });
         test<LocalTestContext>("If hasAudio is false return lessons with no audio", async (context) => {
+            const language = await context.languageFactory.createOne();
             await context.lessonFactory.create(5, {
-                course: await context.courseFactory.createOne({isPublic: true}),
+                course: await context.courseFactory.createOne({language, isPublic: true}),
                 audio: "https://upload.wikimedia.org/wikipedia/commons/d/de/Lorem_ipsum.ogg"
             });
-            await context.lessonFactory.create(5, {course: await context.courseFactory.createOne({isPublic: true}), audio: ""});
+            await context.lessonFactory.create(5, {course: await context.courseFactory.createOne({language, isPublic: true}), audio: ""});
 
             const response = await makeRequest({hasAudio: false});
 
@@ -253,12 +255,6 @@ describe("GET lessons/", () => {
             expect(response.json()).toEqual(lessonSerializer.serializeList(lessons));
         });
         test<LocalTestContext>("If hasAudio is invalid return 400", async (context) => {
-            await context.lessonFactory.create(5, {
-                course: await context.courseFactory.createOne(),
-                audio: "https://upload.wikimedia.org/wikipedia/commons/d/de/Lorem_ipsum.ogg"
-            });
-            await context.lessonFactory.create(5, {course: await context.courseFactory.createOne(), audio: ""});
-
             const response = await makeRequest({hasAudio: "maybe?"});
             expect(response.statusCode).to.equal(400);
         });
@@ -266,8 +262,9 @@ describe("GET lessons/", () => {
     test<LocalTestContext>("If logged in return lessons with vocab levels for user", async (context) => {
         const user = await context.userFactory.createOne();
         const session = await context.sessionFactory.createOne({user: user});
-        await context.lessonFactory.create(10, {course: await context.courseFactory.createOne({isPublic: false})});
-        await context.lessonFactory.create(10, {course: await context.courseFactory.createOne({isPublic: true})});
+        const language = await context.languageFactory.createOne();
+        await context.lessonFactory.create(10, {course: await context.courseFactory.createOne({language, isPublic: false})});
+        await context.lessonFactory.create(10, {course: await context.courseFactory.createOne({language, isPublic: true})});
 
         const response = await makeRequest({}, session.token);
 
@@ -279,8 +276,9 @@ describe("GET lessons/", () => {
     test<LocalTestContext>("If logged in as author of lesson courses return private lessons", async (context) => {
         const user = await context.userFactory.createOne();
         const session = await context.sessionFactory.createOne({user: user});
-        await context.lessonFactory.create(10, {course: await context.courseFactory.createOne({isPublic: false, addedBy: user.profile})});
-        await context.lessonFactory.create(10, {course: await context.courseFactory.createOne({isPublic: true})});
+        const language = await context.languageFactory.createOne();
+        await context.lessonFactory.create(10, {course: await context.courseFactory.createOne({language, isPublic: false, addedBy: user.profile})});
+        await context.lessonFactory.create(10, {course: await context.courseFactory.createOne({language, isPublic: true})});
 
         const response = await makeRequest({}, session.token);
 
@@ -309,11 +307,12 @@ describe("POST lessons/", () => {
         });
     };
 
-    describe("If all fields are valid a new course should be created and return 201", () => {
+    describe("If all fields are valid a new lesson should be created and return 201", () => {
         test<LocalTestContext>("If optional fields are missing use default values", async (context) => {
             const user = await context.userFactory.createOne();
             const session = await context.sessionFactory.createOne({user: user});
-            const course = await context.courseFactory.createOne({addedBy: user.profile, lessons: []});
+            const language = await context.languageFactory.createOne({code: "en"});
+            const course = await context.courseFactory.createOne({language: language, addedBy: user.profile, lessons: []});
             let newLesson: Lesson | null = context.lessonFactory.makeOne({course: course});
 
             const response = await makeRequest({
@@ -342,7 +341,8 @@ describe("POST lessons/", () => {
         test<LocalTestContext>("If optional fields are provided use provided values", async (context) => {
             const user = await context.userFactory.createOne();
             const session = await context.sessionFactory.createOne({user: user});
-            const course = await context.courseFactory.createOne({addedBy: user.profile, lessons: []});
+            const language = await context.languageFactory.createOne({code: "en"});
+            const course = await context.courseFactory.createOne({language: language, addedBy: user.profile, lessons: []});
             let newLesson: Lesson | null = context.lessonFactory.makeOne({course: course});
 
             const response = await makeRequest({
@@ -373,7 +373,7 @@ describe("POST lessons/", () => {
         });
     });
     test<LocalTestContext>("If user not logged in return 401", async (context) => {
-        const course = await context.courseFactory.createOne();
+        const course = await context.courseFactory.createOne({language: await context.languageFactory.createOne()});
         const newLesson = context.lessonFactory.makeOne({course: course});
 
         const response = await makeRequest({
@@ -390,7 +390,8 @@ describe("POST lessons/", () => {
         test<LocalTestContext>("If title is missing return 400", async (context) => {
             const user = await context.userFactory.createOne();
             const session = await context.sessionFactory.createOne({user: user});
-            const course = await context.courseFactory.createOne({addedBy: user.profile, lessons: []});
+            const language = await context.languageFactory.createOne()
+            const course = await context.courseFactory.createOne({language, addedBy: user.profile, lessons: []});
             let newLesson: Lesson | null = context.lessonFactory.makeOne({course: course});
 
             const response = await makeRequest({
@@ -405,7 +406,8 @@ describe("POST lessons/", () => {
         test<LocalTestContext>("If text is missing return 400", async (context) => {
             const user = await context.userFactory.createOne();
             const session = await context.sessionFactory.createOne({user: user});
-            const course = await context.courseFactory.createOne({addedBy: user.profile, lessons: []});
+            const language = await context.languageFactory.createOne()
+            const course = await context.courseFactory.createOne({language, addedBy: user.profile, lessons: []});
             let newLesson: Lesson | null = context.lessonFactory.makeOne({course: course});
 
             const response = await makeRequest({
@@ -420,7 +422,8 @@ describe("POST lessons/", () => {
         test<LocalTestContext>("If course is missing return 400", async (context) => {
             const user = await context.userFactory.createOne();
             const session = await context.sessionFactory.createOne({user: user});
-            const course = await context.courseFactory.createOne({addedBy: user.profile, lessons: []});
+            const language = await context.languageFactory.createOne()
+            const course = await context.courseFactory.createOne({language, addedBy: user.profile, lessons: []});
             let newLesson: Lesson | null = context.lessonFactory.makeOne({course: course});
 
             const response = await makeRequest({
@@ -437,7 +440,8 @@ describe("POST lessons/", () => {
         test<LocalTestContext>("If title is invalid return 400", async (context) => {
             const user = await context.userFactory.createOne();
             const session = await context.sessionFactory.createOne({user: user});
-            const course = await context.courseFactory.createOne({addedBy: user.profile, lessons: []});
+            const language = await context.languageFactory.createOne()
+            const course = await context.courseFactory.createOne({language, addedBy: user.profile, lessons: []});
             let newLesson: Lesson | null = context.lessonFactory.makeOne({course: course});
 
             const response = await makeRequest({
@@ -453,7 +457,8 @@ describe("POST lessons/", () => {
         test<LocalTestContext>("If text is invalid return 400", async (context) => {
             const user = await context.userFactory.createOne();
             const session = await context.sessionFactory.createOne({user: user});
-            const course = await context.courseFactory.createOne({addedBy: user.profile, lessons: []});
+            const language = await context.languageFactory.createOne()
+            const course = await context.courseFactory.createOne({language, addedBy: user.profile, lessons: []});
             let newLesson: Lesson | null = context.lessonFactory.makeOne({course: course});
 
             const response = await makeRequest({
@@ -470,7 +475,8 @@ describe("POST lessons/", () => {
             test<LocalTestContext>("If course id is not a number return 400", async (context) => {
                 const user = await context.userFactory.createOne();
                 const session = await context.sessionFactory.createOne({user: user});
-                const course = await context.courseFactory.createOne({addedBy: user.profile, lessons: []});
+                const language = await context.languageFactory.createOne()
+                const course = await context.courseFactory.createOne({language, addedBy: user.profile, lessons: []});
                 let newLesson: Lesson | null = context.lessonFactory.makeOne({course: course});
 
                 const response = await makeRequest({
@@ -486,7 +492,8 @@ describe("POST lessons/", () => {
             test<LocalTestContext>("If course does not exist return 400", async (context) => {
                 const user = await context.userFactory.createOne();
                 const session = await context.sessionFactory.createOne({user: user});
-                const course = await context.courseFactory.createOne({addedBy: user.profile, lessons: []});
+                const language = await context.languageFactory.createOne()
+                const course = await context.courseFactory.createOne({language, addedBy: user.profile, lessons: []});
                 let newLesson: Lesson | null = context.lessonFactory.makeOne({course: course});
 
                 const response = await makeRequest({
@@ -503,7 +510,8 @@ describe("POST lessons/", () => {
                 const user = await context.userFactory.createOne();
                 const otherUser = await context.userFactory.createOne();
                 const session = await context.sessionFactory.createOne({user: user});
-                const course = await context.courseFactory.createOne({addedBy: otherUser.profile, lessons: [], isPublic: false});
+                const language = await context.languageFactory.createOne()
+                const course = await context.courseFactory.createOne({language, addedBy: otherUser.profile, lessons: [], isPublic: false});
                 let newLesson: Lesson | null = context.lessonFactory.makeOne({course: course});
 
                 const response = await makeRequest({
@@ -520,7 +528,8 @@ describe("POST lessons/", () => {
                 const user = await context.userFactory.createOne();
                 const otherUser = await context.userFactory.createOne();
                 const session = await context.sessionFactory.createOne({user: user});
-                const course = await context.courseFactory.createOne({addedBy: otherUser.profile, lessons: [], isPublic: true});
+                const language = await context.languageFactory.createOne()
+                const course = await context.courseFactory.createOne({language, addedBy: otherUser.profile, lessons: [], isPublic: true});
                 let newLesson: Lesson | null = context.lessonFactory.makeOne({course: course});
 
                 const response = await makeRequest({
@@ -538,7 +547,8 @@ describe("POST lessons/", () => {
             test<LocalTestContext>("If image is not a jpeg or png return 415", async (context) => {
                 const user = await context.userFactory.createOne();
                 const session = await context.sessionFactory.createOne({user: user});
-                const course = await context.courseFactory.createOne({addedBy: user.profile, lessons: []});
+                const language = await context.languageFactory.createOne();
+                const course = await context.courseFactory.createOne({language, addedBy: user.profile, lessons: []});
                 let newLesson: Lesson | null = context.lessonFactory.makeOne({course: course});
 
                 const response = await makeRequest({
@@ -556,7 +566,8 @@ describe("POST lessons/", () => {
             test<LocalTestContext>("If the image file is more than 500KB return 413", async (context) => {
                 const user = await context.userFactory.createOne();
                 const session = await context.sessionFactory.createOne({user: user});
-                const course = await context.courseFactory.createOne({addedBy: user.profile, lessons: []});
+                const language = await context.languageFactory.createOne()
+                const course = await context.courseFactory.createOne({language, addedBy: user.profile, lessons: []});
                 let newLesson: Lesson | null = context.lessonFactory.makeOne({course: course});
 
                 const response = await makeRequest({
@@ -573,7 +584,8 @@ describe("POST lessons/", () => {
             test<LocalTestContext>("If the image is not square return 400", async (context) => {
                 const user = await context.userFactory.createOne();
                 const session = await context.sessionFactory.createOne({user: user});
-                const course = await context.courseFactory.createOne({addedBy: user.profile, lessons: []});
+                const language = await context.languageFactory.createOne()
+                const course = await context.courseFactory.createOne({language, addedBy: user.profile, lessons: []});
                 let newLesson: Lesson | null = context.lessonFactory.makeOne({course: course});
 
                 const response = await makeRequest({
@@ -592,7 +604,8 @@ describe("POST lessons/", () => {
             test<LocalTestContext>("If audio is not a mpeg or wav or ogg return 415", async (context) => {
                 const user = await context.userFactory.createOne();
                 const session = await context.sessionFactory.createOne({user: user});
-                const course = await context.courseFactory.createOne({addedBy: user.profile, lessons: []});
+                const language = await context.languageFactory.createOne()
+                const course = await context.courseFactory.createOne({language, addedBy: user.profile, lessons: []});
                 let newLesson: Lesson | null = context.lessonFactory.makeOne({course: course});
 
                 const response = await makeRequest({
@@ -610,7 +623,8 @@ describe("POST lessons/", () => {
             test<LocalTestContext>("If the audio file is more than 100MB return 413", async (context) => {
                 const user = await context.userFactory.createOne();
                 const session = await context.sessionFactory.createOne({user: user});
-                const course = await context.courseFactory.createOne({addedBy: user.profile, lessons: []});
+                const language = await context.languageFactory.createOne()
+                const course = await context.courseFactory.createOne({language, addedBy: user.profile, lessons: []});
                 let newLesson: Lesson | null = context.lessonFactory.makeOne({course: course});
 
                 const response = await makeRequest({
@@ -642,7 +656,8 @@ describe("GET lessons/:lessonId", () => {
 
     describe("If the lesson exists and is public return the lesson", () => {
         test<LocalTestContext>("If the user is not logged in return lesson and course without vocab levels", async (context) => {
-            const lesson = await context.lessonFactory.createOne({course: await context.courseFactory.createOne({isPublic: true})});
+            const language = await context.languageFactory.createOne()
+            const lesson = await context.lessonFactory.createOne({course: await context.courseFactory.createOne({language, isPublic: true})});
 
             const response = await makeRequest(lesson.id);
 
@@ -652,7 +667,8 @@ describe("GET lessons/:lessonId", () => {
         test<LocalTestContext>("If the user is logged in return lesson and course with vocab levels", async (context) => {
             const user = await context.userFactory.createOne();
             const session = await context.sessionFactory.createOne({user: user});
-            const lesson = await context.lessonFactory.createOne({course: await context.courseFactory.createOne({isPublic: true})});
+            const language = await context.languageFactory.createOne()
+            const lesson = await context.lessonFactory.createOne({course: await context.courseFactory.createOne({language, isPublic: true})});
 
             const response = await makeRequest(lesson.id, session.token);
 
@@ -672,7 +688,8 @@ describe("GET lessons/:lessonId", () => {
         expect(response.statusCode).to.equal(400);
     });
     test<LocalTestContext>("If the lesson is not public and the user is not logged in return 404", async (context) => {
-        const lesson = await context.lessonFactory.createOne({course: await context.courseFactory.createOne({isPublic: false})});
+        const language = await context.languageFactory.createOne()
+        const lesson = await context.lessonFactory.createOne({course: await context.courseFactory.createOne({language, isPublic: false})});
 
         const response = await makeRequest(lesson.id);
 
@@ -680,11 +697,9 @@ describe("GET lessons/:lessonId", () => {
     });
     test<LocalTestContext>("If the lesson is not public and the user is logged in as a non-author return 404", async (context) => {
         const author = await context.userFactory.createOne();
+        const language = await context.languageFactory.createOne()
         const lesson = await context.lessonFactory.createOne({
-            course: await context.courseFactory.createOne({
-                isPublic: false,
-                addedBy: author.profile
-            })
+            course: await context.courseFactory.createOne({language, isPublic: false, addedBy: author.profile})
         });
         const otherUser = await context.userFactory.createOne();
         const session = await context.sessionFactory.createOne({user: otherUser});
@@ -695,11 +710,9 @@ describe("GET lessons/:lessonId", () => {
     });
     test<LocalTestContext>("If the lesson is not public and the user is logged in as author return lesson with vocabs by level", async (context) => {
         const author = await context.userFactory.createOne();
+        const language = await context.languageFactory.createOne()
         const lesson = await context.lessonFactory.createOne({
-            course: await context.courseFactory.createOne({
-                isPublic: false,
-                addedBy: author.profile
-            })
+            course: await context.courseFactory.createOne({language, isPublic: false, addedBy: author.profile})
         });
         const session = await context.sessionFactory.createOne({user: author});
 
@@ -734,7 +747,7 @@ describe("PUT lessons/:lessonId", () => {
         test<LocalTestContext>("If image and audio are not provided, keep old image and audio", async (context) => {
             const author = await context.userFactory.createOne();
             const session = await context.sessionFactory.createOne({user: author});
-            const language = await context.languageFactory.createOne();
+            const language = await context.languageFactory.createOne({code: "en"});
             const course = await context.courseFactory.createOne({addedBy: author.profile, language: language, lessons: []});
             const newCourse = await context.courseFactory.createOne({addedBy: author.profile, language: language});
             let lesson = await context.lessonFactory.createOne({course: course});
@@ -775,7 +788,7 @@ describe("PUT lessons/:lessonId", () => {
         test<LocalTestContext>("If new image and audio are blank clear lesson image and audio", async (context) => {
             const author = await context.userFactory.createOne();
             const session = await context.sessionFactory.createOne({user: author});
-            const language = await context.languageFactory.createOne();
+            const language = await context.languageFactory.createOne({code: "en"});
             const course = await context.courseFactory.createOne({addedBy: author.profile, language: language, lessons: []});
             const newCourse = await context.courseFactory.createOne({addedBy: author.profile, language: language});
             let lesson = await context.lessonFactory.createOne({course: course});
@@ -811,7 +824,7 @@ describe("PUT lessons/:lessonId", () => {
         test<LocalTestContext>("If new image and audio is provided, update lesson image and audio", async (context) => {
             const author = await context.userFactory.createOne();
             const session = await context.sessionFactory.createOne({user: author});
-            const language = await context.languageFactory.createOne();
+            const language = await context.languageFactory.createOne({code: "en"});
             const course = await context.courseFactory.createOne({addedBy: author.profile, language: language, lessons: []});
             const newCourse = await context.courseFactory.createOne({addedBy: author.profile, language: language});
             let lesson = await context.lessonFactory.createOne({course: course});
@@ -968,8 +981,7 @@ describe("PUT lessons/:lessonId", () => {
             const author = await context.userFactory.createOne();
             const session = await context.sessionFactory.createOne({user: author});
             const language = await context.languageFactory.createOne();
-            const course = await context.courseFactory.createOne({addedBy: author.profile, language: language, lessons: []});
-            const newCourse = await context.courseFactory.createOne({addedBy: author.profile, language: language});
+            const course = await context.courseFactory.createOne({addedBy: author.profile, language, lessons: []});
             let lesson = await context.lessonFactory.createOne({course: course});
 
             const updatedLesson = await context.lessonFactory.makeOne({course: course});

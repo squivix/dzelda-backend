@@ -166,28 +166,14 @@ describe("POST users/:username/languages/", function () {
         return await fetchRequest(options, authToken);
     };
 
-    describe("If not authenticated return 401", async () => {
-        test<LocalTestContext>("If username is me and not authenticated return 401", async (context) => {
-            const language = await context.languageFactory.createOne();
 
-            const response = await makeRequest("me", {code: language.code});
-            expect(response.statusCode).to.equal(401);
-        });
-        test<LocalTestContext>("If username is not me and not authenticated return 401", async (context) => {
-            const user = await context.userFactory.createOne();
-            const language = await context.languageFactory.createOne();
-
-            const response = await makeRequest(user.username, {code: language.code});
-            expect(response.statusCode).to.equal(401);
-        });
-    });
-    describe("If username is me or username belongs to authenticated user ", async () => {
+    describe("If user is logged in, and all fields are valid return 201", async () => {
         test<LocalTestContext>("If username is me and authenticated return 201", async (context) => {
             const currentUser = await context.userFactory.createOne();
             const session = await context.sessionFactory.createOne({user: currentUser});
             const language = await context.languageFactory.createOne();
 
-            const response = await makeRequest("me", {code: language.code}, session.token);
+            const response = await makeRequest("me", {languageCode: language.code}, session.token);
 
             const mapping = await context.mapLearnerLanguageRepo.findOne({
                 learner: currentUser.profile,
@@ -205,7 +191,7 @@ describe("POST users/:username/languages/", function () {
 
             const language = await context.languageFactory.createOne();
 
-            const response = await makeRequest(currentUser.username, {code: language.code}, session.token);
+            const response = await makeRequest(currentUser.username, {languageCode: language.code}, session.token);
             const mapping = await context.mapLearnerLanguageRepo.findOne({
                 learner: currentUser.profile,
                 language: language
@@ -216,13 +202,48 @@ describe("POST users/:username/languages/", function () {
                 expect(response.json()).toEqual(languageSerializer.serialize(mapping.language));
         });
     });
-    test<LocalTestContext>("If language with code does not exist return 404", async (context) => {
-        const currentUser = await context.userFactory.createOne();
-        const session = await context.sessionFactory.createOne({user: currentUser});
+    describe("If user is not logged in return 401", async () => {
+        test<LocalTestContext>("If username is me and not authenticated return 401", async (context) => {
+            const language = await context.languageFactory.createOne();
 
-        const response = await makeRequest("me", {code: faker.random.alpha({count: 2})}, session.token);
-        expect(response.statusCode).to.equal(404);
+            const response = await makeRequest("me", {languageCode: language.code});
+            expect(response.statusCode).to.equal(401);
+        });
+        test<LocalTestContext>("If username is not me and not authenticated return 401", async (context) => {
+            const user = await context.userFactory.createOne();
+            const language = await context.languageFactory.createOne();
+
+            const response = await makeRequest(user.username, {languageCode: language.code});
+            expect(response.statusCode).to.equal(401);
+        });
     });
+    describe("If fields are invalid return 400", () => {
+        describe("If language is invalid return 400", () => {
+            test<LocalTestContext>("If languageCode is invalid  return 400", async (context) => {
+                const currentUser = await context.userFactory.createOne();
+                const session = await context.sessionFactory.createOne({user: currentUser});
+
+                const response = await makeRequest("me", {languageCode: faker.random.alpha({count: 10})}, session.token);
+                expect(response.statusCode).to.equal(400);
+            })
+            test<LocalTestContext>("If language is not found return 400", async (context) => {
+                const currentUser = await context.userFactory.createOne();
+                const session = await context.sessionFactory.createOne({user: currentUser});
+                const language = context.languageFactory.makeOne();
+
+                const response = await makeRequest("me", {languageCode: language.code}, session.token);
+                expect(response.statusCode).to.equal(400);
+            });
+            test<LocalTestContext>("If language is not supported return 400", async (context) => {
+                const currentUser = await context.userFactory.createOne();
+                const session = await context.sessionFactory.createOne({user: currentUser});
+                const language = await context.languageFactory.createOne({isSupported: false});
+
+                const response = await makeRequest("me", {languageCode: language.code}, session.token);
+                expect(response.statusCode).to.equal(400);
+            })
+        })
+    })
     describe("If username is not me and not authenticated as user with username return 403", async () => {
         test<LocalTestContext>("If username does not belong to any user return 403", async (context) => {
             const currentUser = await context.userFactory.createOne();
@@ -230,7 +251,7 @@ describe("POST users/:username/languages/", function () {
 
             const language = await context.languageFactory.createOne();
 
-            const response = await makeRequest(faker.random.alphaNumeric(20), {code: language.code}, session.token);
+            const response = await makeRequest(faker.random.alphaNumeric(20), {languageCode: language.code}, session.token);
             expect(response.statusCode).to.equal(403);
         });
         test<LocalTestContext>("If username belongs to another user return 403", async (context) => {
@@ -240,7 +261,7 @@ describe("POST users/:username/languages/", function () {
 
             const language = await context.languageFactory.createOne();
 
-            const response = await makeRequest(otherUser.username, {code: language.code}, session.token);
+            const response = await makeRequest(otherUser.username, {languageCode: language.code}, session.token);
             expect(response.statusCode).to.equal(403);
         });
     });

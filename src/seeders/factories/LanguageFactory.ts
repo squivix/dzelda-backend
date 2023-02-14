@@ -1,5 +1,5 @@
 import {Faker} from "@mikro-orm/seeder";
-import {EntityData} from "@mikro-orm/core";
+import {EntityData, EntityManager, UniqueConstraintViolationException} from "@mikro-orm/core";
 import {Language} from "@/src/models/entities/Language.js";
 import {CustomFactory} from "@/src/seeders/factories/CustomFactory.js";
 
@@ -14,7 +14,7 @@ export class LanguageFactory extends CustomFactory<Language> {
             flag: faker.image.imageUrl(100, 100),
             flagCircular: faker.image.imageUrl(100, 100),
             flagEmoji: faker.internet.emoji(),
-            isSupported: faker.datatype.boolean(),
+            isSupported: true,
             levelThresholds: {
                 beginner1: 0,
                 beginner2: faker.datatype.number({min: 500, max: 1500}),
@@ -24,6 +24,14 @@ export class LanguageFactory extends CustomFactory<Language> {
                 advanced2: faker.datatype.number({min: 26000, max: 35000}),
             }
         };
+    }
+
+    async createOne(overrideParameters?: EntityData<Language>): Promise<Language> {
+        const em = (this as any).em as EntityManager;
+        const language = this.makeEntity(overrideParameters);
+        await em.upsert(Language, language);
+        await em.flush();
+        return language;
     }
 
     protected definition(faker: Faker): EntityData<Language> {

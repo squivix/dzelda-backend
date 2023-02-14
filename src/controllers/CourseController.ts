@@ -50,7 +50,9 @@ class CourseController {
         const languageService = new LanguageService(request.em);
         const language = await languageService.getLanguage(body.data.languageCode);
         if (!language)
-            throw new ValidationAPIError({language: {message: "language not found"}});
+            throw new ValidationAPIError({language: {message: "not found"}});
+        if (!language.isSupported)
+            throw new ValidationAPIError({language: {message: "not supported"}});
 
         const courseService = new CourseService(request.em);
         const course = await courseService.createCourse({

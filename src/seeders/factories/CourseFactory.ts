@@ -20,7 +20,6 @@ export class CourseFactory extends CustomFactory<Course> {
             image: faker.image.imageUrl(100, 100),
             isPublic: faker.datatype.boolean(),
             level: randomEnum(LanguageLevel),
-            language: LanguageFactory.makeDefinition(faker),
             addedBy: {
                 ...ProfileFactory.makeDefinition(faker),
                 user: {...UserFactory.makeDefinition(faker), profile: null}

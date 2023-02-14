@@ -21,9 +21,10 @@ class VocabController {
         const language = await languageService.getLanguage(body.languageCode);
         if (!language)
             throw new ValidationAPIError({language: {message: "not found"}});
+        if (!language.isSupported)
+            throw new ValidationAPIError({language: {message: "not supported"}});
 
-        //TODO replace default english for tests with specifying english in test and avoid collisions somehow...
-        const parser = parsers[language.code] ?? parsers["en"];
+        const parser = parsers[language.code];
         const words = parser.parseText(body.text);
 
         if (words.length == 0)

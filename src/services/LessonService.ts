@@ -59,8 +59,7 @@ export class LessonService {
         await this.em.flush();
 
         const language = fields.course.language;
-        //TODO replace default english for tests with specifying english in test and avoid collisions somehow...
-        const parser = parsers[language.code] ?? parsers["en"];
+        const parser = parsers[language.code];
         const lessonWords = parser.parseText(`${fields.title} ${fields.text}`);
 
         await this.em.upsertMany(Vocab, lessonWords.map(word => ({text: word, language: language.id})));
@@ -89,8 +88,8 @@ export class LessonService {
         if (lesson.title !== updatedLessonData.title || lesson.text !== updatedLessonData.text) {
             lesson.title = updatedLessonData.title;
             lesson.text = updatedLessonData.text;
-            //TODO replace default english for tests with specifying english in test and avoid collisions somehow...
-            const parser = parsers[language.code] ?? parsers["en"];
+
+            const parser = parsers[language.code];
             const lessonWords = parser.parseText(`${updatedLessonData.title} ${updatedLessonData.text}`);
 
             await this.em.nativeDelete(MapLessonVocab, {lesson: lesson, vocab: {text: {$nin: lessonWords}}});

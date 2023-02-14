@@ -6,6 +6,7 @@ import {UserService} from "@/src/services/UserService.js";
 import {ForbiddenAPIError} from "@/src/utils/errors/ForbiddenAPIError.js";
 import {usernameValidator} from "@/src/validators/userValidator.js";
 import {languageSerializer} from "@/src/schemas/response/serializers/LanguageSerializer.js";
+import {ValidationAPIError} from "@/src/utils/errors/ValidationAPIError.js";
 
 class LanguageController {
     async getLanguages(request: FastifyRequest, reply: FastifyReply) {
@@ -49,13 +50,16 @@ class LanguageController {
             throw new ForbiddenAPIError();
 
         const bodyValidator = z.object({
-            code: z.string().min(2).max(4).regex(/^[A-Za-z0-9]*$/)
+            languageCode: z.string().min(2).max(4).regex(/^[A-Za-z0-9]*$/)
         });
         const body = bodyValidator.parse(request.body);
         const languageService = new LanguageService(request.em);
-        const language = await languageService.getLanguage(body.code);
+        const language = await languageService.getLanguage(body.languageCode);
         if (!language)
-            throw new NotFoundAPIError("Language");
+            throw new ValidationAPIError({language: {message: "not found"}});
+        if (!language.isSupported)
+            throw new ValidationAPIError({language: {message: "not supported"}});
+
 
         const newLanguageMapping = await languageService.addLanguageToUser(user, language);
         reply.status(201).send(languageSerializer.serialize(newLanguageMapping));

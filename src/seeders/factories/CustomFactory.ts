@@ -1,5 +1,5 @@
 import {Factory} from "@mikro-orm/seeder";
-import {EntityData} from "@mikro-orm/core";
+import {EntityData, EntityManager} from "@mikro-orm/core";
 
 /**
  * An Entity Factory that overrides make/makeOne functions so as not to persist entity
@@ -7,31 +7,34 @@ import {EntityData} from "@mikro-orm/core";
 export abstract class CustomFactory<T extends Object> extends Factory<T> {
 
     makeOne(overrideParameters?: EntityData<T>): T {
+        const em = (this as any).em as EntityManager;
         let ret = super.makeOne(overrideParameters);
-        (this as any).em.clear();
+        em.clear();
         return ret;
     }
 
     make(amount: number, overrideParameters?: EntityData<T>): T[] {
+        const em = (this as any).em as EntityManager;
         let ret = super.make(amount, overrideParameters);
-        (this as any).em.clear();
+        em.clear();
         return ret;
     }
 
-
     async createOne(overrideParameters?: EntityData<T>): Promise<T> {
-        const entity = (this as any).makeEntity(overrideParameters);
-        (this as any).em.persist(entity);
-        await (this as any).em.flush();
+        const em = (this as any).em as EntityManager;
+        const entity = this.makeEntity(overrideParameters);
+        em.persist(entity);
+        await em.flush();
         return entity;
     }
 
     async create(amount: number, overrideParameters?: EntityData<T>): Promise<T[]> {
+        const em = (this as any).em as EntityManager;
         const entities = [...Array(amount)].map(() => {
-            return (this as any).makeEntity(overrideParameters);
+            return this.makeEntity(overrideParameters);
         });
-        (this as any).em.persist(entities);
-        await (this as any).em.flush();
+        em.persist(entities);
+        await em.flush();
         return entities;
     }
 }
