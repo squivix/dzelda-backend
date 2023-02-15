@@ -299,7 +299,7 @@ describe("POST courses/", function () {
 
             expect(response.statusCode).to.equal(201);
             expect(response.json()).toEqual(expect.objectContaining(courseSerializer.serialize(newCourse, {ignore: ["image"]})));
-            expect(fs.existsSync(response.json().image));
+            expect(fs.existsSync(response.json().image)).toBeTruthy();
         });
     });
     test<LocalTestContext>("If user not logged in return 401", async (context) => {
@@ -630,7 +630,6 @@ describe("PUT courses/:courseId", function () {
 
             expect(response.statusCode).to.equal(200);
             expect(response.json()).toEqual(courseSerializer.serialize(course));
-            expect(fs.existsSync(course.image));
             expect(response.json().lessons.map((l: LessonSchema) => l.id)).toEqual(shuffledLessonIds);
         });
         test<LocalTestContext>("If new image is blank clear course image", async (context) => {
@@ -698,7 +697,7 @@ describe("PUT courses/:courseId", function () {
 
             expect(response.statusCode).to.equal(200);
             expect(response.json()).toEqual(courseSerializer.serialize(course));
-            expect(fs.existsSync(course.image));
+            expect(fs.existsSync(course.image)).toBeTruthy();
             expect(response.json().lessons.map((l: LessonSchema) => l.id)).toEqual(shuffledLessonIds);
         });
     });

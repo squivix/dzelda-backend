@@ -11,6 +11,15 @@ import {Language} from "@/src/models/entities/Language.js";
 import {EntityRepository} from "@mikro-orm/core";
 import {ProfileFactory} from "@/src/seeders/factories/ProfileFactory.js";
 import {languageSerializer} from "@/src/schemas/response/serializers/LanguageSerializer.js";
+import {LessonFactory} from "@/src/seeders/factories/LessonFactory.js";
+import {CourseFactory} from "@/src/seeders/factories/CourseFactory.js";
+import {MapLearnerLesson} from "@/src/models/entities/MapLearnerLesson.js";
+import {MapLearnerDictionary} from "@/src/models/entities/MapLearnerDictionary.js";
+import {DictionaryFactory} from "@/src/seeders/factories/DictionaryFactory.js";
+import {VocabFactory} from "@/src/seeders/factories/VocabFactory.js";
+import {MapLearnerVocab} from "@/src/models/entities/MapLearnerVocab.js";
+import {MeaningFactory} from "@/src/seeders/factories/MeaningFactory.js";
+import {MapLearnerMeaning} from "@/src/models/entities/MapLearnerMeaning.js";
 
 // beforeEach(truncateDb);
 
@@ -18,6 +27,11 @@ interface LocalTestContext extends TestContext {
     languageRepo: EntityRepository<Language>;
     mapLearnerLanguageRepo: EntityRepository<MapLearnerLanguage>;
     languageFactory: LanguageFactory;
+    courseFactory: CourseFactory;
+    lessonFactory: LessonFactory;
+    dictionaryFactory: DictionaryFactory;
+    vocabFactory: VocabFactory;
+    meaningFactory: MeaningFactory;
 }
 
 beforeEach<LocalTestContext>((context) => {
@@ -27,6 +41,11 @@ beforeEach<LocalTestContext>((context) => {
     context.profileFactory = new ProfileFactory(context.em);
     context.sessionFactory = new SessionFactory(context.em);
     context.languageFactory = new LanguageFactory(context.em);
+    context.lessonFactory = new LessonFactory(context.em);
+    context.courseFactory = new CourseFactory(context.em);
+    context.dictionaryFactory = new DictionaryFactory(context.em);
+    context.vocabFactory = new VocabFactory(context.em);
+    context.meaningFactory = new MeaningFactory(context.em);
     context.languageRepo = context.em.getRepository(Language);
     context.mapLearnerLanguageRepo = context.em.getRepository(MapLearnerLanguage);
 });
@@ -224,7 +243,7 @@ describe("POST users/:username/languages/", function () {
 
                 const response = await makeRequest("me", {languageCode: faker.random.alpha({count: 10})}, session.token);
                 expect(response.statusCode).to.equal(400);
-            })
+            });
             test<LocalTestContext>("If language is not found return 400", async (context) => {
                 const currentUser = await context.userFactory.createOne();
                 const session = await context.sessionFactory.createOne({user: currentUser});
@@ -240,9 +259,9 @@ describe("POST users/:username/languages/", function () {
 
                 const response = await makeRequest("me", {languageCode: language.code}, session.token);
                 expect(response.statusCode).to.equal(400);
-            })
-        })
-    })
+            });
+        });
+    });
     describe("If username is not me and not authenticated as user with username return 403", async () => {
         test<LocalTestContext>("If username does not belong to any user return 403", async (context) => {
             const currentUser = await context.userFactory.createOne();
@@ -286,15 +305,15 @@ describe("PATCH users/:username/languages/:languageCode", () => {
                 language: language,
                 addedOn: new Date(oldLastOpened),
                 lastOpened: new Date(oldLastOpened)
-            })
+            });
             await context.em.flush();
 
             const response = await makeRequest("me", language.code, {lastOpened: "now"}, session.token);
 
-            const mapping = await context.em.findOneOrFail(MapLearnerLanguage, {learner: user.profile, language: language})
+            const mapping = await context.em.findOneOrFail(MapLearnerLanguage, {learner: user.profile, language: language});
             expect(response.statusCode).to.equal(200);
-            expect(response.json()).toEqual(languageSerializer.serialize(mapping))
-            expect(oldLastOpened).not.toEqual(mapping.lastOpened.toISOString())
+            expect(response.json()).toEqual(languageSerializer.serialize(mapping));
+            expect(oldLastOpened).not.toEqual(mapping.lastOpened.toISOString());
         });
         test<LocalTestContext>("If username is not me and authenticated as user with username return 200", async (context) => {
             const user = await context.userFactory.createOne();
@@ -306,15 +325,15 @@ describe("PATCH users/:username/languages/:languageCode", () => {
                 language: language,
                 addedOn: new Date(oldLastOpened),
                 lastOpened: new Date(oldLastOpened)
-            })
+            });
             await context.em.flush();
 
             const response = await makeRequest(user.username, language.code, {lastOpened: "now"}, session.token);
 
-            const mapping = await context.em.findOneOrFail(MapLearnerLanguage, {learner: user.profile, language: language})
+            const mapping = await context.em.findOneOrFail(MapLearnerLanguage, {learner: user.profile, language: language});
             expect(response.statusCode).to.equal(200);
-            expect(response.json()).toEqual(languageSerializer.serialize(mapping))
-            expect(oldLastOpened).not.toEqual(mapping.lastOpened.toISOString())
+            expect(response.json()).toEqual(languageSerializer.serialize(mapping));
+            expect(oldLastOpened).not.toEqual(mapping.lastOpened.toISOString());
         });
     });
     test<LocalTestContext>("If user is not logged in return 401", async (context) => {
@@ -342,27 +361,24 @@ describe("PATCH users/:username/languages/:languageCode", () => {
 
         expect(response.statusCode).to.equal(400);
     });
-
-    test<LocalTestContext>("If language is not found return  400", async (context) => {
+    test<LocalTestContext>("If language is not found return  404", async (context) => {
         const user = await context.userFactory.createOne();
         const session = await context.sessionFactory.createOne({user: user});
         const language = await context.languageFactory.makeOne();
 
         const response = await makeRequest(user.username, language.code, {lastOpened: "now"}, session.token);
 
-        expect(response.statusCode).to.equal(400);
+        expect(response.statusCode).to.equal(404);
     });
-
-    test<LocalTestContext>("If user is not learning language return  400", async (context) => {
+    test<LocalTestContext>("If user is not learning language return  404", async (context) => {
         const user = await context.userFactory.createOne();
         const session = await context.sessionFactory.createOne({user: user});
         const language = await context.languageFactory.createOne();
 
         const response = await makeRequest(user.username, language.code, {lastOpened: "now"}, session.token);
 
-        expect(response.statusCode).to.equal(400);
+        expect(response.statusCode).to.equal(404);
     });
-
     test<LocalTestContext>("If lastOpened is not 'now' return  400", async (context) => {
         const user = await context.userFactory.createOne();
         const session = await context.sessionFactory.createOne({user: user});
@@ -372,4 +388,119 @@ describe("PATCH users/:username/languages/:languageCode", () => {
 
         expect(response.statusCode).to.equal(400);
     });
-})
+});
+
+/**{@link LanguageController#deleteUserLanguage}*/
+describe("DELETE /users/:username/languages/:languageCode", () => {
+    const makeRequest = async (username: "me" | string, languageCode: string, authToken?: string) => {
+        const options: InjectOptions = {
+            method: "DELETE",
+            url: `users/${username}/languages/${languageCode}/`,
+        };
+        return await fetchRequest(options, authToken);
+    };
+    describe("If user is logged in and is learning language delete language for user and all associated resources and return 204", async () => {
+        test<LocalTestContext>("If username is me and authenticated return 204", async (context) => {
+            const user = await context.userFactory.createOne();
+            const session = await context.sessionFactory.createOne({user: user});
+            const language = await context.languageFactory.createOne({learners: user.profile});
+
+            const courses = await context.courseFactory.create(3, {language});
+            const lessons = [...await context.lessonFactory.create(3, {course: courses[0]}), ...await context.lessonFactory.create(3, {course: courses[1]}), ...await context.lessonFactory.create(3, {course: courses[2]})];
+            await context.em.insertMany(MapLearnerLesson, lessons.map(l => ({lesson: l, learner: user.profile})));
+            const dictionaries = await context.dictionaryFactory.create(3, {language});
+            await context.em.insertMany(MapLearnerDictionary, dictionaries.map(d => ({dictionary: d, learner: user.profile})));
+            const vocabs = await context.vocabFactory.create(3, {language});
+            await context.em.insertMany(MapLearnerVocab, vocabs.map(v => ({vocab: v, learner: user.profile})));
+            const meaningLanguage = await context.languageFactory.createOne({code: "en"});
+            const meanings = [
+                ...await context.meaningFactory.create(3, {addedBy: user.profile, vocab: vocabs[0], language: meaningLanguage}),
+                ...await context.meaningFactory.create(3, {addedBy: user.profile, vocab: vocabs[1], language: meaningLanguage}),
+                ...await context.meaningFactory.create(3, {addedBy: user.profile, vocab: vocabs[2], language: meaningLanguage})];
+            await context.em.insertMany(MapLearnerMeaning, meanings.map(m => ({meaning: m, learner: user.profile})));
+
+            const response = await makeRequest("me", language.code, session.token);
+
+            expect(response.statusCode).to.equal(204);
+
+            expect((await context.em.findOne(MapLearnerLanguage, {learner: user.profile, language}))?.toObject() ?? null).toBeNull();
+            expect(await context.em.find(MapLearnerLesson, {learner: user.profile, lesson: {course: {language}}})).toHaveLength(0);
+            expect(await context.em.find(MapLearnerDictionary, {learner: user.profile, dictionary: {language}})).toHaveLength(0);
+            expect(await context.em.find(MapLearnerVocab, {learner: user.profile, vocab: {language}})).toHaveLength(0);
+            expect(await context.em.find(MapLearnerMeaning, {learner: user.profile, meaning: {vocab: {language}}})).toHaveLength(0);
+        });
+        test<LocalTestContext>("If username is not me and authenticated as user with username return 204", async (context) => {
+            const user = await context.userFactory.createOne();
+            const session = await context.sessionFactory.createOne({user: user});
+            const language = await context.languageFactory.createOne({learners: user.profile});
+
+            const courses = await context.courseFactory.create(3, {language});
+            const lessons = [...await context.lessonFactory.create(3, {course: courses[0]}), ...await context.lessonFactory.create(3, {course: courses[1]}), ...await context.lessonFactory.create(3, {course: courses[2]})];
+            await context.em.insertMany(MapLearnerLesson, lessons.map(l => ({lesson: l, learner: user.profile})));
+            const dictionaries = await context.dictionaryFactory.create(3, {language});
+            await context.em.insertMany(MapLearnerDictionary, dictionaries.map(d => ({dictionary: d, learner: user.profile})));
+            const vocabs = await context.vocabFactory.create(3, {language});
+            await context.em.insertMany(MapLearnerVocab, vocabs.map(v => ({vocab: v, learner: user.profile})));
+            const meaningLanguage = await context.languageFactory.createOne({code: "en"});
+            const meanings = [
+                ...await context.meaningFactory.create(3, {addedBy: user.profile, vocab: vocabs[0], language: meaningLanguage}),
+                ...await context.meaningFactory.create(3, {addedBy: user.profile, vocab: vocabs[1], language: meaningLanguage}),
+                ...await context.meaningFactory.create(3, {addedBy: user.profile, vocab: vocabs[2], language: meaningLanguage})];
+            await context.em.insertMany(MapLearnerMeaning, meanings.map(m => ({meaning: m, learner: user.profile})));
+
+            const response = await makeRequest(user.username, language.code, session.token);
+
+            expect(response.statusCode).to.equal(204);
+            expect((await context.em.findOne(MapLearnerLanguage, {learner: user.profile, language}))?.toObject() ?? null).toBeNull();
+            expect(await context.em.find(MapLearnerLesson, {learner: user.profile, lesson: {course: {language}}})).toHaveLength(0);
+            expect(await context.em.find(MapLearnerDictionary, {learner: user.profile, dictionary: {language}})).toHaveLength(0);
+            expect(await context.em.find(MapLearnerVocab, {learner: user.profile, vocab: {language}})).toHaveLength(0);
+            expect(await context.em.find(MapLearnerMeaning, {learner: user.profile, meaning: {vocab: {language}}})).toHaveLength(0);
+        });
+    });
+    test<LocalTestContext>("If user is not logged in return 401", async (context) => {
+        const user = await context.userFactory.createOne();
+        const language = await context.languageFactory.createOne({learners: user.profile});
+
+        const response = await makeRequest("me", language.code);
+
+        expect(response.statusCode).to.equal(401);
+    });
+
+    test<LocalTestContext>("If username does not belong the authenticated user return 403", async (context) => {
+        const user = await context.userFactory.createOne();
+        const otherUser = await context.userFactory.createOne();
+        const session = await context.sessionFactory.createOne({user: user});
+        const language = await context.languageFactory.createOne({learners: otherUser.profile});
+
+        const response = await makeRequest(otherUser.username, language.code, session.token);
+
+        expect(response.statusCode).to.equal(403);
+    });
+    test<LocalTestContext>("If languageCode is invalid return  400", async (context) => {
+        const user = await context.userFactory.createOne();
+        const session = await context.sessionFactory.createOne({user: user});
+
+        const response = await makeRequest(user.username, faker.random.alpha(5), session.token);
+
+        expect(response.statusCode).to.equal(400);
+    });
+    test<LocalTestContext>("If language is not found return  404", async (context) => {
+        const user = await context.userFactory.createOne();
+        const session = await context.sessionFactory.createOne({user: user});
+        const language = await context.languageFactory.makeOne();
+
+        const response = await makeRequest(user.username, language.code, session.token);
+
+        expect(response.statusCode).to.equal(404);
+    });
+    test<LocalTestContext>("If user is not learning language return  404", async (context) => {
+        const user = await context.userFactory.createOne();
+        const session = await context.sessionFactory.createOne({user: user});
+        const language = await context.languageFactory.createOne();
+
+        const response = await makeRequest(user.username, language.code, session.token);
+
+        expect(response.statusCode).to.equal(404);
+    });
+});

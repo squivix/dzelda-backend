@@ -7,5 +7,6 @@ export const languageRouter: FastifyPluginCallback = function (fastify, options,
     fastify.get(`/users/:username/languages/`, LanguageController.getUserLanguages);
     fastify.post(`/users/:username/languages/`, {preHandler: requiresAuth, handler: LanguageController.addLanguageToUser});
     fastify.patch(`/users/:username/languages/:languageCode/`, {preHandler: requiresAuth, handler: LanguageController.updateUserLanguage});
+    fastify.delete(`/users/:username/languages/:languageCode/`, {preHandler: requiresAuth, handler: LanguageController.deleteUserLanguage});
     done();
 };

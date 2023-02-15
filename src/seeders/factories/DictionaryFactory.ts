@@ -7,6 +7,10 @@ export class DictionaryFactory extends CustomFactory<Dictionary> {
     readonly model = Dictionary;
 
     protected definition(faker: Faker): EntityData<Dictionary> {
-        return {}
+        return {
+            name: faker.random.alpha(20),
+            lookupLink: faker.internet.url(),
+            dictionaryLink:faker.internet.url()
+        };
     }
 }

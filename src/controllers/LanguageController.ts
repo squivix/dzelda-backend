@@ -86,9 +86,27 @@ class LanguageController {
         const languageService = new LanguageService(request.em);
         const languageMapping = await languageService.getUserLanguage(pathParams.languageCode, request.user as User);
         if (!languageMapping)
-            throw new ValidationAPIError({language: {message: "not found"}});
+            throw  new NotFoundAPIError("Language")
         const updatedLanguageMapping = await languageService.updateUserLanguage(languageMapping)
         reply.status(200).send(languageSerializer.serialize(updatedLanguageMapping));
+    }
+    async deleteUserLanguage(request: FastifyRequest, reply: FastifyReply){
+        const pathParamsValidator = z.object({
+            username: usernameValidator,
+            languageCode: languageCodeValidator
+        });
+        const pathParams = pathParamsValidator.parse(request.params);
+        const userService = new UserService(request.em);
+        const user = await userService.getUser(pathParams.username, request.user);
+        if (!user || user !== request.user)
+            throw new ForbiddenAPIError();
+
+        const languageService = new LanguageService(request.em);
+        const languageMapping = await languageService.getUserLanguage(pathParams.languageCode, request.user as User);
+        if (!languageMapping)
+            throw  new NotFoundAPIError("Language")
+        await languageService.deleteLanguageFromUser(languageMapping)
+        reply.status(204);
     }
 }
 

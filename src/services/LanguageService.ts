@@ -4,6 +4,10 @@ import {User} from "@/src/models/entities/auth/User.js";
 import {cleanObject} from "@/src/utils/utils.js";
 import {MapLearnerLanguage} from "@/src/models/entities/MapLearnerLanguage.js";
 import {LanguageRepo} from "@/src/models/repos/LanguageRepo.js";
+import {MapLearnerLesson} from "@/src/models/entities/MapLearnerLesson.js";
+import {MapLearnerDictionary} from "@/src/models/entities/MapLearnerDictionary.js";
+import {MapLearnerVocab} from "@/src/models/entities/MapLearnerVocab.js";
+import {MapLearnerMeaning} from "@/src/models/entities/MapLearnerMeaning.js";
 
 export class LanguageService {
     em: EntityManager;
@@ -46,4 +50,19 @@ export class LanguageService {
         return await this.languageRepo.findOneOrFail(language, {refresh: true});
     }
 
+    async deleteLanguageFromUser(languageMapping: MapLearnerLanguage) {
+        const learner = languageMapping.learner;
+        const language = languageMapping.language;
+        const lessonMappings = await this.em.find(MapLearnerLesson, {learner, lesson: {course: {language}}});
+        const dictionaryMappings = await this.em.find(MapLearnerDictionary, {learner, dictionary: {language}});
+        const vocabMappings = await this.em.find(MapLearnerVocab, {learner, vocab: {language}});
+        const meaningMappings = await this.em.find(MapLearnerMeaning, {learner, meaning: {vocab: {language}}});
+
+        this.em.remove(languageMapping);
+        this.em.remove(lessonMappings);
+        this.em.remove(dictionaryMappings);
+        this.em.remove(vocabMappings);
+        this.em.remove(meaningMappings);
+        await this.em.flush();
+    }
 }
