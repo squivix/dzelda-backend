@@ -12,7 +12,7 @@ class UserController {
             email: z.string().max(256).email(),
             username: usernameValidator,
             password: z.string().min(8),
-            initialLanguage: z.optional(z.string().min(2).max(4))
+            initialLanguage: z.string().min(2).max(4).optional()
         }).strict();
         const body = validator.parse(request.body);
         const userService = new UserService(request.em);

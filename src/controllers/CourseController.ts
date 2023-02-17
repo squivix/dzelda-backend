@@ -13,6 +13,7 @@ import {ForbiddenAPIError} from "@/src/utils/errors/ForbiddenAPIError.js";
 import {ValidationAPIError} from "@/src/utils/errors/ValidationAPIError.js";
 import {LanguageService} from "@/src/services/LanguageService.js";
 import {numericStringValidator} from "@/src/validators/utilValidators.js";
+import {UserService} from "@/src/services/UserService.js";
 
 class CourseController {
     async getCourses(request: FastifyRequest, reply: FastifyReply) {
@@ -116,6 +117,32 @@ class CourseController {
             lessonsOrder: body.data.lessonsOrder
         }, request.user as User);
         reply.status(200).send(courseSerializer.serialize(updatedCourse));
+    }
+
+    async getUserCoursesLearning(request: FastifyRequest, reply: FastifyReply) {
+        const pathParamsValidator = z.object({username: usernameValidator});
+        const pathParams = pathParamsValidator.parse(request.params);
+        const userService = new UserService(request.em);
+        const user = await userService.getUser(pathParams.username, request.user);
+        if (!user || (!user.profile.isPublic && user !== request.user))
+            throw new NotFoundAPIError("User");
+        if (user !== request.user)
+            throw new ForbiddenAPIError();
+
+        const queryParamsValidator = z.object({
+            languageCode: languageCodeValidator.optional(),
+            addedBy: usernameValidator.optional(),
+            searchQuery: z.string().min(1).max(256).optional(),
+            level: z.nativeEnum(LanguageLevel).optional()
+        });
+        const queryParams = queryParamsValidator.parse(request.query);
+
+        if (queryParams.addedBy == "me")
+            queryParams.addedBy = request.user?.username!;
+
+        const courseService = new CourseService(request.em);
+        const courses = await courseService.getUserCoursesLearning(queryParams, request.user as User);
+        reply.send(courseSerializer.serializeList(courses));
     }
 }
 

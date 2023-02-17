@@ -96,4 +96,26 @@ export class CourseService {
         return course;
     }
 
+    async getUserCoursesLearning(filters: { languageCode?: string, addedBy?: string, searchQuery?: string, level?: LanguageLevel }, user: User) {
+        const dbFilters: FilterQuery<Course> = {$and: []};
+
+        dbFilters.$and!.push({lessons: {learners: user.profile}});
+        dbFilters.$and!.push({$or: [{isPublic: true}, {addedBy: (user as User).profile}]});
+
+        if (filters.languageCode !== undefined)
+            dbFilters.$and!.push({language: {code: filters.languageCode}});
+        if (filters.addedBy !== undefined)
+            dbFilters.$and!.push({addedBy: {user: {username: filters.addedBy}}});
+        if (filters.searchQuery !== undefined)
+            dbFilters.$and!.push({$or: [{title: {$ilike: `%${filters.searchQuery}%`}}, {description: {$ilike: `%${filters.searchQuery}%`}}]});
+        if (filters.level !== undefined)
+            dbFilters.$and!.push({level: filters.level});
+
+        let courses = await this.courseRepo.find(dbFilters, {populate: ["language", "addedBy.user"]});
+
+        if (user && !(user instanceof AnonymousUser))
+            courses = await this.courseRepo.annotateVocabsByLevel(courses, user.id);
+
+        return courses;
+    }
 }

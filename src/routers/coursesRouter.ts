@@ -22,5 +22,7 @@ export const coursesRouter: FastifyPluginCallback = function (fastify, options, 
         handler: CourseController.updateCourse,
         onResponse: deleteFileOnFail
     });
+
+    fastify.get(`/users/:username/courses/`, {preHandler: requiresAuth, handler: CourseController.getUserCoursesLearning});
     done();
 };
