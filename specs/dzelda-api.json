@@ -1111,6 +1111,9 @@
           "401": {
             "$ref": "#/components/responses/Unauthenticated"
           },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
           "404": {
             "$ref": "#/components/responses/NotFound"
           }
@@ -1201,6 +1204,9 @@
           },
           "401": {
             "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
           },
           "404": {
             "$ref": "#/components/responses/NotFound"
@@ -2056,7 +2062,7 @@
             "type": "null"
           },
           "language": {
-            "type": "integer"
+            "$ref": "#/components/schemas/Language"
           },
           "userMeanings": {
             "type": "array",
@@ -2138,7 +2144,7 @@
             "type": "string"
           },
           "language": {
-            "type": "string"
+            "$ref": "#/components/schemas/Language"
           }
         },
         "required": [

@@ -14,6 +14,8 @@ import {lessonTextValidator, lessonTitleValidator} from "@/src/validators/lesson
 import {ForbiddenAPIError} from "@/src/utils/errors/ForbiddenAPIError.js";
 import {NotFoundAPIError} from "@/src/utils/errors/NotFoundAPIError.js";
 import {Course} from "@/src/models/entities/Course.js";
+import {UserService} from "@/src/services/UserService.js";
+import {courseSerializer} from "@/src/schemas/response/serializers/CourseSerializer.js";
 
 class LessonController {
     async getLessons(request: FastifyRequest, reply: FastifyReply) {
@@ -119,6 +121,33 @@ class LessonController {
         }, request.user as User);
         reply.status(200).send(lessonSerializer.serialize(updatedLesson));
 
+    }
+
+    async getUserLessonsLearning(request: FastifyRequest, reply: FastifyReply) {
+        const pathParamsValidator = z.object({username: usernameValidator});
+        const pathParams = pathParamsValidator.parse(request.params);
+        const userService = new UserService(request.em);
+        const user = await userService.getUser(pathParams.username, request.user);
+        if (!user || (!user.profile.isPublic && user !== request.user))
+            throw new NotFoundAPIError("User");
+        if (user !== request.user)
+            throw new ForbiddenAPIError();
+
+        const queryParamsValidator = z.object({
+            languageCode: languageCodeValidator.optional(),
+            addedBy: usernameValidator.optional(),
+            searchQuery: z.string().min(1).max(256).optional(),
+            level: z.nativeEnum(LanguageLevel).optional(),
+            hasAudio: booleanStringValidator.optional(),
+        });
+        const queryParams = queryParamsValidator.parse(request.query);
+
+        if (queryParams.addedBy == "me")
+            queryParams.addedBy = request.user?.username!;
+
+        const lessonService = new LessonService(request.em);
+        const lessons = await lessonService.getUserLessonsLearning(queryParams, request.user as User);
+        reply.send(lessonSerializer.serializeList(lessons));
     }
 }
 

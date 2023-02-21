@@ -3,7 +3,7 @@ import {Course} from "@/src/models/entities/Course.js";
 import {CourseRepo} from "@/src/models/repos/CourseRepo.js";
 import {AnonymousUser, User} from "@/src/models/entities/auth/User.js";
 import {Language} from "@/src/models/entities/Language.js";
-import {defaultVocabsByLevel, VocabLevel} from "@/src/models/enums/VocabLevel.js";
+import {defaultVocabsByLevel} from "@/src/models/enums/VocabLevel.js";
 import {LanguageLevel} from "@/src/models/enums/LanguageLevel.js";
 import {Lesson} from "@/src/models/entities/Lesson.js";
 import {LessonRepo} from "@/src/models/repos/LessonRepo.js";
@@ -19,12 +19,14 @@ export class CourseService {
         this.lessonRepo = this.em.getRepository(Lesson) as LessonRepo;
     }
 
-    async getCourses(filters: { languageCode?: string, addedBy?: string, searchQuery?: string, level?: LanguageLevel }, user: User | AnonymousUser | null) {
+    async getCourses(filters: { languageCode?: string, addedBy?: string, searchQuery?: string, level?: LanguageLevel; isLearning?: boolean }, user: User | AnonymousUser | null) {
         const dbFilters: FilterQuery<Course> = {$and: []};
 
-        if (user && user instanceof User)
+        if (user && user instanceof User) {
             dbFilters.$and!.push({$or: [{isPublic: true}, {addedBy: (user as User).profile}]});
-        else
+            if (filters.isLearning)
+                dbFilters.$and!.push({lessons: {learners: user.profile}});
+        } else
             dbFilters.$and!.push({isPublic: true});
 
         if (filters.languageCode !== undefined)
@@ -96,26 +98,7 @@ export class CourseService {
         return course;
     }
 
-    async getUserCoursesLearning(filters: { languageCode?: string, addedBy?: string, searchQuery?: string, level?: LanguageLevel }, user: User) {
-        const dbFilters: FilterQuery<Course> = {$and: []};
-
-        dbFilters.$and!.push({lessons: {learners: user.profile}});
-        dbFilters.$and!.push({$or: [{isPublic: true}, {addedBy: (user as User).profile}]});
-
-        if (filters.languageCode !== undefined)
-            dbFilters.$and!.push({language: {code: filters.languageCode}});
-        if (filters.addedBy !== undefined)
-            dbFilters.$and!.push({addedBy: {user: {username: filters.addedBy}}});
-        if (filters.searchQuery !== undefined)
-            dbFilters.$and!.push({$or: [{title: {$ilike: `%${filters.searchQuery}%`}}, {description: {$ilike: `%${filters.searchQuery}%`}}]});
-        if (filters.level !== undefined)
-            dbFilters.$and!.push({level: filters.level});
-
-        let courses = await this.courseRepo.find(dbFilters, {populate: ["language", "addedBy.user"]});
-
-        if (user && !(user instanceof AnonymousUser))
-            courses = await this.courseRepo.annotateVocabsByLevel(courses, user.id);
-
-        return courses;
+    async getUserCoursesLearning(filters: { languageCode?: string, addedBy?: string, searchQuery?: string, level?: LanguageLevel, isLearning?: boolean }, user: User) {
+        return this.getCourses({...filters, isLearning: true}, user);
     }
 }

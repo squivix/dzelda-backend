@@ -1266,7 +1266,6 @@ describe("GET users/{username}/courses/", () => {
         return await fetchRequest(options, authToken);
     };
 
-
     describe("If user is logged in and there are no filters return courses with a lesson the user is learning", () => {
         test<LocalTestContext>("If username is me", async (context) => {
             const user = await context.userFactory.createOne();
