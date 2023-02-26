@@ -1651,3 +1651,124 @@ describe("GET users/:username/lessons", () => {
         expect(response.statusCode).to.equal(403);
     });
 });
+
+/**@link LessonController#addLessonToUserLearning*/
+describe("POST users/:username/lessons", () => {
+    const makeRequest = async (username: string | "me", body: object, authToken?: string) => {
+        const options: InjectOptions = {
+            method: "POST",
+            url: `users/${username}/lessons/`,
+            payload: body
+        };
+        return await fetchRequest(options, authToken);
+    };
+    describe("If the lesson exists and is public and user is learning lesson language add lesson to user's lessons learning", () => {
+        test<LocalTestContext>("If username is me", async (context) => {
+            const user = await context.userFactory.createOne();
+            const session = await context.sessionFactory.createOne({user});
+            const language = await context.languageFactory.createOne({learners: user.profile});
+            const course = await context.courseFactory.createOne({language, isPublic: true});
+            const lesson = await context.lessonFactory.createOne({course});
+
+            const response = await makeRequest("me", {lessonId: lesson.id}, session.token);
+            await context.lessonRepo.annotateVocabsByLevel([lesson], user.id);
+            await context.courseRepo.annotateVocabsByLevel([lesson.course], user.id);
+
+            expect(response.statusCode).to.equal(200);
+            expect(response.json()).toEqual(lessonSerializer.serialize(lesson));
+        });
+        test<LocalTestContext>("If username is belongs to the current user", async (context) => {
+            const user = await context.userFactory.createOne();
+            const session = await context.sessionFactory.createOne({user});
+            const language = await context.languageFactory.createOne({learners: user.profile});
+            const course = await context.courseFactory.createOne({language, isPublic: true});
+            const lesson = await context.lessonFactory.createOne({course});
+
+            const response = await makeRequest(user.username, {lessonId: lesson.id}, session.token);
+            await context.lessonRepo.annotateVocabsByLevel([lesson], user.id);
+            await context.courseRepo.annotateVocabsByLevel([lesson.course], user.id);
+
+            expect(response.statusCode).to.equal(200);
+            expect(response.json()).toEqual(lessonSerializer.serialize(lesson));
+        });
+    });
+    describe("If required fields are missing return 400", function () {
+        test<LocalTestContext>("If the lessonId is missing return 400", async (context) => {
+            const user = await context.userFactory.createOne();
+            const session = await context.sessionFactory.createOne({user});
+
+            const response = await makeRequest("me", {}, session.token);
+            expect(response.statusCode).to.equal(400);
+        });
+    });
+    describe("If fields are invalid return 400", function () {
+        describe("If the lesson is invalid return 400", async () => {
+            test<LocalTestContext>("If the lessonId is invalid return 400", async (context) => {
+                const user = await context.userFactory.createOne();
+                const session = await context.sessionFactory.createOne({user});
+
+                const response = await makeRequest("me", {lessonId: faker.random.alpha(10)}, session.token);
+                expect(response.statusCode).to.equal(400);
+            });
+            test<LocalTestContext>("If the lesson is not found return 400", async (context) => {
+                const user = await context.userFactory.createOne();
+                const session = await context.sessionFactory.createOne({user});
+
+                const response = await makeRequest("me", {lessonId: faker.datatype.number({min: 100000})}, session.token);
+                expect(response.statusCode).to.equal(400);
+            });
+            test<LocalTestContext>("If the lesson is not public and the user is logged in as author return 400", async (context) => {
+                const user = await context.userFactory.createOne();
+                const session = await context.sessionFactory.createOne({user});
+                const author = await context.userFactory.createOne();
+                const language = await context.languageFactory.createOne({learners: user.profile});
+                const course = await context.courseFactory.createOne({language, isPublic: false, addedBy: author.profile});
+                const lesson = await context.lessonFactory.createOne({course});
+
+                const response = await makeRequest("me", {lessonId: lesson.id}, session.token);
+
+                expect(response.statusCode).to.equal(400);
+            });
+            test<LocalTestContext>("If the lesson is not in a language the user is learning return 400", async (context) => {
+                const user = await context.userFactory.createOne();
+                const session = await context.sessionFactory.createOne({user});
+                const language = await context.languageFactory.createOne();
+                const course = await context.courseFactory.createOne({language, isPublic: true});
+                const lesson = await context.lessonFactory.createOne({course});
+
+                const response = await makeRequest("me", {lessonId: lesson.id}, session.token);
+
+                expect(response.statusCode).to.equal(400);
+            });
+        });
+    });
+    test<LocalTestContext>("If user is not logged in return 401", async () => {
+        const response = await makeRequest("me", {});
+        expect(response.statusCode).to.equal(401);
+    });
+    test<LocalTestContext>("If username does not exist return 404", async (context) => {
+        const user = await context.userFactory.createOne();
+        const session = await context.sessionFactory.createOne({user: user});
+
+        const response = await makeRequest(faker.random.alphaNumeric(20), {}, session.token);
+        expect(response.statusCode).to.equal(404);
+    });
+    test<LocalTestContext>(`If user exists and is not public and not authenticated as user return 404`, async (context) => {
+        const user = await context.userFactory.createOne();
+        const session = await context.sessionFactory.createOne({user: user});
+        const otherUser = await context.userFactory.createOne({profile: {isPublic: false}});
+        await context.languageFactory.create(10, {learners: user.profile});
+
+        const response = await makeRequest(otherUser.username, {}, session.token);
+        expect(response.statusCode).to.equal(404);
+    });
+    test<LocalTestContext>(`If username exists and is public and not authenticated as user return 403`, async (context) => {
+        const user = await context.userFactory.createOne();
+        const session = await context.sessionFactory.createOne({user: user});
+        const otherUser = await context.userFactory.createOne({profile: {isPublic: true}});
+        await context.languageFactory.create(10, {learners: user.profile});
+
+        const response = await makeRequest(otherUser.username, {}, session.token);
+        expect(response.statusCode).to.equal(403);
+    });
+});

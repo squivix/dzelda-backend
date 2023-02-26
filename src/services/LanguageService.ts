@@ -44,10 +44,10 @@ export class LanguageService {
 
 
     async addLanguageToUser(user: User, language: Language) {
-        const mapping = new MapLearnerLanguage(user.profile, language);
-        await this.em.persist(mapping);
+        const mapping = this.em.create(MapLearnerLanguage, {learner: user.profile, language: language});
         await this.em.flush();
-        return await this.languageRepo.findOneOrFail(language, {refresh: true});
+        await this.em.refresh(mapping.language);
+        return mapping.language;
     }
 
     async deleteLanguageFromUser(languageMapping: MapLearnerLanguage) {

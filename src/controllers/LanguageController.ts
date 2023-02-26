@@ -52,7 +52,7 @@ class LanguageController {
             throw new ForbiddenAPIError();
 
         const bodyValidator = z.object({
-            languageCode: z.string().min(2).max(4).regex(/^[A-Za-z0-9]*$/)
+            languageCode: languageCodeValidator
         });
         const body = bodyValidator.parse(request.body);
         const languageService = new LanguageService(request.em);
@@ -61,7 +61,6 @@ class LanguageController {
             throw new ValidationAPIError({language: {message: "not found"}});
         if (!language.isSupported)
             throw new ValidationAPIError({language: {message: "not supported"}});
-
 
         const newLanguageMapping = await languageService.addLanguageToUser(user, language);
         reply.status(201).send(languageSerializer.serialize(newLanguageMapping));
@@ -81,16 +80,17 @@ class LanguageController {
         const bodyValidator = z.object({
             lastOpened: z.literal("now")
         });
-        bodyValidator.parse(request.body)
+        bodyValidator.parse(request.body);
 
         const languageService = new LanguageService(request.em);
         const languageMapping = await languageService.getUserLanguage(pathParams.languageCode, request.user as User);
         if (!languageMapping)
-            throw  new NotFoundAPIError("Language")
-        const updatedLanguageMapping = await languageService.updateUserLanguage(languageMapping)
+            throw  new NotFoundAPIError("Language");
+        const updatedLanguageMapping = await languageService.updateUserLanguage(languageMapping);
         reply.status(200).send(languageSerializer.serialize(updatedLanguageMapping));
     }
-    async deleteUserLanguage(request: FastifyRequest, reply: FastifyReply){
+
+    async deleteUserLanguage(request: FastifyRequest, reply: FastifyReply) {
         const pathParamsValidator = z.object({
             username: usernameValidator,
             languageCode: languageCodeValidator
@@ -104,8 +104,8 @@ class LanguageController {
         const languageService = new LanguageService(request.em);
         const languageMapping = await languageService.getUserLanguage(pathParams.languageCode, request.user as User);
         if (!languageMapping)
-            throw  new NotFoundAPIError("Language")
-        await languageService.deleteLanguageFromUser(languageMapping)
+            throw  new NotFoundAPIError("Language");
+        await languageService.deleteLanguageFromUser(languageMapping);
         reply.status(204);
     }
 }

@@ -99,7 +99,7 @@ class LessonController {
         const lessonService = new LessonService(request.em);
         const lesson = await lessonService.getLesson(pathParams.lessonId, request.user);
         if (!lesson)
-            throw new NotFoundAPIError("Course");
+            throw new NotFoundAPIError("Lesson");
         if (request?.user?.profile !== lesson.course.addedBy)
             throw lesson.course.isPublic ? new ForbiddenAPIError() : new NotFoundAPIError("Lesson");
 
@@ -148,6 +148,29 @@ class LessonController {
         const lessonService = new LessonService(request.em);
         const lessons = await lessonService.getUserLessonsLearning(queryParams, request.user as User);
         reply.send(lessonSerializer.serializeList(lessons));
+    }
+
+    async addLessonToUserLearning(request: FastifyRequest, reply: FastifyReply) {
+        const pathParamsValidator = z.object({username: usernameValidator});
+        const pathParams = pathParamsValidator.parse(request.params);
+        const userService = new UserService(request.em);
+        const user = await userService.getUser(pathParams.username, request.user);
+        if (!user || (!user.profile.isPublic && user !== request.user))
+            throw new NotFoundAPIError("User");
+        if (user !== request.user)
+            throw new ForbiddenAPIError();
+
+        const bodyValidator = z.object({lessonId: z.number().min(0)});
+        const body = bodyValidator.parse(request.body);
+
+        const lessonService = new LessonService(request.em);
+        let lesson = await lessonService.getLesson(body.lessonId, request.user);
+        if (!lesson || (!lesson.course.isPublic && request?.user?.profile !== lesson.course.addedBy))
+            throw new ValidationAPIError({lesson: {message: "Not found"}});
+        if (!(request.user as User).profile.languagesLearning.contains(lesson.course.language))
+            throw new ValidationAPIError({lesson: {message: "not in a language the user is learning"}});
+        lesson = await lessonService.addLessonToUserLearning(lesson, request.user as User);
+        reply.send(lessonSerializer.serialize(lesson));
     }
 }
 
