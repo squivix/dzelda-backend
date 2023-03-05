@@ -2,7 +2,7 @@ import {z} from "zod";
 import {FastifyReply, FastifyRequest} from "fastify";
 import {ValidationAPIError} from "@/src/utils/errors/ValidationAPIError.js";
 import {languageCodeValidator} from "@/src/validators/languageValidators.js";
-import {vocabLevelValidator, vocabTextValidator} from "@/src/validators/vocabValidators.js";
+import {vocabLevelValidator, vocabNotesValidator, vocabTextValidator} from "@/src/validators/vocabValidators.js";
 import {LanguageService} from "@/src/services/LanguageService.js";
 import {VocabService} from "@/src/services/VocabService.js";
 import {vocabSerializer} from "@/src/schemas/response/serializers/VocabSerializer.js";
@@ -106,6 +106,32 @@ class VocabController {
         reply.send(vocabSerializer.serialize(mapping));
     }
 
+    async updateUserVocab(request: FastifyRequest, reply: FastifyReply) {
+        const pathParamsValidator = z.object({
+            username: usernameValidator,
+            vocabId: numericStringValidator
+        });
+        const pathParams = pathParamsValidator.parse(request.params);
+        const userService = new UserService(request.em);
+        const user = await userService.getUser(pathParams.username, request.user);
+        if (!user || (!user.profile.isPublic && user !== request.user))
+            throw new NotFoundAPIError("User");
+        if (user !== request.user)
+            throw new ForbiddenAPIError();
+
+        const bodyValidator = z.object({
+            level: vocabLevelValidator.optional(),
+            notes: vocabNotesValidator.optional()
+        });
+        const body = bodyValidator.parse(request.body);
+
+        const vocabService = new VocabService(request.em);
+        const mapping = await vocabService.getUserVocab(pathParams.vocabId, user);
+        if (!mapping)
+            throw new NotFoundAPIError("Vocab");
+        const updatedMapping = await vocabService.updateUserVocab(mapping, body);
+        reply.send(vocabSerializer.serialize(updatedMapping));
+    }
 }
 
 export const vocabController = new VocabController();

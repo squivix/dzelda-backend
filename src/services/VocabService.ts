@@ -70,4 +70,14 @@ export class VocabService {
         return mapping;
     }
 
+    async updateUserVocab(mapping: MapLearnerVocab, updatedUserVocabData: { level?: VocabLevel; notes?: string; }) {
+        if (updatedUserVocabData.level !== undefined)
+            mapping.level = updatedUserVocabData.level;
+        if (updatedUserVocabData.notes !== undefined)
+            mapping.notes = updatedUserVocabData.notes;
+
+        this.em.persist(mapping);
+        await this.em.flush();
+        return mapping;
+    }
 }
