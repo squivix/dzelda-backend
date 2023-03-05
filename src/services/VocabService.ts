@@ -60,4 +60,14 @@ export class VocabService {
         return mappings;
     }
 
+    async getUserVocab(vocabId: number, user: User) {
+        const mapping = await this.em.findOne(MapLearnerVocab, {
+            vocab: vocabId,
+            learner: {user: {username: user.username}}
+        }, {populate: ["vocab.meanings"]});
+        if (mapping)
+            await this.vocabRepo.annotateUserMeanings([mapping], user.profile.id);
+        return mapping;
+    }
+
 }

@@ -383,3 +383,100 @@ describe("GET users/:username/vocabs/", () => {
         });
     });
 });
+
+/**@link VocabController#getUserVocab*/
+describe("GET users/:username/vocabs/:vocabId/", () => {
+    const makeRequest = async (username: string | "me", vocabId: number | string, authToken?: string) => {
+        const options: InjectOptions = {
+            method: "GET",
+            url: `users/${username}/vocabs/${vocabId}/`,
+        };
+        return await fetchRequest(options, authToken);
+    };
+
+    describe("If the vocab exists and user is learning it return user vocab", () => {
+        test<LocalTestContext>("If username is me", async (context) => {
+            const user = await context.userFactory.createOne();
+            const session = await context.sessionFactory.createOne({user});
+            const language = await context.languageFactory.createOne({learners: user.profile});
+            const vocab = await context.vocabFactory.createOne({language, learners: user.profile});
+
+            const response = await makeRequest("me", vocab.id, session.token);
+            const mapping = await context.em.findOneOrFail(MapLearnerVocab, {learner: user.profile, vocab});
+            await context.vocabRepo.annotateUserMeanings([mapping], user.profile.id);
+
+            expect(response.statusCode).to.equal(200);
+            expect(response.json()).toEqual(vocabSerializer.serialize(mapping));
+        });
+        test<LocalTestContext>("If username is belongs to the current user", async (context) => {
+            const user = await context.userFactory.createOne();
+            const session = await context.sessionFactory.createOne({user});
+            const language = await context.languageFactory.createOne({learners: user.profile});
+            const vocab = await context.vocabFactory.createOne({language, learners: user.profile});
+
+            const response = await makeRequest(user.username, vocab.id, session.token);
+            const mapping = await context.em.findOneOrFail(MapLearnerVocab, {learner: user.profile, vocab});
+            await context.vocabRepo.annotateUserMeanings([mapping], user.profile.id);
+
+            expect(response.statusCode).to.equal(200);
+            expect(response.json()).toEqual(vocabSerializer.serialize(mapping));
+        });
+    });
+    test<LocalTestContext>(`If vocab does not exist return 404`, async (context) => {
+        const user = await context.userFactory.createOne();
+        const session = await context.sessionFactory.createOne({user});
+
+        const response = await makeRequest("me", faker.datatype.number({min: 100000}), session.token);
+
+        expect(response.statusCode).to.equal(404);
+    });
+    test<LocalTestContext>(`If user is not learning vocab return 404`, async (context) => {
+        const user = await context.userFactory.createOne();
+        const session = await context.sessionFactory.createOne({user});
+        const language = await context.languageFactory.createOne({learners: user.profile});
+        const vocab = await context.vocabFactory.createOne({language});
+
+        const response = await makeRequest("me", vocab.id, session.token);
+
+        expect(response.statusCode).to.equal(404);
+    });
+    test<LocalTestContext>("If user is not logged in return 401", async (context) => {
+        const user = await context.userFactory.createOne();
+        const language = await context.languageFactory.createOne({learners: user.profile});
+        const vocab = await context.vocabFactory.createOne({language, learners: user.profile});
+
+        const response = await makeRequest("me", vocab.id);
+
+        expect(response.statusCode).to.equal(401);
+    });
+    test<LocalTestContext>("If username does not exist return 404", async (context) => {
+        const user = await context.userFactory.createOne();
+        const session = await context.sessionFactory.createOne({user: user});
+        const language = await context.languageFactory.createOne({learners: user.profile});
+        const vocab = await context.vocabFactory.createOne({language, learners: user.profile});
+
+        const response = await makeRequest(faker.random.alphaNumeric(20), vocab.id, session.token);
+        expect(response.statusCode).to.equal(404);
+    });
+    test<LocalTestContext>(`If user exists and is not public and not authenticated as user return 404`, async (context) => {
+        const user = await context.userFactory.createOne();
+        const session = await context.sessionFactory.createOne({user: user});
+        const otherUser = await context.userFactory.createOne({profile: {isPublic: false}});
+        const language = await context.languageFactory.createOne({learners: user.profile});
+        const vocab = await context.vocabFactory.createOne({language, learners: otherUser.profile});
+
+        const response = await makeRequest(otherUser.username, vocab.id, session.token);
+        expect(response.statusCode).to.equal(404);
+    });
+    test<LocalTestContext>(`If username exists and is public and not authenticated as user return 403`, async (context) => {
+        const user = await context.userFactory.createOne();
+        const session = await context.sessionFactory.createOne({user: user});
+        const otherUser = await context.userFactory.createOne({profile: {isPublic: true}});
+        const language = await context.languageFactory.createOne({learners: user.profile});
+        const vocab = await context.vocabFactory.createOne({language, learners: otherUser.profile});
+
+        const response = await makeRequest(otherUser.username, vocab.id, session.token);
+        expect(response.statusCode).to.equal(403);
+    });
+
+});

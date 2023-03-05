@@ -11,7 +11,6 @@ import {usernameValidator} from "@/src/validators/userValidator.js";
 import {UserService} from "@/src/services/UserService.js";
 import {NotFoundAPIError} from "@/src/utils/errors/NotFoundAPIError.js";
 import {ForbiddenAPIError} from "@/src/utils/errors/ForbiddenAPIError.js";
-import {VocabLevel} from "@/src/models/enums/VocabLevel.js";
 import {User} from "@/src/models/entities/auth/User.js";
 import {numericStringValidator} from "@/src/validators/utilValidators.js";
 
@@ -83,8 +82,28 @@ class VocabController {
 
         const vocabService = new VocabService(request.em);
 
-        const vocabs = await vocabService.getUserVocabs(queryParams, request.user as User);
+        const vocabs = await vocabService.getUserVocabs(queryParams, user);
         reply.send(vocabSerializer.serializeList(vocabs));
+    }
+
+    async getUserVocab(request: FastifyRequest, reply: FastifyReply) {
+        const pathParamsValidator = z.object({
+            username: usernameValidator,
+            vocabId: numericStringValidator
+        });
+        const pathParams = pathParamsValidator.parse(request.params);
+        const userService = new UserService(request.em);
+        const user = await userService.getUser(pathParams.username, request.user);
+        if (!user || (!user.profile.isPublic && user !== request.user))
+            throw new NotFoundAPIError("User");
+        if (user !== request.user)
+            throw new ForbiddenAPIError();
+
+        const vocabService = new VocabService(request.em);
+        const mapping = await vocabService.getUserVocab(pathParams.vocabId, user);
+        if (!mapping)
+            throw new NotFoundAPIError("Vocab");
+        reply.send(vocabSerializer.serialize(mapping));
     }
 
 }
