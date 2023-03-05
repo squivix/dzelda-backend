@@ -8,7 +8,7 @@ export enum VocabLevel {
     LEVEL_3 = 3,
     LEVEL_4 = 4,
     LEARNED = 5,
-    KNOWN = 5,
+    KNOWN = 6,
 }
 
 export function defaultVocabsByLevel() {

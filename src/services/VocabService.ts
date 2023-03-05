@@ -1,9 +1,10 @@
-import {EntityManager} from "@mikro-orm/core";
+import {EntityManager, FilterQuery} from "@mikro-orm/core";
 import {Language} from "@/src/models/entities/Language.js";
 import {Vocab} from "@/src/models/entities/Vocab.js";
 import {AnonymousUser, User} from "@/src/models/entities/auth/User.js";
 import {MapLearnerVocab} from "@/src/models/entities/MapLearnerVocab.js";
 import {VocabRepo} from "@/src/models/repos/VocabRepo.js";
+import {VocabLevel} from "@/src/models/enums/VocabLevel.js";
 
 export class VocabService {
     em: EntityManager;
@@ -16,14 +17,8 @@ export class VocabService {
     }
 
     async getVocabs(filters: {}, user: User | AnonymousUser | null) {
-        let vocabs;
-        if (user && !(user instanceof AnonymousUser)) {
-            vocabs = await this.em.find(MapLearnerVocab, {}, {populate: ["vocab.meanings"]});
-            await this.vocabRepo.annotateUserMeanings(vocabs, user.id);
-        } else {
-            vocabs = await this.vocabRepo.find(filters, {limit: 100, populate: ["meanings"]});
-        }
-        return vocabs;
+        const dbFilters: FilterQuery<Vocab> = {$and: []};
+        return await this.vocabRepo.find(dbFilters, {populate: ["meanings"]});
     }
 
     async createVocab(vocabData: { text: string; language: Language; isPhrase: boolean }) {
@@ -47,6 +42,22 @@ export class VocabService {
             text: vocabData.text,
             language: vocabData.language
         }, {populate: ["meanings"]});
+    }
+
+    async getUserVocabs(filters: { languageCode?: string, level?: VocabLevel, searchQuery?: string }, user: User) {
+        const dbFilters: FilterQuery<MapLearnerVocab> = {$and: []};
+        dbFilters.$and!.push({learner: user.profile});
+
+        if (filters.languageCode !== undefined)
+            dbFilters.$and!.push({vocab: {language: {code: filters.languageCode}}});
+        if (filters.level !== undefined)
+            dbFilters.$and!.push({level: filters.level});
+        if (filters.searchQuery !== undefined)
+            dbFilters.$and!.push({vocab: {text: {$ilike: `%${filters.searchQuery}%`}}});
+
+        const mappings = await this.em.find(MapLearnerVocab, dbFilters, {populate: ["vocab", "vocab.language", "vocab.meanings"]});
+        await this.vocabRepo.annotateUserMeanings(mappings, user.profile.id);
+        return mappings;
     }
 
 }

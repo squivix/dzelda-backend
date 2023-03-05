@@ -3,19 +3,22 @@ import {UserFactory} from "@/src/seeders/factories/UserFactory.js";
 import {ProfileFactory} from "@/src/seeders/factories/ProfileFactory.js";
 import {SessionFactory} from "@/src/seeders/factories/SessionFactory.js";
 import {LanguageFactory} from "@/src/seeders/factories/LanguageFactory.js";
-import {EntityRepository} from "@mikro-orm/core";
 import {Vocab} from "@/src/models/entities/Vocab.js";
 import {orm} from "@/src/server.js";
 import {InjectOptions} from "light-my-request";
-import {fetchRequest} from "@/tests/api/utils.js";
+import {buildQueryString, fetchRequest} from "@/tests/api/utils.js";
 import {VocabFactory} from "@/src/seeders/factories/VocabFactory.js";
 import {vocabSerializer} from "@/src/schemas/response/serializers/VocabSerializer.js";
 import {faker} from "@faker-js/faker";
+import {MapLearnerVocab} from "@/src/models/entities/MapLearnerVocab.js";
+import {VocabRepo} from "@/src/models/repos/VocabRepo.js";
+import {randomCase, randomEnum} from "@/tests/utils.js";
+import {VocabLevel} from "@/src/models/enums/VocabLevel.js";
 
 interface LocalTestContext extends TestContext {
     languageFactory: LanguageFactory;
     vocabFactory: VocabFactory;
-    vocabRepo: EntityRepository<Vocab>;
+    vocabRepo: VocabRepo;
 }
 
 beforeEach<LocalTestContext>((context) => {
@@ -214,5 +217,169 @@ describe("POST vocabs/", () => {
         expect(response.statusCode).toEqual(200);
         expect(response.json()).toEqual(vocabSerializer.serialize(oldVocab));
     });
+});
 
+/**@link VocabController#getUserVocabs*/
+describe("GET users/:username/vocabs/", () => {
+    const makeRequest = async (username: string | "me", queryParams: object = {}, authToken?: string) => {
+        const options: InjectOptions = {
+            method: "GET",
+            url: `users/${username}/vocabs/${buildQueryString(queryParams)}`,
+        };
+        return await fetchRequest(options, authToken);
+    };
+
+    describe("If user is logged in and there are no filters return vocabs the user is learning", () => {
+        test<LocalTestContext>("If username is me", async (context) => {
+            const user = await context.userFactory.createOne();
+            const session = await context.sessionFactory.createOne({user: user});
+            const language = await context.languageFactory.createOne();
+            await context.vocabFactory.create(10, {language, learners: user.profile});
+            await context.vocabFactory.create(10, {language});
+
+            const response = await makeRequest("me", {}, session.token);
+
+            const mappings = await context.em.find(MapLearnerVocab, {learner: user.profile}, {populate: ["vocab", "vocab.language", "vocab.meanings"]});
+            await context.vocabRepo.annotateUserMeanings(mappings, user.profile.id);
+
+            expect(response.statusCode).to.equal(200);
+            expect(response.json()).toEqual(vocabSerializer.serializeList(mappings));
+        });
+        test<LocalTestContext>("If username belongs to the currently logged in user", async (context) => {
+            const user = await context.userFactory.createOne();
+            const session = await context.sessionFactory.createOne({user: user});
+            const language = await context.languageFactory.createOne();
+            await context.vocabFactory.create(10, {language, learners: user.profile});
+            await context.vocabFactory.create(10, {language});
+
+            const response = await makeRequest(user.username, {}, session.token);
+
+            const mappings = await context.em.find(MapLearnerVocab, {learner: user.profile}, {populate: ["vocab", "vocab.language", "vocab.meanings"]});
+            await context.vocabRepo.annotateUserMeanings(mappings, user.profile.id);
+
+            expect(response.statusCode).to.equal(200);
+            expect(response.json()).toEqual(vocabSerializer.serializeList(mappings));
+        });
+    });
+    describe("test languageCode filter", () => {
+        test<LocalTestContext>("If language filter is valid and language exists only return vocabs in that language the user is learning", async (context) => {
+            const user = await context.userFactory.createOne();
+            const session = await context.sessionFactory.createOne({user: user});
+            const language1 = await context.languageFactory.createOne();
+            const language2 = await context.languageFactory.createOne();
+            await context.vocabFactory.create(10, {language: language1, learners: user.profile});
+            await context.vocabFactory.create(10, {language: language2, learners: user.profile});
+            await context.vocabFactory.create(5, {language: language1});
+            await context.vocabFactory.create(5, {language: language2});
+
+            const response = await makeRequest("me", {languageCode: language1.code}, session.token);
+
+            const mappings = await context.em.find(MapLearnerVocab, {
+                learner: user.profile,
+                vocab: {language: language1}
+            }, {populate: ["vocab", "vocab.language", "vocab.meanings"]});
+            await context.vocabRepo.annotateUserMeanings(mappings, user.profile.id);
+
+            expect(response.statusCode).to.equal(200);
+            expect(response.json()).toEqual(vocabSerializer.serializeList(mappings));
+        });
+        test<LocalTestContext>("If language does not exist return empty vocab list", async (context) => {
+            const user = await context.userFactory.createOne();
+            const session = await context.sessionFactory.createOne({user: user});
+            const language = await context.languageFactory.makeOne();
+
+            const response = await makeRequest("me", {languageCode: language.code}, session.token);
+
+            expect(response.statusCode).to.equal(200);
+            expect(response.json()).toEqual([]);
+        });
+        test<LocalTestContext>("If language filter is invalid return 400", async (context) => {
+            const user = await context.userFactory.createOne();
+            const session = await context.sessionFactory.createOne({user: user});
+
+            const response = await makeRequest("me", {languageCode: 12345}, session.token);
+
+            expect(response.statusCode).to.equal(400);
+        });
+    });
+    describe("test level filter", () => {
+        test<LocalTestContext>("If level filter is valid only return vocabs the user is learning with that level ", async (context) => {
+            const user = await context.userFactory.createOne();
+            const session = await context.sessionFactory.createOne({user: user});
+            const language = await context.languageFactory.createOne();
+            const level = randomEnum(VocabLevel);
+
+            (await context.vocabFactory.create(5, {language})).forEach(v => context.em.create(MapLearnerVocab, {
+                learner: user.profile,
+                vocab: v,
+                level: level
+            }));
+            await context.vocabFactory.create(5, {language, learners: user.profile});
+            await context.em.flush();
+
+            const response = await makeRequest("me", {level: level}, session.token);
+
+            const mappings = await context.em.find(MapLearnerVocab, {
+                learner: user.profile,
+                level
+            }, {populate: ["vocab", "vocab.language", "vocab.meanings"]});
+            await context.vocabRepo.annotateUserMeanings(mappings, user.profile.id);
+
+            expect(response.statusCode).to.equal(200);
+            expect(response.json()).toEqual(vocabSerializer.serializeList(mappings));
+        });
+        test<LocalTestContext>("If language filter is invalid return 400", async (context) => {
+            const user = await context.userFactory.createOne();
+            const session = await context.sessionFactory.createOne({user: user});
+
+            const response = await makeRequest("me", {level: 7}, session.token);
+
+            expect(response.statusCode).to.equal(400);
+        });
+    });
+    describe("test searchQuery filter", () => {
+        test<LocalTestContext>("If searchQuery is valid return vocabs with query in text", async (context) => {
+            const user = await context.userFactory.createOne();
+            const session = await context.sessionFactory.createOne({user: user});
+            const language = await context.languageFactory.createOne();
+            const searchQuery = "search query";
+            const vocabs: Vocab[] = [];
+            for (let i = 0; i < 5; i++) {
+                vocabs.push(context.vocabFactory.makeOne({
+                    language: language,
+                    text: `text ${randomCase(searchQuery)} ${faker.random.alphaNumeric(10)}`,
+                    learners: user.profile
+                }));
+            }
+            await context.em.persistAndFlush(vocabs);
+            await context.vocabFactory.create(5, {language: language, learners: user.profile});
+
+            const response = await makeRequest("me", {searchQuery: searchQuery}, session.token);
+
+            const mappings = await context.em.find(MapLearnerVocab, {learner: user.profile, vocab: vocabs},
+                {populate: ["vocab", "vocab.language", "vocab.meanings"]});
+            await context.vocabRepo.annotateUserMeanings(mappings, user.profile.id);
+            expect(response.statusCode).to.equal(200);
+            expect(response.json()).toEqual(vocabSerializer.serializeList(mappings));
+        });
+        test<LocalTestContext>("If searchQuery is invalid return 400", async (context) => {
+            const user = await context.userFactory.createOne();
+            const session = await context.sessionFactory.createOne({user: user});
+
+            const response = await makeRequest("me", {searchQuery: faker.random.alpha({count: 300})}, session.token);
+
+            expect(response.statusCode).to.equal(400);
+        });
+        test<LocalTestContext>("If no vocabs match search query return empty list", async (context) => {
+            const user = await context.userFactory.createOne();
+            const session = await context.sessionFactory.createOne({user: user});
+            const language = await context.languageFactory.createOne();
+            await context.vocabFactory.create(5, {language: language, learners: user.profile});
+
+            const response = await makeRequest("me", {searchQuery: faker.random.alpha({count: 200})}, session.token);
+
+            expect(response.statusCode).to.equal(200);
+            expect(response.json()).toEqual([]);
+        });
+    });
 });

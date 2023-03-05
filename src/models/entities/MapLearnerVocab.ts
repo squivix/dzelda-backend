@@ -20,7 +20,7 @@ export class MapLearnerVocab extends CustomBaseEntity {
     @Property({type: types.string, default: ""})
     notes!: string;
 
-    [OptionalProps]?: "notes";
+    [OptionalProps]?: "level" | "notes";
 
     @Property({persist: false, type: () => Meaning})
     userMeanings?: Meaning[];

@@ -4,17 +4,35 @@ export function truncateDb() {
     cp.execSync(`${process.env.PWD}/scripts/truncate-test-db.sh`);
 }
 
-//from https://stackoverflow.com/a/55699349/14200676
-export function randomEnum(enumeration: any) {
-    const values = Object.keys(enumeration);
-    const enumKey = values[Math.floor(Math.random() * values.length)];
-    return enumeration[enumKey];
+
+function randomNumericEnum<T extends Record<string, any>>(e: T): number {
+    const values = Object.values(e);
+    const numericValues = values.filter((value) => typeof value === "number");
+    const randomIndex = Math.floor(Math.random() * numericValues.length);
+    return numericValues[randomIndex];
 }
 
+function randomNonNumericEnum<T extends Record<string, any>>(e: T): string {
+    const values = Object.values(e);
+    const randomIndex = Math.floor(Math.random() * values.length);
+    return values[randomIndex];
+}
+
+// TypeScript's implementation of numeric enums makes reliably detecting enum type or picking a random enum value hard :(
+export function randomEnum<T extends Record<string, number | string>>(e: T): T[keyof T] {
+    const values = Object.values(e);
+    const numericCount = values.filter((value) => typeof value === "number").length;
+    if (numericCount === values.length / 2)
+        return randomNumericEnum(e) as T[keyof T];
+    else
+        return randomNonNumericEnum(e) as T[keyof T];
+}
+
+
 export function randomCase(val: string) {
-    return val.toLowerCase().split('').map(function (c) {
+    return val.toLowerCase().split("").map(function (c) {
         return Math.random() < .5 ? c : c.toUpperCase();
-    }).join('');
+    }).join("");
 }
 
 //from https://stackoverflow.com/a/2450976/14200676
@@ -35,4 +53,4 @@ export function shuffleArray<T>(array: T[]) {
     return array;
 }
 
-export const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
+export const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));

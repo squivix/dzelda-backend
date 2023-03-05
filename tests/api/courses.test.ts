@@ -163,8 +163,7 @@ describe("GET courses/", function () {
             });
             expect(response.statusCode).to.equal(200);
             expect(response.json()).toEqual(courseSerializer.serializeList(courses));
-        })
-        ;
+        });
         test<LocalTestContext>("If searchQuery is invalid return 400", async (context) => {
             await context.courseFactory.create(10, {language: await context.languageFactory.createOne()});
 
@@ -184,7 +183,7 @@ describe("GET courses/", function () {
     describe("test level filter", () => {
         test<LocalTestContext>("If the level is valid return courses in that level", async (context) => {
             const level = randomEnum(LanguageLevel);
-            const language = await context.languageFactory.createOne()
+            const language = await context.languageFactory.createOne();
             await context.courseFactory.create(5, {level: level, isPublic: true, language: language});
             await context.courseFactory.create(5, {isPublic: true, language: language});
 
@@ -1277,10 +1276,10 @@ describe("GET users/{username}/courses/", () => {
             });
             let lessons: Lesson[] = [];
             for (let i = 0; i < courses.length; i++)
-                lessons.push(...await context.lessonFactory.create(3, {course: courses[i]}))
+                lessons.push(...await context.lessonFactory.create(3, {course: courses[i]}));
             lessons = shuffleArray(lessons);
             for (let i = 0; i < faker.datatype.number({min: 1, max: lessons.length}); i++)
-                await context.em.create(MapLearnerLesson, {learner: user.profile, lesson: lessons[i]})
+                await context.em.create(MapLearnerLesson, {learner: user.profile, lesson: lessons[i]});
             await context.em.flush();
 
             const response = await makeRequest("me", {}, session.token);
@@ -1301,10 +1300,10 @@ describe("GET users/{username}/courses/", () => {
             });
             let lessons: Lesson[] = [];
             for (let i = 0; i < courses.length; i++)
-                lessons.push(...await context.lessonFactory.create(3, {course: courses[i]}))
+                lessons.push(...await context.lessonFactory.create(3, {course: courses[i]}));
             lessons = shuffleArray(lessons);
             for (let i = 0; i < faker.datatype.number({min: 1, max: lessons.length}); i++)
-                await context.em.create(MapLearnerLesson, {learner: user.profile, lesson: lessons[i]})
+                await context.em.create(MapLearnerLesson, {learner: user.profile, lesson: lessons[i]});
             await context.em.flush();
 
             const response = await makeRequest(user.username, {}, session.token);
@@ -1315,7 +1314,7 @@ describe("GET users/{username}/courses/", () => {
             expect(response.statusCode).to.equal(200);
             expect(response.json()).toEqual(courseSerializer.serializeList(userCourses));
         });
-    })
+    });
     test<LocalTestContext>("If user is not logged in return 401", async (context) => {
         const response = await makeRequest("me");
         expect(response.statusCode).to.equal(401);
@@ -1348,17 +1347,17 @@ describe("GET users/{username}/courses/", () => {
     describe("test languageCode filter", () => {
         test<LocalTestContext>("If language filter is valid and language exists only return courses in that language with a lesson the user is learning", async (context) => {
             const user = await context.userFactory.createOne();
-            const session = await context.sessionFactory.createOne({user: user})
+            const session = await context.sessionFactory.createOne({user: user});
             const language1 = await context.languageFactory.createOne();
             const language2 = await context.languageFactory.createOne();
             const courses = [...await context.courseFactory.create(5, {language: language1, lessons: [], isPublic: true}),
-                ...await context.courseFactory.create(5, {language: language2, lessons: [], isPublic: true})]
+                ...await context.courseFactory.create(5, {language: language2, lessons: [], isPublic: true})];
             let lessons: Lesson[] = [];
             for (let i = 0; i < courses.length; i++)
-                lessons.push(...await context.lessonFactory.create(3, {course: courses[i]}))
+                lessons.push(...await context.lessonFactory.create(3, {course: courses[i]}));
             lessons = shuffleArray(lessons);
             for (let i = 0; i < faker.datatype.number({min: 1, max: lessons.length}); i++)
-                await context.em.create(MapLearnerLesson, {learner: user.profile, lesson: lessons[i]})
+                await context.em.create(MapLearnerLesson, {learner: user.profile, lesson: lessons[i]});
             await context.em.flush();
 
             const response = await makeRequest("me", {languageCode: language1.code}, session.token);
@@ -1381,10 +1380,10 @@ describe("GET users/{username}/courses/", () => {
             });
             let lessons: Lesson[] = [];
             for (let i = 0; i < courses.length; i++)
-                lessons.push(...await context.lessonFactory.create(3, {course: courses[i]}))
+                lessons.push(...await context.lessonFactory.create(3, {course: courses[i]}));
             lessons = shuffleArray(lessons);
             for (let i = 0; i < faker.datatype.number({min: 1, max: lessons.length}); i++)
-                await context.em.create(MapLearnerLesson, {learner: user.profile, lesson: lessons[i]})
+                await context.em.create(MapLearnerLesson, {learner: user.profile, lesson: lessons[i]});
             await context.em.flush();
 
             const response = await makeRequest("me", {languageCode: faker.random.alpha({count: 4})}, session.token);
@@ -1404,18 +1403,18 @@ describe("GET users/{username}/courses/", () => {
     describe("test addedBy filter", () => {
         test<LocalTestContext>("If addedBy filter is valid and user exists only return public courses added by that user with a lesson the logged in user is learning", async (context) => {
             const user = await context.userFactory.createOne();
-            const session = await context.sessionFactory.createOne({user: user})
+            const session = await context.sessionFactory.createOne({user: user});
             const user1 = await context.userFactory.createOne();
             const user2 = await context.userFactory.createOne();
             const language = await context.languageFactory.createOne();
             const courses = [...await context.courseFactory.create(5, {addedBy: user1.profile, language, lessons: [], isPublic: true}),
-                ...await context.courseFactory.create(5, {addedBy: user2.profile, language, lessons: [], isPublic: true})]
+                ...await context.courseFactory.create(5, {addedBy: user2.profile, language, lessons: [], isPublic: true})];
             let lessons: Lesson[] = [];
             for (let i = 0; i < courses.length; i++)
-                lessons.push(...await context.lessonFactory.create(3, {course: courses[i]}))
+                lessons.push(...await context.lessonFactory.create(3, {course: courses[i]}));
             lessons = shuffleArray(lessons);
             for (let i = 0; i < faker.datatype.number({min: 1, max: lessons.length}); i++)
-                await context.em.create(MapLearnerLesson, {learner: user.profile, lesson: lessons[i]})
+                await context.em.create(MapLearnerLesson, {learner: user.profile, lesson: lessons[i]});
             await context.em.flush();
 
             const response = await makeRequest("me", {addedBy: user1.username}, session.token);
@@ -1431,16 +1430,16 @@ describe("GET users/{username}/courses/", () => {
         test<LocalTestContext>("If addedBy is me return courses added by the logged in user with a lesson the they are learning", async (context) => {
             const user = await context.userFactory.createOne();
             const otherUser = await context.userFactory.createOne();
-            const session = await context.sessionFactory.createOne({user: user})
+            const session = await context.sessionFactory.createOne({user: user});
             const language = await context.languageFactory.createOne();
             const courses = [...await context.courseFactory.create(5, {addedBy: user.profile, language, lessons: [], isPublic: true}),
-                ...await context.courseFactory.create(5, {addedBy: otherUser.profile, language, lessons: [], isPublic: true})]
+                ...await context.courseFactory.create(5, {addedBy: otherUser.profile, language, lessons: [], isPublic: true})];
             let lessons: Lesson[] = [];
             for (let i = 0; i < courses.length; i++)
-                lessons.push(...await context.lessonFactory.create(3, {course: courses[i]}))
+                lessons.push(...await context.lessonFactory.create(3, {course: courses[i]}));
             lessons = shuffleArray(lessons);
             for (let i = 0; i < faker.datatype.number({min: 1, max: lessons.length}); i++)
-                await context.em.create(MapLearnerLesson, {learner: user.profile, lesson: lessons[i]})
+                await context.em.create(MapLearnerLesson, {learner: user.profile, lesson: lessons[i]});
             await context.em.flush();
 
             const response = await makeRequest("me", {addedBy: "me"}, session.token);
@@ -1456,16 +1455,16 @@ describe("GET users/{username}/courses/", () => {
         test<LocalTestContext>("If user does not exist return empty course list", async (context) => {
             const user = await context.userFactory.createOne();
             const otherUser = await context.userFactory.createOne();
-            const session = await context.sessionFactory.createOne({user: user})
+            const session = await context.sessionFactory.createOne({user: user});
             const language = await context.languageFactory.createOne();
             const courses = [...await context.courseFactory.create(5, {addedBy: user.profile, language, lessons: [], isPublic: true}),
-                ...await context.courseFactory.create(5, {addedBy: otherUser.profile, language, lessons: [], isPublic: true})]
+                ...await context.courseFactory.create(5, {addedBy: otherUser.profile, language, lessons: [], isPublic: true})];
             let lessons: Lesson[] = [];
             for (let i = 0; i < courses.length; i++)
-                lessons.push(...await context.lessonFactory.create(3, {course: courses[i]}))
+                lessons.push(...await context.lessonFactory.create(3, {course: courses[i]}));
             lessons = shuffleArray(lessons);
             for (let i = 0; i < faker.datatype.number({min: 1, max: lessons.length}); i++)
-                await context.em.create(MapLearnerLesson, {learner: user.profile, lesson: lessons[i]})
+                await context.em.create(MapLearnerLesson, {learner: user.profile, lesson: lessons[i]});
             await context.em.flush();
 
             const response = await makeRequest("me", {addedBy: faker.random.alpha({count: 20})}, session.token);
@@ -1475,7 +1474,7 @@ describe("GET users/{username}/courses/", () => {
         });
         test<LocalTestContext>("If addedBy filter is invalid return 400", async (context) => {
             const user = await context.userFactory.createOne();
-            const session = await context.sessionFactory.createOne({user: user})
+            const session = await context.sessionFactory.createOne({user: user});
             await context.courseFactory.create(10, {language: await context.languageFactory.createOne()});
 
             const response = await makeRequest(user.username, {addedBy: "!@#%#%^#^!"}, session.token);
@@ -1486,7 +1485,7 @@ describe("GET users/{username}/courses/", () => {
     describe("test searchQuery filter", () => {
         test<LocalTestContext>("If searchQuery is valid return courses with query in title or description with a lesson the user is learning", async (context) => {
             const user = await context.userFactory.createOne();
-            const session = await context.sessionFactory.createOne({user: user})
+            const session = await context.sessionFactory.createOne({user: user});
             const language = await context.languageFactory.createOne();
             const searchQuery = "search query";
             const courses: Course[] = [];
@@ -1507,10 +1506,10 @@ describe("GET users/{username}/courses/", () => {
             courses.push(...await context.courseFactory.create(5, {language, isPublic: true}));
             let lessons: Lesson[] = [];
             for (let i = 0; i < courses.length; i++)
-                lessons.push(...await context.lessonFactory.create(3, {course: courses[i]}))
+                lessons.push(...await context.lessonFactory.create(3, {course: courses[i]}));
             lessons = shuffleArray(lessons);
             for (let i = 0; i < faker.datatype.number({min: 1, max: lessons.length}); i++)
-                await context.em.create(MapLearnerLesson, {learner: user.profile, lesson: lessons[i]})
+                await context.em.create(MapLearnerLesson, {learner: user.profile, lesson: lessons[i]});
             await context.em.flush();
 
             const response = await makeRequest(user.username, {searchQuery: searchQuery}, session.token);
@@ -1523,10 +1522,10 @@ describe("GET users/{username}/courses/", () => {
             await context.courseRepo.annotateVocabsByLevel(userCourses, user.id);
             expect(response.statusCode).to.equal(200);
             expect(response.json()).toEqual(courseSerializer.serializeList(userCourses));
-        })
+        });
         test<LocalTestContext>("If searchQuery is invalid return 400", async (context) => {
             const user = await context.userFactory.createOne();
-            const session = await context.sessionFactory.createOne({user: user})
+            const session = await context.sessionFactory.createOne({user: user});
             await context.courseFactory.create(10, {language: await context.languageFactory.createOne()});
 
             const response = await makeRequest(user.username, {searchQuery: faker.random.alpha({count: 300})}, session.token);
@@ -1535,15 +1534,15 @@ describe("GET users/{username}/courses/", () => {
         });
         test<LocalTestContext>("If no courses match search query return empty list", async (context) => {
             const user = await context.userFactory.createOne();
-            const session = await context.sessionFactory.createOne({user: user})
+            const session = await context.sessionFactory.createOne({user: user});
             const language = await context.languageFactory.createOne();
             const courses = await context.courseFactory.create(10, {language, isPublic: true});
             let lessons: Lesson[] = [];
             for (let i = 0; i < courses.length; i++)
-                lessons.push(...await context.lessonFactory.create(3, {course: courses[i]}))
+                lessons.push(...await context.lessonFactory.create(3, {course: courses[i]}));
             lessons = shuffleArray(lessons);
             for (let i = 0; i < faker.datatype.number({min: 1, max: lessons.length}); i++)
-                await context.em.create(MapLearnerLesson, {learner: user.profile, lesson: lessons[i]})
+                await context.em.create(MapLearnerLesson, {learner: user.profile, lesson: lessons[i]});
             await context.em.flush();
 
             const response = await makeRequest(user.username, {searchQuery: faker.random.alpha({count: 200})}, session.token);
@@ -1555,17 +1554,17 @@ describe("GET users/{username}/courses/", () => {
     describe("test level filter", () => {
         test<LocalTestContext>("If the level is valid return courses in that level with a lesson the user is learning", async (context) => {
             const user = await context.userFactory.createOne();
-            const session = await context.sessionFactory.createOne({user: user})
+            const session = await context.sessionFactory.createOne({user: user});
             const level = randomEnum(LanguageLevel);
             const language = await context.languageFactory.createOne();
             const courses = [...await context.courseFactory.create(5, {level: level, isPublic: true, language: language}),
-                ...await context.courseFactory.create(5, {isPublic: true, language: language})]
+                ...await context.courseFactory.create(5, {isPublic: true, language: language})];
             let lessons: Lesson[] = [];
             for (let i = 0; i < courses.length; i++)
-                lessons.push(...await context.lessonFactory.create(3, {course: courses[i]}))
+                lessons.push(...await context.lessonFactory.create(3, {course: courses[i]}));
             lessons = shuffleArray(lessons);
             for (let i = 0; i < faker.datatype.number({min: 1, max: lessons.length}); i++)
-                await context.em.create(MapLearnerLesson, {learner: user.profile, lesson: lessons[i]})
+                await context.em.create(MapLearnerLesson, {learner: user.profile, lesson: lessons[i]});
             await context.em.flush();
 
             const response = await makeRequest("me", {level: level}, session.token);
@@ -1584,12 +1583,12 @@ describe("GET users/{username}/courses/", () => {
         });
         test<LocalTestContext>("If the level is invalid return 400", async (context) => {
             const user = await context.userFactory.createOne();
-            const session = await context.sessionFactory.createOne({user: user})
+            const session = await context.sessionFactory.createOne({user: user});
             await context.courseFactory.create(10, {isPublic: true, language: await context.languageFactory.createOne()});
 
-            const response = await makeRequest(user.username,{level: "hard"}, session.token);
+            const response = await makeRequest(user.username, {level: "hard"}, session.token);
 
             expect(response.statusCode).to.equal(400);
         });
     });
-})
+});

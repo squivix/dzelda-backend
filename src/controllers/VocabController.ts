@@ -2,11 +2,18 @@ import {z} from "zod";
 import {FastifyReply, FastifyRequest} from "fastify";
 import {ValidationAPIError} from "@/src/utils/errors/ValidationAPIError.js";
 import {languageCodeValidator} from "@/src/validators/languageValidators.js";
-import {vocabTextValidator} from "@/src/validators/vocabValidators.js";
+import {vocabLevelValidator, vocabTextValidator} from "@/src/validators/vocabValidators.js";
 import {LanguageService} from "@/src/services/LanguageService.js";
 import {VocabService} from "@/src/services/VocabService.js";
 import {vocabSerializer} from "@/src/schemas/response/serializers/VocabSerializer.js";
 import {parsers} from "@/src/utils/parsers/parsers.js";
+import {usernameValidator} from "@/src/validators/userValidator.js";
+import {UserService} from "@/src/services/UserService.js";
+import {NotFoundAPIError} from "@/src/utils/errors/NotFoundAPIError.js";
+import {ForbiddenAPIError} from "@/src/utils/errors/ForbiddenAPIError.js";
+import {VocabLevel} from "@/src/models/enums/VocabLevel.js";
+import {User} from "@/src/models/entities/auth/User.js";
+import {numericStringValidator} from "@/src/validators/utilValidators.js";
 
 class VocabController {
     async createVocab(request: FastifyRequest, reply: FastifyReply) {
@@ -48,12 +55,35 @@ class VocabController {
     }
 
     async getVocabs(request: FastifyRequest, reply: FastifyReply) {
-        const validator = z.object({});
+        const queryParamsValidator = z.object({});
 
-        const queryParams = validator.parse(request.query);
+        const queryParams = queryParamsValidator.parse(request.query);
         const vocabService = new VocabService(request.em);
 
         const vocabs = await vocabService.getVocabs(queryParams, request.user);
+        reply.send(vocabSerializer.serializeList(vocabs));
+    }
+
+    async getUserVocabs(request: FastifyRequest, reply: FastifyReply) {
+        const pathParamsValidator = z.object({username: usernameValidator});
+        const pathParams = pathParamsValidator.parse(request.params);
+        const userService = new UserService(request.em);
+        const user = await userService.getUser(pathParams.username, request.user);
+        if (!user || (!user.profile.isPublic && user !== request.user))
+            throw new NotFoundAPIError("User");
+        if (user !== request.user)
+            throw new ForbiddenAPIError();
+
+        const queryParamsValidator = z.object({
+            languageCode: languageCodeValidator.optional(),
+            searchQuery: z.string().min(1).max(256).optional(),
+            level: vocabLevelValidator.optional()
+        });
+        const queryParams = queryParamsValidator.parse(request.query);
+
+        const vocabService = new VocabService(request.em);
+
+        const vocabs = await vocabService.getUserVocabs(queryParams, request.user as User);
         reply.send(vocabSerializer.serializeList(vocabs));
     }
 

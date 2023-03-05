@@ -16,8 +16,8 @@ FROM (SELECT subq.vocab_id, json_agg(subq.*) AS user_meanings
             WHERE mlm.learner_id = ${learnerId}
               AND meaning.vocab_id IN (${vocabMappings.map(m=>m.vocab.id).join(",")})) subq
       GROUP BY subq.vocab_id) outq`;
-        const userMeaningsByVocab = (await this.em.execute(query))[0].user_meanings_by_vocab;
-        vocabMappings.forEach(vocabMapping => vocabMapping.userMeanings = userMeaningsByVocab[vocabMapping.vocab.id]);
+        const userMeaningsByVocab = (await this.em.execute(query))[0].user_meanings_by_vocab ?? {};
+        vocabMappings.forEach(vocabMapping => vocabMapping.userMeanings = userMeaningsByVocab[vocabMapping.vocab.id] ?? []);
     }
 
 }

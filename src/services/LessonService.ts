@@ -124,7 +124,6 @@ export class LessonService {
         return lesson;
     }
 
-
     async getUserLessonsLearning(filters: { languageCode?: string, addedBy?: string, searchQuery?: string, level?: LanguageLevel, hasAudio?: boolean }, user: User) {
         return this.getLessons({...filters, isLearning: true}, user);
     }
