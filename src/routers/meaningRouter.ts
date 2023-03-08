@@ -4,5 +4,6 @@ import {requiresAuth} from "@/src/middlewares/authMiddleware.js";
 
 export const meaningRouter: FastifyPluginCallback = function (fastify, options, done) {
     fastify.post(`/meanings/`, {preHandler: requiresAuth, handler: meaningController.createMeaning});
+    fastify.get(`/users/:username/meanings/`, {preHandler: requiresAuth, handler: meaningController.getUserMeanings});
     done();
 };

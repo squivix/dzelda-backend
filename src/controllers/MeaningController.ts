@@ -1,13 +1,19 @@
 import {FastifyReply, FastifyRequest} from "fastify";
 import {z} from "zod";
 import {languageCodeValidator} from "@/src/validators/languageValidators.js";
-import {vocabTextValidator} from "@/src/validators/vocabValidators.js";
+import {vocabLevelValidator, vocabTextValidator} from "@/src/validators/vocabValidators.js";
 import {LanguageService} from "@/src/services/LanguageService.js";
 import {ValidationAPIError} from "@/src/utils/errors/ValidationAPIError.js";
 import {VocabService} from "@/src/services/VocabService.js";
 import {MeaningService} from "@/src/services/MeaningService.js";
 import {meaningSerializer} from "@/src/schemas/response/serializers/MeaningSerializer.js";
 import {User} from "@/src/models/entities/auth/User.js";
+import {usernameValidator} from "@/src/validators/userValidator.js";
+import {UserService} from "@/src/services/UserService.js";
+import {NotFoundAPIError} from "@/src/utils/errors/NotFoundAPIError.js";
+import {ForbiddenAPIError} from "@/src/utils/errors/ForbiddenAPIError.js";
+import {vocabSerializer} from "@/src/schemas/response/serializers/VocabSerializer.js";
+import {numericStringValidator} from "@/src/validators/utilValidators.js";
 
 class MeaningController {
     async createMeaning(request: FastifyRequest, reply: FastifyReply) {
@@ -40,6 +46,27 @@ class MeaningController {
             vocab: vocab
         }, request.user as User);
         reply.status(201).send(meaningSerializer.serialize(newMeaning));
+    }
+
+    async getUserMeanings(request: FastifyRequest, reply: FastifyReply) {
+        const pathParamsValidator = z.object({username: usernameValidator});
+        const pathParams = pathParamsValidator.parse(request.params);
+        const userService = new UserService(request.em);
+        const user = await userService.getUser(pathParams.username, request.user);
+        if (!user || (!user.profile.isPublic && user !== request.user))
+            throw new NotFoundAPIError("User");
+        if (user !== request.user)
+            throw new ForbiddenAPIError();
+
+        const queryParamsValidator = z.object({
+            vocabId: numericStringValidator.optional()
+        });
+        const queryParams = queryParamsValidator.parse(request.query);
+
+        const meaningService = new MeaningService(request.em);
+        const meanings = await meaningService.getUserMeanings(queryParams, user);
+
+        reply.send(meaningSerializer.serializeList(meanings));
     }
 }
 

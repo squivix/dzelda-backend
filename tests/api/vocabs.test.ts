@@ -481,7 +481,6 @@ describe("GET users/:username/vocabs/:vocabId/", () => {
 
 });
 
-
 /**@link VocabController#updateUserVocab*/
 describe("PATCH users/:username/vocabs/:vocabId/", () => {
     const makeRequest = async (username: string | "me", vocabId: number | string, body: object, authToken?: string) => {

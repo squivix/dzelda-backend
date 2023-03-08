@@ -1,4 +1,4 @@
-import {EntityManager, EntityRepository} from "@mikro-orm/core";
+import {EntityManager, EntityRepository, FilterQuery} from "@mikro-orm/core";
 import {Meaning} from "@/src/models/entities/Meaning.js";
 import {Vocab} from "@/src/models/entities/Vocab.js";
 import {Language} from "@/src/models/entities/Language.js";
@@ -32,5 +32,13 @@ export class MeaningService {
         });
         await this.em.flush();
         return newMeaning;
+    }
+
+    async getUserMeanings(filters: { vocabId?: number }, user: User) {
+        const dbFilters: FilterQuery<Meaning> = {$and: []};
+        dbFilters.$and!.push({learners: user.profile});
+        if (filters.vocabId)
+            dbFilters.$and!.push({vocab: filters.vocabId});
+        return await this.meaningRepo.find(dbFilters, {populate: ["language", "vocab.language", "addedBy.user"]});
     }
 }
