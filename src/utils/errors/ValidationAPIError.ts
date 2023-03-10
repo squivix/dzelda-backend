@@ -8,7 +8,7 @@ export class ValidationAPIError extends APIError {
 
     constructor(fields: FieldsObject) {
         super(StatusCodes.BAD_REQUEST,
-            //TODO show invalid or missing
+            // TODO show invalid or missing
             `Invalid fields: ${Object.keys(fields).join(", ")}`,
             `Invalid fields:\n${Object.entries(fields).map(([field, {message}]) => `${field}: ${message}`).join("\n")}`);
         this.fields = fields;

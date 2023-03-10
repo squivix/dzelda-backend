@@ -5,6 +5,8 @@ import {Language} from "@/src/models/entities/Language.js";
 import {User} from "@/src/models/entities/auth/User.js";
 import {MapLearnerLesson} from "@/src/models/entities/MapLearnerLesson.js";
 import {MapLearnerMeaning} from "@/src/models/entities/MapLearnerMeaning.js";
+import {MapLearnerDictionary} from "@/src/models/entities/MapLearnerDictionary.js";
+import {MapLearnerVocab} from "@/src/models/entities/MapLearnerVocab.js";
 
 export class MeaningService {
 
@@ -45,8 +47,8 @@ export class MeaningService {
         return await this.meaningRepo.find(dbFilters, {populate: ["language", "vocab.language", "addedBy.user", "learnersCount"]});
     }
 
-    async getUserMeaning(meaning: Meaning, user: User) {
-        return await this.em.findOne(MapLearnerMeaning, {meaning: meaning, learner: user.profile});
+    async getUserMeaning(meaningId: number, user: User) {
+        return await this.em.findOne(MapLearnerMeaning, {meaning: meaningId, learner: user.profile});
     }
 
     async getMeaning(meaningId: number) {
@@ -58,5 +60,10 @@ export class MeaningService {
         await this.em.flush();
         await this.em.refresh(mapping.meaning);
         return mapping;
+    }
+
+    async removeMeaningFromUser(meaningMapping: MapLearnerMeaning) {
+        this.em.remove(meaningMapping);
+        await this.em.flush();
     }
 }

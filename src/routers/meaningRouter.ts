@@ -6,5 +6,6 @@ export const meaningRouter: FastifyPluginCallback = function (fastify, options, 
     fastify.post(`/meanings/`, {preHandler: requiresAuth, handler: meaningController.createMeaning});
     fastify.get(`/users/:username/meanings/`, {preHandler: requiresAuth, handler: meaningController.getUserMeanings});
     fastify.post(`/users/:username/meanings/`, {preHandler: requiresAuth, handler: meaningController.addMeaningToUser});
+    fastify.delete(`/users/:username/meanings/:meaningId/`, {preHandler: requiresAuth, handler: meaningController.removeMeaningFromUser});
     done();
 };

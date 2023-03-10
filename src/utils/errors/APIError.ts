@@ -5,7 +5,6 @@ export class APIError extends Error {
     message: string;
     details: string | undefined;
 
-    //TODO standardize or remove ids
     constructor(statusCode: StatusCodes, message: string, details?: string) {
         super();
         this.statusCode = statusCode;

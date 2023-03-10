@@ -26,7 +26,7 @@ export const errorHandler = (error: Error, request: FastifyRequest, reply: Fasti
         if (entity)
             apiError = new NotFoundAPIError(entity);
     } else if (error instanceof UniqueConstraintViolationException) {
-        //TODO find a better way of extracting field from error
+        // TODO find a better way of extracting field from error
         //extracts column name from error message: "Key (column)=(value) already exists."
         const field = (error as any).detail?.match(/\(([^)]*)\)/)?.pop();
         if (field)

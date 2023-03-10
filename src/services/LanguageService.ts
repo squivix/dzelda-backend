@@ -50,7 +50,7 @@ export class LanguageService {
         return mapping;
     }
 
-    async deleteLanguageFromUser(languageMapping: MapLearnerLanguage) {
+    async removeLanguageFromUser(languageMapping: MapLearnerLanguage) {
         const learner = languageMapping.learner;
         const language = languageMapping.language;
         const lessonMappings = await this.em.find(MapLearnerLesson, {learner, lesson: {course: {language}}});

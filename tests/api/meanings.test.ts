@@ -369,6 +369,7 @@ describe("POST users/:username/meanings/", () => {
         };
         return await fetchRequest(options, authToken);
     };
+
     describe("If the meaning exists and user is learning meaning vocab language add meaning to user's meanings learning", () => {
         test<LocalTestContext>("If username is me", async (context) => {
             const user = await context.userFactory.createOne();
@@ -472,7 +473,6 @@ describe("POST users/:username/meanings/", () => {
         const user = await context.userFactory.createOne();
         const session = await context.sessionFactory.createOne({user: user});
         const otherUser = await context.userFactory.createOne({profile: {isPublic: false}});
-        await context.languageFactory.create(10, {learners: user.profile});
 
         const response = await makeRequest(otherUser.username, {}, session.token);
         expect(response.statusCode).to.equal(404);
@@ -481,9 +481,102 @@ describe("POST users/:username/meanings/", () => {
         const user = await context.userFactory.createOne();
         const session = await context.sessionFactory.createOne({user: user});
         const otherUser = await context.userFactory.createOne({profile: {isPublic: true}});
-        await context.languageFactory.create(10, {learners: user.profile});
 
         const response = await makeRequest(otherUser.username, {}, session.token);
+        expect(response.statusCode).to.equal(403);
+    });
+});
+
+/**@link MeaningController#removeMeaningFromUser*/
+describe("DELETE users/:username/meanings/:meaningId/", () => {
+    const makeRequest = async (username: string | "me", meaningId: number | string, authToken?: string) => {
+        const options: InjectOptions = {
+            method: "DELETE",
+            url: `users/${username}/meanings/${meaningId}/`,
+        };
+        return await fetchRequest(options, authToken);
+    };
+
+    describe("If user is logged in and is learning meaning delete meaning for user and return 204", async () => {
+        test<LocalTestContext>("If username is me return 204", async (context) => {
+            const user = await context.userFactory.createOne();
+            const session = await context.sessionFactory.createOne({user});
+            const language = await context.languageFactory.createOne({learners: user.profile});
+            const vocab = await context.vocabFactory.createOne({language});
+            const meaning = await context.meaningFactory.createOne({vocab, language, addedBy: user.profile, learners: user.profile});
+
+            const response = await makeRequest("me", meaning.id, session.token);
+
+            expect(response.statusCode).to.equal(204);
+        });
+        test<LocalTestContext>("If username is not me and authenticated as user with username return 204", async (context) => {
+            const user = await context.userFactory.createOne();
+            const session = await context.sessionFactory.createOne({user});
+            const language = await context.languageFactory.createOne({learners: user.profile});
+            const vocab = await context.vocabFactory.createOne({language});
+            const meaning = await context.meaningFactory.createOne({vocab, language, addedBy: user.profile, learners: user.profile});
+
+            const response = await makeRequest(user.username, meaning.id, session.token);
+
+            expect(response.statusCode).to.equal(204);
+        });
+    });
+    test<LocalTestContext>("If user is not learning meaning return 404", async (context) => {
+        const user = await context.userFactory.createOne();
+        const session = await context.sessionFactory.createOne({user});
+        const language = await context.languageFactory.createOne({learners: user.profile});
+        const vocab = await context.vocabFactory.createOne({language});
+        const meaning = await context.meaningFactory.createOne({vocab, language, addedBy: user.profile});
+
+        const response = await makeRequest("me", meaning.id, session.token);
+
+        expect(response.statusCode).to.equal(404);
+    });
+    test<LocalTestContext>("If meaning does not exist return 404", async (context) => {
+        const user = await context.userFactory.createOne();
+        const session = await context.sessionFactory.createOne({user});
+
+        const response = await makeRequest("me", faker.datatype.number({min: 10000000}), session.token);
+        expect(response.statusCode).to.equal(404);
+    });
+    test<LocalTestContext>("If user is not logged in return 401", async (context) => {
+        const user = await context.userFactory.createOne();
+        const language = await context.languageFactory.createOne({learners: user.profile});
+        const vocab = await context.vocabFactory.createOne({language});
+        const meaning = await context.meaningFactory.createOne({vocab, language, addedBy: user.profile, learners: user.profile});
+        const response = await makeRequest("me", meaning.id);
+        expect(response.statusCode).to.equal(401);
+    });
+    test<LocalTestContext>("If username does not exist return 404", async (context) => {
+        const user = await context.userFactory.createOne();
+        const session = await context.sessionFactory.createOne({user: user});
+        const language = await context.languageFactory.createOne({learners: user.profile});
+        const vocab = await context.vocabFactory.createOne({language});
+        const meaning = await context.meaningFactory.createOne({vocab, language, addedBy: user.profile, learners: user.profile});
+
+        const response = await makeRequest(faker.random.alphaNumeric(20), meaning.id, session.token);
+        expect(response.statusCode).to.equal(404);
+    });
+    test<LocalTestContext>(`If user exists and is not public and not authenticated as user return 404`, async (context) => {
+        const user = await context.userFactory.createOne();
+        const session = await context.sessionFactory.createOne({user: user});
+        const otherUser = await context.userFactory.createOne({profile: {isPublic: false}});
+        const language = await context.languageFactory.createOne({learners: user.profile});
+        const vocab = await context.vocabFactory.createOne({language});
+        const meaning = await context.meaningFactory.createOne({vocab, language, addedBy: user.profile, learners: user.profile});
+
+        const response = await makeRequest(otherUser.username, meaning.id, session.token);
+        expect(response.statusCode).to.equal(404);
+    });
+    test<LocalTestContext>(`If username exists and is public and not authenticated as user return 403`, async (context) => {
+        const user = await context.userFactory.createOne();
+        const session = await context.sessionFactory.createOne({user: user});
+        const otherUser = await context.userFactory.createOne({profile: {isPublic: true}});
+        const language = await context.languageFactory.createOne({learners: user.profile});
+        const vocab = await context.vocabFactory.createOne({language});
+        const meaning = await context.meaningFactory.createOne({vocab, language, addedBy: user.profile, learners: user.profile});
+
+        const response = await makeRequest(otherUser.username, meaning.id, session.token);
         expect(response.statusCode).to.equal(403);
     });
 });

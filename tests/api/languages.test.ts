@@ -300,6 +300,7 @@ describe("POST users/:username/languages/", function () {
         });
     });
 });
+
 /**{@link LanguageController#updateUserLanguage}*/
 describe("PATCH users/:username/languages/:languageCode", () => {
     const makeRequest = async (username: "me" | string, languageCode: string, body: object, authToken?: string) => {

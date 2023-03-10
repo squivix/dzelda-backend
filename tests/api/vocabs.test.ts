@@ -498,7 +498,7 @@ describe("PATCH users/:username/vocabs/:vocabId/", () => {
             const session = await context.sessionFactory.createOne({user});
             const language = await context.languageFactory.createOne({learners: user.profile});
             const vocab = await context.vocabFactory.createOne({language, learners: user.profile});
-            //TODO check if entity is actually updated
+            // TODO check if entity is actually updated, added or deleted
 
             const response = await makeRequest("me", vocab.id, {level: VocabLevel.LEVEL_3, notes: "Vocab note"}, session.token);
             const mapping = await context.em.findOneOrFail(MapLearnerVocab, {learner: user.profile, vocab});

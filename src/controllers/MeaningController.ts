@@ -1,7 +1,7 @@
 import {FastifyReply, FastifyRequest} from "fastify";
 import {z} from "zod";
 import {languageCodeValidator} from "@/src/validators/languageValidators.js";
-import {vocabLevelValidator, vocabTextValidator} from "@/src/validators/vocabValidators.js";
+import {vocabTextValidator} from "@/src/validators/vocabValidators.js";
 import {LanguageService} from "@/src/services/LanguageService.js";
 import {ValidationAPIError} from "@/src/utils/errors/ValidationAPIError.js";
 import {VocabService} from "@/src/services/VocabService.js";
@@ -12,10 +12,7 @@ import {usernameValidator} from "@/src/validators/userValidator.js";
 import {UserService} from "@/src/services/UserService.js";
 import {NotFoundAPIError} from "@/src/utils/errors/NotFoundAPIError.js";
 import {ForbiddenAPIError} from "@/src/utils/errors/ForbiddenAPIError.js";
-import {vocabSerializer} from "@/src/schemas/response/serializers/VocabSerializer.js";
 import {numericStringValidator} from "@/src/validators/utilValidators.js";
-import {LessonService} from "@/src/services/LessonService.js";
-import {lessonSerializer} from "@/src/schemas/response/serializers/LessonSerializer.js";
 
 class MeaningController {
     async createMeaning(request: FastifyRequest, reply: FastifyReply) {
@@ -91,12 +88,34 @@ class MeaningController {
         if (!(request.user as User).profile.languagesLearning.contains(meaning.vocab.language))
             throw new ValidationAPIError({meaning: {message: "not in a language the user is learning"}});
 
-        const existingMeaningMapping = await meaningService.getUserMeaning(meaning, user);
+        const existingMeaningMapping = await meaningService.getUserMeaning(meaning.id, user);
         if (existingMeaningMapping)
             reply.status(200).send(meaningSerializer.serialize(existingMeaningMapping.meaning));
 
         const newMeaningMapping = await meaningService.addMeaningToUserLearning(meaning, user);
         reply.status(201).send(meaningSerializer.serialize(newMeaningMapping.meaning));
+    }
+
+    async removeMeaningFromUser(request: FastifyRequest, reply: FastifyReply) {
+        const pathParamsValidator = z.object({
+            username: usernameValidator,
+            meaningId: numericStringValidator,
+        });
+        const pathParams = pathParamsValidator.parse(request.params);
+        const userService = new UserService(request.em);
+        const user = await userService.getUser(pathParams.username, request.user);
+        if (!user || (!user.profile.isPublic && user !== request.user))
+            throw new NotFoundAPIError("User");
+        if (user !== request.user)
+            throw new ForbiddenAPIError();
+
+        const meaningService = new MeaningService(request.em);
+        const meaningMapping = await meaningService.getUserMeaning(pathParams.meaningId, user);
+        if (!meaningMapping)
+            throw new NotFoundAPIError("Meaning");
+
+        await meaningService.removeMeaningFromUser(meaningMapping);
+        reply.status(204);
     }
 }
 

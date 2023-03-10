@@ -105,7 +105,7 @@ class LanguageController {
         const languageMapping = await languageService.getUserLanguage(pathParams.languageCode, request.user as User);
         if (!languageMapping)
             throw  new NotFoundAPIError("Language");
-        await languageService.deleteLanguageFromUser(languageMapping);
+        await languageService.removeLanguageFromUser(languageMapping);
         reply.status(204);
     }
 }

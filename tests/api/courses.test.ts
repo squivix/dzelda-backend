@@ -536,7 +536,7 @@ describe("GET courses/:courseId/", function () {
         });
     });
     test<LocalTestContext>("If the course does not exist return 404", async () => {
-        const response = await makeRequest(Number(faker.random.numeric(8)));
+        const response = await makeRequest(faker.datatype.number({min: 10000000}));
         expect(response.statusCode).to.equal(404);
     });
     test<LocalTestContext>("If course id is invalid return 400", async () => {
@@ -1481,7 +1481,7 @@ describe("GET users/{username}/courses/", () => {
             expect(response.statusCode).to.equal(400);
         });
     });
-    //TODO test empty string search query and SQL injection search query
+    // TODO test empty string search query and SQL injection search query
     describe("test searchQuery filter", () => {
         test<LocalTestContext>("If searchQuery is valid return courses with query in title or description with a lesson the user is learning", async (context) => {
             const user = await context.userFactory.createOne();
