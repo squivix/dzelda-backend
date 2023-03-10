@@ -16,8 +16,7 @@ export class LanguageSerializer extends CustomEntitySerializer<Language | MapLea
                 flagEmoji: () => languageOrMapping.flagEmoji,
                 isSupported: () => languageOrMapping.isSupported,
                 levelThresholds: () => languageOrMapping.levelThresholds,
-                // TODO see if learnersCount could be done with populate
-                learnersCount: () => Number(languageOrMapping.learnersCount ?? languageOrMapping?.learners?.count())
+                learnersCount: () => Number(languageOrMapping?.learnersCount)
             };
         } else {
             return {
@@ -30,7 +29,7 @@ export class LanguageSerializer extends CustomEntitySerializer<Language | MapLea
                 flagEmoji: () => languageOrMapping.language.flagEmoji,
                 isSupported: () => languageOrMapping.language.isSupported,
                 levelThresholds: () => languageOrMapping.language.levelThresholds,
-                learnersCount: () => Number(languageOrMapping.language.learnersCount ?? languageOrMapping.language?.learners?.count()),
+                learnersCount: () => Number(languageOrMapping?.language?.learnersCount),
                 addedOn: () => languageOrMapping.addedOn.toISOString(),
                 lastOpened: () => languageOrMapping.lastOpened.toISOString(),
             };

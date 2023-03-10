@@ -164,13 +164,18 @@ class LessonController {
         const body = bodyValidator.parse(request.body);
 
         const lessonService = new LessonService(request.em);
-        let lesson = await lessonService.getLesson(body.lessonId, request.user);
+        const lesson = await lessonService.getLesson(body.lessonId, request.user);
         if (!lesson || (!lesson.course.isPublic && request?.user?.profile !== lesson.course.addedBy))
             throw new ValidationAPIError({lesson: {message: "Not found"}});
         if (!(request.user as User).profile.languagesLearning.contains(lesson.course.language))
             throw new ValidationAPIError({lesson: {message: "not in a language the user is learning"}});
-        lesson = await lessonService.addLessonToUserLearning(lesson, request.user as User);
-        reply.send(lessonSerializer.serialize(lesson));
+
+        const existingLessonMapping = await lessonService.getUserLessonLearning(lesson, user);
+        if (existingLessonMapping)
+            reply.status(200).send(lessonSerializer.serialize(existingLessonMapping.lesson));
+
+        const newLessonMapping = await lessonService.addLessonToUserLearning(lesson, request.user as User);
+        reply.status(201).send(lessonSerializer.serialize(newLessonMapping.lesson));
     }
 }
 

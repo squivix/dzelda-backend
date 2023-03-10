@@ -39,5 +39,6 @@ export class Meaning extends CustomBaseEntity {
         type: "number"
     })
     learnersCount!: number;
+
     [OptionalProps]?: "addedOn" | "learnersCount";
 }

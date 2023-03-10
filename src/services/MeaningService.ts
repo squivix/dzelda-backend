@@ -3,6 +3,8 @@ import {Meaning} from "@/src/models/entities/Meaning.js";
 import {Vocab} from "@/src/models/entities/Vocab.js";
 import {Language} from "@/src/models/entities/Language.js";
 import {User} from "@/src/models/entities/auth/User.js";
+import {MapLearnerLesson} from "@/src/models/entities/MapLearnerLesson.js";
+import {MapLearnerMeaning} from "@/src/models/entities/MapLearnerMeaning.js";
 
 export class MeaningService {
 
@@ -28,7 +30,8 @@ export class MeaningService {
             text: meaningData.text,
             language: meaningData.language,
             vocab: meaningData.vocab,
-            addedBy: user.profile
+            addedBy: user.profile,
+            learnersCount: 0
         });
         await this.em.flush();
         return newMeaning;
@@ -39,6 +42,21 @@ export class MeaningService {
         dbFilters.$and!.push({learners: user.profile});
         if (filters.vocabId)
             dbFilters.$and!.push({vocab: filters.vocabId});
-        return await this.meaningRepo.find(dbFilters, {populate: ["language", "vocab.language", "addedBy.user"]});
+        return await this.meaningRepo.find(dbFilters, {populate: ["language", "vocab.language", "addedBy.user", "learnersCount"]});
+    }
+
+    async getUserMeaning(meaning: Meaning, user: User) {
+        return await this.em.findOne(MapLearnerMeaning, {meaning: meaning, learner: user.profile});
+    }
+
+    async getMeaning(meaningId: number) {
+        return await this.meaningRepo.findOne({id: meaningId}, {populate: ["language", "vocab.language", "addedBy.user", "learnersCount"]});
+    }
+
+    async addMeaningToUserLearning(meaning: Meaning, user: User) {
+        const mapping = this.em.create(MapLearnerMeaning, {learner: user.profile, meaning: meaning});
+        await this.em.flush();
+        await this.em.refresh(mapping.meaning);
+        return mapping;
     }
 }

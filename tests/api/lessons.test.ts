@@ -22,6 +22,7 @@ import {parsers} from "@/src/utils/parsers/parsers.js";
 import {MapLessonVocab} from "@/src/models/entities/MapLessonVocab.js";
 import fs from "fs-extra";
 import {MapLearnerLesson} from "@/src/models/entities/MapLearnerLesson.js";
+import {languageSerializer} from "@/src/schemas/response/serializers/LanguageSerializer.js";
 
 interface LocalTestContext extends TestContext {
     languageFactory: LanguageFactory;
@@ -1672,7 +1673,7 @@ describe("POST users/:username/lessons", () => {
             await context.lessonRepo.annotateVocabsByLevel([lesson], user.id);
             await context.courseRepo.annotateVocabsByLevel([lesson.course], user.id);
 
-            expect(response.statusCode).to.equal(200);
+            expect(response.statusCode).to.equal(201);
             expect(response.json()).toEqual(lessonSerializer.serialize(lesson));
         });
         test<LocalTestContext>("If username is belongs to the current user", async (context) => {
@@ -1686,9 +1687,23 @@ describe("POST users/:username/lessons", () => {
             await context.lessonRepo.annotateVocabsByLevel([lesson], user.id);
             await context.courseRepo.annotateVocabsByLevel([lesson.course], user.id);
 
-            expect(response.statusCode).to.equal(200);
+            expect(response.statusCode).to.equal(201);
             expect(response.json()).toEqual(lessonSerializer.serialize(lesson));
         });
+    });
+    test<LocalTestContext>("If user is already learning lesson return 200", async (context) => {
+        const user = await context.userFactory.createOne();
+        const session = await context.sessionFactory.createOne({user});
+        const language = await context.languageFactory.createOne({learners: user.profile});
+        const course = await context.courseFactory.createOne({language, isPublic: true});
+        const lesson = await context.lessonFactory.createOne({course, learners: user.profile});
+
+        const response = await makeRequest("me", {lessonId: lesson.id}, session.token);
+        await context.lessonRepo.annotateVocabsByLevel([lesson], user.id);
+        await context.courseRepo.annotateVocabsByLevel([lesson.course], user.id);
+
+        expect(response.statusCode).to.equal(200);
+        expect(response.json()).toEqual(lessonSerializer.serialize(lesson));
     });
     describe("If required fields are missing return 400", function () {
         test<LocalTestContext>("If the lessonId is missing return 400", async (context) => {

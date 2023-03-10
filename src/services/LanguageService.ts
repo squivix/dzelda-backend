@@ -1,7 +1,6 @@
 import {Language} from "@/src/models/entities/Language.js";
-import {EntityManager, EntityRepository} from "@mikro-orm/core";
+import {EntityManager, FilterQuery} from "@mikro-orm/core";
 import {User} from "@/src/models/entities/auth/User.js";
-import {cleanObject} from "@/src/utils/utils.js";
 import {MapLearnerLanguage} from "@/src/models/entities/MapLearnerLanguage.js";
 import {LanguageRepo} from "@/src/models/repos/LanguageRepo.js";
 import {MapLearnerLesson} from "@/src/models/entities/MapLearnerLesson.js";
@@ -18,10 +17,11 @@ export class LanguageService {
         this.languageRepo = this.em.getRepository(Language);
     }
 
-    async getLanguages(filters: { isSupported: boolean | undefined }) {
-        const languages = await this.languageRepo.find(cleanObject(filters));
-        await this.em.flush();
-        return languages;
+    async getLanguages(filters: { isSupported?: boolean }) {
+        const dbFilters: FilterQuery<Language> = {$and: []};
+        if (filters.isSupported !== undefined)
+            dbFilters.$and!.push({isSupported: filters.isSupported});
+        return await this.languageRepo.find(filters, {populate: ["learnersCount"]});
     }
 
     async getUserLanguages(user: User, filters: {}) {
@@ -47,7 +47,7 @@ export class LanguageService {
         const mapping = this.em.create(MapLearnerLanguage, {learner: user.profile, language: language});
         await this.em.flush();
         await this.em.refresh(mapping.language);
-        return mapping.language;
+        return mapping;
     }
 
     async deleteLanguageFromUser(languageMapping: MapLearnerLanguage) {

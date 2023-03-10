@@ -14,6 +14,8 @@ import {NotFoundAPIError} from "@/src/utils/errors/NotFoundAPIError.js";
 import {ForbiddenAPIError} from "@/src/utils/errors/ForbiddenAPIError.js";
 import {vocabSerializer} from "@/src/schemas/response/serializers/VocabSerializer.js";
 import {numericStringValidator} from "@/src/validators/utilValidators.js";
+import {LessonService} from "@/src/services/LessonService.js";
+import {lessonSerializer} from "@/src/schemas/response/serializers/LessonSerializer.js";
 
 class MeaningController {
     async createMeaning(request: FastifyRequest, reply: FastifyReply) {
@@ -67,6 +69,34 @@ class MeaningController {
         const meanings = await meaningService.getUserMeanings(queryParams, user);
 
         reply.send(meaningSerializer.serializeList(meanings));
+    }
+
+    async addMeaningToUser(request: FastifyRequest, reply: FastifyReply) {
+        const pathParamsValidator = z.object({username: usernameValidator});
+        const pathParams = pathParamsValidator.parse(request.params);
+        const userService = new UserService(request.em);
+        const user = await userService.getUser(pathParams.username, request.user);
+        if (!user || (!user.profile.isPublic && user !== request.user))
+            throw new NotFoundAPIError("User");
+        if (user !== request.user)
+            throw new ForbiddenAPIError();
+
+        const bodyValidator = z.object({meaningId: z.number().min(0)});
+        const body = bodyValidator.parse(request.body);
+
+        const meaningService = new MeaningService(request.em);
+        const meaning = await meaningService.getMeaning(body.meaningId);
+        if (!meaning)
+            throw new ValidationAPIError({meaning: {message: "Not found"}});
+        if (!(request.user as User).profile.languagesLearning.contains(meaning.vocab.language))
+            throw new ValidationAPIError({meaning: {message: "not in a language the user is learning"}});
+
+        const existingMeaningMapping = await meaningService.getUserMeaning(meaning, user);
+        if (existingMeaningMapping)
+            reply.status(200).send(meaningSerializer.serialize(existingMeaningMapping.meaning));
+
+        const newMeaningMapping = await meaningService.addMeaningToUserLearning(meaning, user);
+        reply.status(201).send(meaningSerializer.serialize(newMeaningMapping.meaning));
     }
 }
 

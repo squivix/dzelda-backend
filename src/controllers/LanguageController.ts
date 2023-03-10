@@ -12,16 +12,13 @@ import {User} from "@/src/models/entities/auth/User.js";
 
 class LanguageController {
     async getLanguages(request: FastifyRequest, reply: FastifyReply) {
-        const validator = z.object({
+        const queryParamsValidator = z.object({
             isSupported: z.string().regex(/(true|false)/ig).transform(v => v.toLowerCase() == "true").optional()
         });
+        const queryParams = queryParamsValidator.parse(request.query);
 
-        const queryParams = validator.parse(request.query);
         const languageService = new LanguageService(request.em);
-
-        const filters = {isSupported: queryParams.isSupported};
-
-        const languages = await languageService.getLanguages(filters);
+        const languages = await languageService.getLanguages(queryParams);
         reply.send(languageSerializer.serializeList(languages));
     }
 
@@ -62,8 +59,11 @@ class LanguageController {
         if (!language.isSupported)
             throw new ValidationAPIError({language: {message: "not supported"}});
 
+        const existingLanguageMapping = await languageService.getUserLanguage(language.code, user);
+        if (existingLanguageMapping)
+            reply.status(200).send(languageSerializer.serialize(existingLanguageMapping.language));
         const newLanguageMapping = await languageService.addLanguageToUser(user, language);
-        reply.status(201).send(languageSerializer.serialize(newLanguageMapping));
+        reply.status(201).send(languageSerializer.serialize(newLanguageMapping.language));
     }
 
     async updateUserLanguage(request: FastifyRequest, reply: FastifyReply) {

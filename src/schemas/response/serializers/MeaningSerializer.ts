@@ -11,7 +11,7 @@ class MeaningSerializer extends CustomEntitySerializer<Meaning, MeaningSchema> {
             id: () => meaning.id,
             text: () => meaning.text,
             vocab: () => vocabSerializer.serialize(meaning.vocab, {ignore: ["meanings"]}),
-            learnersCount: () => Number(meaning.learnersCount ?? meaning?.learners?.count()),
+            learnersCount: () => Number(meaning?.learnersCount),
             addedBy: () => meaning.addedBy.user.username,
             language: () => meaning.language.code,
             addedOn: () => meaning.addedOn.toISOString(),

@@ -220,6 +220,22 @@ describe("POST users/:username/languages/", function () {
                 expect(response.json()).toEqual(languageSerializer.serialize(mapping.language));
         });
     });
+    test<LocalTestContext>("If user is already learning language return 200", async (context) => {
+        const user = await context.userFactory.createOne();
+        const session = await context.sessionFactory.createOne({user});
+        const language = await context.languageFactory.createOne({learners: user.profile});
+
+        const response = await makeRequest("me", {languageCode: language.code}, session.token);
+
+        const mapping = await context.mapLearnerLanguageRepo.findOne({
+            learner: user.profile,
+            language: language
+        }, {populate: ["language"], refresh: true});
+        expect(response.statusCode).to.equal(200);
+        expect(mapping).not.toBeNull();
+        if (mapping != null)
+            expect(response.json()).toEqual(languageSerializer.serialize(mapping.language));
+    });
     describe("If user is not logged in return 401", async () => {
         test<LocalTestContext>("If username is me and not authenticated return 401", async (context) => {
             const language = await context.languageFactory.createOne();
@@ -310,7 +326,10 @@ describe("PATCH users/:username/languages/:languageCode", () => {
 
             const response = await makeRequest("me", language.code, {lastOpened: "now"}, session.token);
 
-            const mapping = await context.em.findOneOrFail(MapLearnerLanguage, {learner: user.profile, language: language});
+            const mapping = await context.em.findOneOrFail(MapLearnerLanguage, {
+                learner: user.profile,
+                language: language
+            }, {populate: ["language.learnersCount"], refresh: true});
             expect(response.statusCode).to.equal(200);
             expect(response.json()).toEqual(languageSerializer.serialize(mapping));
             expect(oldLastOpened).not.toEqual(mapping.lastOpened.toISOString());
@@ -330,7 +349,10 @@ describe("PATCH users/:username/languages/:languageCode", () => {
 
             const response = await makeRequest(user.username, language.code, {lastOpened: "now"}, session.token);
 
-            const mapping = await context.em.findOneOrFail(MapLearnerLanguage, {learner: user.profile, language: language});
+            const mapping = await context.em.findOneOrFail(MapLearnerLanguage, {
+                learner: user.profile,
+                language: language
+            }, {populate: ["language.learnersCount"], refresh: true});
             expect(response.statusCode).to.equal(200);
             expect(response.json()).toEqual(languageSerializer.serialize(mapping));
             expect(oldLastOpened).not.toEqual(mapping.lastOpened.toISOString());
@@ -391,7 +413,7 @@ describe("PATCH users/:username/languages/:languageCode", () => {
 });
 
 /**{@link LanguageController#deleteUserLanguage}*/
-describe("DELETE /users/:username/languages/:languageCode", () => {
+describe("DELETE users/:username/languages/:languageCode/", () => {
     const makeRequest = async (username: "me" | string, languageCode: string, authToken?: string) => {
         const options: InjectOptions = {
             method: "DELETE",

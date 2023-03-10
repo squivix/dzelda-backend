@@ -10,6 +10,7 @@ import {Vocab} from "@/src/models/entities/Vocab.js";
 import {MapLessonVocab} from "@/src/models/entities/MapLessonVocab.js";
 import {CourseRepo} from "@/src/models/repos/CourseRepo.js";
 import {MapLearnerLesson} from "@/src/models/entities/MapLearnerLesson.js";
+import {MapLearnerLanguage} from "@/src/models/entities/MapLearnerLanguage.js";
 
 export class LessonService {
     em: SqlEntityManager;
@@ -127,11 +128,15 @@ export class LessonService {
     async getUserLessonsLearning(filters: { languageCode?: string, addedBy?: string, searchQuery?: string, level?: LanguageLevel, hasAudio?: boolean }, user: User) {
         return this.getLessons({...filters, isLearning: true}, user);
     }
+    async getUserLessonLearning(lesson: Lesson, user: User) {
+        return await this.em.findOne(MapLearnerLesson, {lesson: lesson, learner: user.profile});
+    }
 
     async addLessonToUserLearning(lesson: Lesson, user: User) {
         const mapping = this.em.create(MapLearnerLesson, {learner: user.profile, lesson: lesson});
         await this.em.flush();
         await this.em.refresh(mapping.lesson);
-        return mapping.lesson;
+        return mapping;
     }
+
 }

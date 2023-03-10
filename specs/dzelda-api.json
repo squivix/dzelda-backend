@@ -941,6 +941,16 @@
         "summary": "Add Language To User",
         "operationId": "post-users-username-languages",
         "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Language"
+                }
+              }
+            }
+          },
           "201": {
             "description": "Created",
             "content": {
@@ -1273,6 +1283,16 @@
         "summary": "Add Lesson To Learning",
         "operationId": "post-users-username-lessons",
         "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Lesson"
+                }
+              }
+            }
+          },
           "201": {
             "description": "Created",
             "content": {
@@ -1474,7 +1494,34 @@
         "tags": [
           "vocab"
         ],
-        "description": "Get user vocab details."
+        "description": "Get user vocab details.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "level": {
+                    "type": "number",
+                    "enum": [
+                      -1,
+                      0,
+                      1,
+                      2,
+                      3,
+                      4,
+                      5,
+                      6
+                    ]
+                  },
+                  "notes": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/users/{username}/meanings": {
@@ -1534,6 +1581,16 @@
         "summary": "Add Meaning To User",
         "operationId": "post-users-username-meanings",
         "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Meaning"
+                }
+              }
+            }
+          },
           "201": {
             "description": "Created",
             "content": {
@@ -1674,7 +1731,7 @@
         }
       ],
       "get": {
-        "summary": "",
+        "summary": "Get User Dictionaries",
         "tags": [
           "dictionary"
         ],
