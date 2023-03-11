@@ -8,5 +8,6 @@ export const vocabRouter: FastifyPluginCallback = function (fastify, options, do
     fastify.get(`/users/:username/vocabs/`, {preHandler: requiresAuth, handler: vocabController.getUserVocabs});
     fastify.get(`/users/:username/vocabs/:vocabId/`, {preHandler: requiresAuth, handler: vocabController.getUserVocab});
     fastify.patch(`/users/:username/vocabs/:vocabId/`, {preHandler: requiresAuth, handler: vocabController.updateUserVocab});
+    fastify.get(`/lessons/:lessonId/vocabs/`, {preHandler: requiresAuth, handler: vocabController.getLessonVocabs});
     done();
 };

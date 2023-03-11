@@ -1,4 +1,5 @@
-import {ProfileSchema} from "@/src/schemas/response/interfaces/ProfileSchema.js";
+import {ProfileSchema} from "@/src/presentation/response/interfaces/entities/ProfileSchema.js";
+
 
 export interface UserSchema {
     username: string;

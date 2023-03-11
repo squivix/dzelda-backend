@@ -1,7 +1,6 @@
 import {FastifyReply, FastifyRequest} from "fastify";
 import {z} from "zod";
 import {LessonService} from "@/src/services/LessonService.js";
-import {lessonSerializer} from "@/src/schemas/response/serializers/LessonSerializer.js";
 import {languageCodeValidator} from "@/src/validators/languageValidators.js";
 import {usernameValidator} from "@/src/validators/userValidator.js";
 import {AnonymousUser, User} from "@/src/models/entities/auth/User.js";
@@ -13,9 +12,8 @@ import {CourseService} from "@/src/services/CourseService.js";
 import {lessonTextValidator, lessonTitleValidator} from "@/src/validators/lessonValidators.js";
 import {ForbiddenAPIError} from "@/src/utils/errors/ForbiddenAPIError.js";
 import {NotFoundAPIError} from "@/src/utils/errors/NotFoundAPIError.js";
-import {Course} from "@/src/models/entities/Course.js";
 import {UserService} from "@/src/services/UserService.js";
-import {courseSerializer} from "@/src/schemas/response/serializers/CourseSerializer.js";
+import {lessonSerializer} from "@/src/presentation/response/serializers/entities/LessonSerializer.js";
 
 class LessonController {
     async getLessons(request: FastifyRequest, reply: FastifyReply) {

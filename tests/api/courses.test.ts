@@ -6,7 +6,6 @@ import {SessionFactory} from "@/src/seeders/factories/SessionFactory.js";
 import {ProfileFactory} from "@/src/seeders/factories/ProfileFactory.js";
 import {CourseFactory} from "@/src/seeders/factories/CourseFactory.js";
 import {Course} from "@/src/models/entities/Course.js";
-import {courseSerializer} from "@/src/schemas/response/serializers/CourseSerializer.js";
 import {CourseRepo} from "@/src/models/repos/CourseRepo.js";
 import {InjectOptions} from "light-my-request";
 import {LanguageFactory} from "@/src/seeders/factories/LanguageFactory.js";
@@ -18,8 +17,9 @@ import fs from "fs-extra";
 import {LessonFactory} from "@/src/seeders/factories/LessonFactory.js";
 import {LessonRepo} from "@/src/models/repos/LessonRepo.js";
 import {Lesson} from "@/src/models/entities/Lesson.js";
-import {LessonSchema} from "@/src/schemas/response/interfaces/LessonSchema.js";
 import {MapLearnerLesson} from "@/src/models/entities/MapLearnerLesson.js";
+import {courseSerializer} from "@/src/presentation/response/serializers/entities/CourseSerializer";
+import {LessonSchema} from "@/src/presentation/response/interfaces/entities/LessonSchema";
 
 interface LocalTestContext extends TestContext {
     courseRepo: CourseRepo;
@@ -1315,7 +1315,7 @@ describe("GET users/{username}/courses/", () => {
             expect(response.json()).toEqual(courseSerializer.serializeList(userCourses));
         });
     });
-    test<LocalTestContext>("If user is not logged in return 401", async (context) => {
+    test<LocalTestContext>("If user is not logged in return 401", async () => {
         const response = await makeRequest("me");
         expect(response.statusCode).to.equal(401);
     });

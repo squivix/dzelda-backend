@@ -1,7 +1,7 @@
-import {CustomCallbackObject, CustomEntitySerializer} from "@/src/schemas/response/serializers/CustomEntitySerializer.js";
-import {MeaningSchema} from "@/src/schemas/response/interfaces/MeaningSchema.js";
+import {CustomCallbackObject, CustomEntitySerializer} from "@/src/presentation/response/serializers/CustomEntitySerializer.js";
+import {MeaningSchema} from "@/src/presentation/response/interfaces/entities/MeaningSchema.js";
 import {Meaning} from "@/src/models/entities/Meaning.js";
-import {vocabSerializer} from "@/src/schemas/response/serializers/VocabSerializer.js";
+import {vocabSerializer} from "@/src/presentation/response/serializers/entities/VocabSerializer.js";
 
 
 class MeaningSerializer extends CustomEntitySerializer<Meaning, MeaningSchema> {

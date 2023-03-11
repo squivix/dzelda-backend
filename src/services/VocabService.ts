@@ -5,6 +5,7 @@ import {AnonymousUser, User} from "@/src/models/entities/auth/User.js";
 import {MapLearnerVocab} from "@/src/models/entities/MapLearnerVocab.js";
 import {VocabRepo} from "@/src/models/repos/VocabRepo.js";
 import {VocabLevel} from "@/src/models/enums/VocabLevel.js";
+import {Lesson} from "@/src/models/entities/Lesson.js";
 
 export class VocabService {
     em: EntityManager;
@@ -79,5 +80,18 @@ export class VocabService {
         this.em.persist(mapping);
         await this.em.flush();
         return mapping;
+    }
+
+    async getLessonVocabs(lesson: Lesson, user: User) {
+        const existingMappings = await this.em.find(MapLearnerVocab, {
+            vocab: {lessonsAppearingIn: lesson},
+            learner: {user: user}
+        }, {populate: ["vocab.meanings"]});
+
+        const newVocabs = await this.em.find(Vocab, {
+            lessonsAppearingIn: lesson,
+        }, {populate: ["meanings"]});
+
+        return [...existingMappings, ...newVocabs];
     }
 }

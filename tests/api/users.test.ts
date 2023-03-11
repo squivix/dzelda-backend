@@ -9,7 +9,7 @@ import {orm} from "@/src/server.js";
 import {fetchRequest} from "@/tests/api/utils.js";
 import {EntityRepository} from "@mikro-orm/core";
 import {InjectOptions} from "light-my-request";
-import {userSerializer} from "@/src/schemas/response/serializers/UserSerializer.js";
+import {userSerializer} from "@/src/presentation/response/serializers/entities/UserSerializer.js";
 import {SessionFactory} from "@/src/seeders/factories/SessionFactory.js";
 
 interface LocalTestContext extends TestContext {
@@ -51,7 +51,7 @@ describe("POST users/", function () {
             });
 
             expect(response.statusCode).to.equal(201);
-            expect(response.json()).toEqual(expect.objectContaining(newUser.toObject(["profile"])));
+            expect(response.json()).toEqual(userSerializer.serialize(newUser, {ignore: ["profile"]}));
 
             expect(await context.userRepo.findOne({username: newUser.username})).not.toBeNull();
             expect(await context.profileRepo.findOne({user: {username: newUser.username}})).not.toBeNull();
@@ -66,7 +66,7 @@ describe("POST users/", function () {
                 initialLanguage: language.code
             });
             expect(response.statusCode).to.equal(201);
-            expect(response.json()).toEqual(expect.objectContaining(newUser.toObject(["profile"])));
+            expect(response.json()).toEqual(userSerializer.serialize(newUser, {ignore: ["profile"]}));
 
             expect(await context.userRepo.findOne({username: newUser.username})).not.toBeNull();
             expect(await context.profileRepo.findOne({user: {username: newUser.username}})).not.toBeNull();
@@ -227,7 +227,7 @@ describe("GET users/:username/", function () {
             const response = await makeRequest(user.username, session.token);
             expect(response.statusCode).to.equal(404);
         });
-    })
+    });
     describe("If profile is public and not user return user without email", () => {
         test<LocalTestContext>("If not authenticated return user without email", async (context) => {
             const user = await context.userFactory.createOne({profile: {isPublic: true}});
@@ -251,4 +251,4 @@ describe("GET users/:username/", function () {
         const response = await makeRequest(faker.random.alpha({count: 20}));
         expect(response.statusCode).to.equal(404);
     });
-})
+});

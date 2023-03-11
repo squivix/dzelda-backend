@@ -8,12 +8,13 @@ import {orm} from "@/src/server.js";
 import {InjectOptions} from "light-my-request";
 import {buildQueryString, fetchRequest} from "@/tests/api/utils.js";
 import {VocabFactory} from "@/src/seeders/factories/VocabFactory.js";
-import {vocabSerializer} from "@/src/schemas/response/serializers/VocabSerializer.js";
+import {vocabSerializer} from "@/src/presentation/response/serializers/entities/VocabSerializer.js";
 import {faker} from "@faker-js/faker";
 import {MapLearnerVocab} from "@/src/models/entities/MapLearnerVocab.js";
 import {VocabRepo} from "@/src/models/repos/VocabRepo.js";
 import {randomCase, randomEnum} from "@/tests/utils.js";
 import {VocabLevel} from "@/src/models/enums/VocabLevel.js";
+import {learnerVocabSerializer} from "@/src/presentation/response/serializers/mappings/LearnerVocabSerializer.js";
 
 interface LocalTestContext extends TestContext {
     languageFactory: LanguageFactory;
@@ -243,7 +244,7 @@ describe("GET users/:username/vocabs/", () => {
             await context.vocabRepo.annotateUserMeanings(mappings, user.profile.id);
 
             expect(response.statusCode).to.equal(200);
-            expect(response.json()).toEqual(vocabSerializer.serializeList(mappings));
+            expect(response.json()).toEqual(learnerVocabSerializer.serializeList(mappings));
         });
         test<LocalTestContext>("If username belongs to the currently logged in user", async (context) => {
             const user = await context.userFactory.createOne();
@@ -258,7 +259,7 @@ describe("GET users/:username/vocabs/", () => {
             await context.vocabRepo.annotateUserMeanings(mappings, user.profile.id);
 
             expect(response.statusCode).to.equal(200);
-            expect(response.json()).toEqual(vocabSerializer.serializeList(mappings));
+            expect(response.json()).toEqual(learnerVocabSerializer.serializeList(mappings));
         });
     });
     describe("test languageCode filter", () => {
@@ -281,7 +282,7 @@ describe("GET users/:username/vocabs/", () => {
             await context.vocabRepo.annotateUserMeanings(mappings, user.profile.id);
 
             expect(response.statusCode).to.equal(200);
-            expect(response.json()).toEqual(vocabSerializer.serializeList(mappings));
+            expect(response.json()).toEqual(learnerVocabSerializer.serializeList(mappings));
         });
         test<LocalTestContext>("If language does not exist return empty vocab list", async (context) => {
             const user = await context.userFactory.createOne();
@@ -326,7 +327,7 @@ describe("GET users/:username/vocabs/", () => {
             await context.vocabRepo.annotateUserMeanings(mappings, user.profile.id);
 
             expect(response.statusCode).to.equal(200);
-            expect(response.json()).toEqual(vocabSerializer.serializeList(mappings));
+            expect(response.json()).toEqual(learnerVocabSerializer.serializeList(mappings));
         });
         test<LocalTestContext>("If language filter is invalid return 400", async (context) => {
             const user = await context.userFactory.createOne();
@@ -360,7 +361,7 @@ describe("GET users/:username/vocabs/", () => {
                 {populate: ["vocab", "vocab.language", "vocab.meanings"]});
             await context.vocabRepo.annotateUserMeanings(mappings, user.profile.id);
             expect(response.statusCode).to.equal(200);
-            expect(response.json()).toEqual(vocabSerializer.serializeList(mappings));
+            expect(response.json()).toEqual(learnerVocabSerializer.serializeList(mappings));
         });
         test<LocalTestContext>("If searchQuery is invalid return 400", async (context) => {
             const user = await context.userFactory.createOne();
@@ -406,7 +407,7 @@ describe("GET users/:username/vocabs/:vocabId/", () => {
             await context.vocabRepo.annotateUserMeanings([mapping], user.profile.id);
 
             expect(response.statusCode).to.equal(200);
-            expect(response.json()).toEqual(vocabSerializer.serialize(mapping));
+            expect(response.json()).toEqual(learnerVocabSerializer.serialize(mapping));
         });
         test<LocalTestContext>("If username is belongs to the current user", async (context) => {
             const user = await context.userFactory.createOne();
@@ -419,7 +420,7 @@ describe("GET users/:username/vocabs/:vocabId/", () => {
             await context.vocabRepo.annotateUserMeanings([mapping], user.profile.id);
 
             expect(response.statusCode).to.equal(200);
-            expect(response.json()).toEqual(vocabSerializer.serialize(mapping));
+            expect(response.json()).toEqual(learnerVocabSerializer.serialize(mapping));
         });
     });
     test<LocalTestContext>(`If vocab does not exist return 404`, async (context) => {
@@ -505,7 +506,7 @@ describe("PATCH users/:username/vocabs/:vocabId/", () => {
             await context.vocabRepo.annotateUserMeanings([mapping], user.profile.id);
 
             expect(response.statusCode).to.equal(200);
-            expect(response.json()).toEqual(vocabSerializer.serialize(mapping));
+            expect(response.json()).toEqual(learnerVocabSerializer.serialize(mapping));
         });
         test<LocalTestContext>("If username is belongs to the current user", async (context) => {
             const user = await context.userFactory.createOne();
@@ -518,7 +519,128 @@ describe("PATCH users/:username/vocabs/:vocabId/", () => {
             await context.vocabRepo.annotateUserMeanings([mapping], user.profile.id);
 
             expect(response.statusCode).to.equal(200);
-            expect(response.json()).toEqual(vocabSerializer.serialize(mapping));
+            expect(response.json()).toEqual(learnerVocabSerializer.serialize(mapping));
+        });
+    });
+    describe(`If fields are invalid return 400`, async () => {
+        test<LocalTestContext>("If level is invalid return 400", async (context) => {
+            const user = await context.userFactory.createOne();
+            const session = await context.sessionFactory.createOne({user});
+            const language = await context.languageFactory.createOne({learners: user.profile});
+            const vocab = await context.vocabFactory.createOne({language, learners: user.profile});
+
+            const response = await makeRequest("me", vocab.id, {level: 7, notes: "Vocab note"}, session.token);
+
+            expect(response.statusCode).to.equal(400);
+        });
+        test<LocalTestContext>("If notes are invalid return 400", async (context) => {
+            const user = await context.userFactory.createOne();
+            const session = await context.sessionFactory.createOne({user});
+            const language = await context.languageFactory.createOne({learners: user.profile});
+            const vocab = await context.vocabFactory.createOne({language, learners: user.profile});
+
+            const response = await makeRequest("me", vocab.id, {level: VocabLevel.LEVEL_3, notes: faker.random.alpha(3000)}, session.token);
+
+            expect(response.statusCode).to.equal(400);
+        });
+    });
+    test<LocalTestContext>(`If vocab does not exist return 404`, async (context) => {
+        const user = await context.userFactory.createOne();
+        const session = await context.sessionFactory.createOne({user});
+
+        const response = await makeRequest("me", faker.datatype.number({min: 100000}), {level: VocabLevel.LEVEL_3}, session.token);
+
+        expect(response.statusCode).to.equal(404);
+    });
+    test<LocalTestContext>(`If user is not learning vocab return 404`, async (context) => {
+        const user = await context.userFactory.createOne();
+        const session = await context.sessionFactory.createOne({user});
+        const language = await context.languageFactory.createOne({learners: user.profile});
+        const vocab = await context.vocabFactory.createOne({language});
+
+        const response = await makeRequest("me", vocab.id, {level: VocabLevel.LEVEL_3}, session.token);
+
+        expect(response.statusCode).to.equal(404);
+    });
+    test<LocalTestContext>("If user is not logged in return 401", async (context) => {
+        const user = await context.userFactory.createOne();
+        const language = await context.languageFactory.createOne({learners: user.profile});
+        const vocab = await context.vocabFactory.createOne({language, learners: user.profile});
+
+        const response = await makeRequest("me", vocab.id, {level: VocabLevel.LEVEL_3});
+
+        expect(response.statusCode).to.equal(401);
+    });
+    test<LocalTestContext>("If username does not exist return 404", async (context) => {
+        const user = await context.userFactory.createOne();
+        const session = await context.sessionFactory.createOne({user: user});
+        const language = await context.languageFactory.createOne({learners: user.profile});
+        const vocab = await context.vocabFactory.createOne({language, learners: user.profile});
+
+        const response = await makeRequest(faker.random.alphaNumeric(20), vocab.id, {level: VocabLevel.LEVEL_3}, session.token);
+        expect(response.statusCode).to.equal(404);
+    });
+    test<LocalTestContext>(`If user exists and is not public and not authenticated as user return 404`, async (context) => {
+        const user = await context.userFactory.createOne();
+        const session = await context.sessionFactory.createOne({user: user});
+        const otherUser = await context.userFactory.createOne({profile: {isPublic: false}});
+        const language = await context.languageFactory.createOne({learners: user.profile});
+        const vocab = await context.vocabFactory.createOne({language, learners: otherUser.profile});
+
+        const response = await makeRequest(otherUser.username, vocab.id, {level: VocabLevel.LEVEL_3}, session.token);
+        expect(response.statusCode).to.equal(404);
+    });
+    test<LocalTestContext>(`If username exists and is public and not authenticated as user return 403`, async (context) => {
+        const user = await context.userFactory.createOne();
+        const session = await context.sessionFactory.createOne({user: user});
+        const otherUser = await context.userFactory.createOne({profile: {isPublic: true}});
+        const language = await context.languageFactory.createOne({learners: user.profile});
+        const vocab = await context.vocabFactory.createOne({language, learners: otherUser.profile});
+
+        const response = await makeRequest(otherUser.username, vocab.id, {level: VocabLevel.LEVEL_3}, session.token);
+        expect(response.statusCode).to.equal(403);
+    });
+
+});
+
+/**@link VocabController#getLessonVocabs*/
+describe("PATCH lessons/:lessonId/vocabs/", () => {
+    const makeRequest = async (username: string | "me", vocabId: number | string, body: object, authToken?: string) => {
+        const options: InjectOptions = {
+            method: "PATCH",
+            url: `users/${username}/vocabs/${vocabId}/`,
+            payload: body
+        };
+        return await fetchRequest(options, authToken);
+    };
+
+    describe("If all fields are valid, the vocab exists and user is learning it update user vocab", () => {
+        test<LocalTestContext>("If username is me", async (context) => {
+            const user = await context.userFactory.createOne();
+            const session = await context.sessionFactory.createOne({user});
+            const language = await context.languageFactory.createOne({learners: user.profile});
+            const vocab = await context.vocabFactory.createOne({language, learners: user.profile});
+            // TODO check if entity is actually updated, added or deleted
+
+            const response = await makeRequest("me", vocab.id, {level: VocabLevel.LEVEL_3, notes: "Vocab note"}, session.token);
+            const mapping = await context.em.findOneOrFail(MapLearnerVocab, {learner: user.profile, vocab});
+            await context.vocabRepo.annotateUserMeanings([mapping], user.profile.id);
+
+            expect(response.statusCode).to.equal(200);
+            expect(response.json()).toEqual(learnerVocabSerializer.serialize(mapping));
+        });
+        test<LocalTestContext>("If username is belongs to the current user", async (context) => {
+            const user = await context.userFactory.createOne();
+            const session = await context.sessionFactory.createOne({user});
+            const language = await context.languageFactory.createOne({learners: user.profile});
+            const vocab = await context.vocabFactory.createOne({language, learners: user.profile});
+
+            const response = await makeRequest(user.username, vocab.id, {level: VocabLevel.LEVEL_3, notes: "Vocab note"}, session.token);
+            const mapping = await context.em.findOneOrFail(MapLearnerVocab, {learner: user.profile, vocab});
+            await context.vocabRepo.annotateUserMeanings([mapping], user.profile.id);
+
+            expect(response.statusCode).to.equal(200);
+            expect(response.json()).toEqual(learnerVocabSerializer.serialize(mapping));
         });
     });
     describe(`If fields are invalid return 400`, async () => {

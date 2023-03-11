@@ -1,7 +1,7 @@
 import {Course} from "@/src/models/entities/Course.js";
-import {CourseSchema} from "@/src/schemas/response/interfaces/CourseSchema.js";
-import {CustomCallbackObject, CustomEntitySerializer} from "@/src/schemas/response/serializers/CustomEntitySerializer.js";
-import {lessonSerializer} from "@/src/schemas/response/serializers/LessonSerializer.js";
+import {CourseSchema} from "@/src/presentation/response/interfaces/entities/CourseSchema.js";
+import {CustomCallbackObject, CustomEntitySerializer} from "@/src/presentation/response/serializers/CustomEntitySerializer.js";
+import {lessonSerializer} from "@/src/presentation/response/serializers/entities/LessonSerializer.js";
 
 
 export class CourseSerializer extends CustomEntitySerializer<Course, CourseSchema> {

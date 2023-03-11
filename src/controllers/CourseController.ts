@@ -8,12 +8,12 @@ import {UnauthenticatedAPIError} from "@/src/utils/errors/UnauthenticatedAPIErro
 import {courseDescriptionValidator, courseTitleValidator} from "@/src/validators/courseValidator.js";
 import {LanguageLevel} from "@/src/models/enums/LanguageLevel.js";
 import {NotFoundAPIError} from "@/src/utils/errors/NotFoundAPIError.js";
-import {courseSerializer} from "@/src/schemas/response/serializers/CourseSerializer.js";
 import {ForbiddenAPIError} from "@/src/utils/errors/ForbiddenAPIError.js";
 import {ValidationAPIError} from "@/src/utils/errors/ValidationAPIError.js";
 import {LanguageService} from "@/src/services/LanguageService.js";
 import {numericStringValidator} from "@/src/validators/utilValidators.js";
 import {UserService} from "@/src/services/UserService.js";
+import {courseSerializer} from "@/src/presentation/response/serializers/entities/CourseSerializer.js";
 
 class CourseController {
     async getCourses(request: FastifyRequest, reply: FastifyReply) {

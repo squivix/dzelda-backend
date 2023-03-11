@@ -10,7 +10,7 @@ import {MapLearnerLanguage} from "@/src/models/entities/MapLearnerLanguage.js";
 import {Language} from "@/src/models/entities/Language.js";
 import {EntityRepository} from "@mikro-orm/core";
 import {ProfileFactory} from "@/src/seeders/factories/ProfileFactory.js";
-import {languageSerializer} from "@/src/schemas/response/serializers/LanguageSerializer.js";
+import {languageSerializer} from "@/src/presentation/response/serializers/entities/LanguageSerializer.js";
 import {LessonFactory} from "@/src/seeders/factories/LessonFactory.js";
 import {CourseFactory} from "@/src/seeders/factories/CourseFactory.js";
 import {MapLearnerLesson} from "@/src/models/entities/MapLearnerLesson.js";
@@ -20,6 +20,7 @@ import {VocabFactory} from "@/src/seeders/factories/VocabFactory.js";
 import {MapLearnerVocab} from "@/src/models/entities/MapLearnerVocab.js";
 import {MeaningFactory} from "@/src/seeders/factories/MeaningFactory.js";
 import {MapLearnerMeaning} from "@/src/models/entities/MapLearnerMeaning.js";
+import {learnerLanguageSerializer} from "@/src/presentation/response/serializers/mappings/LearnerLanguageSerializer.js";
 
 // beforeEach(truncateDb);
 
@@ -139,9 +140,13 @@ describe("GET users/:username/languages/", function () {
         await context.languageFactory.create(10, {learners: user.profile});
         const response = await makeRequest(user.username);
 
-        const languages = await context.languageRepo.find({learners: user.profile}, {refresh: true});
+        const languageMappings = await context.em.find(MapLearnerLanguage, {learner: user.profile}, {
+            populate: ["language"],
+            refresh: true
+        });
+        //TODO hide lastOpened from other users
         expect(response.statusCode).to.equal(200);
-        expect(response.json()).toEqual(languageSerializer.serializeList(languages));
+        expect(response.json()).toEqual(learnerLanguageSerializer.serializeList(languageMappings));
     });
     test<LocalTestContext>(`If username exists and is not public but authenticated as user return languages`, async (context) => {
         const user = await context.userFactory.createOne({profile: {isPublic: false}});
@@ -150,9 +155,12 @@ describe("GET users/:username/languages/", function () {
 
         const response = await makeRequest(user.username, session.token);
 
-        const languages = await context.languageRepo.find({learners: user.profile}, {refresh: true});
+        const languageMappings = await context.em.find(MapLearnerLanguage, {learner: user.profile}, {
+            populate: ["language"],
+            refresh: true
+        });
         expect(response.statusCode).to.equal(200);
-        expect(response.json()).toEqual(languageSerializer.serializeList(languages));
+        expect(response.json()).toEqual(learnerLanguageSerializer.serializeList(languageMappings));
     });
     test<LocalTestContext>(`If username is me and not authenticated as user return 401`, async (context) => {
         const user = await context.userFactory.createOne({profile: {isPublic: false}});
@@ -168,9 +176,12 @@ describe("GET users/:username/languages/", function () {
 
         const response = await makeRequest("me", session.token);
 
-        const languages = await context.languageRepo.find({learners: user.profile}, {refresh: true});
+        const languageMappings = await context.em.find(MapLearnerLanguage, {learner: user.profile}, {
+            populate: ["language"],
+            refresh: true
+        });
         expect(response.statusCode).to.equal(200);
-        expect(response.json()).toEqual(languageSerializer.serializeList(languages));
+        expect(response.json()).toEqual(learnerLanguageSerializer.serializeList(languageMappings));
     });
 });
 
@@ -201,7 +212,7 @@ describe("POST users/:username/languages/", function () {
             expect(response.statusCode).to.equal(201);
             expect(mapping).not.toBeNull();
             if (mapping != null)
-                expect(response.json()).toEqual(languageSerializer.serialize(mapping.language));
+                expect(response.json()).toEqual(learnerLanguageSerializer.serialize(mapping));
         });
         test<LocalTestContext>("If username is not me and authenticated as user with username return 201", async (context) => {
             const currentUser = await context.userFactory.createOne();
@@ -210,14 +221,14 @@ describe("POST users/:username/languages/", function () {
             const language = await context.languageFactory.createOne();
 
             const response = await makeRequest(currentUser.username, {languageCode: language.code}, session.token);
-            const mapping = await context.mapLearnerLanguageRepo.findOne({
+            const mapping = await context.em.findOne(MapLearnerLanguage, {
                 learner: currentUser.profile,
                 language: language
             }, {populate: ["language"], refresh: true});
             expect(response.statusCode).to.equal(201);
             expect(mapping).not.toBeNull();
             if (mapping != null)
-                expect(response.json()).toEqual(languageSerializer.serialize(mapping.language));
+                expect(response.json()).toEqual(learnerLanguageSerializer.serialize(mapping));
         });
     });
     test<LocalTestContext>("If user is already learning language return 200", async (context) => {
@@ -332,7 +343,7 @@ describe("PATCH users/:username/languages/:languageCode", () => {
                 language: language
             }, {populate: ["language.learnersCount"], refresh: true});
             expect(response.statusCode).to.equal(200);
-            expect(response.json()).toEqual(languageSerializer.serialize(mapping));
+            expect(response.json()).toEqual(learnerLanguageSerializer.serialize(mapping));
             expect(oldLastOpened).not.toEqual(mapping.lastOpened.toISOString());
         });
         test<LocalTestContext>("If username is not me and authenticated as user with username return 200", async (context) => {
@@ -355,7 +366,7 @@ describe("PATCH users/:username/languages/:languageCode", () => {
                 language: language
             }, {populate: ["language.learnersCount"], refresh: true});
             expect(response.statusCode).to.equal(200);
-            expect(response.json()).toEqual(languageSerializer.serialize(mapping));
+            expect(response.json()).toEqual(learnerLanguageSerializer.serialize(mapping));
             expect(oldLastOpened).not.toEqual(mapping.lastOpened.toISOString());
         });
     });

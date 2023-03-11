@@ -5,7 +5,6 @@ import {languageCodeValidator} from "@/src/validators/languageValidators.js";
 import {vocabLevelValidator, vocabNotesValidator, vocabTextValidator} from "@/src/validators/vocabValidators.js";
 import {LanguageService} from "@/src/services/LanguageService.js";
 import {VocabService} from "@/src/services/VocabService.js";
-import {vocabSerializer} from "@/src/schemas/response/serializers/VocabSerializer.js";
 import {parsers} from "@/src/utils/parsers/parsers.js";
 import {usernameValidator} from "@/src/validators/userValidator.js";
 import {UserService} from "@/src/services/UserService.js";
@@ -13,6 +12,9 @@ import {NotFoundAPIError} from "@/src/utils/errors/NotFoundAPIError.js";
 import {ForbiddenAPIError} from "@/src/utils/errors/ForbiddenAPIError.js";
 import {User} from "@/src/models/entities/auth/User.js";
 import {numericStringValidator} from "@/src/validators/utilValidators.js";
+import {LessonService} from "@/src/services/LessonService.js";
+import {vocabSerializer} from "@/src/presentation/response/serializers/entities/VocabSerializer.js";
+import {learnerVocabSerializer} from "@/src/presentation/response/serializers/mappings/LearnerVocabSerializer.js";
 
 class VocabController {
     async createVocab(request: FastifyRequest, reply: FastifyReply) {
@@ -83,10 +85,11 @@ class VocabController {
         const vocabService = new VocabService(request.em);
 
         const vocabs = await vocabService.getUserVocabs(queryParams, user);
-        reply.send(vocabSerializer.serializeList(vocabs));
+        reply.send(learnerVocabSerializer.serializeList(vocabs));
     }
 
     async getUserVocab(request: FastifyRequest, reply: FastifyReply) {
+        2;
         const pathParamsValidator = z.object({
             username: usernameValidator,
             vocabId: numericStringValidator
@@ -103,7 +106,7 @@ class VocabController {
         const mapping = await vocabService.getUserVocab(pathParams.vocabId, user);
         if (!mapping)
             throw new NotFoundAPIError("Vocab");
-        reply.send(vocabSerializer.serialize(mapping));
+        reply.send(learnerVocabSerializer.serialize(mapping));
     }
 
     async updateUserVocab(request: FastifyRequest, reply: FastifyReply) {
@@ -130,7 +133,21 @@ class VocabController {
         if (!mapping)
             throw new NotFoundAPIError("Vocab");
         const updatedMapping = await vocabService.updateUserVocab(mapping, body);
-        reply.send(vocabSerializer.serialize(updatedMapping));
+        reply.send(learnerVocabSerializer.serialize(updatedMapping));
+    }
+
+    async getLessonVocabs(request: FastifyRequest, reply: FastifyReply) {
+        const pathParamsValidator = z.object({lessonId: numericStringValidator});
+        const pathParams = pathParamsValidator.parse(request.params);
+        const lessonService = new LessonService(request.em);
+        const lesson = await lessonService.getLesson(pathParams.lessonId, request.user);
+        if (!lesson || (!lesson.course.isPublic && request?.user?.profile !== lesson.course.addedBy))
+            throw new NotFoundAPIError("Lesson");
+
+        const vocabService = new VocabService(request.em);
+
+        const vocabs = await vocabService.getLessonVocabs(lesson, request.user as User);
+        reply.send(learnerVocabSerializer.serializeList(vocabs));
     }
 }
 

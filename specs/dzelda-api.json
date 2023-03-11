@@ -918,7 +918,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/Language"
+                    "$ref": "#/components/schemas/LearnerLanguage"
                   }
                 }
               }
@@ -1352,7 +1352,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/Vocab"
+                    "$ref": "#/components/schemas/LearnerVocab"
                   }
                 }
               }
@@ -2119,19 +2119,10 @@
             "type": "null"
           },
           "language": {
-            "$ref": "#/components/schemas/Language"
+            "type": "string"
           },
-          "userMeanings": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/Meaning"
-            }
-          },
-          "allMeanings": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/Meaning"
-            }
+          "meanings": {
+            "$ref": "#/components/schemas/Meaning"
           }
         },
         "required": [
@@ -2210,6 +2201,118 @@
           "link",
           "language"
         ]
+      },
+      "LearnerVocab": {
+        "title": "LearnerVocab",
+        "x-stoplight": {
+          "id": "p48qo2qk9eg2o"
+        },
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number"
+          },
+          "text": {
+            "type": "string"
+          },
+          "isPhrase": {
+            "type": "boolean"
+          },
+          "level": {
+            "type": "number"
+          },
+          "notes": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "language": {
+            "type": "string"
+          },
+          "allMeanings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Meaning"
+            }
+          },
+          "userMeanings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Meaning"
+            }
+          }
+        }
+      },
+      "LearnerLanguage": {
+        "title": "LearnerLanguage",
+        "x-stoplight": {
+          "id": "9ofn02r9zze9q"
+        },
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number"
+          },
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "greeting": {
+            "type": "string"
+          },
+          "flag": {
+            "type": "string",
+            "format": "uri"
+          },
+          "flagCircular": {
+            "type": "string",
+            "format": "uri"
+          },
+          "flagEmoji": {
+            "type": "string",
+            "format": "uri"
+          },
+          "isSupported": {
+            "type": "boolean"
+          },
+          "levelThresholds": {
+            "type": "object",
+            "properties": {
+              "beginner1": {
+                "type": "integer"
+              },
+              "beginner2": {
+                "type": "integer"
+              },
+              "intermediate1": {
+                "type": "integer"
+              },
+              "intermediate2": {
+                "type": "integer"
+              },
+              "advanced1": {
+                "type": "integer"
+              },
+              "advanced2": {
+                "type": "integer"
+              }
+            }
+          },
+          "learnersCount": {
+            "type": "number"
+          },
+          "addedOn": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "lastOpened": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
       }
     },
     "securitySchemes": {

@@ -10,7 +10,7 @@ import {SessionFactory} from "@/src/seeders/factories/SessionFactory.js";
 import {InjectOptions} from "light-my-request";
 import {buildQueryString, fetchRequest} from "@/tests/api/utils.js";
 import {MeaningFactory} from "@/src/seeders/factories/MeaningFactory.js";
-import {meaningSerializer} from "@/src/schemas/response/serializers/MeaningSerializer.js";
+import {meaningSerializer} from "@/src/presentation/response/serializers/entities/MeaningSerializer.js";
 import {Meaning} from "@/src/models/entities/Meaning.js";
 import {faker} from "@faker-js/faker";
 

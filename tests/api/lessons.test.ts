@@ -12,7 +12,7 @@ import {Lesson} from "@/src/models/entities/Lesson.js";
 import {Course} from "@/src/models/entities/Course.js";
 import {InjectOptions} from "light-my-request";
 import {buildQueryString, fetchRequest, fetchWithFiles, readSampleFile} from "@/tests/api/utils.js";
-import {lessonSerializer} from "@/src/schemas/response/serializers/LessonSerializer.js";
+import {lessonSerializer} from "@/src/presentation/response/serializers/entities/LessonSerializer.js";
 import {faker} from "@faker-js/faker";
 import {randomCase, randomEnum, shuffleArray} from "@/tests/utils.js";
 import {LanguageLevel} from "@/src/models/enums/LanguageLevel.js";
@@ -22,7 +22,6 @@ import {parsers} from "@/src/utils/parsers/parsers.js";
 import {MapLessonVocab} from "@/src/models/entities/MapLessonVocab.js";
 import fs from "fs-extra";
 import {MapLearnerLesson} from "@/src/models/entities/MapLearnerLesson.js";
-import {languageSerializer} from "@/src/schemas/response/serializers/LanguageSerializer.js";
 
 interface LocalTestContext extends TestContext {
     languageFactory: LanguageFactory;

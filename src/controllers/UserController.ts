@@ -2,8 +2,8 @@ import {z} from "zod";
 import {UserService} from "@/src/services/UserService.js";
 import {FastifyReply, FastifyRequest} from "fastify";
 import {NotFoundAPIError} from "@/src/utils/errors/NotFoundAPIError.js";
-import {userSerializer} from "@/src/schemas/response/serializers/UserSerializer.js";
 import {usernameValidator} from "@/src/validators/userValidator.js";
+import {userSerializer} from "@/src/presentation/response/serializers/entities/UserSerializer.js";
 
 class UserController {
 
@@ -18,7 +18,7 @@ class UserController {
         const userService = new UserService(request.em);
         const newUser = await userService.createUser(body.username, body.email, body.password, body.initialLanguage);
 
-        reply.status(201).send(newUser);
+        reply.status(201).send(userSerializer.serialize(newUser, {ignore: ["profile"]}));
     }
 
     async login(request: FastifyRequest, reply: FastifyReply) {

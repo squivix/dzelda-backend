@@ -1,5 +1,5 @@
 import {VocabLevel} from "@/src/models/enums/VocabLevel.js";
-import {CourseSchema} from "@/src/schemas/response/interfaces/CourseSchema.js";
+import {CourseSchema} from "@/src/presentation/response/interfaces/CourseSchema.js";
 
 export interface LessonSchema {
     id: number;

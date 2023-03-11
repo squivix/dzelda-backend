@@ -25,7 +25,9 @@ export class LanguageService {
     }
 
     async getUserLanguages(user: User, filters: {}) {
-        return await this.languageRepo.find({learners: user.profile, ...filters});
+        const dbFilters: FilterQuery<MapLearnerLanguage> = {$and: []};
+        dbFilters.$and!.push({learner: user.profile});
+        return await this.em.find(MapLearnerLanguage, dbFilters);
     }
 
     async getUserLanguage(code: string, user: User) {

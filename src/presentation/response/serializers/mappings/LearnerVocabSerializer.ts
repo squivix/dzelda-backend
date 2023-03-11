@@ -1,20 +1,24 @@
-import {MapLearnerVocabSchema, VocabOnlySchema, VocabSchema} from "@/src/schemas/response/interfaces/VocabSchema.js";
-import {CustomCallbackObject, CustomEntitySerializer} from "@/src/schemas/response/serializers/CustomEntitySerializer.js";
+import {CustomCallbackObject, CustomEntitySerializer} from "@/src/presentation/response/serializers/CustomEntitySerializer.js";
 import {MapLearnerVocab} from "@/src/models/entities/MapLearnerVocab.js";
-import {meaningSerializer} from "@/src/schemas/response/serializers/MeaningSerializer.js";
 import {Vocab} from "@/src/models/entities/Vocab.js";
+import {LearnerVocabSchema} from "@/src/presentation/response/interfaces/mappings/LearnerVocabSchema.js";
+import {meaningSerializer} from "@/src/presentation/response/serializers/entities/MeaningSerializer.js";
+import {VocabLevel} from "@/src/models/enums/VocabLevel.js";
 
-class VocabSerializer extends CustomEntitySerializer<Vocab | MapLearnerVocab, VocabSchema> {
-
-
-    definition(vocabOrMapping: Vocab | MapLearnerVocab): CustomCallbackObject<VocabSchema> {
+export class LearnerVocabSerializer extends CustomEntitySerializer<Vocab | MapLearnerVocab, LearnerVocabSchema> {
+    definition(vocabOrMapping: Vocab | MapLearnerVocab): CustomCallbackObject<Partial<LearnerVocabSchema>> {
+        //if only vocab is sent
         if (vocabOrMapping instanceof Vocab) {
+            //assume it's new
             return {
                 id: () => vocabOrMapping.id,
                 text: () => vocabOrMapping.text,
                 isPhrase: () => vocabOrMapping.isPhrase,
+                level: () => VocabLevel.NEW,
+                notes: () => null,
                 language: () => vocabOrMapping.language.code,
-                meanings: () => meaningSerializer.serializeList(vocabOrMapping.meanings.getItems()),
+                userMeanings: () => [],
+                allMeanings: () => meaningSerializer.serializeList(vocabOrMapping.meanings.getItems())
             };
         } else {
             return {
@@ -30,9 +34,6 @@ class VocabSerializer extends CustomEntitySerializer<Vocab | MapLearnerVocab, Vo
         }
     }
 
-    serialize(entity: Vocab | MapLearnerVocab, {ignore}: { ignore: (keyof VocabOnlySchema | keyof MapLearnerVocabSchema)[] } = {ignore: []}): Partial<VocabSchema> {
-        return super.serialize(entity, {ignore: ignore as (keyof VocabSchema)[]});
-    }
 }
 
-export const vocabSerializer = new VocabSerializer();
+export const learnerVocabSerializer = new LearnerVocabSerializer();

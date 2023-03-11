@@ -1,4 +1,5 @@
-import {VocabSchema} from "@/src/schemas/response/interfaces/VocabSchema.js";
+import {VocabSchema} from "@/src/presentation/response/interfaces/entities/VocabSchema.js";
+
 
 export interface MeaningSchema {
     id: number;

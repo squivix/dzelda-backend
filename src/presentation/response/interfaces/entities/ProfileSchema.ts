@@ -1,4 +1,5 @@
-import {LanguageSchema} from "@/src/schemas/response/interfaces/LanguageSchema.js";
+import {LanguageSchema} from "@/src/presentation/response/interfaces/entities/LanguageSchema.js";
+
 
 export interface ProfileSchema {
     id: number;
