@@ -141,7 +141,7 @@ class CourseController {
             queryParams.addedBy = request.user?.username!;
 
         const courseService = new CourseService(request.em);
-        const courses = await courseService.getUserCoursesLearning(queryParams, request.user as User);
+        const courses = await courseService.getUserCoursesLearning(queryParams, user);
         reply.send(courseSerializer.serializeList(courses));
     }
 }

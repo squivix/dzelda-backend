@@ -1330,7 +1330,6 @@ describe("GET users/{username}/courses/", () => {
         const user = await context.userFactory.createOne();
         const session = await context.sessionFactory.createOne({user: user});
         const otherUser = await context.userFactory.createOne({profile: {isPublic: false}});
-        await context.languageFactory.create(10, {learners: user.profile});
 
         const response = await makeRequest(otherUser.username, {}, session.token);
         expect(response.statusCode).to.equal(404);
@@ -1339,7 +1338,6 @@ describe("GET users/{username}/courses/", () => {
         const user = await context.userFactory.createOne();
         const session = await context.sessionFactory.createOne({user: user});
         const otherUser = await context.userFactory.createOne({profile: {isPublic: true}});
-        await context.languageFactory.create(10, {learners: user.profile});
 
         const response = await makeRequest(otherUser.username, {}, session.token);
         expect(response.statusCode).to.equal(403);

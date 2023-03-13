@@ -8,6 +8,7 @@ import {lessonsRouter} from "@/src/routers/lessonsRouter.js";
 import FastifyFormidable from "fastify-formidable";
 import {vocabRouter} from "@/src/routers/vocabRouter.js";
 import {meaningRouter} from "@/src/routers/meaningRouter.js";
+import {dictionaryRouter} from "@/src/routers/dictionaryRouter.js";
 
 const rootRouter: FastifyPluginCallback = function rootRouter(fastify, options, done) {
     fastify.register(FastifyFormidable);
@@ -23,6 +24,7 @@ const rootRouter: FastifyPluginCallback = function rootRouter(fastify, options, 
     fastify.register(lessonsRouter);
     fastify.register(vocabRouter);
     fastify.register(meaningRouter);
+    fastify.register(dictionaryRouter);
 
     done();
 };
