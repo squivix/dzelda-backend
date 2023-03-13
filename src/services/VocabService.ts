@@ -87,9 +87,11 @@ export class VocabService {
             vocab: {lessonsAppearingIn: lesson},
             learner: {user: user}
         }, {populate: ["vocab.meanings"]});
+        await this.vocabRepo.annotateUserMeanings(existingMappings, user.profile.id);
 
         const newVocabs = await this.em.find(Vocab, {
             lessonsAppearingIn: lesson,
+            $not: {learners: {user: user}}
         }, {populate: ["meanings"]});
 
         return [...existingMappings, ...newVocabs];
