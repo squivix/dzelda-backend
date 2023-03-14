@@ -197,7 +197,7 @@ describe("POST users/:username/languages/", function () {
     };
 
     describe("If user is logged in, and all fields are valid return 201", async () => {
-        test<LocalTestContext>("If username is me and authenticated return 201", async (context) => {
+        test<LocalTestContext>("If username is me return 201", async (context) => {
             const currentUser = await context.userFactory.createOne();
             const session = await context.sessionFactory.createOne({user: currentUser});
             const language = await context.languageFactory.createOne();

@@ -88,6 +88,34 @@ class VocabController {
         reply.send(learnerVocabSerializer.serializeList(vocabs));
     }
 
+    async addVocabToUser(request: FastifyRequest, reply: FastifyReply) {
+        const pathParamsValidator = z.object({username: usernameValidator});
+        const pathParams = pathParamsValidator.parse(request.params);
+        const userService = new UserService(request.em);
+        const user = await userService.getUser(pathParams.username, request.user);
+        if (!user || (!user.profile.isPublic && user !== request.user))
+            throw new NotFoundAPIError("User");
+        if (user !== request.user)
+            throw new ForbiddenAPIError();
+
+        const bodyValidator = z.object({vocabId: z.number().min(0)});
+        const body = bodyValidator.parse(request.body);
+
+        const vocabService = new VocabService(request.em);
+        const vocab = await vocabService.getVocab(body.vocabId);
+        if (!vocab)
+            throw new ValidationAPIError({vocab: {message: "Not found"}});
+        if (!(request.user as User).profile.languagesLearning.contains(vocab.language))
+            throw new ValidationAPIError({vocab: {message: "not in a language the user is learning"}});
+
+        const existingVocabMapping = await vocabService.getUserVocab(vocab.id, user);
+        if (existingVocabMapping)
+            reply.status(200).send(learnerVocabSerializer.serialize(existingVocabMapping));
+
+        const newVocabMapping = await vocabService.addVocabToUserLearning(vocab, user);
+        reply.status(201).send(learnerVocabSerializer.serialize(newVocabMapping));
+    }
+
     async getUserVocab(request: FastifyRequest, reply: FastifyReply) {
         2;
         const pathParamsValidator = z.object({

@@ -1674,6 +1674,7 @@ describe("POST users/:username/lessons", () => {
 
             expect(response.statusCode).to.equal(201);
             expect(response.json()).toEqual(lessonSerializer.serialize(lesson));
+            expect(await context.em.findOne(MapLearnerLesson, {learner: user.profile, lesson})).not.toBeNull();
         });
         test<LocalTestContext>("If username is belongs to the current user", async (context) => {
             const user = await context.userFactory.createOne();
@@ -1688,6 +1689,7 @@ describe("POST users/:username/lessons", () => {
 
             expect(response.statusCode).to.equal(201);
             expect(response.json()).toEqual(lessonSerializer.serialize(lesson));
+            expect(await context.em.findOne(MapLearnerLesson, {learner: user.profile, lesson})).not.toBeNull();
         });
     });
     test<LocalTestContext>("If user is already learning lesson return 200", async (context) => {

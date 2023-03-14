@@ -6,6 +6,7 @@ import {MapLearnerVocab} from "@/src/models/entities/MapLearnerVocab.js";
 import {VocabRepo} from "@/src/models/repos/VocabRepo.js";
 import {VocabLevel} from "@/src/models/enums/VocabLevel.js";
 import {Lesson} from "@/src/models/entities/Lesson.js";
+import {MapLearnerMeaning} from "@/src/models/entities/MapLearnerMeaning.js";
 
 export class VocabService {
     em: EntityManager;
@@ -59,6 +60,16 @@ export class VocabService {
         const mappings = await this.em.find(MapLearnerVocab, dbFilters, {populate: ["vocab", "vocab.language", "vocab.meanings"]});
         await this.vocabRepo.annotateUserMeanings(mappings, user.profile.id);
         return mappings;
+    }
+
+    async addVocabToUserLearning(vocab: Vocab, user: User) {
+        const mapping = this.em.create(MapLearnerVocab, {
+            learner: user.profile,
+            vocab: vocab
+        });
+        await this.em.flush();
+        await this.vocabRepo.annotateUserMeanings([mapping], user.profile.id)
+        return mapping;
     }
 
     async getUserVocab(vocabId: number, user: User) {

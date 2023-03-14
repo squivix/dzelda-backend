@@ -274,6 +274,7 @@ describe("POST courses/", function () {
 
             expect(response.statusCode).to.equal(201);
             expect(response.json()).toEqual(expect.objectContaining(courseSerializer.serialize(newCourse)));
+            expect(await context.courseRepo.findOne({title: newCourse.title, language})).not.toBeNull();
         });
         test<LocalTestContext>("If optional fields are provided use provided values", async (context) => {
             const user = await context.userFactory.createOne();
@@ -299,6 +300,7 @@ describe("POST courses/", function () {
 
             expect(response.statusCode).to.equal(201);
             expect(response.json()).toEqual(expect.objectContaining(courseSerializer.serialize(newCourse, {ignore: ["image"]})));
+            expect(await context.courseRepo.findOne({title: newCourse.title, language})).not.toBeNull();
             expect(fs.existsSync(response.json().image)).toBeTruthy();
         });
     });
@@ -502,7 +504,6 @@ describe("POST courses/", function () {
         });
     });
 });
-
 
 /**@link CourseController#getCourse*/
 describe("GET courses/:courseId/", function () {

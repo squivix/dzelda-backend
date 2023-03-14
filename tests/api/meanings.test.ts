@@ -13,6 +13,8 @@ import {MeaningFactory} from "@/src/seeders/factories/MeaningFactory.js";
 import {meaningSerializer} from "@/src/presentation/response/serializers/entities/MeaningSerializer.js";
 import {Meaning} from "@/src/models/entities/Meaning.js";
 import {faker} from "@faker-js/faker";
+import {MapLearnerLesson} from "@/src/models/entities/MapLearnerLesson.js";
+import {MapLearnerMeaning} from "@/src/models/entities/MapLearnerMeaning.js";
 
 interface LocalTestContext extends TestContext {
     languageFactory: LanguageFactory;
@@ -58,9 +60,9 @@ describe("POST meanings/", () => {
             text: newMeaning.text,
             vocabId: vocab.id
         }, session.token);
-
         expect(response.statusCode).toEqual(201);
         expect(response.json()).toEqual(expect.objectContaining(meaningSerializer.serialize(newMeaning, {ignore: ["addedOn"]})));
+        expect(await context.meaningRepo.findOne({text: newMeaning.text, language, vocab})).not.toBeNull();
     });
     test<LocalTestContext>("If meaning already exists return 200", async (context) => {
         const user = await context.userFactory.createOne();
@@ -383,6 +385,7 @@ describe("POST users/:username/meanings/", () => {
             meaning.learnersCount = await meaning.learners.loadCount();
 
             expect(response.statusCode).to.equal(201);
+            expect(await context.em.findOne(MapLearnerMeaning, {learner: user.profile, meaning})).not.toBeNull();
             expect(response.json()).toEqual(meaningSerializer.serialize(meaning));
         });
         test<LocalTestContext>("If username is belongs to the current user", async (context) => {
@@ -397,6 +400,7 @@ describe("POST users/:username/meanings/", () => {
             meaning.learnersCount = await meaning.learners.loadCount();
 
             expect(response.statusCode).to.equal(201);
+            expect(await context.em.findOne(MapLearnerMeaning, {learner: user.profile, meaning})).not.toBeNull();
             expect(response.json()).toEqual(meaningSerializer.serialize(meaning));
         });
     });

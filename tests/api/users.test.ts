@@ -102,7 +102,6 @@ describe("POST users/", function () {
             expect(response.statusCode).to.equal(400);
         });
     });
-
     describe("If fields are invalid return 400", async () => {
         describe("If username is invalid return 400", async () => {
             test<LocalTestContext>("If username is shorter than 4 characters return 400", async (context) => {
