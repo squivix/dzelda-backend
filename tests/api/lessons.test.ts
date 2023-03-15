@@ -22,6 +22,9 @@ import {parsers} from "@/src/utils/parsers/parsers.js";
 import {MapLessonVocab} from "@/src/models/entities/MapLessonVocab.js";
 import fs from "fs-extra";
 import {MapLearnerLesson} from "@/src/models/entities/MapLearnerLesson.js";
+import {CourseSchema} from "@/src/presentation/response/interfaces/entities/CourseSchema.js";
+import {courseSerializer} from "@/src/presentation/response/serializers/entities/CourseSerializer.js";
+import {LessonSchema} from "@/src/presentation/response/interfaces/entities/LessonSchema.js";
 
 interface LocalTestContext extends TestContext {
     languageFactory: LanguageFactory;
@@ -780,7 +783,7 @@ describe("PUT lessons/:lessonId", () => {
 
             const oldLessonImage = lesson.image;
             const oldLessonAudio = lesson.audio;
-            const updatedLesson = await context.lessonFactory.makeOne({course: course});
+            const updatedLesson = await context.lessonFactory.makeOne({course: newCourse});
 
             const response = await makeRequest(lesson.id, {
                 data: {
@@ -794,6 +797,7 @@ describe("PUT lessons/:lessonId", () => {
             await context.em.populate(lesson, ["course"]);
             await context.lessonRepo.annotateVocabsByLevel([lesson], author.id);
             await context.courseRepo.annotateVocabsByLevel([lesson.course], author.id);
+            await context.courseRepo.annotateVocabsByLevel([updatedLesson.course], author.id);
 
             expect(response.statusCode).to.equal(200);
             expect(response.json()).toEqual(lessonSerializer.serialize(lesson));
@@ -808,7 +812,8 @@ describe("PUT lessons/:lessonId", () => {
 
             expect(lessonVocabs.length).toEqual(lessonWordsText.length);
             expect(lessonVocabMappings.length).toEqual(lessonWordsText.length);
-
+            const updatedFields: (keyof LessonSchema)[] = ["course", "title", "text"];
+            expect(lessonSerializer.serialize(lesson, {include: updatedFields})).toEqual(lessonSerializer.serialize(updatedLesson, {include: updatedFields}));
         });
         test<LocalTestContext>("If new image and audio are blank clear lesson image and audio", async (context) => {
             const author = await context.userFactory.createOne();
@@ -817,7 +822,7 @@ describe("PUT lessons/:lessonId", () => {
             const course = await context.courseFactory.createOne({addedBy: author.profile, language: language, lessons: []});
             const newCourse = await context.courseFactory.createOne({addedBy: author.profile, language: language});
             let lesson = await context.lessonFactory.createOne({course: course});
-            const updatedLesson = await context.lessonFactory.makeOne({course: course});
+            const updatedLesson = await context.lessonFactory.makeOne({course: newCourse});
 
             const response = await makeRequest(lesson.id, {
                 data: {
@@ -832,6 +837,7 @@ describe("PUT lessons/:lessonId", () => {
             await context.em.populate(lesson, ["course"]);
             await context.lessonRepo.annotateVocabsByLevel([lesson], author.id);
             await context.courseRepo.annotateVocabsByLevel([lesson.course], author.id);
+            await context.courseRepo.annotateVocabsByLevel([updatedLesson.course], author.id);
 
             expect(response.statusCode).to.equal(200);
             expect(response.json()).toEqual(lessonSerializer.serialize(lesson));
@@ -845,6 +851,8 @@ describe("PUT lessons/:lessonId", () => {
 
             expect(lessonVocabs.length).toEqual(lessonWordsText.length);
             expect(lessonVocabMappings.length).toEqual(lessonWordsText.length);
+            const updatedFields: (keyof LessonSchema)[] = ["course", "title", "text"];
+            expect(lessonSerializer.serialize(lesson, {include: updatedFields})).toEqual(lessonSerializer.serialize(updatedLesson, {include: updatedFields}));
         });
         test<LocalTestContext>("If new image and audio is provided, update lesson image and audio", async (context) => {
             const author = await context.userFactory.createOne();
@@ -855,7 +863,7 @@ describe("PUT lessons/:lessonId", () => {
             let lesson = await context.lessonFactory.createOne({course: course});
             const oldLessonImage = lesson.image;
             const oldLessonAudio = lesson.audio;
-            const updatedLesson = await context.lessonFactory.makeOne({course: course});
+            const updatedLesson = await context.lessonFactory.makeOne({course: newCourse});
 
             const response = await makeRequest(lesson.id, {
                 data: {
@@ -872,6 +880,7 @@ describe("PUT lessons/:lessonId", () => {
             lesson = await context.lessonRepo.findOneOrFail({id: lesson.id}, {populate: ["course", "course.language", "course.addedBy.user"]});
             await context.em.populate(lesson, ["course"]);
             await context.lessonRepo.annotateVocabsByLevel([lesson], author.id);
+            await context.courseRepo.annotateVocabsByLevel([updatedLesson.course], author.id);
             await context.courseRepo.annotateVocabsByLevel([lesson.course], author.id);
 
             expect(response.statusCode).to.equal(200);
@@ -887,6 +896,8 @@ describe("PUT lessons/:lessonId", () => {
 
             expect(lessonVocabs.length).toEqual(lessonWordsText.length);
             expect(lessonVocabMappings.length).toEqual(lessonWordsText.length);
+            const updatedFields: (keyof LessonSchema)[] = ["course", "title", "text"];
+            expect(lessonSerializer.serialize(lesson, {include: updatedFields})).toEqual(lessonSerializer.serialize(updatedLesson, {include: updatedFields}));
         });
     });
     test<LocalTestContext>("If user not logged in return 401", async (context) => {

@@ -5,18 +5,24 @@ export type CustomCallbackObject<T> = {
 };
 
 export abstract class CustomEntitySerializer<T, I> {
-    serializeList(entities: T[], {ignore = [], ...options}: { ignore?: (keyof I)[] } = {}): Partial<I>[] {
+    serializeList(entities: T[], {
+        ignore = [],
+        include,
+        ...options
+    }: { ignore: (keyof I)[], include?: (keyof I)[] } = {ignore: []}): Partial<I>[] {
         return entities.map(e => this.serialize(e, {ignore: ignore, ...options}));
     }
 
-    serialize(entity: T, {ignore}: { ignore: (keyof I)[] } = {ignore: []}): Partial<I> {
+    serialize(entity: T, {ignore = [], include}: { ignore?: (keyof I)[], include?: (keyof I)[] } = {ignore: []}): Partial<I> {
         const definition = this.definition(entity);
 
         const fieldsHidden: Partial<Record<keyof I, boolean>> = {};
         ignore.forEach(h => fieldsHidden[h] = true);
 
         let pojo: Partial<I> = {};
-        (Object.keys(definition) as Array<keyof I>).forEach(k => {
+        const fieldsIncluded = include == undefined ? Object.keys(definition) as Array<keyof I> : (Object.keys(definition) as Array<keyof I>).filter(f => include.includes(f));
+
+        fieldsIncluded.forEach(k => {
             if (!fieldsHidden[k])
                 pojo[k] = (definition as CustomCallbackObject<I>)[k]();
         });

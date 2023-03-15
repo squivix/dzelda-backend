@@ -20,6 +20,7 @@ import {Lesson} from "@/src/models/entities/Lesson.js";
 import {MapLearnerLesson} from "@/src/models/entities/MapLearnerLesson.js";
 import {courseSerializer} from "@/src/presentation/response/serializers/entities/CourseSerializer";
 import {LessonSchema} from "@/src/presentation/response/interfaces/entities/LessonSchema";
+import {CourseSchema} from "@/src/presentation/response/interfaces/entities/CourseSchema.js";
 
 interface LocalTestContext extends TestContext {
     courseRepo: CourseRepo;
@@ -629,9 +630,12 @@ describe("PUT courses/:courseId/", function () {
             await context.em.populate(course, ["lessons"], {orderBy: {lessons: {orderInCourse: "asc"}}});
             await context.courseRepo.annotateVocabsByLevel([course], author.id);
 
+
             expect(response.statusCode).to.equal(200);
             expect(response.json()).toEqual(courseSerializer.serialize(course));
             expect(response.json().lessons.map((l: LessonSchema) => l.id)).toEqual(shuffledLessonIds);
+            const updatedFields: (keyof CourseSchema)[] = ["title", "description", "isPublic", "level"];
+            expect(courseSerializer.serialize(course, {include: updatedFields})).toEqual(courseSerializer.serialize(updatedCourse, {include: updatedFields}));
         });
         test<LocalTestContext>("If new image is blank clear course image", async (context) => {
             const author = await context.userFactory.createOne();
@@ -644,7 +648,7 @@ describe("PUT courses/:courseId/", function () {
                 l.orderInCourse = lessonCounter;
                 lessonCounter++;
             }).create(10, {course: course});
-            const updatedCourse = await context.courseFactory.makeOne({addedBy: author.profile, language: language});
+            const updatedCourse = await context.courseFactory.makeOne({addedBy: author.profile, language: language, image: ""});
             const shuffledLessonIds = shuffleArray(courseLessons).map(l => l.id);
 
             const response = await makeRequest(course.id, {
@@ -666,6 +670,8 @@ describe("PUT courses/:courseId/", function () {
             expect(response.json()).toEqual(courseSerializer.serialize(course));
             expect(course.image).toEqual("");
             expect(response.json().lessons.map((l: LessonSchema) => l.id)).toEqual(shuffledLessonIds);
+            const updatedFields: (keyof CourseSchema)[] = ["title", "description", "isPublic", "level", "image"];
+            expect(courseSerializer.serialize(course, {include: updatedFields})).toEqual(courseSerializer.serialize(updatedCourse, {include: updatedFields}));
         });
         test<LocalTestContext>("If new image is provided, update course image", async (context) => {
             const author = await context.userFactory.createOne();
@@ -700,6 +706,8 @@ describe("PUT courses/:courseId/", function () {
             expect(response.json()).toEqual(courseSerializer.serialize(course));
             expect(fs.existsSync(course.image)).toBeTruthy();
             expect(response.json().lessons.map((l: LessonSchema) => l.id)).toEqual(shuffledLessonIds);
+            const updatedFields: (keyof CourseSchema)[] = ["title", "description", "isPublic", "level"];
+            expect(courseSerializer.serialize(course, {include: updatedFields})).toEqual(courseSerializer.serialize(updatedCourse, {include: updatedFields}));
         });
     });
     test<LocalTestContext>("If user not logged in return 401", async (context) => {

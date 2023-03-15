@@ -2192,7 +2192,7 @@
             "type": "string"
           },
           "language": {
-            "$ref": "#/components/schemas/Language"
+            "type": "string"
           }
         },
         "required": [

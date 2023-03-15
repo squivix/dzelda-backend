@@ -68,7 +68,7 @@ export class VocabService {
             vocab: vocab
         });
         await this.em.flush();
-        await this.vocabRepo.annotateUserMeanings([mapping], user.profile.id)
+        await this.vocabRepo.annotateUserMeanings([mapping], user.profile.id);
         return mapping;
     }
 
@@ -83,8 +83,10 @@ export class VocabService {
     }
 
     async updateUserVocab(mapping: MapLearnerVocab, updatedUserVocabData: { level?: VocabLevel; notes?: string; }) {
-        if (updatedUserVocabData.level !== undefined)
+        if (updatedUserVocabData.level !== undefined) {
+            //TODO if level is ignored delete user meanings for vocab
             mapping.level = updatedUserVocabData.level;
+        }
         if (updatedUserVocabData.notes !== undefined)
             mapping.notes = updatedUserVocabData.notes;
 

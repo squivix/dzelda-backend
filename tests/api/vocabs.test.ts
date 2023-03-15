@@ -17,6 +17,9 @@ import {VocabLevel} from "@/src/models/enums/VocabLevel.js";
 import {learnerVocabSerializer} from "@/src/presentation/response/serializers/mappings/LearnerVocabSerializer.js";
 import {LessonFactory} from "@/src/seeders/factories/LessonFactory.js";
 import {CourseFactory} from "@/src/seeders/factories/CourseFactory.js";
+import {LessonSchema} from "@/src/presentation/response/interfaces/entities/LessonSchema.js";
+import {lessonSerializer} from "@/src/presentation/response/serializers/entities/LessonSerializer.js";
+import {LearnerVocabSchema} from "@/src/presentation/response/interfaces/mappings/LearnerVocabSchema.js";
 
 interface LocalTestContext extends TestContext {
     languageFactory: LanguageFactory;
@@ -530,7 +533,6 @@ describe("POST users/:username/vocabs/", () => {
 
 });
 
-
 /**@link VocabController#getUserVocab*/
 describe("GET users/:username/vocabs/:vocabId/", () => {
     const makeRequest = async (username: string | "me", vocabId: number | string, authToken?: string) => {
@@ -645,27 +647,34 @@ describe("PATCH users/:username/vocabs/:vocabId/", () => {
             const session = await context.sessionFactory.createOne({user});
             const language = await context.languageFactory.createOne({learners: user.profile});
             const vocab = await context.vocabFactory.createOne({language, learners: user.profile});
-            // TODO check if entity is actually updated, added or deleted
+            const updatedMapping = context.em.create(MapLearnerVocab,
+                {learner: user.profile, vocab, level: VocabLevel.LEVEL_3, notes: "Vocab note"}, {persist: false});
 
-            const response = await makeRequest("me", vocab.id, {level: VocabLevel.LEVEL_3, notes: "Vocab note"}, session.token);
+            const response = await makeRequest("me", vocab.id, {level: updatedMapping.level, notes: updatedMapping.notes}, session.token);
             const mapping = await context.em.findOneOrFail(MapLearnerVocab, {learner: user.profile, vocab});
             await context.vocabRepo.annotateUserMeanings([mapping], user.profile.id);
 
             expect(response.statusCode).to.equal(200);
             expect(response.json()).toEqual(learnerVocabSerializer.serialize(mapping));
+            const updatedFields: (keyof LearnerVocabSchema)[] = ["level", "notes"];
+            expect(learnerVocabSerializer.serialize(mapping, {include: updatedFields})).toEqual(learnerVocabSerializer.serialize(updatedMapping, {include: updatedFields}));
         });
         test<LocalTestContext>("If username is belongs to the current user", async (context) => {
             const user = await context.userFactory.createOne();
             const session = await context.sessionFactory.createOne({user});
             const language = await context.languageFactory.createOne({learners: user.profile});
             const vocab = await context.vocabFactory.createOne({language, learners: user.profile});
+            const updatedMapping = context.em.create(MapLearnerVocab,
+                {learner: user.profile, vocab, level: VocabLevel.LEVEL_3, notes: "Vocab note"}, {persist: false});
 
-            const response = await makeRequest(user.username, vocab.id, {level: VocabLevel.LEVEL_3, notes: "Vocab note"}, session.token);
+            const response = await makeRequest(user.username, vocab.id, {level: updatedMapping.level, notes: updatedMapping.notes}, session.token);
             const mapping = await context.em.findOneOrFail(MapLearnerVocab, {learner: user.profile, vocab});
             await context.vocabRepo.annotateUserMeanings([mapping], user.profile.id);
 
             expect(response.statusCode).to.equal(200);
             expect(response.json()).toEqual(learnerVocabSerializer.serialize(mapping));
+            const updatedFields: (keyof LearnerVocabSchema)[] = ["level", "notes"];
+            expect(learnerVocabSerializer.serialize(mapping, {include: updatedFields})).toEqual(learnerVocabSerializer.serialize(updatedMapping, {include: updatedFields}));
         });
     });
     describe(`If fields are invalid return 400`, async () => {
