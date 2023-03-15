@@ -57,7 +57,7 @@ describe("GET courses/", function () {
         await context.courseFactory.create(10, {language: await context.languageFactory.createOne()});
 
         const response = await makeRequest();
-        const courses = await context.courseRepo.find({isPublic: true}, {populate: ["language", "addedBy.user"]});
+        const courses = await context.courseRepo.find({isPublic: true}, {populate: ["language", "addedBy.user"], orderBy: {title: "asc"}});
         expect(response.statusCode).to.equal(200);
         expect(response.json()).toEqual(courseSerializer.serializeList(courses));
     });
@@ -71,7 +71,7 @@ describe("GET courses/", function () {
             const courses = await context.courseRepo.find({
                 isPublic: true,
                 language: language1
-            }, {populate: ["addedBy.user"], refresh: true});
+            }, {populate: ["addedBy.user"], orderBy: {title: "asc"}, refresh: true});
             expect(response.statusCode).to.equal(200);
             expect(response.json()).toEqual(courseSerializer.serializeList(courses));
         });
@@ -99,7 +99,7 @@ describe("GET courses/", function () {
             const courses = await context.courseRepo.find({
                 isPublic: true,
                 addedBy: user.profile
-            }, {populate: ["addedBy.user"], refresh: true});
+            }, {populate: ["addedBy.user"], orderBy: {title: "asc"}, refresh: true});
             expect(response.statusCode).to.equal(200);
             expect(response.json()).toEqual(courseSerializer.serializeList(courses));
         });
@@ -112,7 +112,7 @@ describe("GET courses/", function () {
             const response = await makeRequest({addedBy: "me"}, session.token);
             let courses = await context.courseRepo.find({
                 addedBy: user.profile
-            }, {populate: ["addedBy.user"], refresh: true});
+            }, {populate: ["addedBy.user"], orderBy: {title: "asc"}, refresh: true});
             courses = await context.courseRepo.annotateVocabsByLevel(courses, user.id);
 
             expect(response.statusCode).to.equal(200);
@@ -161,7 +161,7 @@ describe("GET courses/", function () {
             const courses = await context.courseRepo.find({
                 isPublic: true,
                 $or: [{title: {$ilike: `%${searchQuery}%`}}, {description: {$ilike: `%${searchQuery}%`}}]
-            });
+            }, {populate: ["addedBy.user", "language"], orderBy: {title: "asc"}});
             expect(response.statusCode).to.equal(200);
             expect(response.json()).toEqual(courseSerializer.serializeList(courses));
         });
@@ -192,7 +192,7 @@ describe("GET courses/", function () {
             const courses = await context.courseRepo.find({
                 isPublic: true,
                 level: level
-            }, {populate: ["language", "addedBy.user"]});
+            }, {populate: ["language", "addedBy.user"], orderBy: {title: "asc"}});
             expect(response.statusCode).to.equal(200);
             expect(response.json()).toEqual(courseSerializer.serializeList(courses));
         });
@@ -204,6 +204,87 @@ describe("GET courses/", function () {
             expect(response.statusCode).to.equal(400);
         });
     });
+    describe("test sort", () => {
+        describe("test sortBy", () => {
+            test<LocalTestContext>("test sortBy title", async (context) => {
+                const language = await context.languageFactory.createOne();
+                await context.courseFactory.createOne({title: "abc", language});
+                await context.courseFactory.createOne({title: "def", language});
+
+                const response = await makeRequest({sortBy: "title"});
+                const courses = await context.courseRepo.find({isPublic: true}, {
+                    populate: ["language", "addedBy.user"],
+                    orderBy: {title: "asc"}
+                });
+                expect(response.statusCode).to.equal(200);
+                expect(response.json()).toEqual(courseSerializer.serializeList(courses));
+            });
+            test<LocalTestContext>("test sortBy createdDate", async (context) => {
+                const language = await context.languageFactory.createOne();
+                await context.courseFactory.createOne({addedOn: "2023-03-15T20:29:42.765Z", language});
+                await context.courseFactory.createOne({addedOn: "2018-07-22T10:30:45.000Z", language});
+
+                const response = await makeRequest({sortBy: "createdDate"});
+                const courses = await context.courseRepo.find({isPublic: true}, {
+                    populate: ["language", "addedBy.user"],
+                    orderBy: {addedOn: "asc"}
+                });
+                expect(response.statusCode).to.equal(200);
+                expect(response.json()).toEqual(courseSerializer.serializeList(courses));
+            });
+            test<LocalTestContext>("test sortBy learnersCount", async (context) => {
+                const user = await context.userFactory.createOne();
+                const language = await context.languageFactory.createOne();
+                await context.lessonFactory.create(3, {course: await context.courseFactory.createOne({language}), learners: user.profile});
+                await context.courseFactory.createOne({language});
+
+                const response = await makeRequest({sortBy: "learnersCount"});
+                const courses = await context.courseRepo.find({isPublic: true}, {
+                    populate: ["language", "addedBy.user"],
+                    orderBy: {learnersCount: "asc"}
+                });
+                expect(response.statusCode).to.equal(200);
+                expect(response.json()).toEqual(courseSerializer.serializeList(courses));
+            });
+            test<LocalTestContext>("if sortBy is invalid return 400", async (context) => {
+                const response = await makeRequest({sortBy: "lessons"});
+                expect(response.statusCode).to.equal(400);
+            });
+        });
+        describe("test sortOrder", () => {
+            test<LocalTestContext>("test sortOrder ascending", async (context) => {
+                const language = await context.languageFactory.createOne();
+                await context.courseFactory.createOne({title: "abc", language});
+                await context.courseFactory.createOne({title: "def", language});
+
+                const response = await makeRequest({sortBy: "title", sortOrder: "asc"});
+                const courses = await context.courseRepo.find({isPublic: true}, {
+                    populate: ["language", "addedBy.user"],
+                    orderBy: {title: "asc"}
+                });
+                expect(response.statusCode).to.equal(200);
+                expect(response.json()).toEqual(courseSerializer.serializeList(courses));
+            });
+            test<LocalTestContext>("test sortOrder descending", async (context) => {
+                const language = await context.languageFactory.createOne();
+                await context.courseFactory.createOne({title: "abc", language});
+                await context.courseFactory.createOne({title: "def", language});
+
+                const response = await makeRequest({sortBy: "title", sortOrder: "desc"});
+                const courses = await context.courseRepo.find({isPublic: true}, {
+                    populate: ["language", "addedBy.user"],
+                    orderBy: {title: "desc"}
+                });
+                expect(response.statusCode).to.equal(200);
+                expect(response.json()).toEqual(courseSerializer.serializeList(courses));
+            });
+            test<LocalTestContext>("if sortBy is invalid return 400", async (context) => {
+                const response = await makeRequest({sortOrder: "rising"});
+                expect(response.statusCode).to.equal(400);
+            });
+        });
+    });
+
     test<LocalTestContext>("If logged in return courses with vocab levels for user", async (context) => {
         const user = await context.userFactory.createOne();
         const session = await context.sessionFactory.createOne({user: user});
@@ -211,7 +292,7 @@ describe("GET courses/", function () {
 
         const response = await makeRequest({}, session.token);
 
-        let courses = await context.courseRepo.find({isPublic: true}, {populate: ["language", "addedBy.user"]});
+        let courses = await context.courseRepo.find({isPublic: true}, {populate: ["language", "addedBy.user"], orderBy: {title: "asc"}});
         courses = await context.courseRepo.annotateVocabsByLevel(courses, user.id);
         expect(response.statusCode).to.equal(200);
         expect(response.json()).toEqual(courseSerializer.serializeList(courses));
@@ -223,7 +304,10 @@ describe("GET courses/", function () {
 
         const response = await makeRequest({}, session.token);
 
-        let courses = await context.courseRepo.find({$or: [{isPublic: true}, {addedBy: user.profile}]}, {populate: ["language", "addedBy.user"]});
+        let courses = await context.courseRepo.find({$or: [{isPublic: true}, {addedBy: user.profile}]}, {
+            populate: ["language", "addedBy.user"],
+            orderBy: {title: "asc"}
+        });
         courses = await context.courseRepo.annotateVocabsByLevel(courses, user.id);
         expect(response.statusCode).to.equal(200);
         expect(response.json()).toEqual(courseSerializer.serializeList(courses));
@@ -1293,7 +1377,10 @@ describe("GET users/{username}/courses/", () => {
 
             const response = await makeRequest("me", {}, session.token);
 
-            const userCourses = await context.courseRepo.find({lessons: {learners: user.profile}}, {populate: ["language", "addedBy.user"]});
+            const userCourses = await context.courseRepo.find({lessons: {learners: user.profile}}, {
+                populate: ["language", "addedBy.user"],
+                orderBy: {title: "asc"}
+            });
             await context.courseRepo.annotateVocabsByLevel(userCourses, user.id);
 
             expect(response.statusCode).to.equal(200);
@@ -1317,7 +1404,10 @@ describe("GET users/{username}/courses/", () => {
 
             const response = await makeRequest(user.username, {}, session.token);
 
-            const userCourses = await context.courseRepo.find({lessons: {learners: user.profile}}, {populate: ["language", "addedBy.user"]});
+            const userCourses = await context.courseRepo.find({lessons: {learners: user.profile}}, {
+                populate: ["language", "addedBy.user"],
+                orderBy: {title: "asc"}
+            });
             await context.courseRepo.annotateVocabsByLevel(userCourses, user.id);
 
             expect(response.statusCode).to.equal(200);
@@ -1370,7 +1460,7 @@ describe("GET users/{username}/courses/", () => {
             const response = await makeRequest("me", {languageCode: language1.code}, session.token);
             const userCourses = await context.courseRepo.find(
                 {isPublic: true, language: language1, lessons: {learners: user.profile}},
-                {populate: ["addedBy.user"], refresh: true});
+                {populate: ["addedBy.user"], orderBy: {title: "asc"}, refresh: true});
 
             await context.courseRepo.annotateVocabsByLevel(userCourses, user.id);
 
@@ -1427,7 +1517,7 @@ describe("GET users/{username}/courses/", () => {
             const response = await makeRequest("me", {addedBy: user1.username}, session.token);
             const userCourses = await context.courseRepo.find(
                 {isPublic: true, addedBy: {user: {username: user1.username}}, lessons: {learners: user.profile}},
-                {populate: ["addedBy.user"], refresh: true});
+                {populate: ["addedBy.user"], orderBy: {title: "asc"}, refresh: true});
 
             await context.courseRepo.annotateVocabsByLevel(userCourses, user.id);
 
@@ -1452,7 +1542,7 @@ describe("GET users/{username}/courses/", () => {
             const response = await makeRequest("me", {addedBy: "me"}, session.token);
             const userCourses = await context.courseRepo.find(
                 {isPublic: true, addedBy: {user: {username: user.username}}, lessons: {learners: user.profile}},
-                {populate: ["addedBy.user"], refresh: true});
+                {populate: ["addedBy.user"], orderBy: {title: "asc"}, refresh: true});
 
             await context.courseRepo.annotateVocabsByLevel(userCourses, user.id);
 
@@ -1525,7 +1615,7 @@ describe("GET users/{username}/courses/", () => {
                 isPublic: true,
                 lessons: {learners: user.profile},
                 $or: [{title: {$ilike: `%${searchQuery}%`}}, {description: {$ilike: `%${searchQuery}%`}}],
-            });
+            }, {populate: ["addedBy.user", "language"], orderBy: {title: "asc"}});
             await context.courseRepo.annotateVocabsByLevel(userCourses, user.id);
             expect(response.statusCode).to.equal(200);
             expect(response.json()).toEqual(courseSerializer.serializeList(userCourses));
@@ -1581,7 +1671,7 @@ describe("GET users/{username}/courses/", () => {
                     level: level,
                     lessons: {learners: user.profile}
                 },
-                {populate: ["addedBy.user"], refresh: true});
+                {populate: ["addedBy.user"], orderBy: {title: "asc"}, refresh: true});
 
             await context.courseRepo.annotateVocabsByLevel(userCourses, user.id);
 
@@ -1596,6 +1686,163 @@ describe("GET users/{username}/courses/", () => {
             const response = await makeRequest(user.username, {level: "hard"}, session.token);
 
             expect(response.statusCode).to.equal(400);
+        });
+    });
+
+    describe("test sort", () => {
+        describe("test sortBy", () => {
+            test<LocalTestContext>("test sortBy title", async (context) => {
+                const user = await context.userFactory.createOne();
+                const session = await context.sessionFactory.createOne({user: user});
+                const courses = await context.courseFactory.create(10, {
+                    language: await context.languageFactory.createOne(),
+                    lessons: [],
+                    isPublic: true
+                });
+                let lessons: Lesson[] = [];
+                for (let i = 0; i < courses.length; i++)
+                    lessons.push(...await context.lessonFactory.create(3, {course: courses[i]}));
+                lessons = shuffleArray(lessons);
+                for (let i = 0; i < faker.datatype.number({min: 1, max: lessons.length}); i++)
+                    await context.em.create(MapLearnerLesson, {learner: user.profile, lesson: lessons[i]});
+                await context.em.flush();
+
+                const response = await makeRequest("me", {sortBy: "title"}, session.token);
+
+                const userCourses = await context.courseRepo.find({lessons: {learners: user.profile}}, {
+                    populate: ["language", "addedBy.user"],
+                    orderBy: {title: "asc"}
+                });
+                await context.courseRepo.annotateVocabsByLevel(userCourses, user.id);
+
+                expect(response.statusCode).to.equal(200);
+                expect(response.json()).toEqual(courseSerializer.serializeList(userCourses));
+            });
+            test<LocalTestContext>("test sortBy createdDate", async (context) => {
+                const user = await context.userFactory.createOne();
+                const session = await context.sessionFactory.createOne({user: user});
+                const courses = await context.courseFactory.create(10, {
+                    language: await context.languageFactory.createOne(),
+                    lessons: [],
+                    isPublic: true
+                });
+                let lessons: Lesson[] = [];
+                for (let i = 0; i < courses.length; i++)
+                    lessons.push(...await context.lessonFactory.create(3, {course: courses[i]}));
+                lessons = shuffleArray(lessons);
+                for (let i = 0; i < faker.datatype.number({min: 1, max: lessons.length}); i++)
+                    await context.em.create(MapLearnerLesson, {learner: user.profile, lesson: lessons[i]});
+                await context.em.flush();
+
+                const response = await makeRequest("me", {sortBy: "createdDate"}, session.token);
+
+                const userCourses = await context.courseRepo.find({lessons: {learners: user.profile}}, {
+                    populate: ["language", "addedBy.user"],
+                    orderBy: {addedOn: "asc"}
+                });
+                await context.courseRepo.annotateVocabsByLevel(userCourses, user.id);
+
+                expect(response.statusCode).to.equal(200);
+                expect(response.json()).toEqual(courseSerializer.serializeList(userCourses));
+            });
+            test<LocalTestContext>("test sortBy learnersCount", async (context) => {
+
+                const user = await context.userFactory.createOne();
+                const session = await context.sessionFactory.createOne({user: user});
+                const courses = await context.courseFactory.create(10, {
+                    language: await context.languageFactory.createOne(),
+                    lessons: [],
+                    isPublic: true
+                });
+                let lessons: Lesson[] = [];
+                for (let i = 0; i < courses.length; i++)
+                    lessons.push(...await context.lessonFactory.create(3, {course: courses[i]}));
+                lessons = shuffleArray(lessons);
+                for (let i = 0; i < faker.datatype.number({min: 1, max: lessons.length}); i++)
+                    await context.em.create(MapLearnerLesson, {learner: user.profile, lesson: lessons[i]});
+                await context.em.flush();
+
+                const response = await makeRequest("me", {sortBy: "learnersCount"}, session.token);
+
+                const userCourses = await context.courseRepo.find({lessons: {learners: user.profile}}, {
+                    populate: ["language", "addedBy.user"],
+                    orderBy: {learnersCount: "asc"}
+                });
+                await context.courseRepo.annotateVocabsByLevel(userCourses, user.id);
+
+                expect(response.statusCode).to.equal(200);
+                expect(response.json()).toEqual(courseSerializer.serializeList(userCourses));
+            });
+            test<LocalTestContext>("if sortBy is invalid return 400", async (context) => {
+                const user = await context.userFactory.createOne();
+                const session = await context.sessionFactory.createOne({user: user});
+
+                const response = await makeRequest("me", {sortBy: "lessons"}, session.token);
+                expect(response.statusCode).to.equal(400);
+            });
+        });
+        describe("test sortOrder", () => {
+            test<LocalTestContext>("test sortOrder ascending", async (context) => {
+                const user = await context.userFactory.createOne();
+                const session = await context.sessionFactory.createOne({user: user});
+                const courses = await context.courseFactory.create(10, {
+                    language: await context.languageFactory.createOne(),
+                    lessons: [],
+                    isPublic: true
+                });
+                let lessons: Lesson[] = [];
+                for (let i = 0; i < courses.length; i++)
+                    lessons.push(...await context.lessonFactory.create(3, {course: courses[i]}));
+                lessons = shuffleArray(lessons);
+                for (let i = 0; i < faker.datatype.number({min: 1, max: lessons.length}); i++)
+                    await context.em.create(MapLearnerLesson, {learner: user.profile, lesson: lessons[i]});
+                await context.em.flush();
+
+                const response = await makeRequest("me", {sortBy: "title", sortOrder: "asc"}, session.token);
+
+                const userCourses = await context.courseRepo.find({lessons: {learners: user.profile}}, {
+                    populate: ["language", "addedBy.user"],
+                    orderBy: {title: "asc"}
+                });
+                await context.courseRepo.annotateVocabsByLevel(userCourses, user.id);
+
+                expect(response.statusCode).to.equal(200);
+                expect(response.json()).toEqual(courseSerializer.serializeList(userCourses));
+            });
+            test<LocalTestContext>("test sortOrder descending", async (context) => {
+                const user = await context.userFactory.createOne();
+                const session = await context.sessionFactory.createOne({user: user});
+                const courses = await context.courseFactory.create(10, {
+                    language: await context.languageFactory.createOne(),
+                    lessons: [],
+                    isPublic: true
+                });
+                let lessons: Lesson[] = [];
+                for (let i = 0; i < courses.length; i++)
+                    lessons.push(...await context.lessonFactory.create(3, {course: courses[i]}));
+                lessons = shuffleArray(lessons);
+                for (let i = 0; i < faker.datatype.number({min: 1, max: lessons.length}); i++)
+                    await context.em.create(MapLearnerLesson, {learner: user.profile, lesson: lessons[i]});
+                await context.em.flush();
+
+                const response = await makeRequest("me", {sortBy: "title", sortOrder: "desc"}, session.token);
+
+                const userCourses = await context.courseRepo.find({lessons: {learners: user.profile}}, {
+                    populate: ["language", "addedBy.user"],
+                    orderBy: {title: "desc"}
+                });
+                await context.courseRepo.annotateVocabsByLevel(userCourses, user.id);
+
+                expect(response.statusCode).to.equal(200);
+                expect(response.json()).toEqual(courseSerializer.serializeList(userCourses));
+            });
+            test<LocalTestContext>("if sortOrder is invalid return 400", async (context) => {
+                const user = await context.userFactory.createOne();
+                const session = await context.sessionFactory.createOne({user: user});
+
+                const response = await makeRequest("me", {sortOrder: "rising"}, session.token);
+                expect(response.statusCode).to.equal(400);
+            });
         });
     });
 });

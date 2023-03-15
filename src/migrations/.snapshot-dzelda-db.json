@@ -767,6 +767,17 @@
           "nullable": false,
           "mappedType": "integer"
         },
+        "added_on": {
+          "name": "added_on",
+          "type": "timestamptz(0)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "length": 6,
+          "default": "now()",
+          "mappedType": "datetime"
+        },
         "level": {
           "name": "level",
           "type": "text",
@@ -1481,11 +1492,12 @@
         },
         "notes": {
           "name": "notes",
-          "type": "varchar(255)",
+          "type": "varchar(2048)",
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
           "nullable": false,
+          "length": 2048,
           "default": "''",
           "mappedType": "string"
         }

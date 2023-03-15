@@ -7,6 +7,7 @@ import {defaultVocabsByLevel} from "@/src/models/enums/VocabLevel.js";
 import {LanguageLevel} from "@/src/models/enums/LanguageLevel.js";
 import {Lesson} from "@/src/models/entities/Lesson.js";
 import {LessonRepo} from "@/src/models/repos/LessonRepo.js";
+import {QueryOrderMap} from "@mikro-orm/core/enums.js";
 
 export class CourseService {
     em: EntityManager;
@@ -19,7 +20,7 @@ export class CourseService {
         this.lessonRepo = this.em.getRepository(Lesson) as LessonRepo;
     }
 
-    async getCourses(filters: { languageCode?: string, addedBy?: string, searchQuery?: string, level?: LanguageLevel; isLearning?: boolean }, user: User | AnonymousUser | null) {
+    async getCourses(filters: { languageCode?: string, addedBy?: string, searchQuery?: string, level?: LanguageLevel; isLearning?: boolean }, sort: { sortBy: "title" | "createdDate" | "learnersCount", sortOrder: "asc" | "desc" }, user: User | AnonymousUser | null) {
         const dbFilters: FilterQuery<Course> = {$and: []};
 
         if (user && user instanceof User) {
@@ -38,10 +39,17 @@ export class CourseService {
         if (filters.level !== undefined)
             dbFilters.$and!.push({level: filters.level});
 
-        let courses = await this.courseRepo.find(dbFilters, {populate: ["language", "addedBy.user"]});
+        const dbOrderBy: QueryOrderMap<Course> = {};
+        if (sort.sortBy == "title")
+            dbOrderBy["title"] = sort.sortOrder;
+        else if (sort.sortBy == "createdDate")
+            dbOrderBy["addedOn"] = sort.sortOrder;
+        else if (sort.sortBy == "learnersCount")
+            dbOrderBy["learnersCount"] = sort.sortOrder;
 
+        const courses = await this.courseRepo.find(dbFilters, {orderBy: dbOrderBy, populate: ["language", "addedBy.user"]});
         if (user && !(user instanceof AnonymousUser))
-            courses = await this.courseRepo.annotateVocabsByLevel(courses, user.id);
+            await this.courseRepo.annotateVocabsByLevel(courses, user.id);
 
         return courses;
     }
@@ -98,7 +106,7 @@ export class CourseService {
         return course;
     }
 
-    async getUserCoursesLearning(filters: { languageCode?: string, addedBy?: string, searchQuery?: string, level?: LanguageLevel, isLearning?: boolean }, user: User) {
-        return this.getCourses({...filters, isLearning: true}, user);
+    async getUserCoursesLearning(filters: { languageCode?: string, addedBy?: string, searchQuery?: string, level?: LanguageLevel, isLearning?: boolean }, sort: { sortBy: "title" | "createdDate" | "learnersCount", sortOrder: "asc" | "desc" }, user: User) {
+        return this.getCourses({...filters, isLearning: true}, sort, user);
     }
 }

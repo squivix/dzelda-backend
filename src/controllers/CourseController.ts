@@ -21,7 +21,9 @@ class CourseController {
             languageCode: languageCodeValidator.optional(),
             addedBy: usernameValidator.optional(),
             searchQuery: z.string().min(1).max(256).optional(),
-            level: z.nativeEnum(LanguageLevel).optional()
+            level: z.nativeEnum(LanguageLevel).optional(),
+            sortBy: z.union([z.literal("title"), z.literal("createdDate"), z.literal("learnersCount")]).optional().default("title"),
+            sortOrder: z.union([z.literal("asc"), z.literal("desc")]).optional().default("asc"),
         });
         const queryParams = queryParamsValidator.parse(request.query);
         if (queryParams.addedBy == "me") {
@@ -29,9 +31,15 @@ class CourseController {
                 throw new UnauthenticatedAPIError(request.user);
             queryParams.addedBy = request.user?.username;
         }
-
+        const filters = {
+            languageCode: queryParams.languageCode,
+            addedBy: queryParams.addedBy,
+            searchQuery: queryParams.searchQuery,
+            level: queryParams.level
+        };
+        const sort = {sortBy: queryParams.sortBy, sortOrder: queryParams.sortOrder};
         const courseService = new CourseService(request.em);
-        const courses = await courseService.getCourses(queryParams, request.user);
+        const courses = await courseService.getCourses(filters, sort, request.user);
         reply.send(courseSerializer.serializeList(courses));
     }
 
@@ -133,15 +141,24 @@ class CourseController {
             languageCode: languageCodeValidator.optional(),
             addedBy: usernameValidator.optional(),
             searchQuery: z.string().min(1).max(256).optional(),
-            level: z.nativeEnum(LanguageLevel).optional()
+            level: z.nativeEnum(LanguageLevel).optional(),
+            sortBy: z.union([z.literal("title"), z.literal("createdDate"), z.literal("learnersCount")]).optional().default("title"),
+            sortOrder: z.union([z.literal("asc"), z.literal("desc")]).optional().default("asc"),
         });
         const queryParams = queryParamsValidator.parse(request.query);
 
         if (queryParams.addedBy == "me")
             queryParams.addedBy = request.user?.username!;
 
+        const filters = {
+            languageCode: queryParams.languageCode,
+            addedBy: queryParams.addedBy,
+            searchQuery: queryParams.searchQuery,
+            level: queryParams.level
+        };
+        const sort = {sortBy: queryParams.sortBy, sortOrder: queryParams.sortOrder};
         const courseService = new CourseService(request.em);
-        const courses = await courseService.getUserCoursesLearning(queryParams, user);
+        const courses = await courseService.getUserCoursesLearning(filters, sort, user);
         reply.send(courseSerializer.serializeList(courses));
     }
 }

@@ -67,9 +67,7 @@ export class Language extends CustomBaseEntity {
     learners: Collection<Profile> = new Collection<Profile>(this);
 
 
-    @Formula((alias: string) => `(SELECT COUNT(learner_id) FROM map_learner_language WHERE language_id=${alias}.id)`, {
-        type: "number"
-    })
+    @Formula((alias: string) => `(SELECT COUNT(learner_id) FROM map_learner_language WHERE language_id=${alias}.id)`, {type: "number"})
     learnersCount!: number;
 
 

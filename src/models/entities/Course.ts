@@ -1,4 +1,4 @@
-import {Collection, Entity, Enum, Index, ManyToOne, OneToMany, OptionalProps, Property, types} from "@mikro-orm/core";
+import {Collection, Entity, Enum, Formula, Index, ManyToOne, OneToMany, OptionalProps, Property, types} from "@mikro-orm/core";
 import {CustomBaseEntity} from "@/src/models/entities/CustomBaseEntity.js";
 import {Language} from "@/src/models/entities/Language.js";
 import {Profile} from "@/src/models/entities/Profile.js";
@@ -8,8 +8,8 @@ import {VocabLevel} from "@/src/models/enums/VocabLevel.js";
 import {CourseRepo} from "@/src/models/repos/CourseRepo.js";
 
 @Entity({customRepository: () => CourseRepo})
-@Index({properties: ['language']})
-@Index({properties: ['addedBy']})
+@Index({properties: ["language"]})
+@Index({properties: ["addedBy"]})
 export class Course extends CustomBaseEntity {
 
     @Property({type: types.string, length: 255})
@@ -30,16 +30,24 @@ export class Course extends CustomBaseEntity {
     @ManyToOne({entity: () => Profile, inversedBy: (profile) => profile.coursesAdded})
     addedBy!: Profile;
 
+    @Property({type: types.datetime, defaultRaw: "now()"})
+    addedOn!: Date;
+
     @Enum({items: () => LanguageLevel, type: types.enum, default: LanguageLevel.ADVANCED_1})
     level: LanguageLevel = LanguageLevel.ADVANCED_1;
 
     @OneToMany({entity: () => Lesson, mappedBy: (lesson) => lesson.course})
     lessons: Collection<Lesson> = new Collection<Lesson>(this);
 
-    [OptionalProps]?: "description" | "image" | "isPublic" | "level";
+    [OptionalProps]?: "description" | "image" | "isPublic" | "level" | "addedOn" | "learnersCount";
 
     //annotated properties
     @Property({persist: false, type: types.json})
     vocabsByLevel?: Record<VocabLevel, number>;
+
+    @Formula((alias: string) => `(SELECT COUNT(DISTINCT map_learner_lesson.learner_id) FROM map_learner_lesson JOIN lesson ON map_learner_lesson.lesson_id = lesson.id WHERE lesson.course_id = ${alias}.id)`, {
+        type: "number"
+    })
+    learnersCount?: number;
 
 }
