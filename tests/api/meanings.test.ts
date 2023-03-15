@@ -15,6 +15,7 @@ import {Meaning} from "@/src/models/entities/Meaning.js";
 import {faker} from "@faker-js/faker";
 import {MapLearnerLesson} from "@/src/models/entities/MapLearnerLesson.js";
 import {MapLearnerMeaning} from "@/src/models/entities/MapLearnerMeaning.js";
+import {MapLearnerLanguage} from "@/src/models/entities/MapLearnerLanguage.js";
 
 interface LocalTestContext extends TestContext {
     languageFactory: LanguageFactory;
@@ -512,6 +513,7 @@ describe("DELETE users/:username/meanings/:meaningId/", () => {
             const response = await makeRequest("me", meaning.id, session.token);
 
             expect(response.statusCode).to.equal(204);
+            expect((await context.em.findOne(MapLearnerMeaning, {learner: user.profile, meaning}))?.toObject() ?? null).toBeNull();
         });
         test<LocalTestContext>("If username is not me and authenticated as user with username return 204", async (context) => {
             const user = await context.userFactory.createOne();
@@ -523,6 +525,7 @@ describe("DELETE users/:username/meanings/:meaningId/", () => {
             const response = await makeRequest(user.username, meaning.id, session.token);
 
             expect(response.statusCode).to.equal(204);
+            expect((await context.em.findOne(MapLearnerMeaning, {learner: user.profile, meaning}))?.toObject() ?? null).toBeNull();
         });
     });
     test<LocalTestContext>("If user is not learning meaning return 404", async (context) => {
