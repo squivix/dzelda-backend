@@ -22,6 +22,8 @@ class LessonController {
             searchQuery: z.string().min(1).max(256).optional(),
             level: lessonLevelsFilterValidator.default([]),
             hasAudio: booleanStringValidator.optional(),
+            sortBy: z.union([z.literal("title"), z.literal("createdDate"), z.literal("learnersCount")]).optional().default("title"),
+            sortOrder: z.union([z.literal("asc"), z.literal("desc")]).optional().default("asc"),
         });
         const queryParams = validator.parse(request.query);
         if (queryParams.addedBy == "me") {
@@ -29,9 +31,18 @@ class LessonController {
                 throw new UnauthenticatedAPIError(request.user);
             queryParams.addedBy = request.user?.username;
         }
+
+        const filters = {
+            languageCode: queryParams.languageCode,
+            addedBy: queryParams.addedBy,
+            searchQuery: queryParams.searchQuery,
+            level: queryParams.level,
+            hasAudio: queryParams.hasAudio,
+        };
+        const sort = {sortBy: queryParams.sortBy, sortOrder: queryParams.sortOrder};
         const lessonService = new LessonService(request.em);
 
-        const lessons = await lessonService.getLessons(queryParams, request.user);
+        const lessons = await lessonService.getLessons(filters, sort, request.user);
         reply.send(lessonSerializer.serializeList(lessons));
     }
 
@@ -137,14 +148,24 @@ class LessonController {
             searchQuery: z.string().min(1).max(256).optional(),
             level: lessonLevelsFilterValidator.default([]),
             hasAudio: booleanStringValidator.optional(),
+            sortBy: z.union([z.literal("title"), z.literal("createdDate"), z.literal("learnersCount")]).optional().default("title"),
+            sortOrder: z.union([z.literal("asc"), z.literal("desc")]).optional().default("asc"),
         });
         const queryParams = queryParamsValidator.parse(request.query);
 
         if (queryParams.addedBy == "me")
             queryParams.addedBy = request.user?.username!;
 
+        const filters = {
+            languageCode: queryParams.languageCode,
+            addedBy: queryParams.addedBy,
+            searchQuery: queryParams.searchQuery,
+            level: queryParams.level,
+            hasAudio: queryParams.hasAudio,
+        };
+        const sort = {sortBy: queryParams.sortBy, sortOrder: queryParams.sortOrder};
         const lessonService = new LessonService(request.em);
-        const lessons = await lessonService.getUserLessonsLearning(queryParams, request.user as User);
+        const lessons = await lessonService.getUserLessonsLearning(filters, sort, request.user as User);
         reply.send(lessonSerializer.serializeList(lessons));
     }
 

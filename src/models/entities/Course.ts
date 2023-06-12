@@ -1,8 +1,7 @@
-import {Collection, Entity, Enum, Formula, Index, ManyToOne, OneToMany, OptionalProps, Property, types} from "@mikro-orm/core";
+import {Collection, Entity, Formula, Index, ManyToOne, OneToMany, OptionalProps, Property, types} from "@mikro-orm/core";
 import {CustomBaseEntity} from "@/src/models/entities/CustomBaseEntity.js";
 import {Language} from "@/src/models/entities/Language.js";
 import {Profile} from "@/src/models/entities/Profile.js";
-import {LanguageLevel} from "@/src/models/enums/LanguageLevel.js";
 import {Lesson} from "@/src/models/entities/Lesson.js";
 import {VocabLevel} from "@/src/models/enums/VocabLevel.js";
 import {CourseRepo} from "@/src/models/repos/CourseRepo.js";

@@ -10,7 +10,7 @@ import {Vocab} from "@/src/models/entities/Vocab.js";
 import {MapLessonVocab} from "@/src/models/entities/MapLessonVocab.js";
 import {CourseRepo} from "@/src/models/repos/CourseRepo.js";
 import {MapLearnerLesson} from "@/src/models/entities/MapLearnerLesson.js";
-import {MapLearnerLanguage} from "@/src/models/entities/MapLearnerLanguage.js";
+import {QueryOrderMap} from "@mikro-orm/core/enums.js";
 
 export class LessonService {
     em: SqlEntityManager;
@@ -25,13 +25,15 @@ export class LessonService {
     }
 
     async getLessons(filters: {
-        languageCode?: string,
-        addedBy?: string,
-        searchQuery?: string,
-        level?: LanguageLevel[],
-        hasAudio?: boolean;
-        isLearning?: boolean
-    }, user: User | AnonymousUser | null) {
+                         languageCode?: string,
+                         addedBy?: string,
+                         searchQuery?: string,
+                         level?: LanguageLevel[],
+                         hasAudio?: boolean;
+                         isLearning?: boolean
+                     },
+                     sort: { sortBy: "title" | "createdDate" | "learnersCount", sortOrder: "asc" | "desc" },
+                     user: User | AnonymousUser | null) {
         const dbFilters: FilterQuery<Lesson> = {$and: []};
         if (user && user instanceof User) {
             dbFilters.$and!.push({$or: [{course: {isPublic: true}}, {course: {addedBy: (user as User).profile}}]});
@@ -52,7 +54,15 @@ export class LessonService {
         if (filters.level !== undefined)
             dbFilters.$and!.push({$or: filters.level.map(level => ({level}))});
 
-        let lessons = await this.lessonRepo.find(dbFilters, {populate: ["course", "course.language", "course.addedBy.user"]});
+        const dbOrderBy: QueryOrderMap<Lesson> = {};
+        if (sort.sortBy == "title")
+            dbOrderBy["title"] = sort.sortOrder;
+        else if (sort.sortBy == "createdDate")
+            dbOrderBy["addedOn"] = sort.sortOrder;
+        else if (sort.sortBy == "learnersCount")
+            dbOrderBy["learnersCount"] = sort.sortOrder;
+
+        let lessons = await this.lessonRepo.find(dbFilters, {orderBy: dbOrderBy, populate: ["course", "course.language", "course.addedBy.user"]});
 
         if (user && !(user instanceof AnonymousUser))
             lessons = await this.lessonRepo.annotateVocabsByLevel(lessons, user.id);
@@ -144,13 +154,15 @@ export class LessonService {
     }
 
     async getUserLessonsLearning(filters: {
-        languageCode?: string,
-        addedBy?: string,
-        searchQuery?: string,
-        level?: LanguageLevel[],
-        hasAudio?: boolean
-    }, user: User) {
-        return this.getLessons({...filters, isLearning: true}, user);
+                                     languageCode?: string,
+                                     addedBy?: string,
+                                     searchQuery?: string,
+                                     level?: LanguageLevel[],
+                                     hasAudio?: boolean
+                                 },
+                                 sort: { sortBy: "title" | "createdDate" | "learnersCount", sortOrder: "asc" | "desc" },
+                                 user: User) {
+        return this.getLessons({...filters, isLearning: true}, sort, user);
     }
 
     async getUserLessonLearning(lesson: Lesson, user: User) {
