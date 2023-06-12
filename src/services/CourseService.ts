@@ -20,7 +20,7 @@ export class CourseService {
         this.lessonRepo = this.em.getRepository(Lesson) as LessonRepo;
     }
 
-    async getCourses(filters: { languageCode?: string, addedBy?: string, searchQuery?: string, level?: LanguageLevel; isLearning?: boolean }, sort: { sortBy: "title" | "createdDate" | "learnersCount", sortOrder: "asc" | "desc" }, user: User | AnonymousUser | null) {
+    async getCourses(filters: { languageCode?: string, addedBy?: string, searchQuery?: string, isLearning?: boolean }, sort: { sortBy: "title" | "createdDate" | "learnersCount", sortOrder: "asc" | "desc" }, user: User | AnonymousUser | null) {
         const dbFilters: FilterQuery<Course> = {$and: []};
 
         if (user && user instanceof User) {
@@ -36,8 +36,6 @@ export class CourseService {
             dbFilters.$and!.push({addedBy: {user: {username: filters.addedBy}}});
         if (filters.searchQuery !== undefined)
             dbFilters.$and!.push({$or: [{title: {$ilike: `%${filters.searchQuery}%`}}, {description: {$ilike: `%${filters.searchQuery}%`}}]});
-        if (filters.level !== undefined)
-            dbFilters.$and!.push({level: filters.level});
 
         const dbOrderBy: QueryOrderMap<Course> = {};
         if (sort.sortBy == "title")
@@ -64,7 +62,6 @@ export class CourseService {
             description: fields.description,
             image: fields.image,
             isPublic: fields.isPublic,
-            level: fields.level
         });
         newCourse.vocabsByLevel = defaultVocabsByLevel();
         await this.em.flush();
@@ -81,11 +78,10 @@ export class CourseService {
         return course;
     }
 
-    async updateCourse(course: Course, updatedCourseData: { title: string; description: string; isPublic: boolean; image?: string; level: LanguageLevel; lessonsOrder: number[] }, user: User) {
+    async updateCourse(course: Course, updatedCourseData: { title: string; description: string; isPublic: boolean; image?: string;  lessonsOrder: number[] }, user: User) {
         course.title = updatedCourseData.title;
         course.description = updatedCourseData.description;
         course.isPublic = updatedCourseData.isPublic;
-        course.level = updatedCourseData.level;
         if (updatedCourseData.image !== undefined)
             course.image = updatedCourseData.image;
 

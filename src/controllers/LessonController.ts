@@ -6,15 +6,13 @@ import {usernameValidator} from "@/src/validators/userValidator.js";
 import {AnonymousUser, User} from "@/src/models/entities/auth/User.js";
 import {UnauthenticatedAPIError} from "@/src/utils/errors/UnauthenticatedAPIError.js";
 import {booleanStringValidator, numericStringValidator} from "@/src/validators/utilValidators.js";
-import {LanguageLevel} from "@/src/models/enums/LanguageLevel.js";
 import {ValidationAPIError} from "@/src/utils/errors/ValidationAPIError.js";
 import {CourseService} from "@/src/services/CourseService.js";
-import {lessonTextValidator, lessonTitleValidator} from "@/src/validators/lessonValidators.js";
+import {lessonLevelsFilterValidator, lessonLevelValidator, lessonTextValidator, lessonTitleValidator} from "@/src/validators/lessonValidators.js";
 import {ForbiddenAPIError} from "@/src/utils/errors/ForbiddenAPIError.js";
 import {NotFoundAPIError} from "@/src/utils/errors/NotFoundAPIError.js";
 import {UserService} from "@/src/services/UserService.js";
 import {lessonSerializer} from "@/src/presentation/response/serializers/entities/LessonSerializer.js";
-import {courseLevelValidator} from "@/src/validators/courseValidator.js";
 
 class LessonController {
     async getLessons(request: FastifyRequest, reply: FastifyReply) {
@@ -22,7 +20,7 @@ class LessonController {
             languageCode: languageCodeValidator.optional(),
             addedBy: usernameValidator.optional(),
             searchQuery: z.string().min(1).max(256).optional(),
-            level: courseLevelValidator.default([]),
+            level: lessonLevelsFilterValidator.default([]),
             hasAudio: booleanStringValidator.optional(),
         });
         const queryParams = validator.parse(request.query);
@@ -42,6 +40,7 @@ class LessonController {
             data: z.object({
                 title: lessonTitleValidator,
                 text: lessonTextValidator,
+                level: lessonLevelValidator.optional(),
                 courseId: z.number().min(0)
             }),
             image: z.string().optional(),
@@ -61,6 +60,7 @@ class LessonController {
             title: body.data.title,
             text: body.data.text,
             course: course,
+            level: body.data.level,
             image: body.image,
             audio: body.audio,
         }, request.user as User);
@@ -135,7 +135,7 @@ class LessonController {
             languageCode: languageCodeValidator.optional(),
             addedBy: usernameValidator.optional(),
             searchQuery: z.string().min(1).max(256).optional(),
-            level: courseLevelValidator.default([]),
+            level: lessonLevelsFilterValidator.default([]),
             hasAudio: booleanStringValidator.optional(),
         });
         const queryParams = queryParamsValidator.parse(request.query);

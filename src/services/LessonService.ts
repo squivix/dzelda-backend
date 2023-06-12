@@ -50,7 +50,7 @@ export class LessonService {
         if (filters.hasAudio !== undefined)
             dbFilters.$and!.push({audio: {[filters.hasAudio ? "$ne" : "$eq"]: ""}});
         if (filters.level !== undefined)
-            dbFilters.$and!.push({$or: filters.level.map(level => ({course: {level}}))});
+            dbFilters.$and!.push({$or: filters.level.map(level => ({level}))});
 
         let lessons = await this.lessonRepo.find(dbFilters, {populate: ["course", "course.language", "course.addedBy.user"]});
 
@@ -59,10 +59,11 @@ export class LessonService {
         return lessons;
     }
 
-    async createLesson(fields: { title: string; text: string; course: Course; image?: string; audio?: string; }, user: User) {
+    async createLesson(fields: { title: string; text: string; level?: LanguageLevel, course: Course; image?: string; audio?: string; }, user: User) {
         let newLesson = await this.lessonRepo.create({
             title: fields.title,
             text: fields.text,
+            level: fields.level,
             image: fields.image,
             audio: fields.audio,
             course: fields.course,
@@ -98,6 +99,7 @@ export class LessonService {
     async updateLesson(lesson: Lesson, updatedLessonData: {
         title: string;
         text: string;
+        level?: LanguageLevel
         course: Course,
         image?: string;
         audio?: string;
@@ -121,6 +123,9 @@ export class LessonService {
             lesson.course = updatedLessonData.course;
             lesson.orderInCourse = await updatedLessonData.course.lessons.loadCount(true);
         }
+
+        if (updatedLessonData.level !== undefined)
+            lesson.level = updatedLessonData.level;
 
         if (updatedLessonData.image !== undefined)
             lesson.image = updatedLessonData.image;

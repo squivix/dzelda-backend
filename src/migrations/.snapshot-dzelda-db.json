@@ -777,24 +777,6 @@
           "length": 6,
           "default": "now()",
           "mappedType": "datetime"
-        },
-        "level": {
-          "name": "level",
-          "type": "text",
-          "unsigned": false,
-          "autoincrement": false,
-          "primary": false,
-          "nullable": false,
-          "default": "'advanced1'",
-          "enumItems": [
-            "beginner1",
-            "beginner2",
-            "intermediate1",
-            "intermediate2",
-            "advanced1",
-            "advanced2"
-          ],
-          "mappedType": "enum"
         }
       },
       "name": "course",
@@ -927,6 +909,24 @@
           "nullable": false,
           "default": "0",
           "mappedType": "integer"
+        },
+        "level": {
+          "name": "level",
+          "type": "text",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "default": "'advanced1'",
+          "enumItems": [
+            "beginner1",
+            "beginner2",
+            "intermediate1",
+            "intermediate2",
+            "advanced1",
+            "advanced2"
+          ],
+          "mappedType": "enum"
         },
         "added_on": {
           "name": "added_on",

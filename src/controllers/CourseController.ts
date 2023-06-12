@@ -21,7 +21,6 @@ class CourseController {
             languageCode: languageCodeValidator.optional(),
             addedBy: usernameValidator.optional(),
             searchQuery: z.string().min(1).max(256).optional(),
-            level: z.nativeEnum(LanguageLevel).optional(),
             sortBy: z.union([z.literal("title"), z.literal("createdDate"), z.literal("learnersCount")]).optional().default("title"),
             sortOrder: z.union([z.literal("asc"), z.literal("desc")]).optional().default("asc"),
         });
@@ -35,7 +34,6 @@ class CourseController {
             languageCode: queryParams.languageCode,
             addedBy: queryParams.addedBy,
             searchQuery: queryParams.searchQuery,
-            level: queryParams.level
         };
         const sort = {sortBy: queryParams.sortBy, sortOrder: queryParams.sortOrder};
         const courseService = new CourseService(request.em);
@@ -96,7 +94,6 @@ class CourseController {
                 title: courseTitleValidator,
                 description: courseDescriptionValidator,
                 isPublic: z.boolean(),
-                level: z.nativeEnum(LanguageLevel),
                 lessonsOrder: z.array(z.number().int().min(0)).refine(e => new Set(e).size === e.length)
             }),
             image: z.string().optional()
@@ -121,7 +118,6 @@ class CourseController {
             description: body.data.description,
             isPublic: body.data.isPublic,
             image: body.image,
-            level: body.data.level,
             lessonsOrder: body.data.lessonsOrder
         }, request.user as User);
         reply.status(200).send(courseSerializer.serialize(updatedCourse));

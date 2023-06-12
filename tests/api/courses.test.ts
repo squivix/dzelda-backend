@@ -10,8 +10,7 @@ import {CourseRepo} from "@/src/models/repos/CourseRepo.js";
 import {InjectOptions} from "light-my-request";
 import {LanguageFactory} from "@/src/seeders/factories/LanguageFactory.js";
 import {faker} from "@faker-js/faker";
-import {randomCase, randomEnum, shuffleArray} from "@/tests/utils.js";
-import {LanguageLevel} from "@/src/models/enums/LanguageLevel.js";
+import {randomCase, shuffleArray} from "@/tests/utils.js";
 import {defaultVocabsByLevel} from "@/src/models/enums/VocabLevel.js";
 import fs from "fs-extra";
 import {LessonFactory} from "@/src/seeders/factories/LessonFactory.js";
@@ -181,29 +180,6 @@ describe("GET courses/", function () {
             expect(response.json()).toEqual([]);
         });
     });
-    describe("test level filter", () => {
-        test<LocalTestContext>("If the level is valid return courses in that level", async (context) => {
-            const level = randomEnum(LanguageLevel);
-            const language = await context.languageFactory.createOne();
-            await context.courseFactory.create(5, {level: level, isPublic: true, language: language});
-            await context.courseFactory.create(5, {isPublic: true, language: language});
-
-            const response = await makeRequest({level: level});
-            const courses = await context.courseRepo.find({
-                isPublic: true,
-                level: level
-            }, {populate: ["language", "addedBy.user"], orderBy: {title: "asc"}});
-            expect(response.statusCode).to.equal(200);
-            expect(response.json()).toEqual(courseSerializer.serializeList(courses));
-        });
-        test<LocalTestContext>("If the level is invalid return 400", async (context) => {
-            await context.courseFactory.create(10, {isPublic: true, language: await context.languageFactory.createOne()});
-
-            const response = await makeRequest({level: "hard"});
-
-            expect(response.statusCode).to.equal(400);
-        });
-    });
     describe("test sort", () => {
         describe("test sortBy", () => {
             test<LocalTestContext>("test sortBy title", async (context) => {
@@ -345,7 +321,6 @@ describe("POST courses/", function () {
                 lessons: [],
                 addedBy: user.profile,
                 language: language,
-                level: LanguageLevel.ADVANCED_1,
                 image: "",
                 vocabsByLevel: defaultVocabsByLevel()
             });
@@ -378,7 +353,6 @@ describe("POST courses/", function () {
                     description: newCourse.description,
                     languageCode: language.code,
                     isPublic: newCourse.isPublic,
-                    level: newCourse.level,
                 },
                 files: {image: readSampleFile("images/lorem-ipsum-69_8KB-1_1ratio.png")}
             }, session.token);
@@ -705,7 +679,6 @@ describe("PUT courses/:courseId/", function () {
                     title: updatedCourse.title,
                     description: updatedCourse.description,
                     isPublic: updatedCourse.isPublic,
-                    level: updatedCourse.level,
                     lessonsOrder: shuffledLessonIds
                 }
             }, session.token);
@@ -740,7 +713,6 @@ describe("PUT courses/:courseId/", function () {
                     title: updatedCourse.title,
                     description: updatedCourse.description,
                     isPublic: updatedCourse.isPublic,
-                    level: updatedCourse.level,
                     lessonsOrder: shuffledLessonIds
                 },
                 files: {image: {value: ""}}
@@ -776,7 +748,6 @@ describe("PUT courses/:courseId/", function () {
                     title: updatedCourse.title,
                     description: updatedCourse.description,
                     isPublic: updatedCourse.isPublic,
-                    level: updatedCourse.level,
                     lessonsOrder: shuffledLessonIds
                 },
                 files: {image: readSampleFile("images/lorem-ipsum-69_8KB-1_1ratio.png")}
@@ -811,7 +782,6 @@ describe("PUT courses/:courseId/", function () {
                 title: updatedCourse.title,
                 description: updatedCourse.description,
                 isPublic: updatedCourse.isPublic,
-                level: updatedCourse.level,
                 lessonsOrder: shuffleArray(courseLessons).map(l => l.id)
             }
         });
@@ -829,7 +799,6 @@ describe("PUT courses/:courseId/", function () {
                 title: updatedCourse.title,
                 description: updatedCourse.description,
                 isPublic: updatedCourse.isPublic,
-                level: updatedCourse.level,
                 lessonsOrder: [1, 2, 3]
             }
         }, session.token);
@@ -861,7 +830,6 @@ describe("PUT courses/:courseId/", function () {
                 title: updatedCourse.title,
                 description: updatedCourse.description,
                 isPublic: updatedCourse.isPublic,
-                level: updatedCourse.level,
                 lessonsOrder: shuffleArray(courseLessons).map(l => l.id)
             }
         }, session.token);
@@ -893,7 +861,6 @@ describe("PUT courses/:courseId/", function () {
                 title: updatedCourse.title,
                 description: updatedCourse.description,
                 isPublic: updatedCourse.isPublic,
-                level: updatedCourse.level,
                 lessonsOrder: shuffleArray(courseLessons).map(l => l.id)
             }
         }, session.token);
@@ -918,7 +885,6 @@ describe("PUT courses/:courseId/", function () {
                 data: {
                     description: updatedCourse.description,
                     isPublic: updatedCourse.isPublic,
-                    level: updatedCourse.level,
                     lessonsOrder: shuffleArray(courseLessons).map(l => l.id)
                 }
             }, session.token);
@@ -942,7 +908,6 @@ describe("PUT courses/:courseId/", function () {
                 data: {
                     title: updatedCourse.title,
                     isPublic: updatedCourse.isPublic,
-                    level: updatedCourse.level,
                     lessonsOrder: shuffleArray(courseLessons).map(l => l.id)
                 }
             }, session.token);
@@ -967,32 +932,6 @@ describe("PUT courses/:courseId/", function () {
                 data: {
                     title: updatedCourse.title,
                     description: updatedCourse.description,
-                    level: updatedCourse.level,
-                    lessonsOrder: shuffleArray(courseLessons).map(l => l.id)
-                }
-            }, session.token);
-
-            expect(response.statusCode).to.equal(400);
-        });
-        test<LocalTestContext>("If level is missing return 400", async (context) => {
-
-            const author = await context.userFactory.createOne();
-            const session = await context.sessionFactory.createOne({user: author});
-            const language = await context.languageFactory.createOne();
-            const course = await context.courseFactory.createOne({addedBy: author.profile, language: language, lessons: [], image: ""});
-
-            let lessonCounter = 0;
-            let courseLessons = await context.lessonFactory.each(l => {
-                l.orderInCourse = lessonCounter;
-                lessonCounter++;
-            }).create(10, {course: course});
-            const updatedCourse = await context.courseFactory.makeOne({addedBy: author.profile, language: language});
-
-            const response = await makeRequest(course.id, {
-                data: {
-                    title: updatedCourse.title,
-                    description: updatedCourse.description,
-                    isPublic: updatedCourse.isPublic,
                     lessonsOrder: shuffleArray(courseLessons).map(l => l.id)
                 }
             }, session.token);
@@ -1017,7 +956,6 @@ describe("PUT courses/:courseId/", function () {
                     title: updatedCourse.title,
                     description: updatedCourse.description,
                     isPublic: updatedCourse.isPublic,
-                    level: updatedCourse.level,
                 }
             }, session.token);
 
@@ -1064,7 +1002,6 @@ describe("PUT courses/:courseId/", function () {
                     title: faker.random.alpha(300),
                     description: updatedCourse.description,
                     isPublic: updatedCourse.isPublic,
-                    level: updatedCourse.level,
                     lessonsOrder: shuffleArray(courseLessons).map(l => l.id)
                 }
             }, session.token);
@@ -1089,7 +1026,6 @@ describe("PUT courses/:courseId/", function () {
                     title: updatedCourse.title,
                     description: faker.random.alpha(600),
                     isPublic: updatedCourse.isPublic,
-                    level: updatedCourse.level,
                     lessonsOrder: shuffleArray(courseLessons).map(l => l.id)
                 }
             }, session.token);
@@ -1114,32 +1050,6 @@ describe("PUT courses/:courseId/", function () {
                     title: updatedCourse.title,
                     description: updatedCourse.description,
                     isPublic: "kinda?",
-                    level: updatedCourse.level,
-                    lessonsOrder: shuffleArray(courseLessons).map(l => l.id)
-                }
-            }, session.token);
-
-            expect(response.statusCode).to.equal(400);
-        });
-        test<LocalTestContext>("If level is invalid return 400", async (context) => {
-            const author = await context.userFactory.createOne();
-            const session = await context.sessionFactory.createOne({user: author});
-            const language = await context.languageFactory.createOne();
-            const course = await context.courseFactory.createOne({addedBy: author.profile, language: language, lessons: [], image: ""});
-
-            let lessonCounter = 0;
-            let courseLessons = await context.lessonFactory.each(l => {
-                l.orderInCourse = lessonCounter;
-                lessonCounter++;
-            }).create(10, {course: course});
-            const updatedCourse = await context.courseFactory.makeOne({addedBy: author.profile, language: language});
-
-            const response = await makeRequest(course.id, {
-                data: {
-                    title: updatedCourse.title,
-                    description: updatedCourse.description,
-                    isPublic: updatedCourse.isPublic,
-                    level: "high",
                     lessonsOrder: shuffleArray(courseLessons).map(l => l.id)
                 }
             }, session.token);
@@ -1159,7 +1069,6 @@ describe("PUT courses/:courseId/", function () {
                         title: updatedCourse.title,
                         description: updatedCourse.description,
                         isPublic: updatedCourse.isPublic,
-                        level: updatedCourse.level,
                         lessonsOrder: [1, 2, 3.5, -1, "42"]
                     }
                 }, session.token);
@@ -1190,7 +1099,6 @@ describe("PUT courses/:courseId/", function () {
                             title: updatedCourse.title,
                             description: updatedCourse.description,
                             isPublic: updatedCourse.isPublic,
-                            level: updatedCourse.level,
                             lessonsOrder: [...shuffleArray(courseLessons.map(l => l.id)), otherLesson.id]
                         }
                     }, session.token);
@@ -1222,7 +1130,6 @@ describe("PUT courses/:courseId/", function () {
                             title: updatedCourse.title,
                             description: updatedCourse.description,
                             isPublic: updatedCourse.isPublic,
-                            level: updatedCourse.level,
                             lessonsOrder: lessonOrder
                         }
                     }, session.token);
@@ -1254,7 +1161,6 @@ describe("PUT courses/:courseId/", function () {
                             title: updatedCourse.title,
                             description: updatedCourse.description,
                             isPublic: updatedCourse.isPublic,
-                            level: updatedCourse.level,
                             lessonsOrder: lessonOrder
                         }
                     }, session.token);
@@ -1283,7 +1189,6 @@ describe("PUT courses/:courseId/", function () {
                         title: faker.random.alpha(300),
                         description: updatedCourse.description,
                         isPublic: updatedCourse.isPublic,
-                        level: updatedCourse.level,
                         lessonsOrder: shuffleArray(courseLessons).map(l => l.id)
                     },
                     files: {image: readSampleFile("images/audio-468_4KB.png")}
@@ -1309,7 +1214,6 @@ describe("PUT courses/:courseId/", function () {
                         title: faker.random.alpha(300),
                         description: updatedCourse.description,
                         isPublic: updatedCourse.isPublic,
-                        level: updatedCourse.level,
                         lessonsOrder: shuffleArray(courseLessons).map(l => l.id)
                     },
                     files: {
@@ -1336,7 +1240,6 @@ describe("PUT courses/:courseId/", function () {
                         title: faker.random.alpha(300),
                         description: updatedCourse.description,
                         isPublic: updatedCourse.isPublic,
-                        level: updatedCourse.level,
                         lessonsOrder: shuffleArray(courseLessons).map(l => l.id)
                     },
                     files: {image: readSampleFile("images/rectangle-5_2KB-2_1ratio.png")}
@@ -1648,47 +1551,6 @@ describe("GET users/{username}/courses/", () => {
             expect(response.json()).toEqual([]);
         });
     });
-    describe("test level filter", () => {
-        test<LocalTestContext>("If the level is valid return courses in that level with a lesson the user is learning", async (context) => {
-            const user = await context.userFactory.createOne();
-            const session = await context.sessionFactory.createOne({user: user});
-            const level = randomEnum(LanguageLevel);
-            const language = await context.languageFactory.createOne();
-            const courses = [...await context.courseFactory.create(5, {level: level, isPublic: true, language: language}),
-                ...await context.courseFactory.create(5, {isPublic: true, language: language})];
-            let lessons: Lesson[] = [];
-            for (let i = 0; i < courses.length; i++)
-                lessons.push(...await context.lessonFactory.create(3, {course: courses[i]}));
-            lessons = shuffleArray(lessons);
-            for (let i = 0; i < faker.datatype.number({min: 1, max: lessons.length}); i++)
-                await context.em.create(MapLearnerLesson, {learner: user.profile, lesson: lessons[i]});
-            await context.em.flush();
-
-            const response = await makeRequest("me", {level: level}, session.token);
-            const userCourses = await context.courseRepo.find(
-                {
-                    isPublic: true,
-                    level: level,
-                    lessons: {learners: user.profile}
-                },
-                {populate: ["addedBy.user"], orderBy: {title: "asc"}, refresh: true});
-
-            await context.courseRepo.annotateVocabsByLevel(userCourses, user.id);
-
-            expect(response.statusCode).to.equal(200);
-            expect(response.json()).toEqual(courseSerializer.serializeList(userCourses));
-        });
-        test<LocalTestContext>("If the level is invalid return 400", async (context) => {
-            const user = await context.userFactory.createOne();
-            const session = await context.sessionFactory.createOne({user: user});
-            await context.courseFactory.create(10, {isPublic: true, language: await context.languageFactory.createOne()});
-
-            const response = await makeRequest(user.username, {level: "hard"}, session.token);
-
-            expect(response.statusCode).to.equal(400);
-        });
-    });
-
     describe("test sort", () => {
         describe("test sortBy", () => {
             test<LocalTestContext>("test sortBy title", async (context) => {

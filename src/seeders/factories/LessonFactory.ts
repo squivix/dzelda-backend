@@ -7,6 +7,8 @@ import {parsers} from "@/src/utils/parsers/parsers.js";
 import {Vocab} from "@/src/models/entities/Vocab.js";
 import {MapLessonVocab} from "@/src/models/entities/MapLessonVocab.js";
 import {Language} from "@/src/models/entities/Language.js";
+import {randomEnum} from "@/tests/utils.js";
+import {LanguageLevel} from "@/src/models/enums/LanguageLevel.js";
 
 export class LessonFactory extends CustomFactory<Lesson> {
     readonly model = Lesson;
@@ -17,6 +19,7 @@ export class LessonFactory extends CustomFactory<Lesson> {
             title: faker.random.words(faker.datatype.number({min: 4, max: 10})),
             text: faker.random.words(faker.datatype.number({min: 50, max: 100})),
             image: faker.image.imageUrl(100, 100),
+            level: randomEnum(LanguageLevel),
             audio: "https://upload.wikimedia.org/wikipedia/commons/d/de/Lorem_ipsum.ogg"
         };
     }

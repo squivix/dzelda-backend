@@ -33,13 +33,10 @@ export class Course extends CustomBaseEntity {
     @Property({type: types.datetime, defaultRaw: "now()"})
     addedOn!: Date;
 
-    @Enum({items: () => LanguageLevel, type: types.enum, default: LanguageLevel.ADVANCED_1})
-    level: LanguageLevel = LanguageLevel.ADVANCED_1;
-
     @OneToMany({entity: () => Lesson, mappedBy: (lesson) => lesson.course})
     lessons: Collection<Lesson> = new Collection<Lesson>(this);
 
-    [OptionalProps]?: "description" | "image" | "isPublic" | "level" | "addedOn" | "learnersCount";
+    [OptionalProps]?: "description" | "image" | "isPublic"  | "addedOn" | "learnersCount";
 
     //annotated properties
     @Property({persist: false, type: types.json})

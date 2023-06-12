@@ -208,14 +208,15 @@ describe("GET lessons/", () => {
         test<LocalTestContext>("If the level is valid return lessons in that level", async (context) => {
             const level = randomEnum(LanguageLevel);
             const language = await context.languageFactory.createOne();
-            await context.lessonFactory.create(5, {course: await context.courseFactory.createOne({language: language, level: level})});
-            await context.lessonFactory.create(5, {course: await context.courseFactory.createOne({language: language})});
+            const course = await context.courseFactory.createOne({isPublic: true, language: language});
+            await context.lessonFactory.create(5, {level: level, course});
+            await context.lessonFactory.create(5, {course});
 
             const response = await makeRequest({level: level});
 
             const lessons = await context.lessonRepo.find({
+                level: level,
                 course: {
-                    level: level,
                     isPublic: true
                 }
             }, {populate: ["course", "course.language", "course.addedBy.user"]});
@@ -1540,11 +1541,11 @@ describe("GET users/:username/lessons", () => {
             const session = await context.sessionFactory.createOne({user: user});
             const level = randomEnum(LanguageLevel);
             const language = await context.languageFactory.createOne();
-            const courses = [...await context.courseFactory.create(2, {language, level, isPublic: true}),
-                ...await context.courseFactory.create(2, {language, isPublic: true})];
+            const course = await context.courseFactory.createOne({isPublic:true, language: language, lessons: []});
+
             let lessons: Lesson[] = [];
-            for (let i = 0; i < courses.length; i++)
-                lessons.push(...await context.lessonFactory.create(5, {course: courses[i]}));
+            lessons.push(...await context.lessonFactory.create(5, {course, level}));
+            lessons.push(...await context.lessonFactory.create(5, {course}));
             lessons = shuffleArray(lessons);
             for (let i = 0; i < faker.datatype.number({min: 1, max: lessons.length}); i++)
                 await context.em.create(MapLearnerLesson, {learner: user.profile, lesson: lessons[i]});
@@ -1553,7 +1554,7 @@ describe("GET users/:username/lessons", () => {
             const response = await makeRequest("me", {level: level}, session.token);
 
             const userLessons = await context.lessonRepo.find({
-                course: {level: level},
+                level: level,
                 learners: user.profile
             }, {populate: ["course", "course.language", "course.addedBy.user"]});
             await context.lessonRepo.annotateVocabsByLevel(userLessons, user.id);
