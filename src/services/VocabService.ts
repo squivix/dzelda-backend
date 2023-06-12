@@ -6,7 +6,6 @@ import {MapLearnerVocab} from "@/src/models/entities/MapLearnerVocab.js";
 import {VocabRepo} from "@/src/models/repos/VocabRepo.js";
 import {VocabLevel} from "@/src/models/enums/VocabLevel.js";
 import {Lesson} from "@/src/models/entities/Lesson.js";
-import {MapLearnerMeaning} from "@/src/models/entities/MapLearnerMeaning.js";
 
 export class VocabService {
     em: EntityManager;
@@ -18,9 +17,29 @@ export class VocabService {
         this.vocabRepo = this.em.getRepository(Vocab);
     }
 
-    async getVocabs(filters: {}, user: User | AnonymousUser | null) {
+    async getVocabs(filters: { languageCode?: string, searchQuery?: string },
+                    sort: { sortBy: "text" | "lessonsCount" | "learnersCount", sortOrder: "asc" | "desc" },
+                    pagination: { page: number, pageSize: number }, user: User | AnonymousUser | null) {
         const dbFilters: FilterQuery<Vocab> = {$and: []};
-        return await this.vocabRepo.find(dbFilters, {populate: ["meanings"]});
+
+        if (filters.languageCode !== undefined)
+            dbFilters.$and!.push({language: {code: filters.languageCode}});
+        if (filters.searchQuery !== undefined)
+            dbFilters.$and!.push({text: {$ilike: `%${filters.searchQuery}%`}});
+        return await this.vocabRepo.find(dbFilters, {
+            populate: ["meanings", "meanings.addedBy.user"],
+            limit: pagination.pageSize,
+            offset: pagination.pageSize * (pagination.page - 1)
+        });
+    }
+
+    async countVocabs(filters: { languageCode?: string, searchQuery?: string }) {
+        const dbFilters: FilterQuery<Vocab> = {$and: []};
+        if (filters.languageCode !== undefined)
+            dbFilters.$and!.push({language: {code: filters.languageCode}});
+        if (filters.searchQuery !== undefined)
+            dbFilters.$and!.push({text: {$ilike: `%${filters.searchQuery}%`}});
+        return await this.vocabRepo.count(dbFilters);
     }
 
     async createVocab(vocabData: { text: string; language: Language; isPhrase: boolean }) {

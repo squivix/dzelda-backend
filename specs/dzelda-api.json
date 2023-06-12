@@ -303,26 +303,6 @@
           },
           {
             "schema": {
-              "type": "array",
-              "items": {
-                "type": "string",
-                "enum": [
-                  "beginner1",
-                  "beginner2",
-                  "intermediate1",
-                  "intermediate2",
-                  "advanced1",
-                  "advanced2"
-                ]
-              },
-              "minItems": 0,
-              "maxItems": 6
-            },
-            "in": "query",
-            "name": "level"
-          },
-          {
-            "schema": {
               "type": "string"
             },
             "in": "query",
@@ -342,16 +322,7 @@
             "name": "sortBy"
           },
           {
-            "schema": {
-              "type": "string",
-              "enum": [
-                "asc",
-                "desc"
-              ],
-              "default": "asc"
-            },
-            "in": "query",
-            "name": "sortOrder"
+            "$ref": "#/components/parameters/sortOrder"
           }
         ],
         "security": []
@@ -641,22 +612,18 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "enum": [
+                "title",
+                "createdDate",
+                "learnersCount"
+              ]
             },
             "in": "query",
             "name": "sortBy"
           },
           {
-            "schema": {
-              "type": "string",
-              "enum": [
-                "asc",
-                "desc"
-              ],
-              "default": "asc"
-            },
-            "in": "query",
-            "name": "sortOrder"
+            "$ref": "#/components/parameters/sortOrder"
           }
         ]
       },
@@ -889,6 +856,97 @@
           "vocab"
         ],
         "description": "Create new vocab."
+      },
+      "get": {
+        "summary": "Get Vocabs",
+        "operationId": "get-vocabs",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "page": {
+                      "type": "integer"
+                    },
+                    "pageSize": {
+                      "type": "integer"
+                    },
+                    "pageCount": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Vocab"
+                      }
+                    }
+                  },
+                  "required": [
+                    "page",
+                    "pageSize",
+                    "pageCount",
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          }
+        },
+        "description": "Get a list of vocabs",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "languageCode"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 256
+            },
+            "in": "query",
+            "name": "searchQuery"
+          },
+          {
+            "$ref": "#/components/parameters/page"
+          },
+          {
+            "schema": {
+              "type": "number",
+              "default": "25",
+              "minLength": 1,
+              "maxLength": 200,
+              "minimum": 1,
+              "maximum": 200
+            },
+            "in": "query",
+            "name": "pageSize"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "text",
+                "lessonsCount",
+                "learnersCount"
+              ],
+              "default": "text"
+            },
+            "in": "query",
+            "name": "sortBy"
+          },
+          {
+            "$ref": "#/components/parameters/sortOrder"
+          }
+        ]
       }
     },
     "/meanings": {
@@ -1313,7 +1371,9 @@
               "maxItems": 6
             },
             "in": "query",
-            "name": "level"
+            "name": "level",
+            "style": "form",
+            "explode": true
           },
           {
             "schema": {
@@ -2607,6 +2667,28 @@
           "type": "string",
           "pattern": "^[A-Za-z0-9]*$",
           "maxLength": 20
+        }
+      },
+      "sortOrder": {
+        "name": "sortOrder",
+        "in": "query",
+        "schema": {
+          "type": "string",
+          "enum": [
+            "asc",
+            "desc"
+          ],
+          "default": "asc"
+        }
+      },
+      "page": {
+        "name": "page",
+        "in": "query",
+        "required": false,
+        "schema": {
+          "type": "integer",
+          "minimum": 1,
+          "default": 1
         }
       }
     }
