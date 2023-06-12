@@ -24,7 +24,14 @@ export class LessonService {
 
     }
 
-    async getLessons(filters: { languageCode?: string, addedBy?: string, searchQuery?: string, level?: LanguageLevel, hasAudio?: boolean; isLearning?: boolean }, user: User | AnonymousUser | null) {
+    async getLessons(filters: {
+        languageCode?: string,
+        addedBy?: string,
+        searchQuery?: string,
+        level?: LanguageLevel[],
+        hasAudio?: boolean;
+        isLearning?: boolean
+    }, user: User | AnonymousUser | null) {
         const dbFilters: FilterQuery<Lesson> = {$and: []};
         if (user && user instanceof User) {
             dbFilters.$and!.push({$or: [{course: {isPublic: true}}, {course: {addedBy: (user as User).profile}}]});
@@ -43,7 +50,7 @@ export class LessonService {
         if (filters.hasAudio !== undefined)
             dbFilters.$and!.push({audio: {[filters.hasAudio ? "$ne" : "$eq"]: ""}});
         if (filters.level !== undefined)
-            dbFilters.$and!.push({course: {level: filters.level}});
+            dbFilters.$and!.push({$or: filters.level.map(level => ({course: {level}}))});
 
         let lessons = await this.lessonRepo.find(dbFilters, {populate: ["course", "course.language", "course.addedBy.user"]});
 
@@ -88,7 +95,13 @@ export class LessonService {
         return lesson;
     }
 
-    async updateLesson(lesson: Lesson, updatedLessonData: { title: string; text: string; course: Course, image?: string; audio?: string; }, user: User) {
+    async updateLesson(lesson: Lesson, updatedLessonData: {
+        title: string;
+        text: string;
+        course: Course,
+        image?: string;
+        audio?: string;
+    }, user: User) {
         const language = lesson.course.language;
         if (lesson.title !== updatedLessonData.title || lesson.text !== updatedLessonData.text) {
             lesson.title = updatedLessonData.title;
@@ -125,9 +138,16 @@ export class LessonService {
         return lesson;
     }
 
-    async getUserLessonsLearning(filters: { languageCode?: string, addedBy?: string, searchQuery?: string, level?: LanguageLevel, hasAudio?: boolean }, user: User) {
+    async getUserLessonsLearning(filters: {
+        languageCode?: string,
+        addedBy?: string,
+        searchQuery?: string,
+        level?: LanguageLevel[],
+        hasAudio?: boolean
+    }, user: User) {
         return this.getLessons({...filters, isLearning: true}, user);
     }
+
     async getUserLessonLearning(lesson: Lesson, user: User) {
         return await this.em.findOne(MapLearnerLesson, {lesson: lesson, learner: user.profile});
     }

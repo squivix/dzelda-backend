@@ -327,6 +327,31 @@
             },
             "in": "query",
             "name": "searchQuery"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "title",
+                "createdDate",
+                "learnersCount"
+              ],
+              "default": "title"
+            },
+            "in": "query",
+            "name": "sortBy"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ],
+              "default": "asc"
+            },
+            "in": "query",
+            "name": "sortOrder"
           }
         ],
         "security": []
@@ -603,7 +628,9 @@
               "maxItems": 6
             },
             "in": "query",
-            "name": "level"
+            "name": "level",
+            "style": "form",
+            "explode": true
           },
           {
             "schema": {
@@ -611,6 +638,25 @@
             },
             "in": "query",
             "name": "hasAudio"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "sortBy"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ],
+              "default": "asc"
+            },
+            "in": "query",
+            "name": "sortOrder"
           }
         ]
       },
@@ -2242,7 +2288,17 @@
               "$ref": "#/components/schemas/Meaning"
             }
           }
-        }
+        },
+        "required": [
+          "id",
+          "text",
+          "isPhrase",
+          "level",
+          "notes",
+          "language",
+          "allMeanings",
+          "userMeanings"
+        ]
       },
       "LearnerLanguage": {
         "title": "LearnerLanguage",
@@ -2312,7 +2368,21 @@
             "type": "string",
             "format": "date-time"
           }
-        }
+        },
+        "required": [
+          "id",
+          "code",
+          "name",
+          "greeting",
+          "flag",
+          "flagCircular",
+          "flagEmoji",
+          "isSupported",
+          "levelThresholds",
+          "learnersCount",
+          "addedOn",
+          "lastOpened"
+        ]
       }
     },
     "securitySchemes": {

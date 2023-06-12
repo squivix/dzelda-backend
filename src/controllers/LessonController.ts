@@ -14,6 +14,7 @@ import {ForbiddenAPIError} from "@/src/utils/errors/ForbiddenAPIError.js";
 import {NotFoundAPIError} from "@/src/utils/errors/NotFoundAPIError.js";
 import {UserService} from "@/src/services/UserService.js";
 import {lessonSerializer} from "@/src/presentation/response/serializers/entities/LessonSerializer.js";
+import {courseLevelValidator} from "@/src/validators/courseValidator.js";
 
 class LessonController {
     async getLessons(request: FastifyRequest, reply: FastifyReply) {
@@ -21,10 +22,9 @@ class LessonController {
             languageCode: languageCodeValidator.optional(),
             addedBy: usernameValidator.optional(),
             searchQuery: z.string().min(1).max(256).optional(),
-            level: z.nativeEnum(LanguageLevel).optional(),
+            level: courseLevelValidator.default([]),
             hasAudio: booleanStringValidator.optional(),
         });
-
         const queryParams = validator.parse(request.query);
         if (queryParams.addedBy == "me") {
             if (!request.user || request.user instanceof AnonymousUser)
@@ -135,7 +135,7 @@ class LessonController {
             languageCode: languageCodeValidator.optional(),
             addedBy: usernameValidator.optional(),
             searchQuery: z.string().min(1).max(256).optional(),
-            level: z.nativeEnum(LanguageLevel).optional(),
+            level: courseLevelValidator.default([]),
             hasAudio: booleanStringValidator.optional(),
         });
         const queryParams = queryParamsValidator.parse(request.query);
