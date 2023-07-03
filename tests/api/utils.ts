@@ -6,12 +6,10 @@ import fs from "fs-extra";
 import path from "path";
 
 export async function fetchRequest(options: InjectOptions, authToken?: string) {
-    if (authToken) {
-        if (options.headers)
-            options.headers.authorization = `Bearer ${authToken}`;
-        else
-            options.headers = {authorization: `Bearer ${authToken}`};
-    }
+    options.headers = options.headers ?? {};
+    if (authToken)
+        options.headers.authorization = `Bearer ${authToken}`;
+    const {server,API_ROOT} = await import("@/src/server.js");
     return await server.inject({
         ...options,
         url: `${API_ROOT}/${options.url}`

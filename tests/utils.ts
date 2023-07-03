@@ -1,10 +1,3 @@
-import cp from "child_process";
-
-export function truncateDb() {
-    cp.execSync(`${process.env.PWD}/scripts/truncate-test-db.sh`);
-}
-
-
 function randomNumericEnum<T extends Record<string, any>>(e: T): number {
     const values = Object.values(e);
     const numericValues = values.filter((value) => typeof value === "number");
