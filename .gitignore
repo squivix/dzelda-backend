@@ -2,7 +2,8 @@ build
 node_modules
 coverage
 npm-debug.log
-.env
+env
+*.env
 .nyc_output
 specs/schema.ts
 /public/media/

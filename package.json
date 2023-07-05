@@ -16,7 +16,7 @@
     "unmigrate": "mikro-orm migration:down --to 0",
     "premake-migrations": "npm run clean",
     "premigrate": "npm run clean",
-    "dev": "concurrently \"npm run watch-compile\" \"npm run watch-dev\"",
+    "dev": "env-cmd -f ./env/dev.env concurrently \"npm run watch-compile\" \"npm run watch-dev\"",
     "watch-compile": "swc src -w --out-dir build/src",
     "watch-dev": "nodemon --watch \"build/src/**/*\" -e js ./build/src/main.js",
     "generate-schema": "npx openapi-typescript specs/dzelda-api.json --output specs/schema.ts"
@@ -29,6 +29,7 @@
     "@mikro-orm/core": "^5.6.7",
     "@mikro-orm/postgresql": "^5.6.7",
     "dotenv": "^16.0.3",
+    "env-cmd": "^10.1.0",
     "fastify": "^4.9.2",
     "fastify-formidable": "^3.0.2",
     "file-type": "^18.2.0",

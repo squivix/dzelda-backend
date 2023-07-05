@@ -1,0 +1,1 @@
+export const AUTH_TOKEN_LENGTH = 32;

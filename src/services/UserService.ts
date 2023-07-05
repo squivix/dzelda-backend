@@ -8,6 +8,7 @@ import {StatusCodes} from "http-status-codes";
 import {APIError} from "@/src/utils/errors/APIError.js";
 import {EntityManager, EntityRepository} from "@mikro-orm/core";
 import {UnauthenticatedAPIError} from "@/src/utils/errors/UnauthenticatedAPIError.js";
+import {AUTH_TOKEN_LENGTH} from "@/src/constants.js";
 
 
 export class UserService {
@@ -40,7 +41,7 @@ export class UserService {
         const user = await this.userRepo.findOne({username: username});
 
         if (user && await passwordHasher.validate(password, user.password)) {
-            const token = crypto.randomBytes(Number(process.env.AUTH_TOKEN_LENGTH)).toString("hex");
+            const token = crypto.randomBytes(AUTH_TOKEN_LENGTH).toString("hex");
             await this.em.upsert(Session, {user: user, token: token});
             await this.em.flush();
             return token;

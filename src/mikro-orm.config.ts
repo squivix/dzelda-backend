@@ -1,4 +1,3 @@
-import * as dotenv from "dotenv";
 import {LoadStrategy, Options} from "@mikro-orm/core";
 import {User} from "@/src/models/entities/auth/User.js";
 import {Profile} from "@/src/models/entities/Profile.js";
@@ -17,20 +16,12 @@ import {Session} from "@/src/models/entities/auth/Session.js";
 import {Vocab} from "@/src/models/entities/Vocab.js";
 import {MapLearnerLanguage} from "@/src/models/entities/MapLearnerLanguage.js";
 
-dotenv.config();
 
 const devOptions: Options = {
     type: "postgresql",
-    dbName: process.env.DB_NAME,
-    user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    port: Number(process.env.DB_PORT),
-    //entity discovery does not work so well with vitest, gotta pass manually :(
     entities: [Course, CustomBaseEntity, Dictionary, Language, Lesson, MapLearnerDictionary,
         MapLearnerLesson, MapLearnerMeaning, MapLearnerVocab, MapLessonVocab, MapLearnerLanguage, Meaning,
         Profile, Vocab, User, Session],
-    // entities: ["./build/src/models/entities"],
-    // entitiesTs: ["./src/models/entities"],
     loadStrategy: LoadStrategy.JOINED,
     debug: true,
     migrations: {
@@ -46,7 +37,6 @@ const devOptions: Options = {
 
 const testOptions: Options = {
     ...devOptions,
-    dbName: `${devOptions.dbName}-test`,
     debug: false,       //SQL queries too verbose
 };
 
