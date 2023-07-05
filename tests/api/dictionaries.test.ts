@@ -49,7 +49,10 @@ describe("GET users/:username/dictionaries/", function () {
 
             const response = await makeRequest("me", {}, session.token);
 
-            const userDictionaries = await context.em.find(Dictionary, {learners: user.profile}, {populate: ["language"]});
+            const userDictionaries = await context.em.find(Dictionary, {learners: user.profile}, {
+                populate: ["language"],
+                orderBy: {name: "asc"}
+            });
             expect(response.statusCode).to.equal(200);
             expect(response.json()).toEqual(dictionarySerializer.serializeList(userDictionaries));
         });
@@ -62,7 +65,10 @@ describe("GET users/:username/dictionaries/", function () {
 
             const response = await makeRequest(user.username, {}, session.token);
 
-            const userDictionaries = await context.em.find(Dictionary, {learners: user.profile}, {populate: ["language"]});
+            const userDictionaries = await context.em.find(Dictionary, {learners: user.profile}, {
+                populate: ["language"],
+                orderBy: {name: "asc"}
+            });
             expect(response.statusCode).to.equal(200);
             expect(response.json()).toEqual(dictionarySerializer.serializeList(userDictionaries));
         });

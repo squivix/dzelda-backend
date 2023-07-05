@@ -19,9 +19,8 @@ class DictionaryController {
         if (user !== request.user)
             throw new ForbiddenAPIError();
 
-
         const dictionaryService = new DictionaryService(request.em);
-        const dictionaries = await dictionaryService.getUserDictionaries(user, {});
+        const dictionaries = await dictionaryService.getUserDictionaries(user, {}, {sortBy: "name", sortOrder: "asc"});
         reply.send(dictionarySerializer.serializeList(dictionaries));
     }
 }

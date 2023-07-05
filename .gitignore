@@ -9,3 +9,4 @@ specs/schema.ts
 /public/uploads/
 /data/
 .idea
+.directory
