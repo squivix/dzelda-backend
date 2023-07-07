@@ -3,7 +3,7 @@ import {faker} from "@faker-js/faker";
 import {orm, passwordHasher} from "@/src/server.js";
 import {UserFactory} from "@/src/seeders/factories/UserFactory.js";
 import {Session} from "@/src/models/entities/auth/Session.js";
-import {fetchRequest} from "@/tests/api/utils.js";
+import {fetchRequest} from "@/tests/integration/utils.js";
 import {EntityRepository} from "@mikro-orm/core";
 import {SessionFactory} from "@/src/seeders/factories/SessionFactory.js";
 

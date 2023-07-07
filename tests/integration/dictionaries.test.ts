@@ -7,7 +7,7 @@ import {EntityRepository} from "@mikro-orm/core";
 import {DictionaryFactory} from "@/src/seeders/factories/DictionaryFactory.js";
 import {Dictionary} from "@/src/models/entities/Dictionary.js";
 import {InjectOptions} from "light-my-request";
-import {buildQueryString, fetchRequest} from "@/tests/api/utils.js";
+import {buildQueryString, fetchRequest} from "@/tests/integration/utils.js";
 import {faker} from "@faker-js/faker";
 import {dictionarySerializer} from "@/src/presentation/response/serializers/entities/DictionarySerializer.js";
 import {LanguageFactory} from "@/src/seeders/factories/LanguageFactory.js";

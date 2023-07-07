@@ -36,7 +36,7 @@ export function buildQueryString(data: object) {
 }
 
 export function readSampleFile(filePath: string, fileName?: string, mimeType?: string): { value: ""; } | { value: Buffer; fileName?: string, mimeType?: string } {
-    return {value: fs.readFileSync(`tests/sample-files/${filePath}`), fileName: fileName ?? path.basename(filePath), mimeType};
+    return {value: fs.readFileSync(`tests/integration/sample-files/${filePath}`), fileName: fileName ?? path.basename(filePath), mimeType};
 }
 
 export async function fetchWithFiles(

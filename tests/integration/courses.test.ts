@@ -1,6 +1,6 @@
 import {beforeEach, describe, expect, test, TestContext} from "vitest";
 import {orm} from "@/src/server.js";
-import {buildQueryString, fetchRequest, fetchWithFiles, readSampleFile} from "@/tests/api/utils.js";
+import {buildQueryString, fetchRequest, fetchWithFiles, readSampleFile} from "@/tests/integration/utils.js";
 import {UserFactory} from "@/src/seeders/factories/UserFactory.js";
 import {SessionFactory} from "@/src/seeders/factories/SessionFactory.js";
 import {ProfileFactory} from "@/src/seeders/factories/ProfileFactory.js";

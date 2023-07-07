@@ -2,7 +2,7 @@ import {beforeEach, describe, expect, test, TestContext} from "vitest";
 import {faker} from "@faker-js/faker";
 import {orm} from "@/src/server.js";
 import {LanguageFactory} from "@/src/seeders/factories/LanguageFactory.js";
-import {buildQueryString, fetchRequest} from "@/tests/api/utils.js";
+import {buildQueryString, fetchRequest} from "@/tests/integration/utils.js";
 import {UserFactory} from "@/src/seeders/factories/UserFactory.js";
 import {SessionFactory} from "@/src/seeders/factories/SessionFactory.js";
 import {InjectOptions} from "light-my-request";
@@ -391,7 +391,7 @@ describe("PATCH users/:username/languages/:languageCode", () => {
         const user = await context.userFactory.createOne();
         const session = await context.sessionFactory.createOne({user: user});
 
-        const response = await makeRequest(user.username, faker.random.alpha(5), {lastOpened: "now"}, session.token);
+        const response = await makeRequest(user.username, "", {lastOpened: "now"}, session.token);
 
         expect(response.statusCode).to.equal(400);
     });
@@ -515,7 +515,7 @@ describe("DELETE users/:username/languages/:languageCode/", () => {
         const user = await context.userFactory.createOne();
         const session = await context.sessionFactory.createOne({user: user});
 
-        const response = await makeRequest(user.username, faker.random.alpha(5), session.token);
+        const response = await makeRequest(user.username, "", session.token);
 
         expect(response.statusCode).to.equal(400);
     });

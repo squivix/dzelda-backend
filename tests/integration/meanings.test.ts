@@ -8,7 +8,7 @@ import {UserFactory} from "@/src/seeders/factories/UserFactory.js";
 import {ProfileFactory} from "@/src/seeders/factories/ProfileFactory.js";
 import {SessionFactory} from "@/src/seeders/factories/SessionFactory.js";
 import {InjectOptions} from "light-my-request";
-import {buildQueryString, fetchRequest} from "@/tests/api/utils.js";
+import {buildQueryString, fetchRequest} from "@/tests/integration/utils.js";
 import {MeaningFactory} from "@/src/seeders/factories/MeaningFactory.js";
 import {meaningSerializer} from "@/src/presentation/response/serializers/entities/MeaningSerializer.js";
 import {Meaning} from "@/src/models/entities/Meaning.js";

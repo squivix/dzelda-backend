@@ -6,7 +6,7 @@ import {LanguageFactory} from "@/src/seeders/factories/LanguageFactory.js";
 import {Vocab} from "@/src/models/entities/Vocab.js";
 import {orm} from "@/src/server.js";
 import {InjectOptions} from "light-my-request";
-import {buildQueryString, fetchRequest} from "@/tests/api/utils.js";
+import {buildQueryString, fetchRequest} from "@/tests/integration/utils.js";
 import {VocabFactory} from "@/src/seeders/factories/VocabFactory.js";
 import {vocabSerializer} from "@/src/presentation/response/serializers/entities/VocabSerializer.js";
 import {faker} from "@faker-js/faker";
