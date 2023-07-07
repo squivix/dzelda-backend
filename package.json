@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "pretest": "npm run migrate",
-    "test": " npx vitest --no-watch",
+    "test": "npx vitest --no-watch",
     "compile": "npx swc src -d ./build/src &&  npx swc tests -d ./build/tests",
     "clean": "rm -rf ./build/* && npm run compile",
     "premake-migrations": "npm run clean",
