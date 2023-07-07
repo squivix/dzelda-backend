@@ -11,6 +11,8 @@ import {LanguageLevel} from "@/src/models/enums/LanguageLevel.js";
 
 @Entity({customRepository: () => LessonRepo})
 @Index({properties: ["course"]})
+@Index({properties: ["title"]})
+@Index({properties: ["addedOn"]})
 export class Lesson extends CustomBaseEntity {
     @Property({type: types.string, length: 124})
     title!: string;

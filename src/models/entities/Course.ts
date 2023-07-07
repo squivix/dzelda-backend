@@ -9,6 +9,8 @@ import {CourseRepo} from "@/src/models/repos/CourseRepo.js";
 @Entity({customRepository: () => CourseRepo})
 @Index({properties: ["language"]})
 @Index({properties: ["addedBy"]})
+@Index({properties: ["title"]})
+@Index({properties: ["addedOn"]})
 export class Course extends CustomBaseEntity {
 
     @Property({type: types.string, length: 255})

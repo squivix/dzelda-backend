@@ -17,12 +17,11 @@
         },
         "code": {
           "name": "code",
-          "type": "varchar(4)",
+          "type": "varchar(255)",
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
           "nullable": false,
-          "length": 4,
           "mappedType": "string"
         },
         "name": {
@@ -188,6 +187,15 @@
       "name": "dictionary",
       "schema": "public",
       "indexes": [
+        {
+          "keyName": "dictionary_name_index",
+          "columnNames": [
+            "name"
+          ],
+          "composite": false,
+          "primary": false,
+          "unique": false
+        },
         {
           "keyName": "dictionary_language_id_index",
           "columnNames": [
@@ -783,6 +791,24 @@
       "schema": "public",
       "indexes": [
         {
+          "keyName": "course_added_on_index",
+          "columnNames": [
+            "added_on"
+          ],
+          "composite": false,
+          "primary": false,
+          "unique": false
+        },
+        {
+          "keyName": "course_title_index",
+          "columnNames": [
+            "title"
+          ],
+          "composite": false,
+          "primary": false,
+          "unique": false
+        },
+        {
           "keyName": "course_added_by_id_index",
           "columnNames": [
             "added_by_id"
@@ -943,6 +969,24 @@
       "name": "lesson",
       "schema": "public",
       "indexes": [
+        {
+          "keyName": "lesson_added_on_index",
+          "columnNames": [
+            "added_on"
+          ],
+          "composite": false,
+          "primary": false,
+          "unique": false
+        },
+        {
+          "keyName": "lesson_title_index",
+          "columnNames": [
+            "title"
+          ],
+          "composite": false,
+          "primary": false,
+          "unique": false
+        },
         {
           "keyName": "lesson_course_id_index",
           "columnNames": [

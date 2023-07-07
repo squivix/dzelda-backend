@@ -8,7 +8,7 @@ export class LanguageFactory extends CustomFactory<Language> {
 
     public static makeDefinition(faker: Faker): EntityData<Language> {
         return {
-            code: faker.random.alpha({count: 4}),
+            code: faker.random.alpha({count: 20}),
             name: faker.random.word(),
             greeting: faker.random.words(20),
             flag: faker.image.imageUrl(100, 100),
@@ -24,14 +24,6 @@ export class LanguageFactory extends CustomFactory<Language> {
                 advanced2: faker.datatype.number({min: 26000, max: 35000}),
             }
         };
-    }
-
-    async createOne(overrideParameters?: EntityData<Language>): Promise<Language> {
-        const em = (this as any).em as EntityManager;
-        const language = this.makeEntity(overrideParameters);
-        await em.upsert(Language, language);
-        await em.flush();
-        return language;
     }
 
     protected definition(faker: Faker): EntityData<Language> {

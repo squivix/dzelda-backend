@@ -39,6 +39,7 @@ services:
     volumes:
       - ".:/app:ro"
       - "./build:/app/build"
+      - "./src/migrations:/app/src/migrations"
       - "/app/node_modules"
     env_file:
       - "./env/dev.env"

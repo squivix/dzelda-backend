@@ -10,7 +10,7 @@ import {LanguageRepo} from "@/src/models/repos/LanguageRepo.js";
 
 @Entity({customRepository: () => LanguageRepo})
 export class Language extends CustomBaseEntity {
-    @Property({type: types.string, length: 4, unique: true})
+    @Property({type: types.string, unique: true})
     code!: string;
 
     @Property({type: types.string, length: 255})
