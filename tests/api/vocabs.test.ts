@@ -17,8 +17,6 @@ import {VocabLevel} from "@/src/models/enums/VocabLevel.js";
 import {learnerVocabSerializer} from "@/src/presentation/response/serializers/mappings/LearnerVocabSerializer.js";
 import {LessonFactory} from "@/src/seeders/factories/LessonFactory.js";
 import {CourseFactory} from "@/src/seeders/factories/CourseFactory.js";
-import {LessonSchema} from "@/src/presentation/response/interfaces/entities/LessonSchema.js";
-import {lessonSerializer} from "@/src/presentation/response/serializers/entities/LessonSerializer.js";
 import {LearnerVocabSchema} from "@/src/presentation/response/interfaces/mappings/LearnerVocabSchema.js";
 
 interface LocalTestContext extends TestContext {
@@ -27,10 +25,9 @@ interface LocalTestContext extends TestContext {
     vocabRepo: VocabRepo;
     lessonFactory: LessonFactory;
     courseFactory: CourseFactory;
-
 }
 
-beforeEach<LocalTestContext>((context) => {
+beforeEach<LocalTestContext>(async (context) => {
     context.em = orm.em.fork();
 
     context.userFactory = new UserFactory(context.em);
@@ -42,6 +39,28 @@ beforeEach<LocalTestContext>((context) => {
     context.courseFactory = new CourseFactory(context.em);
 
     context.vocabRepo = context.em.getRepository(Vocab);
+});
+
+/**@link VocabController#getVocabs*/
+describe("GET vocabs/", () => {
+    const makeRequest = async (queryParams: object = {}, authToken?: string) => {
+        const options: InjectOptions = {
+            method: "GET",
+            url: `vocabs/${buildQueryString(queryParams)}`,
+        };
+        return await fetchRequest(options, authToken);
+    };
+    test<LocalTestContext>("If there are no filters return all vocabs", async (context) => {
+        const language = await context.languageFactory.createOne();
+        await context.vocabFactory.create(10, {language});
+
+        const response = await makeRequest({});
+
+        const vocabs = await context.em.find(Vocab, {}, {populate: ["language", "meanings", "meanings.addedBy.user"]});
+
+        expect(response.statusCode).to.equal(200);
+        expect(response.json()).toEqual(vocabSerializer.serializeList(vocabs));
+    });
 });
 
 /**@link VocabController#createVocab*/

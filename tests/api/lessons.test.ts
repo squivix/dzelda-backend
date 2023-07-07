@@ -61,8 +61,8 @@ describe("GET lessons/", () => {
     };
     test<LocalTestContext>("If there are no filters and not logged in return all public lessons", async (context) => {
         const language = await context.languageFactory.createOne();
-        await context.lessonFactory.create(10, {course: await context.courseFactory.createOne({language: language, isPublic: false})});
-        await context.lessonFactory.create(10, {course: await context.courseFactory.createOne({language: language, isPublic: true})});
+        await context.lessonFactory.create(3, {course: await context.courseFactory.createOne({language: language, isPublic: false})});
+        await context.lessonFactory.create(3, {course: await context.courseFactory.createOne({language: language, isPublic: true})});
 
         const response = await makeRequest();
 
@@ -373,8 +373,8 @@ describe("GET lessons/", () => {
         const user = await context.userFactory.createOne();
         const session = await context.sessionFactory.createOne({user: user});
         const language = await context.languageFactory.createOne();
-        await context.lessonFactory.create(10, {course: await context.courseFactory.createOne({language, isPublic: false})});
-        await context.lessonFactory.create(10, {course: await context.courseFactory.createOne({language, isPublic: true})});
+        await context.lessonFactory.create(3, {course: await context.courseFactory.createOne({language, isPublic: false})});
+        await context.lessonFactory.create(3, {course: await context.courseFactory.createOne({language, isPublic: true})});
 
         const response = await makeRequest({}, session.token);
 
@@ -390,14 +390,14 @@ describe("GET lessons/", () => {
         const user = await context.userFactory.createOne();
         const session = await context.sessionFactory.createOne({user: user});
         const language = await context.languageFactory.createOne();
-        await context.lessonFactory.create(10, {
+        await context.lessonFactory.create(3, {
             course: await context.courseFactory.createOne({
                 language,
                 isPublic: false,
                 addedBy: user.profile
             })
         });
-        await context.lessonFactory.create(10, {course: await context.courseFactory.createOne({language, isPublic: true})});
+        await context.lessonFactory.create(3, {course: await context.courseFactory.createOne({language, isPublic: true})});
 
         const response = await makeRequest({}, session.token);
 

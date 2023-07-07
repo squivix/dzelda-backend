@@ -27,7 +27,7 @@ export class VocabService {
         if (filters.searchQuery !== undefined)
             dbFilters.$and!.push({text: {$ilike: `%${filters.searchQuery}%`}});
         return await this.vocabRepo.find(dbFilters, {
-            populate: ["meanings", "meanings.addedBy.user"],
+            populate: ["language", "meanings", "meanings.addedBy.user"],
             limit: pagination.pageSize,
             offset: pagination.pageSize * (pagination.page - 1)
         });
