@@ -1,5 +1,5 @@
 services:
-  test-database:
+  test-db:
     image: "postgres:15"
     command: "postgres -c fsync=off -c synchronous_commit=off -c full_page_writes=off -c random_page_cost=1.0"
     tmpfs: "/var/lib/postgresql/data"
@@ -10,6 +10,8 @@ services:
       PGDATA: "/var/lib/postgresql/data"
     profiles:
       - "test"
+    ports:
+      - "54320:5432"
   tests:
     build:
       dockerfile: "./tests.dockerfile"
@@ -17,15 +19,17 @@ services:
     env_file:
       - "./env/test.env"
     depends_on:
-      - "test-database"
+      - "test-db"
     profiles:
       - "test"
-  dev-database:
+  dev-db:
     image: "postgres:15"
     environment:
       POSTGRES_USER: "devin"
       POSTGRES_PASSWORD: "123456789"
       POSTGRES_DB: "dzelda-db"
+    profiles:
+      - dev
     volumes:
       - "postgres-data:/var/lib/postgresql/data"
   backend:
@@ -35,8 +39,11 @@ services:
     env_file:
       - "./env/dev.env"
     ports:
-      - 8000:3000
+      - "8000:80"
+    profiles:
+      - dev
+      - prod
     depends_on:
-    - "dev-database"
+    - "dev-db"
 volumes:
   postgres-data: null

@@ -8,7 +8,7 @@ import path from "path";
 import vavite from "vavite";
 
 export default defineConfig({
-    plugins:[
+    plugins: [
         vavite({
             serverEntry: "/src/server.ts",
             reloadOn: "static-deps-change",
@@ -26,6 +26,9 @@ export default defineConfig({
     test: {
         /* for example, use global to avoid globals imports (describe, test, expect): */
         exclude: [...defaultExclude, "build/**"],
-        threads: false
+        threads: false,
+        globalSetup: [
+            "./tests/setup.ts",
+        ]
     },
 });
