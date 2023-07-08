@@ -1608,7 +1608,6 @@ describe("GET users/{username}/courses/", () => {
                 expect(response.json()).toEqual(courseSerializer.serializeList(userCourses));
             });
             test<LocalTestContext>("test sortBy learnersCount", async (context) => {
-
                 const user = await context.userFactory.createOne();
                 const session = await context.sessionFactory.createOne({user: user});
                 const courses = await context.courseFactory.create(10, {
@@ -1625,7 +1624,7 @@ describe("GET users/{username}/courses/", () => {
                 await context.em.flush();
 
                 const response = await makeRequest("me", {sortBy: "learnersCount"}, session.token);
-
+                //TODO filter by isPublic or added by user?
                 const userCourses = await context.courseRepo.find({lessons: {learners: user.profile}}, {
                     populate: ["language", "addedBy.user"],
                     orderBy: {learnersCount: "asc"}

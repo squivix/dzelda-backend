@@ -51,16 +51,27 @@ describe("GET vocabs/", () => {
         };
         return await fetchRequest(options, authToken);
     };
+    const paginationDefaults = {pageSize: 25, page: 1};
     test<LocalTestContext>("If there are no filters return all vocabs", async (context) => {
         const language = await context.languageFactory.createOne();
         await context.vocabFactory.create(10, {language});
 
         const response = await makeRequest({});
 
-        const vocabs = await context.em.find(Vocab, {}, {populate: ["language", "meanings", "meanings.addedBy.user"]});
+        const vocabs = await context.em.find(Vocab, {}, {
+            populate: ["language", "meanings", "meanings.addedBy.user"],
+            limit: paginationDefaults.pageSize,
+            offset: paginationDefaults.pageSize * (paginationDefaults.page - 1)
+        });
+        const allVocabsCount = await context.vocabRepo.count({});
 
         expect(response.statusCode).to.equal(200);
-        expect(response.json()).toEqual(vocabSerializer.serializeList(vocabs));
+        expect(response.json()).toEqual({
+            page: paginationDefaults.page,
+            pageSize: paginationDefaults.pageSize,
+            pageCount: Math.ceil(allVocabsCount / paginationDefaults.pageSize),
+            data: vocabSerializer.serializeList(vocabs)
+        });
     });
 });
 
@@ -186,7 +197,7 @@ describe("POST vocabs/", () => {
                 const user = await context.userFactory.createOne();
                 const session = await context.sessionFactory.createOne({user: user});
                 const language = await context.languageFactory.createOne();
-                vi.spyOn( parserExports, 'getParser').mockImplementation((_) => parserExports.parsers["en"])
+                vi.spyOn(parserExports, "getParser").mockImplementation((_) => parserExports.parsers["en"]);
                 const newVocab = context.vocabFactory.makeOne({language: language});
                 const response = await makeRequest({
                     languageCode: language.code,
@@ -200,7 +211,7 @@ describe("POST vocabs/", () => {
                 const user = await context.userFactory.createOne();
                 const session = await context.sessionFactory.createOne({user: user});
                 const language = await context.languageFactory.createOne();
-                vi.spyOn( parserExports, 'getParser').mockImplementation((_) => parserExports.parsers["en"])
+                vi.spyOn(parserExports, "getParser").mockImplementation((_) => parserExports.parsers["en"]);
                 const response = await makeRequest({
                     languageCode: language.code,
                     text: faker.random.words(2),
@@ -243,7 +254,7 @@ describe("POST vocabs/", () => {
         const language = await context.languageFactory.createOne();
         const oldVocab = await context.vocabFactory.createOne({language: language});
         const newVocab = context.vocabFactory.makeOne({language: language, text: oldVocab.text});
-        vi.spyOn( parserExports, 'getParser').mockImplementation((_) => parserExports.parsers["en"])
+        vi.spyOn(parserExports, "getParser").mockImplementation((_) => parserExports.parsers["en"]);
         const response = await makeRequest({
             languageCode: language.code,
             text: newVocab.text,
@@ -690,7 +701,10 @@ describe("PATCH users/:username/vocabs/:vocabId/", () => {
             const updatedMapping = context.em.create(MapLearnerVocab,
                 {learner: user.profile, vocab, level: VocabLevel.LEVEL_3, notes: "Vocab note"}, {persist: false});
 
-            const response = await makeRequest(user.username, vocab.id, {level: updatedMapping.level, notes: updatedMapping.notes}, session.token);
+            const response = await makeRequest(user.username, vocab.id, {
+                level: updatedMapping.level,
+                notes: updatedMapping.notes
+            }, session.token);
             const mapping = await context.em.findOneOrFail(MapLearnerVocab, {learner: user.profile, vocab});
             await context.vocabRepo.annotateUserMeanings([mapping], user.profile.id);
 
