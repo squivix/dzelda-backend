@@ -89,7 +89,8 @@ describe("POST vocabs/", () => {
     test<LocalTestContext>("If user is logged in and all fields are valid create a new vocab and return it", async (context) => {
         const user = await context.userFactory.createOne();
         const session = await context.sessionFactory.createOne({user: user});
-        const language = await context.languageFactory.createOne({code: "en"});
+        const language = await context.languageFactory.createOne();
+        vi.spyOn( parserExports, 'getParser').mockImplementation((_) => parserExports.parsers["en"])
         const newVocab = context.vocabFactory.makeOne({language: language});
         const response = await makeRequest({
             languageCode: language.code,

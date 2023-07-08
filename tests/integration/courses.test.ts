@@ -53,7 +53,7 @@ describe("GET courses/", function () {
     };
 
     test<LocalTestContext>("If there are no filters return all public courses", async (context) => {
-        await context.courseFactory.create(10, {language: await context.languageFactory.createOne()});
+        await context.courseFactory.create(5, {language: await context.languageFactory.createOne()});
 
         const response = await makeRequest();
         const courses = await context.courseRepo.find({isPublic: true}, {populate: ["language", "addedBy.user"], orderBy: {title: "asc"}});
@@ -63,8 +63,8 @@ describe("GET courses/", function () {
     describe("test languageCode filter", () => {
         test<LocalTestContext>("If language filter is valid and language exists only return public courses in that language", async (context) => {
             const language1 = await context.languageFactory.createOne();
-            await context.courseFactory.create(5, {language: language1});
-            await context.courseFactory.create(5, {language: await context.languageFactory.createOne()});
+            await context.courseFactory.create(3, {language: language1});
+            await context.courseFactory.create(3, {language: await context.languageFactory.createOne()});
 
             const response = await makeRequest({languageCode: language1.code});
             const courses = await context.courseRepo.find({
@@ -75,15 +75,13 @@ describe("GET courses/", function () {
             expect(response.json()).toEqual(courseSerializer.serializeList(courses));
         });
         test<LocalTestContext>("If language does not exist return empty course list", async (context) => {
-            await context.courseFactory.create(10, {language: await context.languageFactory.createOne()});
+            await context.courseFactory.create(3, {language: await context.languageFactory.createOne()});
 
             const response = await makeRequest({languageCode: faker.random.alpha({count: 4})});
             expect(response.statusCode).to.equal(200);
             expect(response.json()).toEqual([]);
         });
         test<LocalTestContext>("If language filter is invalid return 400", async (context) => {
-            await context.courseFactory.create(10, {language: await context.languageFactory.createOne()});
-
             const response = await makeRequest({languageCode: 12345});
             expect(response.statusCode).to.equal(400);
         });
@@ -91,8 +89,8 @@ describe("GET courses/", function () {
     describe("test addedBy filter", () => {
         test<LocalTestContext>("If addedBy filter is valid and user exists only return public courses added by that user", async (context) => {
             const user = await context.userFactory.createOne();
-            await context.courseFactory.create(5, {language: await context.languageFactory.createOne(), addedBy: user.profile});
-            await context.courseFactory.create(5, {language: await context.languageFactory.createOne()});
+            await context.courseFactory.create(3, {language: await context.languageFactory.createOne(), addedBy: user.profile});
+            await context.courseFactory.create(3, {language: await context.languageFactory.createOne()});
 
             const response = await makeRequest({addedBy: user.username});
             const courses = await context.courseRepo.find({
@@ -105,8 +103,8 @@ describe("GET courses/", function () {
         test<LocalTestContext>("If addedBy is me and signed in return courses added by that user", async (context) => {
             const user = await context.userFactory.createOne();
             const session = await context.sessionFactory.createOne({user: user});
-            await context.courseFactory.create(5, {language: await context.languageFactory.createOne(), addedBy: user.profile});
-            await context.courseFactory.create(5, {language: await context.languageFactory.createOne()});
+            await context.courseFactory.create(3, {language: await context.languageFactory.createOne(), addedBy: user.profile});
+            await context.courseFactory.create(3, {language: await context.languageFactory.createOne()});
 
             const response = await makeRequest({addedBy: "me"}, session.token);
             let courses = await context.courseRepo.find({
@@ -118,21 +116,17 @@ describe("GET courses/", function () {
             expect(response.json()).toEqual(courseSerializer.serializeList(courses));
         });
         test<LocalTestContext>("If addedBy is me and not signed in return 401", async (context) => {
-            await context.courseFactory.create(10, {language: await context.languageFactory.createOne()});
-
             const response = await makeRequest({addedBy: "me"});
             expect(response.statusCode).to.equal(401);
         });
         test<LocalTestContext>("If user does not exist return empty course list", async (context) => {
-            await context.courseFactory.create(10, {language: await context.languageFactory.createOne()});
+            await context.courseFactory.create(3, {language: await context.languageFactory.createOne()});
 
             const response = await makeRequest({addedBy: faker.random.alpha({count: 20})});
             expect(response.statusCode).to.equal(200);
             expect(response.json()).toEqual([]);
         });
         test<LocalTestContext>("If addedBy filter is invalid return 400", async (context) => {
-            await context.courseFactory.create(10, {language: await context.languageFactory.createOne()});
-
             const response = await makeRequest({addedBy: "!@#%#%^#^!"});
             expect(response.statusCode).to.equal(400);
         });
@@ -143,16 +137,17 @@ describe("GET courses/", function () {
             const language = await context.languageFactory.createOne();
             for (let i = 0; i < 10; i++) {
                 if (i % 2 == 0)
-                    await context.courseFactory.createOne({
+                    context.em.persist(context.courseFactory.makeOne({
                         language: language,
                         title: `title ${randomCase(searchQuery)} ${faker.random.alphaNumeric(10)}`
-                    });
+                    }));
                 else
-                    await context.courseFactory.createOne({
+                    context.em.persist( context.courseFactory.makeOne({
                         language: language,
                         description: `description ${randomCase(searchQuery)} ${faker.random.alphaNumeric(10)}`
-                    });
+                    }));
             }
+            await context.em.flush();
             await context.courseFactory.create(5, {language: language,});
 
             const response = await makeRequest({searchQuery: searchQuery});
@@ -165,14 +160,12 @@ describe("GET courses/", function () {
             expect(response.json()).toEqual(courseSerializer.serializeList(courses));
         });
         test<LocalTestContext>("If searchQuery is invalid return 400", async (context) => {
-            await context.courseFactory.create(10, {language: await context.languageFactory.createOne()});
-
             const response = await makeRequest({searchQuery: faker.random.alpha({count: 300})});
 
             expect(response.statusCode).to.equal(400);
         });
         test<LocalTestContext>("If no courses match search query return empty list", async (context) => {
-            await context.courseFactory.create(10, {language: await context.languageFactory.createOne()});
+            await context.courseFactory.create(3, {language: await context.languageFactory.createOne()});
 
             const response = await makeRequest({searchQuery: faker.random.alpha({count: 200})});
 
