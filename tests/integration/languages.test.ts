@@ -1,4 +1,4 @@
-import {beforeEach, describe, expect, test, TestContext} from "vitest";
+import {beforeEach, describe, expect, test, TestContext, vi} from "vitest";
 import {faker} from "@faker-js/faker";
 import {orm} from "@/src/server.js";
 import {LanguageFactory} from "@/src/seeders/factories/LanguageFactory.js";
@@ -21,6 +21,7 @@ import {MapLearnerVocab} from "@/src/models/entities/MapLearnerVocab.js";
 import {MeaningFactory} from "@/src/seeders/factories/MeaningFactory.js";
 import {MapLearnerMeaning} from "@/src/models/entities/MapLearnerMeaning.js";
 import {learnerLanguageSerializer} from "@/src/presentation/response/serializers/mappings/LearnerLanguageSerializer.js";
+import * as parserExports from "@/src/utils/parsers/parsers.js";
 
 // beforeEach(truncateDb);
 
@@ -446,7 +447,8 @@ describe("DELETE users/:username/languages/:languageCode/", () => {
             await context.em.insertMany(MapLearnerDictionary, dictionaries.map(d => ({dictionary: d, learner: user.profile})));
             const vocabs = await context.vocabFactory.create(3, {language});
             await context.em.insertMany(MapLearnerVocab, vocabs.map(v => ({vocab: v, learner: user.profile})));
-            const meaningLanguage = await context.languageFactory.createOne({code: "en"});
+            const meaningLanguage = await context.languageFactory.createOne();
+            vi.spyOn( parserExports, 'getParser').mockImplementation((_) => parserExports.parsers["en"])
             const meanings = [
                 ...await context.meaningFactory.create(3, {addedBy: user.profile, vocab: vocabs[0], language: meaningLanguage}),
                 ...await context.meaningFactory.create(3, {addedBy: user.profile, vocab: vocabs[1], language: meaningLanguage}),
@@ -475,7 +477,8 @@ describe("DELETE users/:username/languages/:languageCode/", () => {
             await context.em.insertMany(MapLearnerDictionary, dictionaries.map(d => ({dictionary: d, learner: user.profile})));
             const vocabs = await context.vocabFactory.create(3, {language});
             await context.em.insertMany(MapLearnerVocab, vocabs.map(v => ({vocab: v, learner: user.profile})));
-            const meaningLanguage = await context.languageFactory.createOne({code: "en"});
+            const meaningLanguage = await context.languageFactory.createOne();
+            vi.spyOn( parserExports, 'getParser').mockImplementation((_) => parserExports.parsers["en"])
             const meanings = [
                 ...await context.meaningFactory.create(3, {addedBy: user.profile, vocab: vocabs[0], language: meaningLanguage}),
                 ...await context.meaningFactory.create(3, {addedBy: user.profile, vocab: vocabs[1], language: meaningLanguage}),

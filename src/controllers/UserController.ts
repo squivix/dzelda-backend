@@ -4,6 +4,7 @@ import {FastifyReply, FastifyRequest} from "fastify";
 import {NotFoundAPIError} from "@/src/utils/errors/NotFoundAPIError.js";
 import {usernameValidator} from "@/src/validators/userValidator.js";
 import {userSerializer} from "@/src/presentation/response/serializers/entities/UserSerializer.js";
+import {languageCodeValidator} from "@/src/validators/languageValidators.js";
 
 class UserController {
 
@@ -12,7 +13,7 @@ class UserController {
             email: z.string().max(256).email(),
             username: usernameValidator,
             password: z.string().min(8),
-            initialLanguage: z.string().min(2).max(4).optional()
+            initialLanguage: languageCodeValidator.optional()
         }).strict();
         const body = validator.parse(request.body);
         const userService = new UserService(request.em);

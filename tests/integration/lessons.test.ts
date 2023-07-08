@@ -1,4 +1,4 @@
-import {beforeEach, describe, expect, test, TestContext} from "vitest";
+import {beforeEach, describe, expect, test, TestContext, vi} from "vitest";
 import {UserFactory} from "@/src/seeders/factories/UserFactory.js";
 import {ProfileFactory} from "@/src/seeders/factories/ProfileFactory.js";
 import {SessionFactory} from "@/src/seeders/factories/SessionFactory.js";
@@ -18,12 +18,11 @@ import {randomCase, randomEnum, shuffleArray} from "@/tests/utils.js";
 import {LanguageLevel} from "@/src/models/enums/LanguageLevel.js";
 import {Vocab} from "@/src/models/entities/Vocab.js";
 import {EntityRepository} from "@mikro-orm/core";
-import {parsers} from "@/src/utils/parsers/parsers.js";
+import * as parserExports from "@/src/utils/parsers/parsers.js";
+import {getParser, parsers} from "@/src/utils/parsers/parsers.js";
 import {MapLessonVocab} from "@/src/models/entities/MapLessonVocab.js";
 import fs from "fs-extra";
 import {MapLearnerLesson} from "@/src/models/entities/MapLearnerLesson.js";
-import {CourseSchema} from "@/src/presentation/response/interfaces/entities/CourseSchema.js";
-import {courseSerializer} from "@/src/presentation/response/serializers/entities/CourseSerializer.js";
 import {LessonSchema} from "@/src/presentation/response/interfaces/entities/LessonSchema.js";
 
 interface LocalTestContext extends TestContext {
@@ -427,7 +426,8 @@ describe("POST lessons/", () => {
         test<LocalTestContext>("If optional fields are missing use default values", async (context) => {
             const user = await context.userFactory.createOne();
             const session = await context.sessionFactory.createOne({user: user});
-            const language = await context.languageFactory.createOne({code: "en"});
+            const language = await context.languageFactory.createOne();
+            vi.spyOn( parserExports, 'getParser').mockImplementation((_) => parserExports.parsers["en"])
             const course = await context.courseFactory.createOne({language: language, addedBy: user.profile, lessons: []});
             let newLesson: Lesson | null = context.lessonFactory.makeOne({course: course});
 
@@ -457,9 +457,10 @@ describe("POST lessons/", () => {
         test<LocalTestContext>("If optional fields are provided use provided values", async (context) => {
             const user = await context.userFactory.createOne();
             const session = await context.sessionFactory.createOne({user: user});
-            const language = await context.languageFactory.createOne({code: "en"});
+            const language = await context.languageFactory.createOne();
             const course = await context.courseFactory.createOne({language: language, addedBy: user.profile, lessons: []});
             let newLesson: Lesson | null = context.lessonFactory.makeOne({course: course});
+            vi.spyOn( parserExports, 'getParser').mockImplementation((_) => parserExports.parsers["en"])
 
             const response = await makeRequest({
                 data: {
@@ -874,7 +875,8 @@ describe("PUT lessons/:lessonId", () => {
         test<LocalTestContext>("If image and audio are not provided, keep old image and audio", async (context) => {
             const author = await context.userFactory.createOne();
             const session = await context.sessionFactory.createOne({user: author});
-            const language = await context.languageFactory.createOne({code: "en"});
+            const language = await context.languageFactory.createOne();
+            vi.spyOn( parserExports, 'getParser').mockImplementation((_) => parserExports.parsers["en"])
             const course = await context.courseFactory.createOne({addedBy: author.profile, language: language, lessons: []});
             const newCourse = await context.courseFactory.createOne({addedBy: author.profile, language: language});
             let lesson = await context.lessonFactory.createOne({course: course});
@@ -916,7 +918,8 @@ describe("PUT lessons/:lessonId", () => {
         test<LocalTestContext>("If new image and audio are blank clear lesson image and audio", async (context) => {
             const author = await context.userFactory.createOne();
             const session = await context.sessionFactory.createOne({user: author});
-            const language = await context.languageFactory.createOne({code: "en"});
+            const language = await context.languageFactory.createOne();
+            vi.spyOn( parserExports, 'getParser').mockImplementation((_) => parserExports.parsers["en"])
             const course = await context.courseFactory.createOne({addedBy: author.profile, language: language, lessons: []});
             const newCourse = await context.courseFactory.createOne({addedBy: author.profile, language: language});
             let lesson = await context.lessonFactory.createOne({course: course});
@@ -955,7 +958,8 @@ describe("PUT lessons/:lessonId", () => {
         test<LocalTestContext>("If new image and audio is provided, update lesson image and audio", async (context) => {
             const author = await context.userFactory.createOne();
             const session = await context.sessionFactory.createOne({user: author});
-            const language = await context.languageFactory.createOne({code: "en"});
+            const language = await context.languageFactory.createOne();
+            vi.spyOn( parserExports, 'getParser').mockImplementation((_) => parserExports.parsers["en"])
             const course = await context.courseFactory.createOne({addedBy: author.profile, language: language, lessons: []});
             const newCourse = await context.courseFactory.createOne({addedBy: author.profile, language: language});
             let lesson = await context.lessonFactory.createOne({course: course});
@@ -1619,7 +1623,7 @@ describe("GET users/:username/lessons", () => {
                 title: {$ilike: `%${searchQuery}%`},
                 learners: user.profile,
                 course: {isPublic: true}
-            }, {populate: ["course", "course.addedBy.user"], orderBy: {title: "asc"}, refresh:true});
+            }, {populate: ["course", "course.addedBy.user", "course.language"], orderBy: {title: "asc"}});
             await context.lessonRepo.annotateVocabsByLevel(userLessons, user.id);
             expect(response.statusCode).to.equal(200);
             expect(response.json()).toEqual(lessonSerializer.serializeList(userLessons));

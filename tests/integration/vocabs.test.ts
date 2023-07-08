@@ -1,4 +1,4 @@
-import {beforeEach, describe, expect, test, TestContext} from "vitest";
+import {beforeEach, describe, expect, test, TestContext, vi} from "vitest";
 import {UserFactory} from "@/src/seeders/factories/UserFactory.js";
 import {ProfileFactory} from "@/src/seeders/factories/ProfileFactory.js";
 import {SessionFactory} from "@/src/seeders/factories/SessionFactory.js";
@@ -18,6 +18,7 @@ import {learnerVocabSerializer} from "@/src/presentation/response/serializers/ma
 import {LessonFactory} from "@/src/seeders/factories/LessonFactory.js";
 import {CourseFactory} from "@/src/seeders/factories/CourseFactory.js";
 import {LearnerVocabSchema} from "@/src/presentation/response/interfaces/mappings/LearnerVocabSchema.js";
+import * as parserExports from "@/src/utils/parsers/parsers.js";
 
 interface LocalTestContext extends TestContext {
     languageFactory: LanguageFactory;
@@ -184,7 +185,8 @@ describe("POST vocabs/", () => {
             test<LocalTestContext>("If text contains no parsable words return 400", async (context) => {
                 const user = await context.userFactory.createOne();
                 const session = await context.sessionFactory.createOne({user: user});
-                const language = await context.languageFactory.createOne({code: "en"});
+                const language = await context.languageFactory.createOne();
+                vi.spyOn( parserExports, 'getParser').mockImplementation((_) => parserExports.parsers["en"])
                 const newVocab = context.vocabFactory.makeOne({language: language});
                 const response = await makeRequest({
                     languageCode: language.code,
@@ -197,7 +199,8 @@ describe("POST vocabs/", () => {
             test<LocalTestContext>("If text contains more than one parsable words and isPhrase is false return 400", async (context) => {
                 const user = await context.userFactory.createOne();
                 const session = await context.sessionFactory.createOne({user: user});
-                const language = await context.languageFactory.createOne({code: "en"});
+                const language = await context.languageFactory.createOne();
+                vi.spyOn( parserExports, 'getParser').mockImplementation((_) => parserExports.parsers["en"])
                 const response = await makeRequest({
                     languageCode: language.code,
                     text: faker.random.words(2),
@@ -237,9 +240,10 @@ describe("POST vocabs/", () => {
     test<LocalTestContext>("If vocab with same text already exists for the language return 200", async (context) => {
         const user = await context.userFactory.createOne();
         const session = await context.sessionFactory.createOne({user: user});
-        const language = await context.languageFactory.createOne({code: "en"});
+        const language = await context.languageFactory.createOne();
         const oldVocab = await context.vocabFactory.createOne({language: language});
         const newVocab = context.vocabFactory.makeOne({language: language, text: oldVocab.text});
+        vi.spyOn( parserExports, 'getParser').mockImplementation((_) => parserExports.parsers["en"])
         const response = await makeRequest({
             languageCode: language.code,
             text: newVocab.text,

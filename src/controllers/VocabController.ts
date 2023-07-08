@@ -5,7 +5,7 @@ import {languageCodeValidator} from "@/src/validators/languageValidators.js";
 import {vocabLevelValidator, vocabNotesValidator, vocabTextValidator} from "@/src/validators/vocabValidators.js";
 import {LanguageService} from "@/src/services/LanguageService.js";
 import {VocabService} from "@/src/services/VocabService.js";
-import {parsers} from "@/src/utils/parsers/parsers.js";
+import {getParser} from "@/src/utils/parsers/parsers.js";
 import {usernameValidator} from "@/src/validators/userValidator.js";
 import {UserService} from "@/src/services/UserService.js";
 import {NotFoundAPIError} from "@/src/utils/errors/NotFoundAPIError.js";
@@ -32,7 +32,7 @@ class VocabController {
         if (!language.isSupported)
             throw new ValidationAPIError({language: {message: "not supported"}});
 
-        const parser = parsers[language.code];
+        const parser = getParser(language.code);
         const words = parser.parseText(body.text);
 
         if (words.length == 0)

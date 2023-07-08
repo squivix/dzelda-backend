@@ -5,7 +5,7 @@ import {LessonRepo} from "@/src/models/repos/LessonRepo.js";
 import {AnonymousUser, User} from "@/src/models/entities/auth/User.js";
 import {LanguageLevel} from "@/src/models/enums/LanguageLevel.js";
 import {Course} from "@/src/models/entities/Course.js";
-import {parsers} from "@/src/utils/parsers/parsers.js";
+import {getParser} from "@/src/utils/parsers/parsers.js";
 import {Vocab} from "@/src/models/entities/Vocab.js";
 import {MapLessonVocab} from "@/src/models/entities/MapLessonVocab.js";
 import {CourseRepo} from "@/src/models/repos/CourseRepo.js";
@@ -82,7 +82,7 @@ export class LessonService {
         await this.em.flush();
 
         const language = fields.course.language;
-        const parser = parsers[language.code];
+        const parser = getParser(language.code);
         const lessonWords = parser.parseText(`${fields.title} ${fields.text}`);
 
         await this.em.upsertMany(Vocab, lessonWords.map(word => ({text: word, language: language.id})));
@@ -119,7 +119,7 @@ export class LessonService {
             lesson.title = updatedLessonData.title;
             lesson.text = updatedLessonData.text;
 
-            const parser = parsers[language.code];
+            const parser = getParser(language.code);
             const lessonWords = parser.parseText(`${updatedLessonData.title} ${updatedLessonData.text}`);
 
             await this.em.nativeDelete(MapLessonVocab, {lesson: lesson, vocab: {text: {$nin: lessonWords}}});
