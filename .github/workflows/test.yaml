@@ -1,0 +1,32 @@
+name: "Run Tests"
+on: [workflow_dispatch]
+jobs:
+  integration-tests:
+    runs-on: ubuntu-22.04
+    container:
+      image: node:18
+      env:
+        NODE_ENV: test
+        PORT: 3000
+        MIKRO_ORM_CLIENT_URL: "postgresql://devin:123456789@test-db:5432/dzelda-db-test"
+    services:
+      test-db:
+        image: "postgres:15"
+        env:
+          POSTGRES_USER: "devin"
+          POSTGRES_PASSWORD: "123456789"
+          POSTGRES_DB: "dzelda-db-test"
+          PGDATA: "/var/lib/postgresql/data"
+    steps:
+      - name: "Checkout code"
+        uses: actions/checkout@v3
+      - name: "Cache dependencies"
+        uses: actions/cache@v3
+        with:
+          path: node_modules
+          key: ${{ hashFiles('package-lock.json') }}
+      - name: "Install dependencies"
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: npm ci
+      - name: "Run tests"
+        run: npm run test
