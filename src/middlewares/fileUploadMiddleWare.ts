@@ -6,7 +6,7 @@ import fs from "fs-extra";
 import formidable, {Files} from "formidable";
 import path from "path";
 import crypto from "crypto";
-import {validateFields} from "@/src/validators/fileValidator.js";
+import {validateFileFields} from "@/src/validators/fileValidator.js";
 
 export const MAX_TOTAL_FILE_UPLOAD_SIZE = 500 * 1024 * 1024;
 export const ROOT_UPLOAD_DIR = "public/uploads";
@@ -35,7 +35,7 @@ export function singleFileUploadMiddleWare(fields: {
         if (!request[kIsMultipart])
             throw new UnsupportedContentTypeAPIError("multipart/form-data");
 
-        await validateFields(fields, request.files!);
+        await validateFileFields(fields, request.files!);
         try {
             (request.body as any).data = JSON.parse((request.body as any).data);
         } catch (e) {

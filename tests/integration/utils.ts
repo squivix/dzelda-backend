@@ -4,12 +4,13 @@ import http from "http";
 import FormData from "form-data";
 import fs from "fs-extra";
 import path from "path";
+import {File, Files} from "fastify-formidable/lib/mjs/index.js";
 
 export async function fetchRequest(options: InjectOptions, authToken?: string) {
     options.headers = options.headers ?? {};
     if (authToken)
         options.headers.authorization = `Bearer ${authToken}`;
-    const {server,API_ROOT} = await import("@/src/server.js");
+    const {server, API_ROOT} = await import("@/src/server.js");
     return await server.inject({
         ...options,
         url: `${API_ROOT}/${options.url}`
@@ -35,7 +36,11 @@ export function buildQueryString(data: object) {
         return queryString;
 }
 
-export function readSampleFile(filePath: string, fileName?: string, mimeType?: string): { value: ""; } | { value: Buffer; fileName?: string, mimeType?: string } {
+export function readSampleFile(filePath: string, fileName?: string, mimeType?: string): { value: ""; } | {
+    value: Buffer;
+    fileName?: string,
+    mimeType?: string
+} {
     return {value: fs.readFileSync(`tests/integration/sample-files/${filePath}`), fileName: fileName ?? path.basename(filePath), mimeType};
 }
 
@@ -65,4 +70,17 @@ export async function fetchWithFiles(
         headers: formData.getHeaders()
     };
     return await fetchRequest(options as InjectOptions, authToken);
+}
+
+export function mockValidateFileFields(fakeFieldFileSizes: { [fieldName: string]: number }) {
+    return async (fields: {
+        [fieldName: string]: { path: string, validate: (file?: File) => Promise<void> }
+    }, files: Files): Promise<void> => {
+        await Promise.all(Object.entries(fields).map(([fieldName, field]) => {
+            const file = files[fieldName] as File;
+            if (fieldName in fakeFieldFileSizes)
+                file.size = fakeFieldFileSizes[fieldName];
+            return field.validate(file);
+        }));
+    };
 }

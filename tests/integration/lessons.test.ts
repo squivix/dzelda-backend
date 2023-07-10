@@ -11,7 +11,7 @@ import {orm} from "@/src/server.js";
 import {Lesson} from "@/src/models/entities/Lesson.js";
 import {Course} from "@/src/models/entities/Course.js";
 import {InjectOptions} from "light-my-request";
-import {buildQueryString, fetchRequest, fetchWithFiles, readSampleFile} from "@/tests/integration/utils.js";
+import {buildQueryString, fetchRequest, fetchWithFiles, mockValidateFileFields, readSampleFile} from "@/tests/integration/utils.js";
 import {lessonSerializer} from "@/src/presentation/response/serializers/entities/LessonSerializer.js";
 import {faker} from "@faker-js/faker";
 import {randomCase, randomEnum, shuffleArray} from "@/tests/utils.js";
@@ -24,6 +24,7 @@ import {MapLessonVocab} from "@/src/models/entities/MapLessonVocab.js";
 import fs from "fs-extra";
 import {MapLearnerLesson} from "@/src/models/entities/MapLearnerLesson.js";
 import {LessonSchema} from "@/src/presentation/response/interfaces/entities/LessonSchema.js";
+import * as fileValidatorExports from "@/src/validators/fileValidator.js";
 
 interface LocalTestContext extends TestContext {
     languageFactory: LanguageFactory;
@@ -427,7 +428,7 @@ describe("POST lessons/", () => {
             const user = await context.userFactory.createOne();
             const session = await context.sessionFactory.createOne({user: user});
             const language = await context.languageFactory.createOne();
-            vi.spyOn( parserExports, 'getParser').mockImplementation((_) => parserExports.parsers["en"])
+            vi.spyOn(parserExports, "getParser").mockImplementation((_) => parserExports.parsers["en"]);
             const course = await context.courseFactory.createOne({language: language, addedBy: user.profile, lessons: []});
             let newLesson: Lesson | null = context.lessonFactory.makeOne({course: course});
 
@@ -460,7 +461,7 @@ describe("POST lessons/", () => {
             const language = await context.languageFactory.createOne();
             const course = await context.courseFactory.createOne({language: language, addedBy: user.profile, lessons: []});
             let newLesson: Lesson | null = context.lessonFactory.makeOne({course: course});
-            vi.spyOn( parserExports, 'getParser').mockImplementation((_) => parserExports.parsers["en"])
+            vi.spyOn(parserExports, "getParser").mockImplementation((_) => parserExports.parsers["en"]);
 
             const response = await makeRequest({
                 data: {
@@ -686,6 +687,7 @@ describe("POST lessons/", () => {
                 const language = await context.languageFactory.createOne();
                 const course = await context.courseFactory.createOne({language, addedBy: user.profile, lessons: []});
                 let newLesson: Lesson | null = context.lessonFactory.makeOne({course: course});
+                vi.spyOn(fileValidatorExports, "validateFileFields").mockImplementation(mockValidateFileFields({"image": 510 * 1024}));
 
                 const response = await makeRequest({
                     data: {
@@ -693,7 +695,7 @@ describe("POST lessons/", () => {
                         text: newLesson.text,
                         courseId: course.id,
                     },
-                    files: {image: readSampleFile("images/santa-barbara-1_8MB-1_1ratio.jpg")}
+                    files: {image: readSampleFile("images/lorem-ipsum-69_8KB-1_1ratio.png")}
                 }, session.token);
 
                 expect(response.statusCode).to.equal(413);
@@ -743,6 +745,7 @@ describe("POST lessons/", () => {
                 const language = await context.languageFactory.createOne();
                 const course = await context.courseFactory.createOne({language, addedBy: user.profile, lessons: []});
                 let newLesson: Lesson | null = context.lessonFactory.makeOne({course: course});
+                vi.spyOn(fileValidatorExports, "validateFileFields").mockImplementation(mockValidateFileFields({"audio": 110 * 1024 * 1024}));
 
                 const response = await makeRequest({
                     data: {
@@ -751,7 +754,7 @@ describe("POST lessons/", () => {
                         courseId: course.id,
                     },
                     files: {
-                        audio: readSampleFile("audio/beethoven-174_1MB.wav")
+                        audio: readSampleFile("audio/piano-97_9KB.wav")
                     }
                 }, session.token);
 
@@ -876,7 +879,7 @@ describe("PUT lessons/:lessonId", () => {
             const author = await context.userFactory.createOne();
             const session = await context.sessionFactory.createOne({user: author});
             const language = await context.languageFactory.createOne();
-            vi.spyOn( parserExports, 'getParser').mockImplementation((_) => parserExports.parsers["en"])
+            vi.spyOn(parserExports, "getParser").mockImplementation((_) => parserExports.parsers["en"]);
             const course = await context.courseFactory.createOne({addedBy: author.profile, language: language, lessons: []});
             const newCourse = await context.courseFactory.createOne({addedBy: author.profile, language: language});
             let lesson = await context.lessonFactory.createOne({course: course});
@@ -919,7 +922,7 @@ describe("PUT lessons/:lessonId", () => {
             const author = await context.userFactory.createOne();
             const session = await context.sessionFactory.createOne({user: author});
             const language = await context.languageFactory.createOne();
-            vi.spyOn( parserExports, 'getParser').mockImplementation((_) => parserExports.parsers["en"])
+            vi.spyOn(parserExports, "getParser").mockImplementation((_) => parserExports.parsers["en"]);
             const course = await context.courseFactory.createOne({addedBy: author.profile, language: language, lessons: []});
             const newCourse = await context.courseFactory.createOne({addedBy: author.profile, language: language});
             let lesson = await context.lessonFactory.createOne({course: course});
@@ -959,7 +962,7 @@ describe("PUT lessons/:lessonId", () => {
             const author = await context.userFactory.createOne();
             const session = await context.sessionFactory.createOne({user: author});
             const language = await context.languageFactory.createOne();
-            vi.spyOn( parserExports, 'getParser').mockImplementation((_) => parserExports.parsers["en"])
+            vi.spyOn(parserExports, "getParser").mockImplementation((_) => parserExports.parsers["en"]);
             const course = await context.courseFactory.createOne({addedBy: author.profile, language: language, lessons: []});
             const newCourse = await context.courseFactory.createOne({addedBy: author.profile, language: language});
             let lesson = await context.lessonFactory.createOne({course: course});
@@ -1312,8 +1315,8 @@ describe("PUT lessons/:lessonId", () => {
                 const course = await context.courseFactory.createOne({addedBy: author.profile, language: language, lessons: []});
                 const newCourse = await context.courseFactory.createOne({addedBy: author.profile, language: language});
                 let lesson = await context.lessonFactory.createOne({course: course});
-
                 const updatedLesson = await context.lessonFactory.makeOne({course: course});
+                vi.spyOn(fileValidatorExports, "validateFileFields").mockImplementation(mockValidateFileFields({"image": 510 * 1024}));
 
                 const response = await makeRequest(lesson.id, {
                     data: {
@@ -1321,7 +1324,7 @@ describe("PUT lessons/:lessonId", () => {
                         title: updatedLesson.title,
                         text: updatedLesson.text,
                     },
-                    files: {image: readSampleFile("images/santa-barbara-1_8MB-1_1ratio.jpg")}
+                    files: {image: readSampleFile("images/lorem-ipsum-69_8KB-1_1ratio.png")}
                 }, session.token);
 
                 expect(response.statusCode).to.equal(413);
@@ -1378,8 +1381,8 @@ describe("PUT lessons/:lessonId", () => {
                 const course = await context.courseFactory.createOne({addedBy: author.profile, language: language, lessons: []});
                 const newCourse = await context.courseFactory.createOne({addedBy: author.profile, language: language});
                 let lesson = await context.lessonFactory.createOne({course: course});
-
                 const updatedLesson = await context.lessonFactory.makeOne({course: course});
+                vi.spyOn(fileValidatorExports, "validateFileFields").mockImplementation(mockValidateFileFields({"audio": 110 * 1024 * 1024}));
 
                 const response = await makeRequest(lesson.id, {
                     data: {
@@ -1388,7 +1391,7 @@ describe("PUT lessons/:lessonId", () => {
                         text: updatedLesson.text,
                     },
                     files: {
-                        audio: readSampleFile("audio/beethoven-174_1MB.wav")
+                        audio: readSampleFile("audio/piano-97_9KB.wav")
                     }
                 }, session.token);
 

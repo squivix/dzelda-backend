@@ -39,7 +39,7 @@ export function validateImageAspectRatio(imageFile: File, imageFieldName = "imag
             throw new ValidationAPIError({image: {message: "incorrect aspect ratio"}});
     }
 }
-export async function validateFields(fields: {
+export async function validateFileFields(fields: {
     [fieldName: string]: { path: string, validate: (file?: File) => Promise<void> }
 }, files: Files): Promise<void> {
     await Promise.all(Object.entries(fields).map(([fieldName, field]) => field.validate(files[fieldName] as File)));

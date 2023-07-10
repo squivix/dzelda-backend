@@ -29,6 +29,7 @@ export default defineConfig({
         threads: false,
         globalSetup: [
             "./tests/setup.ts",
-        ]
+        ],
+        restoreMocks: true,
     },
 });

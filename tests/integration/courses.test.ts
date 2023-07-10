@@ -1,6 +1,6 @@
 import {beforeEach, describe, expect, test, TestContext, vi} from "vitest";
 import {orm} from "@/src/server.js";
-import {buildQueryString, fetchRequest, fetchWithFiles, readSampleFile} from "@/tests/integration/utils.js";
+import {buildQueryString, fetchRequest, fetchWithFiles, mockValidateFileFields, readSampleFile} from "@/tests/integration/utils.js";
 import {UserFactory} from "@/src/seeders/factories/UserFactory.js";
 import {SessionFactory} from "@/src/seeders/factories/SessionFactory.js";
 import {ProfileFactory} from "@/src/seeders/factories/ProfileFactory.js";
@@ -21,8 +21,6 @@ import {courseSerializer} from "@/src/presentation/response/serializers/entities
 import {LessonSchema} from "@/src/presentation/response/interfaces/entities/LessonSchema";
 import {CourseSchema} from "@/src/presentation/response/interfaces/entities/CourseSchema.js";
 import * as fileValidatorExports from "@/src/validators/fileValidator.js";
-import {File} from "fastify-formidable/lib/mjs/index.js";
-import {Files} from "formidable";
 
 interface LocalTestContext extends TestContext {
     courseRepo: CourseRepo;
@@ -145,7 +143,7 @@ describe("GET courses/", function () {
                         title: `title ${randomCase(searchQuery)} ${faker.random.alphaNumeric(10)}`
                     }));
                 else
-                    context.em.persist( context.courseFactory.makeOne({
+                    context.em.persist(context.courseFactory.makeOne({
                         language: language,
                         description: `description ${randomCase(searchQuery)} ${faker.random.alphaNumeric(10)}`
                     }));
@@ -336,13 +334,7 @@ describe("POST courses/", function () {
             const user = await context.userFactory.createOne();
             const session = await context.sessionFactory.createOne({user: user});
             const language = await context.languageFactory.createOne();
-            vi.spyOn( fileValidatorExports, 'validateFields').mockImplementation(async (fields: {
-                [fieldName: string]: { path: string, validate: (file?: File) => Promise<void> }
-            }, files: Files): Promise<void> =>{
-                await Promise.all(Object.entries(fields).map(([fieldName, field]) => {
-                    field.validate(files[fieldName] as File);
-                }));
-            })
+
             const newCourse = context.courseFactory.makeOne({
                 addedBy: user.profile,
                 language: language,
@@ -532,13 +524,14 @@ describe("POST courses/", function () {
                 const session = await context.sessionFactory.createOne({user: user});
                 const language = await context.languageFactory.createOne();
                 const newCourse = context.courseFactory.makeOne({language: language});
+                vi.spyOn(fileValidatorExports, "validateFileFields").mockImplementation(mockValidateFileFields({"image": 510 * 1024}));
 
                 const response = await makeRequest({
                     data: {
                         title: newCourse.title,
                         languageCode: language.code,
                     },
-                    files: {image: readSampleFile("images/santa-barbara-1_8MB-1_1ratio.jpg")}
+                    files: {image: readSampleFile("images/lorem-ipsum-69_8KB-1_1ratio.png")}
                 }, session.token);
 
                 expect(response.statusCode).to.equal(413);
@@ -1210,6 +1203,7 @@ describe("PUT courses/:courseId/", function () {
                     lessonCounter++;
                 }).create(10, {course: course});
                 const updatedCourse = await context.courseFactory.makeOne({addedBy: author.profile, language: language});
+                const spy=vi.spyOn(fileValidatorExports, "validateFileFields").mockImplementation(mockValidateFileFields({"image": 510 * 1024}));
 
                 const response = await makeRequest(course.id, {
                     data: {
@@ -1219,7 +1213,7 @@ describe("PUT courses/:courseId/", function () {
                         lessonsOrder: shuffleArray(courseLessons).map(l => l.id)
                     },
                     files: {
-                        image: readSampleFile("images/santa-barbara-1_8MB-1_1ratio.jpg")
+                        image: readSampleFile("images/lorem-ipsum-69_8KB-1_1ratio.png")
                     }
                 }, session.token);
                 expect(response.statusCode).to.equal(413);
