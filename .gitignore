@@ -11,3 +11,4 @@ specs/schema.ts
 /data/
 .idea
 .directory
+.run

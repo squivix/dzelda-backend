@@ -3,14 +3,17 @@ import {File, kIsMultipart} from "fastify-formidable";
 import {UnsupportedContentTypeAPIError} from "@/src/utils/errors/UnsupportedContentTypeAPIError.js";
 import {ValidationAPIError} from "@/src/utils/errors/ValidationAPIError.js";
 import fs from "fs-extra";
-import formidable from "formidable";
+import formidable, {Files} from "formidable";
 import path from "path";
 import crypto from "crypto";
+import {validateFields} from "@/src/validators/fileValidator.js";
 
 export const MAX_TOTAL_FILE_UPLOAD_SIZE = 500 * 1024 * 1024;
 export const ROOT_UPLOAD_DIR = "public/uploads";
 
-export function singleFileUploadMiddleWare(fields: { [fieldName: string]: { path: string, validate: (file?: File) => Promise<void> } }): preHandlerHookHandler {
+export function singleFileUploadMiddleWare(fields: {
+    [fieldName: string]: { path: string, validate: (file?: File) => Promise<void> }
+}): preHandlerHookHandler {
     return async (request) => {
         const formidableInstance = formidable({
             maxFileSize: MAX_TOTAL_FILE_UPLOAD_SIZE,
@@ -32,7 +35,7 @@ export function singleFileUploadMiddleWare(fields: { [fieldName: string]: { path
         if (!request[kIsMultipart])
             throw new UnsupportedContentTypeAPIError("multipart/form-data");
 
-        await Promise.all(Object.entries(fields).map(([fieldName, field]) => field.validate(request.files?.[fieldName] as File)));
+        await validateFields(fields, request.files!);
         try {
             (request.body as any).data = JSON.parse((request.body as any).data);
         } catch (e) {

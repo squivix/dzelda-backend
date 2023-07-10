@@ -4,6 +4,7 @@ import imageSize from "image-size";
 import {File} from "fastify-formidable";
 import {FilesTooLargeAPIError} from "@/src/utils/errors/FilesTooLargeAPIError.js";
 import {fileTypeFromFile} from "file-type";
+import formidable, {Files} from "formidable";
 
 export function validateFileSize(file: File, fieldName: string, sizeInKb: number) {
     if (file.size > sizeInKb * 1024)
@@ -14,7 +15,7 @@ export function validateFileSize(file: File, fieldName: string, sizeInKb: number
 const fileMimeTypes = {
     image: ["image/jpeg", "image/png"],
 
-    audio: ["audio/wav", "audio/wave", "audio/vnd.wave","audio/mpeg", "application/ogg"]
+    audio: ["audio/wav", "audio/wave", "audio/vnd.wave", "audio/mpeg", "application/ogg"]
 };
 
 export async function validateFileType(file: File, fieldName: string, type: keyof typeof fileMimeTypes) {
@@ -37,4 +38,9 @@ export function validateImageAspectRatio(imageFile: File, imageFieldName = "imag
         if (dimensions.width !== divisor * widthRatio || dimensions.height !== divisor * heightRatio)
             throw new ValidationAPIError({image: {message: "incorrect aspect ratio"}});
     }
+}
+export async function validateFields(fields: {
+    [fieldName: string]: { path: string, validate: (file?: File) => Promise<void> }
+}, files: Files): Promise<void> {
+    await Promise.all(Object.entries(fields).map(([fieldName, field]) => field.validate(files[fieldName] as File)));
 }

@@ -1,4 +1,4 @@
-import {beforeEach, describe, expect, test, TestContext} from "vitest";
+import {beforeEach, describe, expect, test, TestContext, vi} from "vitest";
 import {orm} from "@/src/server.js";
 import {buildQueryString, fetchRequest, fetchWithFiles, readSampleFile} from "@/tests/integration/utils.js";
 import {UserFactory} from "@/src/seeders/factories/UserFactory.js";
@@ -20,6 +20,9 @@ import {MapLearnerLesson} from "@/src/models/entities/MapLearnerLesson.js";
 import {courseSerializer} from "@/src/presentation/response/serializers/entities/CourseSerializer";
 import {LessonSchema} from "@/src/presentation/response/interfaces/entities/LessonSchema";
 import {CourseSchema} from "@/src/presentation/response/interfaces/entities/CourseSchema.js";
+import * as fileValidatorExports from "@/src/validators/fileValidator.js";
+import {File} from "fastify-formidable/lib/mjs/index.js";
+import {Files} from "formidable";
 
 interface LocalTestContext extends TestContext {
     courseRepo: CourseRepo;
@@ -333,7 +336,13 @@ describe("POST courses/", function () {
             const user = await context.userFactory.createOne();
             const session = await context.sessionFactory.createOne({user: user});
             const language = await context.languageFactory.createOne();
-
+            vi.spyOn( fileValidatorExports, 'validateFields').mockImplementation(async (fields: {
+                [fieldName: string]: { path: string, validate: (file?: File) => Promise<void> }
+            }, files: Files): Promise<void> =>{
+                await Promise.all(Object.entries(fields).map(([fieldName, field]) => {
+                    field.validate(files[fieldName] as File);
+                }));
+            })
             const newCourse = context.courseFactory.makeOne({
                 addedBy: user.profile,
                 language: language,
