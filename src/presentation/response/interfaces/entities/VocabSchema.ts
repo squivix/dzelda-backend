@@ -6,4 +6,6 @@ export interface VocabSchema {
     isPhrase: boolean;
     language: string;
     meanings: Partial<MeaningSchema>[];
+    learnersCount: number;
+    lessonsCount: number;
 }

@@ -1,5 +1,5 @@
 import {Lesson} from "@/src/models/entities/Lesson.js";
-import {Collection, Entity, Index, ManyToMany, ManyToOne, OneToMany, Property, types, Unique} from "@mikro-orm/core";
+import {Collection, Entity, Formula, Index, ManyToMany, ManyToOne, OneToMany, Property, types, Unique} from "@mikro-orm/core";
 import {MapLessonVocab} from "@/src/models/entities/MapLessonVocab.js";
 import {CustomBaseEntity} from "@/src/models/entities/CustomBaseEntity.js";
 import {Language} from "@/src/models/entities/Language.js";
@@ -40,5 +40,15 @@ export class Vocab extends CustomBaseEntity {
     })
     learners: Collection<Profile> = new Collection<Profile>(this);
 
+    @Formula((alias: string) => `(SELECT COUNT(DISTINCT map_learner_vocab.learner_id) FROM map_learner_vocab JOIN vocab ON map_learner_vocab.vocab_id = vocab.id WHERE vocab.id = ${alias}.id)`, {
+        type: "number"
+    })
+    learnersCount?: number;
+
+
+    @Formula((alias: string) => `(SELECT COUNT(DISTINCT map_lesson_vocab.lesson_id) FROM map_lesson_vocab JOIN vocab ON map_lesson_vocab.vocab_id = vocab.id WHERE vocab.id = ${alias}.id)`, {
+        type: "number"
+    })
+    lessonsCount?:number;
 
 }

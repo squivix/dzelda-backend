@@ -6,6 +6,8 @@ import {MapLearnerVocab} from "@/src/models/entities/MapLearnerVocab.js";
 import {VocabRepo} from "@/src/models/repos/VocabRepo.js";
 import {VocabLevel} from "@/src/models/enums/VocabLevel.js";
 import {Lesson} from "@/src/models/entities/Lesson.js";
+import {QueryOrderMap} from "@mikro-orm/core/enums.js";
+import {Course} from "@/src/models/entities/Course.js";
 
 export class VocabService {
     em: EntityManager;
@@ -26,10 +28,20 @@ export class VocabService {
             dbFilters.$and!.push({language: {code: filters.languageCode}});
         if (filters.searchQuery !== undefined)
             dbFilters.$and!.push({text: {$ilike: `%${filters.searchQuery}%`}});
+
+        const dbOrderBy: QueryOrderMap<Vocab> = {};
+        if (sort.sortBy == "text")
+            dbOrderBy["text"] = sort.sortOrder;
+        if (sort.sortBy == "learnersCount")
+            dbOrderBy["learnersCount"] = sort.sortOrder;
+        if (sort.sortBy == "lessonsCount")
+            dbOrderBy["lessonsCount"] = sort.sortOrder;
+
         return await this.vocabRepo.find(dbFilters, {
-            populate: ["language", "meanings", "meanings.addedBy.user"],
+            populate: ["language", "meanings", "meanings.addedBy.user", "learnersCount", "lessonsCount"],
             limit: pagination.pageSize,
-            offset: pagination.pageSize * (pagination.page - 1)
+            offset: pagination.pageSize * (pagination.page - 1),
+            orderBy: dbOrderBy
         });
     }
 

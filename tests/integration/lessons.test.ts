@@ -325,7 +325,7 @@ describe("GET lessons/", () => {
             });
         });
         describe("test sortOrder", () => {
-            test<LocalTestContext>("test sortOrder ascending", async (context) => {
+            test<LocalTestContext>("If sortOrder is asc return the lessons in ascending order", async (context) => {
                 const language = await context.languageFactory.createOne();
                 const course = await context.courseFactory.createOne({language});
                 await context.lessonFactory.createOne({course, title: "abc"});
@@ -341,7 +341,7 @@ describe("GET lessons/", () => {
                 expect(response.statusCode).to.equal(200);
                 expect(response.json()).toEqual(lessonSerializer.serializeList(lessons));
             });
-            test<LocalTestContext>("test sortOrder descending", async (context) => {
+            test<LocalTestContext>("If sortOrder is desc return the lessons in descending order", async (context) => {
                 const language = await context.languageFactory.createOne();
                 const course = await context.courseFactory.createOne({language});
                 await context.lessonFactory.createOne({course, title: "abc"});
@@ -357,7 +357,7 @@ describe("GET lessons/", () => {
                 expect(response.statusCode).to.equal(200);
                 expect(response.json()).toEqual(lessonSerializer.serializeList(lessons));
             });
-            test<LocalTestContext>("if sortBy is invalid return 400", async (context) => {
+            test<LocalTestContext>("If sortBy is invalid return 400", async (context) => {
                 const response = await makeRequest({sortOrder: "rising"});
                 expect(response.statusCode).to.equal(400);
             });

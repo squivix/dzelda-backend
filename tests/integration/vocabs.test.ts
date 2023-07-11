@@ -51,28 +51,268 @@ describe("GET vocabs/", () => {
         };
         return await fetchRequest(options, authToken);
     };
-    const paginationDefaults = {pageSize: 25, page: 1};
-    test<LocalTestContext>("If there are no filters return all vocabs", async (context) => {
+    const queryDefaults: {
+        pagination: { pageSize: number, page: number },
+        sort: { sortBy: "text" | "learnersCount" | "lessonsCount", sortOrder: "asc" | "desc" }
+    } = {pagination: {pageSize: 25, page: 1}, sort: {sortBy: "text", sortOrder: "asc"}};
+    test<LocalTestContext>("If there are no filters return all vocabs paginated", async (context) => {
         const language = await context.languageFactory.createOne();
-        await context.vocabFactory.create(10, {language});
+        await context.vocabFactory.create(5, {language});
 
         const response = await makeRequest({});
 
         const vocabs = await context.em.find(Vocab, {}, {
-            populate: ["language", "meanings", "meanings.addedBy.user"],
-            limit: paginationDefaults.pageSize,
-            offset: paginationDefaults.pageSize * (paginationDefaults.page - 1)
+            populate: ["language", "meanings", "meanings.addedBy.user", "learnersCount", "lessonsCount"],
+            limit: queryDefaults.pagination.pageSize,
+            offset: queryDefaults.pagination.pageSize * (queryDefaults.pagination.page - 1),
+            orderBy: {[queryDefaults.sort.sortBy]: queryDefaults.sort.sortOrder},
+            refresh: true
         });
         const allVocabsCount = await context.vocabRepo.count({});
 
         expect(response.statusCode).to.equal(200);
         expect(response.json()).toEqual({
-            page: paginationDefaults.page,
-            pageSize: paginationDefaults.pageSize,
-            pageCount: Math.ceil(allVocabsCount / paginationDefaults.pageSize),
+            page: queryDefaults.pagination.page,
+            pageSize: queryDefaults.pagination.pageSize,
+            pageCount: Math.ceil(allVocabsCount / queryDefaults.pagination.pageSize),
             data: vocabSerializer.serializeList(vocabs)
         });
     });
+    describe("test filters", () => {
+        describe("test languageCode filter", () => {
+            test<LocalTestContext>("If language filter is valid and language exists only return vocabs in that language", async (context) => {
+                const language1 = await context.languageFactory.createOne();
+                const language2 = await context.languageFactory.createOne();
+                await context.vocabFactory.create(3, {language: language1});
+                await context.vocabFactory.create(3, {language: language2});
+
+                const response = await makeRequest({languageCode: language1.code});
+
+                const vocabs = await context.em.find(Vocab, {language: language1}, {
+                    populate: ["language", "meanings", "meanings.addedBy.user", "learnersCount", "lessonsCount"],
+                    limit: queryDefaults.pagination.pageSize,
+                    offset: queryDefaults.pagination.pageSize * (queryDefaults.pagination.page - 1),
+                    orderBy: {[queryDefaults.sort.sortBy]: queryDefaults.sort.sortOrder},
+                    refresh: true
+                });
+                const allVocabsCount = await context.vocabRepo.count({language: language1});
+
+                expect(response.statusCode).to.equal(200);
+
+                expect(response.json()).toEqual({
+                    page: queryDefaults.pagination.page,
+                    pageSize: queryDefaults.pagination.pageSize,
+                    pageCount: Math.ceil(allVocabsCount / queryDefaults.pagination.pageSize),
+                    data: vocabSerializer.serializeList(vocabs)
+                });
+            });
+            test<LocalTestContext>("If language does not exist return empty vocab list", async (context) => {
+                const language = await context.languageFactory.makeOne();
+                await context.vocabFactory.create(3, {language: await context.languageFactory.createOne()});
+
+                const response = await makeRequest({languageCode: language.code});
+
+                expect(response.statusCode).to.equal(200);
+                expect(response.json()).toEqual({
+                    page: queryDefaults.pagination.page,
+                    pageSize: queryDefaults.pagination.pageSize,
+                    pageCount: 0,
+                    data: []
+                });
+            });
+            test<LocalTestContext>("If language filter is invalid return 400", async (context) => {
+                const response = await makeRequest({languageCode: 12345});
+
+                expect(response.statusCode).to.equal(400);
+            });
+        });
+        describe("test searchQuery filter", () => {
+            test<LocalTestContext>("If searchQuery is valid return vocabs with text that matches query", async (context) => {
+                const language = await context.languageFactory.createOne();
+                const searchQuery = "search query";
+                for (let i = 0; i < 3; i++) {
+                    context.em.persist(context.vocabFactory.makeOne({
+                        language: language,
+                        text: `text ${randomCase(searchQuery)} ${faker.random.alphaNumeric(10)}`,
+                    }));
+                }
+                await context.em.flush();
+                await context.vocabFactory.create(3, {language: language});
+
+                const response = await makeRequest({searchQuery: searchQuery});
+
+                const vocabs = await context.em.find(Vocab, {text: {$ilike: `%${searchQuery}%`}}, {
+                    populate: ["language", "meanings", "meanings.addedBy.user", "learnersCount", "lessonsCount"],
+                    limit: queryDefaults.pagination.pageSize,
+                    offset: queryDefaults.pagination.pageSize * (queryDefaults.pagination.page - 1),
+                    orderBy: {[queryDefaults.sort.sortBy]: queryDefaults.sort.sortOrder},
+                    refresh: true
+                });
+                const allVocabsCount = await context.vocabRepo.count({text: {$ilike: `%${searchQuery}%`}});
+                expect(response.statusCode).to.equal(200);
+                expect(response.json()).toEqual({
+                    page: queryDefaults.pagination.page,
+                    pageSize: queryDefaults.pagination.pageSize,
+                    pageCount: Math.ceil(allVocabsCount / queryDefaults.pagination.pageSize),
+                    data: vocabSerializer.serializeList(vocabs)
+                });
+            });
+            test<LocalTestContext>("If no vocabs match search query return empty list", async (context) => {
+                await context.vocabFactory.create(5, {language: await context.languageFactory.createOne()});
+
+                const response = await makeRequest({searchQuery: faker.random.alpha({count: 200})});
+
+                expect(response.statusCode).to.equal(200);
+                expect(response.json()).toEqual({
+                    page: queryDefaults.pagination.page,
+                    pageSize: queryDefaults.pagination.pageSize,
+                    pageCount: 0,
+                    data: []
+                });
+            });
+            test<LocalTestContext>("If searchQuery is invalid return 400", async (context) => {
+                const response = await makeRequest({searchQuery: faker.random.alpha({count: 300})});
+
+                expect(response.statusCode).to.equal(400);
+            });
+        });
+    });
+    describe("test sort", () => {
+        describe("test sortBy", () => {
+            test<LocalTestContext>("test sortBy title", async (context) => {
+                const language = await context.languageFactory.createOne();
+                await context.vocabFactory.createOne({text: "abc", language});
+                await context.vocabFactory.createOne({text: "def", language});
+
+                const response = await makeRequest({sortBy: "text"});
+
+                const vocabs = await context.em.find(Vocab, {}, {
+                    populate: ["language", "meanings", "meanings.addedBy.user", "learnersCount", "lessonsCount"],
+                    limit: queryDefaults.pagination.pageSize,
+                    offset: queryDefaults.pagination.pageSize * (queryDefaults.pagination.page - 1),
+                    orderBy: {"text": queryDefaults.sort.sortOrder},
+                    refresh: true
+                });
+                const allVocabsCount = await context.vocabRepo.count({});
+
+                expect(response.statusCode).to.equal(200);
+                expect(response.json()).toEqual({
+                    page: queryDefaults.pagination.page,
+                    pageSize: queryDefaults.pagination.pageSize,
+                    pageCount: Math.ceil(allVocabsCount / queryDefaults.pagination.pageSize),
+                    data: vocabSerializer.serializeList(vocabs)
+                });
+            });
+            test<LocalTestContext>("test sortBy learnersCount", async (context) => {
+                const learner1 = await context.userFactory.createOne();
+                const learner2 = await context.userFactory.createOne();
+                const language = await context.languageFactory.createOne();
+                await context.vocabFactory.createOne({language, learners: [learner1.profile, learner2.profile]});
+                await context.vocabFactory.createOne({language, learners: [learner1.profile]});
+
+                const response = await makeRequest({sortBy: "learnersCount"});
+
+                const vocabs = await context.vocabRepo.find({}, {
+                    populate: ["language", "meanings", "meanings.addedBy.user", "learnersCount", "lessonsCount"],
+                    limit: queryDefaults.pagination.pageSize,
+                    offset: queryDefaults.pagination.pageSize * (queryDefaults.pagination.page - 1),
+                    orderBy: {learnersCount: queryDefaults.sort.sortOrder},
+                    refresh: true
+                });
+                const allVocabsCount = await context.vocabRepo.count({});
+
+                expect(response.statusCode).to.equal(200);
+                expect(response.json()).toEqual({
+                    page: queryDefaults.pagination.page,
+                    pageSize: queryDefaults.pagination.pageSize,
+                    pageCount: Math.ceil(allVocabsCount / queryDefaults.pagination.pageSize),
+                    data: vocabSerializer.serializeList(vocabs)
+                });
+            });
+            test<LocalTestContext>("test sortBy lessonsCount", async (context) => {
+                const course = await context.courseFactory.createOne({language: await context.languageFactory.createOne()});
+                const lesson1 = await context.lessonFactory.createOne({course});
+                const lesson2 = await context.lessonFactory.createOne({course});
+                const language = await context.languageFactory.createOne();
+                await context.vocabFactory.createOne({language, lessonsAppearingIn: [lesson1, lesson2]});
+                await context.vocabFactory.createOne({language, lessonsAppearingIn: [lesson1]});
+
+                const response = await makeRequest({sortBy: "learnersCount"});
+
+                const vocabs = await context.em.find(Vocab, {}, {
+                    populate: ["language", "meanings", "meanings.addedBy.user", "learnersCount", "lessonsCount"],
+                    limit: queryDefaults.pagination.pageSize,
+                    offset: queryDefaults.pagination.pageSize * (queryDefaults.pagination.page - 1),
+                    orderBy: {lessonsCount: queryDefaults.sort.sortOrder},
+                    refresh: true
+                });
+                const allVocabsCount = await context.vocabRepo.count({});
+
+                expect(response.statusCode).to.equal(200);
+                expect(response.json()).toEqual({
+                    page: queryDefaults.pagination.page,
+                    pageSize: queryDefaults.pagination.pageSize,
+                    pageCount: Math.ceil(allVocabsCount / queryDefaults.pagination.pageSize),
+                    data: vocabSerializer.serializeList(vocabs)
+                });
+            });
+        });
+        describe("test sortOrder", () => {
+            test<LocalTestContext>("If sortOrder is asc return the lessons in ascending order", async (context) => {
+                const language = await context.languageFactory.createOne();
+                await context.vocabFactory.createOne({text: "abc", language});
+                await context.vocabFactory.createOne({text: "def", language});
+
+                const response = await makeRequest({sortBy: "text", sortOrder: "asc"});
+
+                const vocabs = await context.em.find(Vocab, {}, {
+                    populate: ["language", "meanings", "meanings.addedBy.user", "learnersCount", "lessonsCount"],
+                    limit: queryDefaults.pagination.pageSize,
+                    offset: queryDefaults.pagination.pageSize * (queryDefaults.pagination.page - 1),
+                    orderBy: {"text": "asc"},
+                    refresh: true
+                });
+                const allVocabsCount = await context.vocabRepo.count({});
+
+                expect(response.statusCode).to.equal(200);
+                expect(response.json()).toEqual({
+                    page: queryDefaults.pagination.page,
+                    pageSize: queryDefaults.pagination.pageSize,
+                    pageCount: Math.ceil(allVocabsCount / queryDefaults.pagination.pageSize),
+                    data: vocabSerializer.serializeList(vocabs)
+                });
+            });
+            test<LocalTestContext>("If sortOrder is desc return the lessons in descending order", async (context) => {
+                const language = await context.languageFactory.createOne();
+                await context.vocabFactory.createOne({text: "abc", language});
+                await context.vocabFactory.createOne({text: "def", language});
+
+                const response = await makeRequest({sortBy: "text", sortOrder: "desc"});
+
+                const vocabs = await context.em.find(Vocab, {}, {
+                    populate: ["language", "meanings", "meanings.addedBy.user", "learnersCount", "lessonsCount"],
+                    limit: queryDefaults.pagination.pageSize,
+                    offset: queryDefaults.pagination.pageSize * (queryDefaults.pagination.page - 1),
+                    orderBy: {"text": "desc"},
+                    refresh: true
+                });
+                const allVocabsCount = await context.vocabRepo.count({});
+
+                expect(response.statusCode).to.equal(200);
+                expect(response.json()).toEqual({
+                    page: queryDefaults.pagination.page,
+                    pageSize: queryDefaults.pagination.pageSize,
+                    pageCount: Math.ceil(allVocabsCount / queryDefaults.pagination.pageSize),
+                    data: vocabSerializer.serializeList(vocabs)
+                });
+            });
+            test<LocalTestContext>("If sortBy is invalid return 400", async (context) => {
+                const response = await makeRequest({sortOrder: "rising"});
+                expect(response.statusCode).to.equal(400);
+            });
+        });
+    });
+
 });
 
 /**@link VocabController#createVocab*/
@@ -90,7 +330,7 @@ describe("POST vocabs/", () => {
         const user = await context.userFactory.createOne();
         const session = await context.sessionFactory.createOne({user: user});
         const language = await context.languageFactory.createOne();
-        vi.spyOn( parserExports, 'getParser').mockImplementation((_) => parserExports.parsers["en"])
+        vi.spyOn(parserExports, "getParser").mockImplementation((_) => parserExports.parsers["en"]);
         const newVocab = context.vocabFactory.makeOne({language: language});
         const response = await makeRequest({
             languageCode: language.code,
@@ -404,7 +644,7 @@ describe("GET users/:username/vocabs/", () => {
 
             const response = await makeRequest("me", {searchQuery: searchQuery}, session.token);
 
-            const mappings = await context.em.find(MapLearnerVocab, {learner: user.profile, vocab: vocabs},
+            const mappings = await context.em.find(MapLearnerVocab, {learner: user.profile, vocab: {text: {$ilike: `%${searchQuery}%`}}},
                 {populate: ["vocab", "vocab.language", "vocab.meanings"]});
             await context.vocabRepo.annotateUserMeanings(mappings, user.profile.id);
             expect(response.statusCode).to.equal(200);
@@ -429,6 +669,11 @@ describe("GET users/:username/vocabs/", () => {
             expect(response.statusCode).to.equal(200);
             expect(response.json()).toEqual([]);
         });
+    });
+    test<LocalTestContext>("If username is not logged in return 401", async (context) => {
+        const response = await makeRequest("me", {});
+
+        expect(response.statusCode).to.equal(401);
     });
 });
 
