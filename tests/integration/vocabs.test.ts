@@ -312,8 +312,158 @@ describe("GET vocabs/", () => {
             });
         });
     });
+    describe("test pagination", () => {
+        describe("test page", () => {
+            test<LocalTestContext>("If page is 1 return the first page of results", async (context) => {
+                const language = await context.languageFactory.createOne();
+                await context.vocabFactory.create(10, {language});
+                const page = 1, pageSize = 3;
 
-});
+                const response = await makeRequest({page: page, pageSize});
+
+                const vocabs = await context.em.find(Vocab, {}, {
+                    populate: ["language", "meanings", "meanings.addedBy.user", "learnersCount", "lessonsCount"],
+                    limit: pageSize,
+                    offset: pageSize * (page - 1),
+                    orderBy: {[queryDefaults.sort.sortBy]: queryDefaults.sort.sortOrder},
+                    refresh: true
+                });
+                const allVocabsCount = await context.vocabRepo.count({});
+
+                expect(response.statusCode).to.equal(200);
+                expect(response.json()).toEqual({
+                    page: page,
+                    pageSize: pageSize,
+                    pageCount: Math.ceil(allVocabsCount / pageSize),
+                    data: vocabSerializer.serializeList(vocabs)
+                });
+            });
+            test<LocalTestContext>("If page is 2 return the second page of results", async (context) => {
+                const language = await context.languageFactory.createOne();
+                await context.vocabFactory.create(10, {language});
+                const page = 2, pageSize = 3;
+
+                const response = await makeRequest({page: page, pageSize});
+
+                const vocabs = await context.em.find(Vocab, {}, {
+                    populate: ["language", "meanings", "meanings.addedBy.user", "learnersCount", "lessonsCount"],
+                    limit: pageSize,
+                    offset: pageSize * (page - 1),
+                    orderBy: {[queryDefaults.sort.sortBy]: queryDefaults.sort.sortOrder},
+                    refresh: true
+                });
+                const allVocabsCount = await context.vocabRepo.count({});
+
+                expect(response.statusCode).to.equal(200);
+                expect(response.json()).toEqual({
+                    page: page,
+                    pageSize: pageSize,
+                    pageCount: Math.ceil(allVocabsCount / pageSize),
+                    data: vocabSerializer.serializeList(vocabs)
+                });
+            });
+            test<LocalTestContext>("If page is last return the last page of results", async (context) => {
+                const language = await context.languageFactory.createOne();
+                await context.vocabFactory.create(10, {language});
+                const allVocabsCount = await context.vocabRepo.count({});
+                const pageSize = 3;
+                const page = Math.ceil(allVocabsCount / pageSize);
+
+                const response = await makeRequest({page: page, pageSize});
+
+                const vocabs = await context.em.find(Vocab, {}, {
+                    populate: ["language", "meanings", "meanings.addedBy.user", "learnersCount", "lessonsCount"],
+                    limit: pageSize,
+                    offset: pageSize * (page - 1),
+                    orderBy: {[queryDefaults.sort.sortBy]: queryDefaults.sort.sortOrder},
+                    refresh: true
+                });
+
+                expect(response.statusCode).to.equal(200);
+                expect(response.json()).toEqual({
+                    page: page,
+                    pageSize: pageSize,
+                    pageCount: Math.ceil(allVocabsCount / pageSize),
+                    data: vocabSerializer.serializeList(vocabs)
+                });
+            });
+            test<LocalTestContext>("If page is more than last return empty page", async (context) => {
+                const language = await context.languageFactory.createOne();
+                await context.vocabFactory.create(10, {language});
+                const allVocabsCount = await context.vocabRepo.count({});
+                const pageSize = 3;
+                const page = Math.ceil(allVocabsCount / pageSize) + 1;
+
+                const response = await makeRequest({page: page, pageSize});
+
+                expect(response.statusCode).to.equal(200);
+                expect(response.json()).toEqual({
+                    page: page,
+                    pageSize: pageSize,
+                    pageCount: Math.ceil(allVocabsCount / pageSize),
+                    data: []
+                });
+            });
+            describe("If page is invalid return 400", () => {
+                test<LocalTestContext>("If page is less than 1 return 400", async (context) => {
+                    const response = await makeRequest({page: 0, pageSize: 3});
+
+                    expect(response.statusCode).to.equal(400);
+                });
+                test<LocalTestContext>("If page is not a number return 400", async (context) => {
+                    const response = await makeRequest({page: "last", pageSize: 3});
+
+                    expect(response.statusCode).to.equal(400);
+                });
+            });
+        });
+        describe("test pageSize", () => {
+            test<LocalTestContext>("If pageSize is 10 split the results into 10 sized pages", async (context) => {
+                const language = await context.languageFactory.createOne();
+                await context.vocabFactory.create(10, {language});
+                const allVocabsCount = await context.vocabRepo.count({});
+                const page = 1, pageSize = 10;
+
+                const response = await makeRequest({page: page, pageSize});
+
+                const vocabs = await context.em.find(Vocab, {}, {
+                    populate: ["language", "meanings", "meanings.addedBy.user", "learnersCount", "lessonsCount"],
+                    limit: pageSize,
+                    offset: pageSize * (page - 1),
+                    orderBy: {[queryDefaults.sort.sortBy]: queryDefaults.sort.sortOrder},
+                    refresh: true
+                });
+
+                expect(response.statusCode).to.equal(200);
+                expect(response.json()).toEqual({
+                    page: page,
+                    pageSize: pageSize,
+                    pageCount: Math.ceil(allVocabsCount / pageSize),
+                    data: vocabSerializer.serializeList(vocabs)
+                });
+                expect(response.json().data.length).toBeLessThanOrEqual(pageSize);
+            });
+            describe("If pageSize is invalid return 400", () => {
+                test<LocalTestContext>("If pageSize is too big return 400", async (context) => {
+                    const response = await makeRequest({page: 1, pageSize: 500});
+
+                    expect(response.statusCode).to.equal(400);
+                });
+                test<LocalTestContext>("If pageSize is negative return 400", async (context) => {
+                    const response = await makeRequest({page: 1, pageSize: -10});
+
+                    expect(response.statusCode).to.equal(400);
+                });
+                test<LocalTestContext>("If pageSize is not a number return 400", async (context) => {
+                    const response = await makeRequest({page: 1, pageSize: "a lot"});
+
+                    expect(response.statusCode).to.equal(400);
+                });
+            });
+        });
+    });
+})
+;
 
 /**@link VocabController#createVocab*/
 describe("POST vocabs/", () => {
