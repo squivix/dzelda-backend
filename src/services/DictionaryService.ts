@@ -18,10 +18,10 @@ export class DictionaryService {
         const dbFilters: FilterQuery<Dictionary> = {$and: []};
         dbFilters.$and!.push({learners: user.profile});
 
-        const dbOrderBy: QueryOrderMap<Dictionary> = {};
+        const dbOrderBy: QueryOrderMap<Dictionary>[] = [];
         if (sort.sortBy == "name")
-            dbOrderBy["name"] = sort.sortOrder;
-
+            dbOrderBy.push({name: sort.sortOrder});
+        dbOrderBy.push({id: "asc"});
         return await this.dictionaryRepo.find(dbFilters, {populate: ["language"], orderBy: dbOrderBy});
     }
 }

@@ -21,7 +21,7 @@ export class Vocab extends CustomBaseEntity {
     @Property({type: types.boolean, default: false})
     isPhrase!: boolean;
 
-    @OneToMany({entity: () => Meaning, mappedBy: (meaning: Meaning) => meaning.vocab})
+    @OneToMany({entity: () => Meaning, mappedBy: (meaning: Meaning) => meaning.vocab, orderBy: {learnersCount: "desc"}})
     meanings: Collection<Meaning> = new Collection<Meaning>(this);
 
     @ManyToMany({
@@ -49,6 +49,6 @@ export class Vocab extends CustomBaseEntity {
     @Formula((alias: string) => `(SELECT COUNT(DISTINCT map_lesson_vocab.lesson_id) FROM map_lesson_vocab JOIN vocab ON map_lesson_vocab.vocab_id = vocab.id WHERE vocab.id = ${alias}.id)`, {
         type: "number"
     })
-    lessonsCount?:number;
+    lessonsCount?: number;
 
 }

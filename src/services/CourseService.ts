@@ -20,7 +20,10 @@ export class CourseService {
         this.lessonRepo = this.em.getRepository(Lesson) as LessonRepo;
     }
 
-    async getCourses(filters: { languageCode?: string, addedBy?: string, searchQuery?: string, isLearning?: boolean }, sort: { sortBy: "title" | "createdDate" | "learnersCount", sortOrder: "asc" | "desc" }, user: User | AnonymousUser | null) {
+    async getCourses(filters: { languageCode?: string, addedBy?: string, searchQuery?: string, isLearning?: boolean }, sort: {
+        sortBy: "title" | "createdDate" | "learnersCount",
+        sortOrder: "asc" | "desc"
+    }, user: User | AnonymousUser | null) {
         const dbFilters: FilterQuery<Course> = {$and: []};
 
         if (user && user instanceof User) {
@@ -37,14 +40,14 @@ export class CourseService {
         if (filters.searchQuery !== undefined)
             dbFilters.$and!.push({$or: [{title: {$ilike: `%${filters.searchQuery}%`}}, {description: {$ilike: `%${filters.searchQuery}%`}}]});
 
-        const dbOrderBy: QueryOrderMap<Course> = {};
+        const dbOrderBy: QueryOrderMap<Course>[] = [];
         if (sort.sortBy == "title")
-            dbOrderBy["title"] = sort.sortOrder;
+            dbOrderBy.push({title: sort.sortOrder});
         else if (sort.sortBy == "createdDate")
-            dbOrderBy["addedOn"] = sort.sortOrder;
+            dbOrderBy.push({addedOn: sort.sortOrder});
         else if (sort.sortBy == "learnersCount")
-            dbOrderBy["learnersCount"] = sort.sortOrder;
-
+            dbOrderBy.push({learnersCount: sort.sortOrder});
+        dbOrderBy.push({id: "asc"});
         const courses = await this.courseRepo.find(dbFilters, {orderBy: dbOrderBy, populate: ["language", "addedBy.user"]});
         if (user && !(user instanceof AnonymousUser))
             await this.courseRepo.annotateVocabsByLevel(courses, user.id);
@@ -78,7 +81,13 @@ export class CourseService {
         return course;
     }
 
-    async updateCourse(course: Course, updatedCourseData: { title: string; description: string; isPublic: boolean; image?: string;  lessonsOrder: number[] }, user: User) {
+    async updateCourse(course: Course, updatedCourseData: {
+        title: string;
+        description: string;
+        isPublic: boolean;
+        image?: string;
+        lessonsOrder: number[]
+    }, user: User) {
         course.title = updatedCourseData.title;
         course.description = updatedCourseData.description;
         course.isPublic = updatedCourseData.isPublic;
@@ -102,7 +111,13 @@ export class CourseService {
         return course;
     }
 
-    async getUserCoursesLearning(filters: { languageCode?: string, addedBy?: string, searchQuery?: string, level?: LanguageLevel, isLearning?: boolean }, sort: { sortBy: "title" | "createdDate" | "learnersCount", sortOrder: "asc" | "desc" }, user: User) {
+    async getUserCoursesLearning(filters: {
+        languageCode?: string,
+        addedBy?: string,
+        searchQuery?: string,
+        level?: LanguageLevel,
+        isLearning?: boolean
+    }, sort: { sortBy: "title" | "createdDate" | "learnersCount", sortOrder: "asc" | "desc" }, user: User) {
         return this.getCourses({...filters, isLearning: true}, sort, user);
     }
 }

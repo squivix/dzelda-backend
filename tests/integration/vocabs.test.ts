@@ -65,7 +65,7 @@ describe("GET vocabs/", () => {
             populate: ["language", "meanings", "meanings.addedBy.user", "learnersCount", "lessonsCount"],
             limit: queryDefaults.pagination.pageSize,
             offset: queryDefaults.pagination.pageSize * (queryDefaults.pagination.page - 1),
-            orderBy: {[queryDefaults.sort.sortBy]: queryDefaults.sort.sortOrder},
+            orderBy: [{[queryDefaults.sort.sortBy]: queryDefaults.sort.sortOrder}, {id: "asc"}],
             refresh: true
         });
         const allVocabsCount = await context.vocabRepo.count({});
@@ -92,7 +92,7 @@ describe("GET vocabs/", () => {
                     populate: ["language", "meanings", "meanings.addedBy.user", "learnersCount", "lessonsCount"],
                     limit: queryDefaults.pagination.pageSize,
                     offset: queryDefaults.pagination.pageSize * (queryDefaults.pagination.page - 1),
-                    orderBy: {[queryDefaults.sort.sortBy]: queryDefaults.sort.sortOrder},
+                    orderBy: [{[queryDefaults.sort.sortBy]: queryDefaults.sort.sortOrder}, {id: "asc"}],
                     refresh: true
                 });
                 const allVocabsCount = await context.vocabRepo.count({language: language1});
@@ -145,7 +145,7 @@ describe("GET vocabs/", () => {
                     populate: ["language", "meanings", "meanings.addedBy.user", "learnersCount", "lessonsCount"],
                     limit: queryDefaults.pagination.pageSize,
                     offset: queryDefaults.pagination.pageSize * (queryDefaults.pagination.page - 1),
-                    orderBy: {[queryDefaults.sort.sortBy]: queryDefaults.sort.sortOrder},
+                    orderBy: [{[queryDefaults.sort.sortBy]: queryDefaults.sort.sortOrder}, {id: "asc"}],
                     refresh: true
                 });
                 const allVocabsCount = await context.vocabRepo.count({text: {$ilike: `%${searchQuery}%`}});
@@ -190,7 +190,7 @@ describe("GET vocabs/", () => {
                     populate: ["language", "meanings", "meanings.addedBy.user", "learnersCount", "lessonsCount"],
                     limit: queryDefaults.pagination.pageSize,
                     offset: queryDefaults.pagination.pageSize * (queryDefaults.pagination.page - 1),
-                    orderBy: {"text": queryDefaults.sort.sortOrder},
+                    orderBy: [{"text": queryDefaults.sort.sortOrder}, {id: "asc"}],
                     refresh: true
                 });
                 const allVocabsCount = await context.vocabRepo.count({});
@@ -216,7 +216,7 @@ describe("GET vocabs/", () => {
                     populate: ["language", "meanings", "meanings.addedBy.user", "learnersCount", "lessonsCount"],
                     limit: queryDefaults.pagination.pageSize,
                     offset: queryDefaults.pagination.pageSize * (queryDefaults.pagination.page - 1),
-                    orderBy: {learnersCount: queryDefaults.sort.sortOrder},
+                    orderBy: [{learnersCount: queryDefaults.sort.sortOrder}, {id: "asc"}],
                     refresh: true
                 });
                 const allVocabsCount = await context.vocabRepo.count({});
@@ -237,13 +237,13 @@ describe("GET vocabs/", () => {
                 await context.vocabFactory.createOne({language, lessonsAppearingIn: [lesson1, lesson2]});
                 await context.vocabFactory.createOne({language, lessonsAppearingIn: [lesson1]});
 
-                const response = await makeRequest({sortBy: "learnersCount"});
+                const response = await makeRequest({sortBy: "lessonsCount"});
 
-                const vocabs = await context.em.find(Vocab, {}, {
+                const vocabs = await context.vocabRepo.find({}, {
                     populate: ["language", "meanings", "meanings.addedBy.user", "learnersCount", "lessonsCount"],
                     limit: queryDefaults.pagination.pageSize,
                     offset: queryDefaults.pagination.pageSize * (queryDefaults.pagination.page - 1),
-                    orderBy: {lessonsCount: queryDefaults.sort.sortOrder},
+                    orderBy: [{lessonsCount: queryDefaults.sort.sortOrder}, {id: "asc"}],
                     refresh: true
                 });
                 const allVocabsCount = await context.vocabRepo.count({});
@@ -269,7 +269,7 @@ describe("GET vocabs/", () => {
                     populate: ["language", "meanings", "meanings.addedBy.user", "learnersCount", "lessonsCount"],
                     limit: queryDefaults.pagination.pageSize,
                     offset: queryDefaults.pagination.pageSize * (queryDefaults.pagination.page - 1),
-                    orderBy: {"text": "asc"},
+                    orderBy: [{"text": "asc"}, {id: "asc"}],
                     refresh: true
                 });
                 const allVocabsCount = await context.vocabRepo.count({});
@@ -293,7 +293,7 @@ describe("GET vocabs/", () => {
                     populate: ["language", "meanings", "meanings.addedBy.user", "learnersCount", "lessonsCount"],
                     limit: queryDefaults.pagination.pageSize,
                     offset: queryDefaults.pagination.pageSize * (queryDefaults.pagination.page - 1),
-                    orderBy: {"text": "desc"},
+                    orderBy: [{"text": "desc"}, {id: "asc"}],
                     refresh: true
                 });
                 const allVocabsCount = await context.vocabRepo.count({});
@@ -325,7 +325,7 @@ describe("GET vocabs/", () => {
                     populate: ["language", "meanings", "meanings.addedBy.user", "learnersCount", "lessonsCount"],
                     limit: pageSize,
                     offset: pageSize * (page - 1),
-                    orderBy: {[queryDefaults.sort.sortBy]: queryDefaults.sort.sortOrder},
+                    orderBy: [{[queryDefaults.sort.sortBy]: queryDefaults.sort.sortOrder}, {id: "asc"}],
                     refresh: true
                 });
                 const allVocabsCount = await context.vocabRepo.count({});
@@ -349,7 +349,7 @@ describe("GET vocabs/", () => {
                     populate: ["language", "meanings", "meanings.addedBy.user", "learnersCount", "lessonsCount"],
                     limit: pageSize,
                     offset: pageSize * (page - 1),
-                    orderBy: {[queryDefaults.sort.sortBy]: queryDefaults.sort.sortOrder},
+                    orderBy: [{[queryDefaults.sort.sortBy]: queryDefaults.sort.sortOrder}, {id: "asc"}],
                     refresh: true
                 });
                 const allVocabsCount = await context.vocabRepo.count({});
@@ -375,7 +375,7 @@ describe("GET vocabs/", () => {
                     populate: ["language", "meanings", "meanings.addedBy.user", "learnersCount", "lessonsCount"],
                     limit: pageSize,
                     offset: pageSize * (page - 1),
-                    orderBy: {[queryDefaults.sort.sortBy]: queryDefaults.sort.sortOrder},
+                    orderBy: [{[queryDefaults.sort.sortBy]: queryDefaults.sort.sortOrder}, {id: "asc"}],
                     refresh: true
                 });
 
@@ -430,7 +430,7 @@ describe("GET vocabs/", () => {
                     populate: ["language", "meanings", "meanings.addedBy.user", "learnersCount", "lessonsCount"],
                     limit: pageSize,
                     offset: pageSize * (page - 1),
-                    orderBy: {[queryDefaults.sort.sortBy]: queryDefaults.sort.sortOrder},
+                    orderBy: [{[queryDefaults.sort.sortBy]: queryDefaults.sort.sortOrder}, {id: "asc"}],
                     refresh: true
                 });
 

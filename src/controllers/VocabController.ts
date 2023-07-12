@@ -50,7 +50,7 @@ class VocabController {
         const newVocab = await vocabService.createVocab({
             language: language,
             text: vocabText,
-            isPhrase: body.isPhrase
+            isPhrase: body.isPhrase,
         });
         reply.status(201).send(vocabSerializer.serialize(newVocab));
     }

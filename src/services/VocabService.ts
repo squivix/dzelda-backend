@@ -29,13 +29,14 @@ export class VocabService {
         if (filters.searchQuery !== undefined)
             dbFilters.$and!.push({text: {$ilike: `%${filters.searchQuery}%`}});
 
-        const dbOrderBy: QueryOrderMap<Vocab> = {};
+        const dbOrderBy: QueryOrderMap<Vocab>[] = [];
         if (sort.sortBy == "text")
-            dbOrderBy["text"] = sort.sortOrder;
-        if (sort.sortBy == "learnersCount")
-            dbOrderBy["learnersCount"] = sort.sortOrder;
-        if (sort.sortBy == "lessonsCount")
-            dbOrderBy["lessonsCount"] = sort.sortOrder;
+            dbOrderBy.push({text: sort.sortOrder});
+        else if (sort.sortBy == "learnersCount")
+            dbOrderBy.push({learnersCount: sort.sortOrder});
+        else if (sort.sortBy == "lessonsCount")
+            dbOrderBy.push({lessonsCount: sort.sortOrder});
+        dbOrderBy.push({id: "asc"});
 
         return await this.vocabRepo.find(dbFilters, {
             populate: ["language", "meanings", "meanings.addedBy.user", "learnersCount", "lessonsCount"],
@@ -58,7 +59,9 @@ export class VocabService {
         const newVocab = await this.vocabRepo.create({
             text: vocabData.text,
             language: vocabData.language,
-            isPhrase: vocabData.isPhrase
+            isPhrase: vocabData.isPhrase,
+            learnersCount: 0,
+            lessonsCount: 0
         });
         await this.em.flush();
         return newVocab;

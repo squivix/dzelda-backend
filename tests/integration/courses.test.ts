@@ -52,12 +52,19 @@ describe("GET courses/", function () {
         };
         return await fetchRequest(options, authToken);
     };
+    const queryDefaults: {
+        // pagination: { pageSize: number, page: number },
+        sort: { sortBy: "title" | "createdDate" | "learnersCount", sortOrder: "asc" | "desc" }
+    } = {/*pagination: {pageSize: 25, page: 1},*/ sort: {sortBy: "title", sortOrder: "asc"}};
 
     test<LocalTestContext>("If there are no filters return all public courses", async (context) => {
         await context.courseFactory.create(5, {language: await context.languageFactory.createOne()});
 
         const response = await makeRequest();
-        const courses = await context.courseRepo.find({isPublic: true}, {populate: ["language", "addedBy.user"], orderBy: {title: "asc"}});
+        const courses = await context.courseRepo.find({isPublic: true}, {
+            populate: ["language", "addedBy.user"],
+            orderBy: [{[queryDefaults.sort.sortBy]: queryDefaults.sort.sortOrder}, {id: "asc"}]
+        });
         expect(response.statusCode).to.equal(200);
         expect(response.json()).toEqual(courseSerializer.serializeList(courses));
     });
@@ -71,7 +78,11 @@ describe("GET courses/", function () {
             const courses = await context.courseRepo.find({
                 isPublic: true,
                 language: language1
-            }, {populate: ["addedBy.user"], orderBy: {title: "asc"}, refresh: true});
+            }, {
+                populate: ["addedBy.user"],
+                orderBy: [{[queryDefaults.sort.sortBy]: queryDefaults.sort.sortOrder}, {id: "asc"}],
+                refresh: true
+            });
             expect(response.statusCode).to.equal(200);
             expect(response.json()).toEqual(courseSerializer.serializeList(courses));
         });
@@ -97,7 +108,11 @@ describe("GET courses/", function () {
             const courses = await context.courseRepo.find({
                 isPublic: true,
                 addedBy: user.profile
-            }, {populate: ["addedBy.user"], orderBy: {title: "asc"}, refresh: true});
+            }, {
+                populate: ["addedBy.user"],
+                orderBy: [{[queryDefaults.sort.sortBy]: queryDefaults.sort.sortOrder}, {id: "asc"}],
+                refresh: true
+            });
             expect(response.statusCode).to.equal(200);
             expect(response.json()).toEqual(courseSerializer.serializeList(courses));
         });
@@ -110,7 +125,11 @@ describe("GET courses/", function () {
             const response = await makeRequest({addedBy: "me"}, session.token);
             let courses = await context.courseRepo.find({
                 addedBy: user.profile
-            }, {populate: ["addedBy.user"], orderBy: {title: "asc"}, refresh: true});
+            }, {
+                populate: ["addedBy.user"],
+                orderBy: [{[queryDefaults.sort.sortBy]: queryDefaults.sort.sortOrder}, {id: "asc"}],
+                refresh: true
+            });
             courses = await context.courseRepo.annotateVocabsByLevel(courses, user.id);
 
             expect(response.statusCode).to.equal(200);
@@ -156,7 +175,10 @@ describe("GET courses/", function () {
             const courses = await context.courseRepo.find({
                 isPublic: true,
                 $or: [{title: {$ilike: `%${searchQuery}%`}}, {description: {$ilike: `%${searchQuery}%`}}]
-            }, {populate: ["addedBy.user", "language"], orderBy: {title: "asc"}});
+            }, {
+                populate: ["addedBy.user", "language"],
+                orderBy: [{[queryDefaults.sort.sortBy]: queryDefaults.sort.sortOrder}, {id: "asc"}]
+            });
             expect(response.statusCode).to.equal(200);
             expect(response.json()).toEqual(courseSerializer.serializeList(courses));
         });
@@ -184,7 +206,7 @@ describe("GET courses/", function () {
                 const response = await makeRequest({sortBy: "title"});
                 const courses = await context.courseRepo.find({isPublic: true}, {
                     populate: ["language", "addedBy.user"],
-                    orderBy: {title: "asc"}
+                    orderBy: [{title: "asc"}, {id: "asc"}]
                 });
                 expect(response.statusCode).to.equal(200);
                 expect(response.json()).toEqual(courseSerializer.serializeList(courses));
@@ -197,7 +219,7 @@ describe("GET courses/", function () {
                 const response = await makeRequest({sortBy: "createdDate"});
                 const courses = await context.courseRepo.find({isPublic: true}, {
                     populate: ["language", "addedBy.user"],
-                    orderBy: {addedOn: "asc"}
+                    orderBy: [{addedOn: "asc"}, {id: "asc"}]
                 });
                 expect(response.statusCode).to.equal(200);
                 expect(response.json()).toEqual(courseSerializer.serializeList(courses));
@@ -211,7 +233,7 @@ describe("GET courses/", function () {
                 const response = await makeRequest({sortBy: "learnersCount"});
                 const courses = await context.courseRepo.find({isPublic: true}, {
                     populate: ["language", "addedBy.user"],
-                    orderBy: {learnersCount: "asc"}
+                    orderBy: [{learnersCount: "asc"}, {id: "asc"}]
                 });
                 expect(response.statusCode).to.equal(200);
                 expect(response.json()).toEqual(courseSerializer.serializeList(courses));
@@ -230,7 +252,7 @@ describe("GET courses/", function () {
                 const response = await makeRequest({sortBy: "title", sortOrder: "asc"});
                 const courses = await context.courseRepo.find({isPublic: true}, {
                     populate: ["language", "addedBy.user"],
-                    orderBy: {title: "asc"}
+                    orderBy: [{title: "asc"}, {id: "asc"}]
                 });
                 expect(response.statusCode).to.equal(200);
                 expect(response.json()).toEqual(courseSerializer.serializeList(courses));
@@ -243,7 +265,7 @@ describe("GET courses/", function () {
                 const response = await makeRequest({sortBy: "title", sortOrder: "desc"});
                 const courses = await context.courseRepo.find({isPublic: true}, {
                     populate: ["language", "addedBy.user"],
-                    orderBy: {title: "desc"}
+                    orderBy: [{title: "desc"}, {id: "asc"}]
                 });
                 expect(response.statusCode).to.equal(200);
                 expect(response.json()).toEqual(courseSerializer.serializeList(courses));
@@ -262,7 +284,10 @@ describe("GET courses/", function () {
 
         const response = await makeRequest({}, session.token);
 
-        let courses = await context.courseRepo.find({isPublic: true}, {populate: ["language", "addedBy.user"], orderBy: {title: "asc"}});
+        let courses = await context.courseRepo.find({isPublic: true}, {
+            populate: ["language", "addedBy.user"],
+            orderBy: [{[queryDefaults.sort.sortBy]: queryDefaults.sort.sortOrder}, {id: "asc"}]
+        });
         courses = await context.courseRepo.annotateVocabsByLevel(courses, user.id);
         expect(response.statusCode).to.equal(200);
         expect(response.json()).toEqual(courseSerializer.serializeList(courses));
@@ -276,7 +301,7 @@ describe("GET courses/", function () {
 
         let courses = await context.courseRepo.find({$or: [{isPublic: true}, {addedBy: user.profile}]}, {
             populate: ["language", "addedBy.user"],
-            orderBy: {title: "asc"}
+            orderBy: [{[queryDefaults.sort.sortBy]: queryDefaults.sort.sortOrder}, {id: "asc"}]
         });
         courses = await context.courseRepo.annotateVocabsByLevel(courses, user.id);
         expect(response.statusCode).to.equal(200);
@@ -1203,7 +1228,7 @@ describe("PUT courses/:courseId/", function () {
                     lessonCounter++;
                 }).create(10, {course: course});
                 const updatedCourse = await context.courseFactory.makeOne({addedBy: author.profile, language: language});
-                const spy=vi.spyOn(fileValidatorExports, "validateFileFields").mockImplementation(mockValidateFileFields({"image": 510 * 1024}));
+                const spy = vi.spyOn(fileValidatorExports, "validateFileFields").mockImplementation(mockValidateFileFields({"image": 510 * 1024}));
 
                 const response = await makeRequest(course.id, {
                     data: {
@@ -1256,6 +1281,10 @@ describe("GET users/{username}/courses/", () => {
         };
         return await fetchRequest(options, authToken);
     };
+    const queryDefaults: {
+        // pagination: { pageSize: number, page: number },
+        sort: { sortBy: "title" | "createdDate" | "learnersCount", sortOrder: "asc" | "desc" }
+    } = {/*pagination: {pageSize: 25, page: 1},*/ sort: {sortBy: "title", sortOrder: "asc"}};
 
     describe("If user is logged in and there are no filters return courses with a lesson the user is learning", () => {
         test<LocalTestContext>("If username is me", async (context) => {
@@ -1278,7 +1307,7 @@ describe("GET users/{username}/courses/", () => {
 
             const userCourses = await context.courseRepo.find({lessons: {learners: user.profile}}, {
                 populate: ["language", "addedBy.user"],
-                orderBy: {title: "asc"}
+                orderBy: [{[queryDefaults.sort.sortBy]: queryDefaults.sort.sortOrder}, {id: "asc"}],
             });
             await context.courseRepo.annotateVocabsByLevel(userCourses, user.id);
 
@@ -1305,7 +1334,7 @@ describe("GET users/{username}/courses/", () => {
 
             const userCourses = await context.courseRepo.find({lessons: {learners: user.profile}}, {
                 populate: ["language", "addedBy.user"],
-                orderBy: {title: "asc"}
+                orderBy: [{[queryDefaults.sort.sortBy]: queryDefaults.sort.sortOrder}, {id: "asc"}],
             });
             await context.courseRepo.annotateVocabsByLevel(userCourses, user.id);
 
@@ -1359,7 +1388,11 @@ describe("GET users/{username}/courses/", () => {
             const response = await makeRequest("me", {languageCode: language1.code}, session.token);
             const userCourses = await context.courseRepo.find(
                 {isPublic: true, language: language1, lessons: {learners: user.profile}},
-                {populate: ["addedBy.user"], orderBy: {title: "asc"}, refresh: true});
+                {
+                    populate: ["addedBy.user"],
+                    orderBy: [{[queryDefaults.sort.sortBy]: queryDefaults.sort.sortOrder}, {id: "asc"}],
+                    refresh: true
+                });
 
             await context.courseRepo.annotateVocabsByLevel(userCourses, user.id);
 
@@ -1416,7 +1449,11 @@ describe("GET users/{username}/courses/", () => {
             const response = await makeRequest("me", {addedBy: user1.username}, session.token);
             const userCourses = await context.courseRepo.find(
                 {isPublic: true, addedBy: {user: {username: user1.username}}, lessons: {learners: user.profile}},
-                {populate: ["addedBy.user"], orderBy: {title: "asc"}, refresh: true});
+                {
+                    populate: ["addedBy.user"],
+                    orderBy: [{[queryDefaults.sort.sortBy]: queryDefaults.sort.sortOrder}, {id: "asc"}],
+                    refresh: true
+                });
 
             await context.courseRepo.annotateVocabsByLevel(userCourses, user.id);
 
@@ -1441,7 +1478,11 @@ describe("GET users/{username}/courses/", () => {
             const response = await makeRequest("me", {addedBy: "me"}, session.token);
             const userCourses = await context.courseRepo.find(
                 {isPublic: true, addedBy: {user: {username: user.username}}, lessons: {learners: user.profile}},
-                {populate: ["addedBy.user"], orderBy: {title: "asc"}, refresh: true});
+                {
+                    populate: ["addedBy.user"],
+                    orderBy: [{[queryDefaults.sort.sortBy]: queryDefaults.sort.sortOrder}, {id: "asc"}],
+                    refresh: true
+                });
 
             await context.courseRepo.annotateVocabsByLevel(userCourses, user.id);
 
@@ -1514,7 +1555,10 @@ describe("GET users/{username}/courses/", () => {
                 isPublic: true,
                 lessons: {learners: user.profile},
                 $or: [{title: {$ilike: `%${searchQuery}%`}}, {description: {$ilike: `%${searchQuery}%`}}],
-            }, {populate: ["addedBy.user", "language"], orderBy: {title: "asc"}});
+            }, {
+                populate: ["addedBy.user", "language"],
+                orderBy: [{[queryDefaults.sort.sortBy]: queryDefaults.sort.sortOrder}, {id: "asc"}],
+            });
             await context.courseRepo.annotateVocabsByLevel(userCourses, user.id);
             expect(response.statusCode).to.equal(200);
             expect(response.json()).toEqual(courseSerializer.serializeList(userCourses));
@@ -1569,7 +1613,7 @@ describe("GET users/{username}/courses/", () => {
 
                 const userCourses = await context.courseRepo.find({lessons: {learners: user.profile}}, {
                     populate: ["language", "addedBy.user"],
-                    orderBy: {title: "asc"}
+                    orderBy: [{title: "asc"}, {id: "asc"}],
                 });
                 await context.courseRepo.annotateVocabsByLevel(userCourses, user.id);
 
@@ -1596,7 +1640,7 @@ describe("GET users/{username}/courses/", () => {
 
                 const userCourses = await context.courseRepo.find({lessons: {learners: user.profile}}, {
                     populate: ["language", "addedBy.user"],
-                    orderBy: {addedOn: "asc"}
+                    orderBy: [{addedOn: "asc"}, {id: "asc"}],
                 });
                 await context.courseRepo.annotateVocabsByLevel(userCourses, user.id);
 
@@ -1623,7 +1667,7 @@ describe("GET users/{username}/courses/", () => {
                 //TODO filter by isPublic or added by user?
                 const userCourses = await context.courseRepo.find({lessons: {learners: user.profile}}, {
                     populate: ["language", "addedBy.user"],
-                    orderBy: {learnersCount: "asc"}
+                    orderBy: [{learnersCount: "asc"}, {id: "asc"}]
                 });
                 await context.courseRepo.annotateVocabsByLevel(userCourses, user.id);
 
@@ -1659,7 +1703,7 @@ describe("GET users/{username}/courses/", () => {
 
                 const userCourses = await context.courseRepo.find({lessons: {learners: user.profile}}, {
                     populate: ["language", "addedBy.user"],
-                    orderBy: {title: "asc"}
+                    orderBy: [{title: "asc"}, {id: "asc"}]
                 });
                 await context.courseRepo.annotateVocabsByLevel(userCourses, user.id);
 
@@ -1686,7 +1730,7 @@ describe("GET users/{username}/courses/", () => {
 
                 const userCourses = await context.courseRepo.find({lessons: {learners: user.profile}}, {
                     populate: ["language", "addedBy.user"],
-                    orderBy: {title: "desc"}
+                    orderBy: [{title: "desc"}, {id: "asc"}]
                 });
                 await context.courseRepo.annotateVocabsByLevel(userCourses, user.id);
 

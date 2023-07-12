@@ -54,22 +54,33 @@ export class LessonService {
         if (filters.level !== undefined)
             dbFilters.$and!.push({$or: filters.level.map(level => ({level}))});
 
-        const dbOrderBy: QueryOrderMap<Lesson> = {};
+        const dbOrderBy: QueryOrderMap<Lesson>[] = [];
         if (sort.sortBy == "title")
-            dbOrderBy["title"] = sort.sortOrder;
+            dbOrderBy.push({title: sort.sortOrder});
         else if (sort.sortBy == "createdDate")
-            dbOrderBy["addedOn"] = sort.sortOrder;
+            dbOrderBy.push({addedOn: sort.sortOrder});
         else if (sort.sortBy == "learnersCount")
-            dbOrderBy["learnersCount"] = sort.sortOrder;
+            dbOrderBy.push({learnersCount: sort.sortOrder});
+        dbOrderBy.push({id: "asc"});
 
-        let lessons = await this.lessonRepo.find(dbFilters, {orderBy: dbOrderBy, populate: ["course", "course.language", "course.addedBy.user"]});
+        let lessons = await this.lessonRepo.find(dbFilters, {
+            orderBy: dbOrderBy,
+            populate: ["course", "course.language", "course.addedBy.user"]
+        });
 
         if (user && !(user instanceof AnonymousUser))
             lessons = await this.lessonRepo.annotateVocabsByLevel(lessons, user.id);
         return lessons;
     }
 
-    async createLesson(fields: { title: string; text: string; level?: LanguageLevel, course: Course; image?: string; audio?: string; }, user: User) {
+    async createLesson(fields: {
+        title: string;
+        text: string;
+        level?: LanguageLevel,
+        course: Course;
+        image?: string;
+        audio?: string;
+    }, user: User) {
         let newLesson = await this.lessonRepo.create({
             title: fields.title,
             text: fields.text,
