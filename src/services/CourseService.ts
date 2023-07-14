@@ -116,19 +116,6 @@ export class CourseService {
         return course;
     }
 
-    async getUserCoursesLearning(filters: {
-        languageCode?: string,
-        addedBy?: string,
-        searchQuery?: string,
-        level?: LanguageLevel,
-        isLearning?: boolean
-    }, sort: { sortBy: "title" | "createdDate" | "learnersCount", sortOrder: "asc" | "desc" }, pagination: {
-        page: number,
-        pageSize: number
-    }, user: User) {
-        return this.getCourses({...filters, isLearning: true}, sort, pagination, user);
-    }
-
     async countCourses(filters: {
         languageCode?: string,
         addedBy?: string,

@@ -162,12 +162,13 @@ class CourseController {
             languageCode: queryParams.languageCode,
             addedBy: queryParams.addedBy,
             searchQuery: queryParams.searchQuery,
-            level: queryParams.level
+            level: queryParams.level,
+            isLearning: true
         };
         const sort = {sortBy: queryParams.sortBy, sortOrder: queryParams.sortOrder};
         const pagination = {page: queryParams.page, pageSize: queryParams.pageSize};
         const courseService = new CourseService(request.em);
-        const courses = await courseService.getUserCoursesLearning(filters, sort, pagination, user);
+        const courses = await courseService.getCourses(filters, sort, pagination, user);
         const recordsCount = await courseService.countCourses(filters, user);
         reply.send({
             page: pagination.page,

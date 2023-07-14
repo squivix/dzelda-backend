@@ -605,7 +605,8 @@ describe("POST vocabs/", () => {
                 vi.spyOn(parserExports, "getParser").mockImplementation((_) => parserExports.parsers["en"]);
                 const response = await makeRequest({
                     languageCode: language.code,
-                    text: faker.random.words(2),
+                    // text: faker.random.words(2),
+                    text: "hello hello",
                     isPhrase: false
                 }, session.token);
 

@@ -13,9 +13,7 @@ import {MeaningFactory} from "@/src/seeders/factories/MeaningFactory.js";
 import {meaningSerializer} from "@/src/presentation/response/serializers/entities/MeaningSerializer.js";
 import {Meaning} from "@/src/models/entities/Meaning.js";
 import {faker} from "@faker-js/faker";
-import {MapLearnerLesson} from "@/src/models/entities/MapLearnerLesson.js";
 import {MapLearnerMeaning} from "@/src/models/entities/MapLearnerMeaning.js";
-import {MapLearnerLanguage} from "@/src/models/entities/MapLearnerLanguage.js";
 
 interface LocalTestContext extends TestContext {
     languageFactory: LanguageFactory;

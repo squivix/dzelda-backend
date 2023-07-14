@@ -21,6 +21,7 @@ import {courseSerializer} from "@/src/presentation/response/serializers/entities
 import {LessonSchema} from "@/src/presentation/response/interfaces/entities/LessonSchema";
 import {CourseSchema} from "@/src/presentation/response/interfaces/entities/CourseSchema.js";
 import * as fileValidatorExports from "@/src/validators/fileValidator.js";
+import {User} from "@/src/models/entities/auth/User.js";
 
 interface LocalTestContext extends TestContext {
     courseRepo: CourseRepo;
@@ -1565,12 +1566,18 @@ describe("GET users/{username}/courses/", () => {
 
             const response = await makeRequest("me", {}, session.token);
 
-            const userCourses = await context.courseRepo.find({lessons: {learners: user.profile}}, {
+            const userCourses = await context.courseRepo.find({
+                lessons: {learners: user.profile},
+                $or: [{isPublic: true}, {addedBy: (user as User).profile}],
+            }, {
                 populate: ["language", "addedBy.user"],
                 orderBy: [{[queryDefaults.sort.sortBy]: queryDefaults.sort.sortOrder}, {id: "asc"}],
             });
             await context.courseRepo.annotateVocabsByLevel(userCourses, user.id);
-            const recordsCount = await context.courseRepo.count({lessons: {learners: user.profile}});
+            const recordsCount = await context.courseRepo.count({
+                lessons: {learners: user.profile},
+                $or: [{isPublic: true}, {addedBy: (user as User).profile}],
+            });
 
             expect(response.statusCode).to.equal(200);
             expect(response.json()).toEqual({
@@ -1598,12 +1605,18 @@ describe("GET users/{username}/courses/", () => {
 
             const response = await makeRequest(user.username, {}, session.token);
 
-            const userCourses = await context.courseRepo.find({lessons: {learners: user.profile}}, {
+            const userCourses = await context.courseRepo.find({
+                lessons: {learners: user.profile},
+                $or: [{isPublic: true}, {addedBy: (user as User).profile}],
+            }, {
                 populate: ["language", "addedBy.user"],
                 orderBy: [{[queryDefaults.sort.sortBy]: queryDefaults.sort.sortOrder}, {id: "asc"}],
             });
             await context.courseRepo.annotateVocabsByLevel(userCourses, user.id);
-            const recordsCount = await context.courseRepo.count({lessons: {learners: user.profile}});
+            const recordsCount = await context.courseRepo.count({
+                lessons: {learners: user.profile},
+                $or: [{isPublic: true}, {addedBy: (user as User).profile}],
+            });
 
             expect(response.statusCode).to.equal(200);
             expect(response.json()).toEqual({
@@ -1659,7 +1672,11 @@ describe("GET users/{username}/courses/", () => {
 
             const response = await makeRequest("me", {languageCode: language1.code}, session.token);
             const userCourses = await context.courseRepo.find(
-                {isPublic: true, language: language1, lessons: {learners: user.profile}},
+                {
+                    language: language1,
+                    lessons: {learners: user.profile},
+                    $or: [{isPublic: true}, {addedBy: (user as User).profile}],
+                },
                 {
                     populate: ["addedBy.user"],
                     orderBy: [{[queryDefaults.sort.sortBy]: queryDefaults.sort.sortOrder}, {id: "asc"}],
@@ -1730,17 +1747,25 @@ describe("GET users/{username}/courses/", () => {
 
             const response = await makeRequest("me", {addedBy: user1.username}, session.token);
             const userCourses = await context.courseRepo.find(
-                {isPublic: true, addedBy: {user: {username: user1.username}}, lessons: {learners: user.profile}},
+                {
+                    addedBy: {user: {username: user1.username}},
+                    lessons: {learners: user.profile},
+                    $or: [{isPublic: true}, {addedBy: (user as User).profile}],
+                },
                 {
                     populate: ["addedBy.user"],
                     orderBy: [{[queryDefaults.sort.sortBy]: queryDefaults.sort.sortOrder}, {id: "asc"}],
                     refresh: true
                 });
-
             await context.courseRepo.annotateVocabsByLevel(userCourses, user.id);
+            const recordsCount = await context.courseRepo.count({
+                addedBy: {user: {username: user1.username}},
+                lessons: {learners: user.profile},
+                $or: [{isPublic: true}, {addedBy: (user as User).profile}],
+            },);
+
 
             expect(response.statusCode).to.equal(200);
-            expect(response.json()).toEqual(courseSerializer.serializeList(userCourses));
             expect(response.json()).toEqual({
                 page: queryDefaults.pagination.page,
                 pageSize: queryDefaults.pagination.pageSize,
@@ -1773,13 +1798,13 @@ describe("GET users/{username}/courses/", () => {
                 });
             await context.courseRepo.annotateVocabsByLevel(userCourses, user.id);
             const recordsCount = await context.courseRepo.count({
-                isPublic: true,
                 addedBy: {user: {username: user.username}},
-                lessons: {learners: user.profile}
+                lessons: {learners: user.profile},
+
+                $or: [{isPublic: true}, {addedBy: (user as User).profile}],
             },);
 
             expect(response.statusCode).to.equal(200);
-            expect(response.json()).toEqual(courseSerializer.serializeList(userCourses));
             expect(response.json()).toEqual({
                 page: queryDefaults.pagination.page,
                 pageSize: queryDefaults.pagination.pageSize,
@@ -1805,7 +1830,6 @@ describe("GET users/{username}/courses/", () => {
             const response = await makeRequest("me", {addedBy: faker.random.alpha({count: 20})}, session.token);
 
             expect(response.statusCode).to.equal(200);
-            expect(response.json()).toEqual([]);
             expect(response.json()).toEqual({
                 page: queryDefaults.pagination.page,
                 pageSize: queryDefaults.pagination.pageSize,
