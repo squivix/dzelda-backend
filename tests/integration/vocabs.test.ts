@@ -68,13 +68,13 @@ describe("GET vocabs/", () => {
             orderBy: [{[queryDefaults.sort.sortBy]: queryDefaults.sort.sortOrder}, {id: "asc"}],
             refresh: true
         });
-        const allVocabsCount = await context.vocabRepo.count({});
+        const recordsCount = await context.vocabRepo.count({});
 
         expect(response.statusCode).to.equal(200);
         expect(response.json()).toEqual({
             page: queryDefaults.pagination.page,
             pageSize: queryDefaults.pagination.pageSize,
-            pageCount: Math.ceil(allVocabsCount / queryDefaults.pagination.pageSize),
+            pageCount: Math.ceil(recordsCount / queryDefaults.pagination.pageSize),
             data: vocabSerializer.serializeList(vocabs)
         });
     });
@@ -95,14 +95,14 @@ describe("GET vocabs/", () => {
                     orderBy: [{[queryDefaults.sort.sortBy]: queryDefaults.sort.sortOrder}, {id: "asc"}],
                     refresh: true
                 });
-                const allVocabsCount = await context.vocabRepo.count({language: language1});
+                const recordsCount = await context.vocabRepo.count({language: language1});
 
                 expect(response.statusCode).to.equal(200);
 
                 expect(response.json()).toEqual({
                     page: queryDefaults.pagination.page,
                     pageSize: queryDefaults.pagination.pageSize,
-                    pageCount: Math.ceil(allVocabsCount / queryDefaults.pagination.pageSize),
+                    pageCount: Math.ceil(recordsCount / queryDefaults.pagination.pageSize),
                     data: vocabSerializer.serializeList(vocabs)
                 });
             });
@@ -148,12 +148,12 @@ describe("GET vocabs/", () => {
                     orderBy: [{[queryDefaults.sort.sortBy]: queryDefaults.sort.sortOrder}, {id: "asc"}],
                     refresh: true
                 });
-                const allVocabsCount = await context.vocabRepo.count({text: {$ilike: `%${searchQuery}%`}});
+                const recordsCount = await context.vocabRepo.count({text: {$ilike: `%${searchQuery}%`}});
                 expect(response.statusCode).to.equal(200);
                 expect(response.json()).toEqual({
                     page: queryDefaults.pagination.page,
                     pageSize: queryDefaults.pagination.pageSize,
-                    pageCount: Math.ceil(allVocabsCount / queryDefaults.pagination.pageSize),
+                    pageCount: Math.ceil(recordsCount / queryDefaults.pagination.pageSize),
                     data: vocabSerializer.serializeList(vocabs)
                 });
             });
@@ -193,13 +193,13 @@ describe("GET vocabs/", () => {
                     orderBy: [{"text": queryDefaults.sort.sortOrder}, {id: "asc"}],
                     refresh: true
                 });
-                const allVocabsCount = await context.vocabRepo.count({});
+                const recordsCount = await context.vocabRepo.count({});
 
                 expect(response.statusCode).to.equal(200);
                 expect(response.json()).toEqual({
                     page: queryDefaults.pagination.page,
                     pageSize: queryDefaults.pagination.pageSize,
-                    pageCount: Math.ceil(allVocabsCount / queryDefaults.pagination.pageSize),
+                    pageCount: Math.ceil(recordsCount / queryDefaults.pagination.pageSize),
                     data: vocabSerializer.serializeList(vocabs)
                 });
             });
@@ -219,13 +219,13 @@ describe("GET vocabs/", () => {
                     orderBy: [{learnersCount: queryDefaults.sort.sortOrder}, {id: "asc"}],
                     refresh: true
                 });
-                const allVocabsCount = await context.vocabRepo.count({});
+                const recordsCount = await context.vocabRepo.count({});
 
                 expect(response.statusCode).to.equal(200);
                 expect(response.json()).toEqual({
                     page: queryDefaults.pagination.page,
                     pageSize: queryDefaults.pagination.pageSize,
-                    pageCount: Math.ceil(allVocabsCount / queryDefaults.pagination.pageSize),
+                    pageCount: Math.ceil(recordsCount / queryDefaults.pagination.pageSize),
                     data: vocabSerializer.serializeList(vocabs)
                 });
             });
@@ -246,13 +246,13 @@ describe("GET vocabs/", () => {
                     orderBy: [{lessonsCount: queryDefaults.sort.sortOrder}, {id: "asc"}],
                     refresh: true
                 });
-                const allVocabsCount = await context.vocabRepo.count({});
+                const recordsCount = await context.vocabRepo.count({});
 
                 expect(response.statusCode).to.equal(200);
                 expect(response.json()).toEqual({
                     page: queryDefaults.pagination.page,
                     pageSize: queryDefaults.pagination.pageSize,
-                    pageCount: Math.ceil(allVocabsCount / queryDefaults.pagination.pageSize),
+                    pageCount: Math.ceil(recordsCount / queryDefaults.pagination.pageSize),
                     data: vocabSerializer.serializeList(vocabs)
                 });
             });
@@ -272,13 +272,13 @@ describe("GET vocabs/", () => {
                     orderBy: [{"text": "asc"}, {id: "asc"}],
                     refresh: true
                 });
-                const allVocabsCount = await context.vocabRepo.count({});
+                const recordsCount = await context.vocabRepo.count({});
 
                 expect(response.statusCode).to.equal(200);
                 expect(response.json()).toEqual({
                     page: queryDefaults.pagination.page,
                     pageSize: queryDefaults.pagination.pageSize,
-                    pageCount: Math.ceil(allVocabsCount / queryDefaults.pagination.pageSize),
+                    pageCount: Math.ceil(recordsCount / queryDefaults.pagination.pageSize),
                     data: vocabSerializer.serializeList(vocabs)
                 });
             });
@@ -296,13 +296,13 @@ describe("GET vocabs/", () => {
                     orderBy: [{"text": "desc"}, {id: "asc"}],
                     refresh: true
                 });
-                const allVocabsCount = await context.vocabRepo.count({});
+                const recordsCount = await context.vocabRepo.count({});
 
                 expect(response.statusCode).to.equal(200);
                 expect(response.json()).toEqual({
                     page: queryDefaults.pagination.page,
                     pageSize: queryDefaults.pagination.pageSize,
-                    pageCount: Math.ceil(allVocabsCount / queryDefaults.pagination.pageSize),
+                    pageCount: Math.ceil(recordsCount / queryDefaults.pagination.pageSize),
                     data: vocabSerializer.serializeList(vocabs)
                 });
             });
@@ -328,13 +328,13 @@ describe("GET vocabs/", () => {
                     orderBy: [{[queryDefaults.sort.sortBy]: queryDefaults.sort.sortOrder}, {id: "asc"}],
                     refresh: true
                 });
-                const allVocabsCount = await context.vocabRepo.count({});
+                const recordsCount = await context.vocabRepo.count({});
 
                 expect(response.statusCode).to.equal(200);
                 expect(response.json()).toEqual({
                     page: page,
                     pageSize: pageSize,
-                    pageCount: Math.ceil(allVocabsCount / pageSize),
+                    pageCount: Math.ceil(recordsCount / pageSize),
                     data: vocabSerializer.serializeList(vocabs)
                 });
             });
@@ -352,22 +352,22 @@ describe("GET vocabs/", () => {
                     orderBy: [{[queryDefaults.sort.sortBy]: queryDefaults.sort.sortOrder}, {id: "asc"}],
                     refresh: true
                 });
-                const allVocabsCount = await context.vocabRepo.count({});
+                const recordsCount = await context.vocabRepo.count({});
 
                 expect(response.statusCode).to.equal(200);
                 expect(response.json()).toEqual({
                     page: page,
                     pageSize: pageSize,
-                    pageCount: Math.ceil(allVocabsCount / pageSize),
+                    pageCount: Math.ceil(recordsCount / pageSize),
                     data: vocabSerializer.serializeList(vocabs)
                 });
             });
             test<LocalTestContext>("If page is last return the last page of results", async (context) => {
                 const language = await context.languageFactory.createOne();
                 await context.vocabFactory.create(10, {language});
-                const allVocabsCount = await context.vocabRepo.count({});
+                const recordsCount = await context.vocabRepo.count({});
                 const pageSize = 3;
-                const page = Math.ceil(allVocabsCount / pageSize);
+                const page = Math.ceil(recordsCount / pageSize);
 
                 const response = await makeRequest({page: page, pageSize});
 
@@ -383,16 +383,16 @@ describe("GET vocabs/", () => {
                 expect(response.json()).toEqual({
                     page: page,
                     pageSize: pageSize,
-                    pageCount: Math.ceil(allVocabsCount / pageSize),
+                    pageCount: Math.ceil(recordsCount / pageSize),
                     data: vocabSerializer.serializeList(vocabs)
                 });
             });
             test<LocalTestContext>("If page is more than last return empty page", async (context) => {
                 const language = await context.languageFactory.createOne();
                 await context.vocabFactory.create(10, {language});
-                const allVocabsCount = await context.vocabRepo.count({});
+                const recordsCount = await context.vocabRepo.count({});
                 const pageSize = 3;
-                const page = Math.ceil(allVocabsCount / pageSize) + 1;
+                const page = Math.ceil(recordsCount / pageSize) + 1;
 
                 const response = await makeRequest({page: page, pageSize});
 
@@ -400,7 +400,7 @@ describe("GET vocabs/", () => {
                 expect(response.json()).toEqual({
                     page: page,
                     pageSize: pageSize,
-                    pageCount: Math.ceil(allVocabsCount / pageSize),
+                    pageCount: Math.ceil(recordsCount / pageSize),
                     data: []
                 });
             });
@@ -421,7 +421,7 @@ describe("GET vocabs/", () => {
             test<LocalTestContext>("If pageSize is 10 split the results into 10 sized pages", async (context) => {
                 const language = await context.languageFactory.createOne();
                 await context.vocabFactory.create(10, {language});
-                const allVocabsCount = await context.vocabRepo.count({});
+                const recordsCount = await context.vocabRepo.count({});
                 const page = 1, pageSize = 10;
 
                 const response = await makeRequest({page: page, pageSize});
@@ -438,7 +438,7 @@ describe("GET vocabs/", () => {
                 expect(response.json()).toEqual({
                     page: page,
                     pageSize: pageSize,
-                    pageCount: Math.ceil(allVocabsCount / pageSize),
+                    pageCount: Math.ceil(recordsCount / pageSize),
                     data: vocabSerializer.serializeList(vocabs)
                 });
                 expect(response.json().data.length).toBeLessThanOrEqual(pageSize);

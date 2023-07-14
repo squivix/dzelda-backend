@@ -14,6 +14,7 @@ import {LanguageService} from "@/src/services/LanguageService.js";
 import {numericStringValidator} from "@/src/validators/utilValidators.js";
 import {UserService} from "@/src/services/UserService.js";
 import {courseSerializer} from "@/src/presentation/response/serializers/entities/CourseSerializer.js";
+import {vocabSerializer} from "@/src/presentation/response/serializers/entities/VocabSerializer.js";
 
 class CourseController {
     async getCourses(request: FastifyRequest, reply: FastifyReply) {
@@ -23,6 +24,8 @@ class CourseController {
             searchQuery: z.string().min(1).max(256).optional(),
             sortBy: z.union([z.literal("title"), z.literal("createdDate"), z.literal("learnersCount")]).optional().default("title"),
             sortOrder: z.union([z.literal("asc"), z.literal("desc")]).optional().default("asc"),
+            page: z.coerce.number().int().min(1).optional().default(1),
+            pageSize: z.coerce.number().int().min(1).max(100).optional().default(10),
         });
         const queryParams = queryParamsValidator.parse(request.query);
         if (queryParams.addedBy == "me") {
@@ -36,9 +39,16 @@ class CourseController {
             searchQuery: queryParams.searchQuery,
         };
         const sort = {sortBy: queryParams.sortBy, sortOrder: queryParams.sortOrder};
+        const pagination = {page: queryParams.page, pageSize: queryParams.pageSize};
         const courseService = new CourseService(request.em);
-        const courses = await courseService.getCourses(filters, sort, request.user);
-        reply.send(courseSerializer.serializeList(courses));
+        const courses = await courseService.getCourses(filters, sort, pagination, request.user);
+        const recordsCount = await courseService.countCourses(filters, request.user);
+        reply.send({
+            page: pagination.page,
+            pageSize: pagination.pageSize,
+            pageCount: Math.ceil(recordsCount / pagination.pageSize),
+            data: courseSerializer.serializeList(courses)
+        });
     }
 
     async createCourse(request: FastifyRequest, reply: FastifyReply) {
@@ -140,6 +150,8 @@ class CourseController {
             level: z.nativeEnum(LanguageLevel).optional(),
             sortBy: z.union([z.literal("title"), z.literal("createdDate"), z.literal("learnersCount")]).optional().default("title"),
             sortOrder: z.union([z.literal("asc"), z.literal("desc")]).optional().default("asc"),
+            page: z.coerce.number().int().min(1).optional().default(1),
+            pageSize: z.coerce.number().int().min(1).max(100).optional().default(10),
         });
         const queryParams = queryParamsValidator.parse(request.query);
 
@@ -153,9 +165,16 @@ class CourseController {
             level: queryParams.level
         };
         const sort = {sortBy: queryParams.sortBy, sortOrder: queryParams.sortOrder};
+        const pagination = {page: queryParams.page, pageSize: queryParams.pageSize};
         const courseService = new CourseService(request.em);
-        const courses = await courseService.getUserCoursesLearning(filters, sort, user);
-        reply.send(courseSerializer.serializeList(courses));
+        const courses = await courseService.getUserCoursesLearning(filters, sort, pagination, user);
+        const recordsCount = await courseService.countCourses(filters, user);
+        reply.send({
+            page: pagination.page,
+            pageSize: pagination.pageSize,
+            pageCount: Math.ceil(recordsCount / pagination.pageSize),
+            data: courseSerializer.serializeList(courses)
+        });
     }
 }
 

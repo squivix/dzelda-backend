@@ -23,7 +23,7 @@ export class CourseService {
     async getCourses(filters: { languageCode?: string, addedBy?: string, searchQuery?: string, isLearning?: boolean }, sort: {
         sortBy: "title" | "createdDate" | "learnersCount",
         sortOrder: "asc" | "desc"
-    }, user: User | AnonymousUser | null) {
+    }, pagination: { page: number, pageSize: number }, user: User | AnonymousUser | null) {
         const dbFilters: FilterQuery<Course> = {$and: []};
 
         if (user && user instanceof User) {
@@ -48,7 +48,12 @@ export class CourseService {
         else if (sort.sortBy == "learnersCount")
             dbOrderBy.push({learnersCount: sort.sortOrder});
         dbOrderBy.push({id: "asc"});
-        const courses = await this.courseRepo.find(dbFilters, {orderBy: dbOrderBy, populate: ["language", "addedBy.user"]});
+        const courses = await this.courseRepo.find(dbFilters, {
+            populate: ["language", "addedBy.user"],
+            orderBy: dbOrderBy,
+            limit: pagination.pageSize,
+            offset: pagination.pageSize * (pagination.page - 1),
+        });
         if (user && !(user instanceof AnonymousUser))
             await this.courseRepo.annotateVocabsByLevel(courses, user.id);
 
@@ -117,7 +122,35 @@ export class CourseService {
         searchQuery?: string,
         level?: LanguageLevel,
         isLearning?: boolean
-    }, sort: { sortBy: "title" | "createdDate" | "learnersCount", sortOrder: "asc" | "desc" }, user: User) {
-        return this.getCourses({...filters, isLearning: true}, sort, user);
+    }, sort: { sortBy: "title" | "createdDate" | "learnersCount", sortOrder: "asc" | "desc" }, pagination: {
+        page: number,
+        pageSize: number
+    }, user: User) {
+        return this.getCourses({...filters, isLearning: true}, sort, pagination, user);
+    }
+
+    async countCourses(filters: {
+        languageCode?: string,
+        addedBy?: string,
+        searchQuery?: string,
+        level?: LanguageLevel,
+        isLearning?: boolean
+    }, user: User | AnonymousUser | null) {
+        const dbFilters: FilterQuery<Course> = {$and: []};
+
+        if (user && user instanceof User) {
+            dbFilters.$and!.push({$or: [{isPublic: true}, {addedBy: (user as User).profile}]});
+            if (filters.isLearning)
+                dbFilters.$and!.push({lessons: {learners: user.profile}});
+        } else
+            dbFilters.$and!.push({isPublic: true});
+
+        if (filters.languageCode !== undefined)
+            dbFilters.$and!.push({language: {code: filters.languageCode}});
+        if (filters.addedBy !== undefined)
+            dbFilters.$and!.push({addedBy: {user: {username: filters.addedBy}}});
+        if (filters.searchQuery !== undefined)
+            dbFilters.$and!.push({$or: [{title: {$ilike: `%${filters.searchQuery}%`}}, {description: {$ilike: `%${filters.searchQuery}%`}}]});
+        return await this.courseRepo.count(dbFilters);
     }
 }

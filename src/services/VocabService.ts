@@ -40,9 +40,9 @@ export class VocabService {
 
         return await this.vocabRepo.find(dbFilters, {
             populate: ["language", "meanings", "meanings.addedBy.user", "learnersCount", "lessonsCount"],
+            orderBy: dbOrderBy,
             limit: pagination.pageSize,
             offset: pagination.pageSize * (pagination.page - 1),
-            orderBy: dbOrderBy
         });
     }
 

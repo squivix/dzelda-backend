@@ -59,10 +59,10 @@ class VocabController {
         const queryParamsValidator = z.object({
             languageCode: languageCodeValidator.optional(),
             searchQuery: z.string().min(1).max(256).optional(),
-            page: z.coerce.number().int().min(1).optional().default(1),
-            pageSize: z.coerce.number().int().min(1).max(200).optional().default(25),
             sortBy: z.union([z.literal("text"), z.literal("lessonsCount"), z.literal("learnersCount")]).optional().default("text"),
             sortOrder: z.union([z.literal("asc"), z.literal("desc")]).optional().default("asc"),
+            page: z.coerce.number().int().min(1).optional().default(1),
+            pageSize: z.coerce.number().int().min(1).max(200).optional().default(25),
         });
 
         const queryParams = queryParamsValidator.parse(request.query);
@@ -71,11 +71,12 @@ class VocabController {
         const sort = {sortBy: queryParams.sortBy, sortOrder: queryParams.sortOrder};
         const pagination = {page: queryParams.page, pageSize: queryParams.pageSize};
         const vocabs = await vocabService.getVocabs(filters, sort, pagination, request.user);
-        const allVocabsCount = await vocabService.countVocabs(filters);
+        const recordsCount = await vocabService.countVocabs(filters);
         reply.send({
+            //TODO check if recordsCount is 0 to avoid a message like Page 1 out of 0
             page: pagination.page,
             pageSize: pagination.pageSize,
-            pageCount: Math.ceil(allVocabsCount / pagination.pageSize),
+            pageCount: Math.ceil(recordsCount / pagination.pageSize),
             data: vocabSerializer.serializeList(vocabs)
         });
     }
