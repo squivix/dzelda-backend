@@ -33,7 +33,7 @@ class VocabController {
             throw new ValidationAPIError({language: {message: "not supported"}});
 
         const parser = getParser(language.code);
-        const words = parser.parseText(body.text);
+        const words = parser.parseText(body.text, true);
 
         if (words.length == 0)
             throw new ValidationAPIError({text: {message: "vocab is invalid for this language"}});

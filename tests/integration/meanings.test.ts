@@ -206,7 +206,7 @@ describe("POST meanings/", () => {
                 const response = await makeRequest({
                     languageCode: language.code,
                     text: newMeaning.text,
-                    vocabId: faker.datatype.number({min: 1000})
+                    vocabId: faker.datatype.number({min: 100000})
                 }, session.token);
 
                 expect(response.statusCode).toEqual(400);

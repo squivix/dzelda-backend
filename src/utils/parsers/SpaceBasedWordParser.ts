@@ -15,13 +15,13 @@ export class SpaceBasedWordParser extends WordParser {
         this.ignoreCase = ignoreCase;
     }
 
-    parseText(text: string): string[] {
+    parseText(text: string, keepDuplicates = false): string[] {
         let parsedText = text;
 
         //replace special characters
         Object.keys(this.replaceCharsMap).forEach(c => parsedText = parsedText.replace(c, this.replaceCharsMap[c]));
 
-        //replace all non word characters with a space
+        //replace all non-word characters with a space
         parsedText = parsedText.replace(this.notWordCharsRegex, " ");
 
         //trim
@@ -30,33 +30,14 @@ export class SpaceBasedWordParser extends WordParser {
         if (this.ignoreCase)
             //change all to lowercase
             parsedText = parsedText.toLowerCase();
-
-        const wordSet = new Set(parsedText.split(" ").filter(w => w !== ""));
-        return Array.from(wordSet);
+        const wordArray = parsedText.split(" ").filter(w => w !== "");
+        if (keepDuplicates)
+            return wordArray;
+        else
+            return Array.from(new Set(wordArray));
     }
 
     combine(words: string[]): string {
         return words.join(" ");
     }
 }
-
-
-/*
-def parse_text(language, lesson_text):
-    parsed_text = ""
-    special_chars_in_text_qs = SpecialCharacter.objects.filter(language=language).annotate(
-        querystring=Value(lesson_text, output_field=TextField())
-    ).filter(querystring__icontains=F('character'))
-    special_chars_in_text = dict()
-    for c in special_chars_in_text_qs:
-        special_chars_in_text[c.character] = c.replace_with
-
-    for c in lesson_text:
-        try:
-            parsed_text += special_chars_in_text[c]
-        except KeyError:
-            parsed_text += regex.sub(r"[^ \p{Alphabetic}+]", " ", c)
-
-    return regex.sub(r"\s+", " ", parsed_text.strip().lower())
-
-*/
