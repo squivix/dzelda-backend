@@ -166,7 +166,7 @@ describe("GET courses/", function () {
                 refresh: true
             });
             courses = await context.courseRepo.annotateVocabsByLevel(courses, user.id);
-            const recordsCount = await context.courseRepo.count({isPublic: true, addedBy: user.profile});
+            const recordsCount = await context.courseRepo.count({addedBy: user.profile});
 
             expect(response.statusCode).to.equal(200);
             expect(response.json()).toEqual({
@@ -1572,6 +1572,8 @@ describe("GET users/{username}/courses/", () => {
             }, {
                 populate: ["language", "addedBy.user"],
                 orderBy: [{[queryDefaults.sort.sortBy]: queryDefaults.sort.sortOrder}, {id: "asc"}],
+                limit: queryDefaults.pagination.pageSize,
+                offset: queryDefaults.pagination.pageSize * (queryDefaults.pagination.page - 1),
             });
             await context.courseRepo.annotateVocabsByLevel(userCourses, user.id);
             const recordsCount = await context.courseRepo.count({
@@ -1611,6 +1613,8 @@ describe("GET users/{username}/courses/", () => {
             }, {
                 populate: ["language", "addedBy.user"],
                 orderBy: [{[queryDefaults.sort.sortBy]: queryDefaults.sort.sortOrder}, {id: "asc"}],
+                limit: queryDefaults.pagination.pageSize,
+                offset: queryDefaults.pagination.pageSize * (queryDefaults.pagination.page - 1),
             });
             await context.courseRepo.annotateVocabsByLevel(userCourses, user.id);
             const recordsCount = await context.courseRepo.count({
@@ -1680,6 +1684,8 @@ describe("GET users/{username}/courses/", () => {
                 {
                     populate: ["addedBy.user"],
                     orderBy: [{[queryDefaults.sort.sortBy]: queryDefaults.sort.sortOrder}, {id: "asc"}],
+                    limit: queryDefaults.pagination.pageSize,
+                    offset: queryDefaults.pagination.pageSize * (queryDefaults.pagination.page - 1),
                     refresh: true
                 });
             await context.courseRepo.annotateVocabsByLevel(userCourses, user.id);
@@ -1755,6 +1761,8 @@ describe("GET users/{username}/courses/", () => {
                 {
                     populate: ["addedBy.user"],
                     orderBy: [{[queryDefaults.sort.sortBy]: queryDefaults.sort.sortOrder}, {id: "asc"}],
+                    limit: queryDefaults.pagination.pageSize,
+                    offset: queryDefaults.pagination.pageSize * (queryDefaults.pagination.page - 1),
                     refresh: true
                 });
             await context.courseRepo.annotateVocabsByLevel(userCourses, user.id);
@@ -1794,6 +1802,8 @@ describe("GET users/{username}/courses/", () => {
                 {
                     populate: ["addedBy.user"],
                     orderBy: [{[queryDefaults.sort.sortBy]: queryDefaults.sort.sortOrder}, {id: "asc"}],
+                    limit: queryDefaults.pagination.pageSize,
+                    offset: queryDefaults.pagination.pageSize * (queryDefaults.pagination.page - 1),
                     refresh: true
                 });
             await context.courseRepo.annotateVocabsByLevel(userCourses, user.id);
@@ -1886,6 +1896,8 @@ describe("GET users/{username}/courses/", () => {
             }, {
                 populate: ["addedBy.user", "language"],
                 orderBy: [{[queryDefaults.sort.sortBy]: queryDefaults.sort.sortOrder}, {id: "asc"}],
+                limit: queryDefaults.pagination.pageSize,
+                offset: queryDefaults.pagination.pageSize * (queryDefaults.pagination.page - 1),
             });
             await context.courseRepo.annotateVocabsByLevel(userCourses, user.id);
             const recordsCount = await context.courseRepo.count({
@@ -1957,6 +1969,8 @@ describe("GET users/{username}/courses/", () => {
                 const userCourses = await context.courseRepo.find({lessons: {learners: user.profile}}, {
                     populate: ["language", "addedBy.user"],
                     orderBy: [{title: "asc"}, {id: "asc"}],
+                    limit: queryDefaults.pagination.pageSize,
+                    offset: queryDefaults.pagination.pageSize * (queryDefaults.pagination.page - 1),
                 });
                 await context.courseRepo.annotateVocabsByLevel(userCourses, user.id);
                 const recordsCount = await context.courseRepo.count({lessons: {learners: user.profile}});
@@ -1990,6 +2004,8 @@ describe("GET users/{username}/courses/", () => {
                 const userCourses = await context.courseRepo.find({lessons: {learners: user.profile}}, {
                     populate: ["language", "addedBy.user"],
                     orderBy: [{addedOn: "asc"}, {id: "asc"}],
+                    limit: queryDefaults.pagination.pageSize,
+                    offset: queryDefaults.pagination.pageSize * (queryDefaults.pagination.page - 1),
                 });
                 await context.courseRepo.annotateVocabsByLevel(userCourses, user.id);
                 const recordsCount = await context.courseRepo.count({lessons: {learners: user.profile}});
@@ -2022,7 +2038,9 @@ describe("GET users/{username}/courses/", () => {
                 //TODO filter by isPublic or added by user?
                 const userCourses = await context.courseRepo.find({lessons: {learners: user.profile}}, {
                     populate: ["language", "addedBy.user"],
-                    orderBy: [{learnersCount: "asc"}, {id: "asc"}]
+                    orderBy: [{learnersCount: "asc"}, {id: "asc"}],
+                    limit: queryDefaults.pagination.pageSize,
+                    offset: queryDefaults.pagination.pageSize * (queryDefaults.pagination.page - 1),
                 });
                 await context.courseRepo.annotateVocabsByLevel(userCourses, user.id);
                 const recordsCount = await context.courseRepo.count({lessons: {learners: user.profile}});
@@ -2064,7 +2082,9 @@ describe("GET users/{username}/courses/", () => {
 
                 const userCourses = await context.courseRepo.find({lessons: {learners: user.profile}}, {
                     populate: ["language", "addedBy.user"],
-                    orderBy: [{title: "asc"}, {id: "asc"}]
+                    orderBy: [{title: "asc"}, {id: "asc"}],
+                    limit: queryDefaults.pagination.pageSize,
+                    offset: queryDefaults.pagination.pageSize * (queryDefaults.pagination.page - 1),
                 });
                 await context.courseRepo.annotateVocabsByLevel(userCourses, user.id);
                 const recordsCount = await context.courseRepo.count({lessons: {learners: user.profile}});
@@ -2097,7 +2117,9 @@ describe("GET users/{username}/courses/", () => {
 
                 const userCourses = await context.courseRepo.find({lessons: {learners: user.profile}}, {
                     populate: ["language", "addedBy.user"],
-                    orderBy: [{title: "desc"}, {id: "asc"}]
+                    orderBy: [{title: "desc"}, {id: "asc"}],
+                    limit: queryDefaults.pagination.pageSize,
+                    offset: queryDefaults.pagination.pageSize * (queryDefaults.pagination.page - 1),
                 });
                 await context.courseRepo.annotateVocabsByLevel(userCourses, user.id);
                 const recordsCount = await context.courseRepo.count({lessons: {learners: user.profile}});
@@ -2116,6 +2138,262 @@ describe("GET users/{username}/courses/", () => {
 
                 const response = await makeRequest("me", {sortOrder: "rising"}, session.token);
                 expect(response.statusCode).to.equal(400);
+            });
+        });
+    });
+    describe("test pagination", () => {
+        describe("test page", () => {
+            test<LocalTestContext>("If page is 1 return the first page of results", async (context) => {
+                const user = await context.userFactory.createOne();
+                const session = await context.sessionFactory.createOne({user: user});
+                const courses = await context.courseFactory.create(10, {
+                    language: await context.languageFactory.createOne(),
+                    lessons: [],
+                    isPublic: true
+                });
+                let lessons: Lesson[] = [];
+                for (let i = 0; i < courses.length; i++)
+                    lessons.push(...await context.lessonFactory.create(5, {course: courses[i]}));
+                lessons = shuffleArray(lessons);
+                for (let i = 0; i < faker.datatype.number({min: 1, max: lessons.length}); i++)
+                    await context.em.create(MapLearnerLesson, {learner: user.profile, lesson: lessons[i]});
+                await context.em.flush();
+                const page = 1, pageSize = 3;
+
+                const response = await makeRequest("me", {page, pageSize}, session.token);
+
+                const userCourses = await context.courseRepo.find({
+                    lessons: {learners: user.profile},
+                    $or: [{isPublic: true}, {addedBy: (user as User).profile}],
+                }, {
+                    populate: ["language", "addedBy.user"],
+                    orderBy: [{[queryDefaults.sort.sortBy]: queryDefaults.sort.sortOrder}, {id: "asc"}],
+                    limit: pageSize,
+                    offset: pageSize * (page - 1),
+                });
+                await context.courseRepo.annotateVocabsByLevel(userCourses, user.id);
+                const recordsCount = await context.courseRepo.count({
+                    lessons: {learners: user.profile},
+                    $or: [{isPublic: true}, {addedBy: (user as User).profile}],
+                });
+
+                expect(response.statusCode).to.equal(200);
+                expect(response.json()).toEqual({
+                    page: page,
+                    pageSize: pageSize,
+                    pageCount: Math.ceil(recordsCount / pageSize),
+                    data: courseSerializer.serializeList(userCourses)
+                });
+            });
+            test<LocalTestContext>("If page is 2 return the second page of results", async (context) => {
+                const user = await context.userFactory.createOne();
+                const session = await context.sessionFactory.createOne({user: user});
+                const courses = await context.courseFactory.create(10, {
+                    language: await context.languageFactory.createOne(),
+                    lessons: [],
+                    isPublic: true
+                });
+                let lessons: Lesson[] = [];
+                for (let i = 0; i < courses.length; i++)
+                    lessons.push(...await context.lessonFactory.create(5, {course: courses[i]}));
+                lessons = shuffleArray(lessons);
+                for (let i = 0; i < faker.datatype.number({min: 1, max: lessons.length}); i++)
+                    await context.em.create(MapLearnerLesson, {learner: user.profile, lesson: lessons[i]});
+                await context.em.flush();
+                const page = 2, pageSize = 3;
+
+                const response = await makeRequest("me", {page, pageSize}, session.token);
+
+                const userCourses = await context.courseRepo.find({
+                    lessons: {learners: user.profile},
+                    $or: [{isPublic: true}, {addedBy: (user as User).profile}],
+                }, {
+                    populate: ["language", "addedBy.user"],
+                    orderBy: [{[queryDefaults.sort.sortBy]: queryDefaults.sort.sortOrder}, {id: "asc"}],
+                    limit: pageSize,
+                    offset: pageSize * (page - 1),
+                });
+                await context.courseRepo.annotateVocabsByLevel(userCourses, user.id);
+                const recordsCount = await context.courseRepo.count({
+                    lessons: {learners: user.profile},
+                    $or: [{isPublic: true}, {addedBy: (user as User).profile}],
+                });
+
+                expect(response.statusCode).to.equal(200);
+                expect(response.json()).toEqual({
+                    page: page,
+                    pageSize: pageSize,
+                    pageCount: Math.ceil(recordsCount / pageSize),
+                    data: courseSerializer.serializeList(userCourses)
+                });
+            });
+            test<LocalTestContext>("If page is last return the last page of results", async (context) => {
+                const user = await context.userFactory.createOne();
+                const session = await context.sessionFactory.createOne({user: user});
+                const courses = await context.courseFactory.create(10, {
+                    language: await context.languageFactory.createOne(),
+                    lessons: [],
+                    isPublic: true
+                });
+                let lessons: Lesson[] = [];
+                for (let i = 0; i < courses.length; i++)
+                    lessons.push(...await context.lessonFactory.create(5, {course: courses[i]}));
+                lessons = shuffleArray(lessons);
+                for (let i = 0; i < faker.datatype.number({min: 1, max: lessons.length}); i++)
+                    await context.em.create(MapLearnerLesson, {learner: user.profile, lesson: lessons[i]});
+                await context.em.flush();
+                const recordsCount = await context.courseRepo.count({
+                    lessons: {learners: user.profile},
+                    $or: [{isPublic: true}, {addedBy: (user as User).profile}],
+                });
+                const pageSize = 3;
+                const page = Math.ceil(recordsCount / pageSize);
+
+                const response = await makeRequest("me", {page, pageSize}, session.token);
+                const userCourses = await context.courseRepo.find({
+                    lessons: {learners: user.profile},
+                    $or: [{isPublic: true}, {addedBy: (user as User).profile}],
+                }, {
+                    populate: ["language", "addedBy.user"],
+                    orderBy: [{[queryDefaults.sort.sortBy]: queryDefaults.sort.sortOrder}, {id: "asc"}],
+                    limit: pageSize,
+                    offset: pageSize * (page - 1),
+                });
+                await context.courseRepo.annotateVocabsByLevel(userCourses, user.id);
+
+                expect(response.statusCode).to.equal(200);
+                expect(response.json()).toEqual({
+                    page: page,
+                    pageSize: pageSize,
+                    pageCount: Math.ceil(recordsCount / pageSize),
+                    data: courseSerializer.serializeList(userCourses)
+                });
+            });
+            test<LocalTestContext>("If page is more than last return empty page", async (context) => {
+                const user = await context.userFactory.createOne();
+                const session = await context.sessionFactory.createOne({user: user});
+                const courses = await context.courseFactory.create(10, {
+                    language: await context.languageFactory.createOne(),
+                    lessons: [],
+                    isPublic: true
+                });
+                let lessons: Lesson[] = [];
+                for (let i = 0; i < courses.length; i++)
+                    lessons.push(...await context.lessonFactory.create(5, {course: courses[i]}));
+                lessons = shuffleArray(lessons);
+                for (let i = 0; i < faker.datatype.number({min: 1, max: lessons.length}); i++)
+                    await context.em.create(MapLearnerLesson, {learner: user.profile, lesson: lessons[i]});
+                await context.em.flush();
+                const recordsCount = await context.courseRepo.count({
+                    lessons: {learners: user.profile},
+                    $or: [{isPublic: true}, {addedBy: (user as User).profile}],
+                });
+                const pageSize = 3;
+                const page = Math.ceil(recordsCount / pageSize) + 1;
+
+                const response = await makeRequest("me", {page, pageSize}, session.token);
+                const userCourses = await context.courseRepo.find({
+                    lessons: {learners: user.profile},
+                    $or: [{isPublic: true}, {addedBy: (user as User).profile}],
+                }, {
+                    populate: ["language", "addedBy.user"],
+                    orderBy: [{[queryDefaults.sort.sortBy]: queryDefaults.sort.sortOrder}, {id: "asc"}],
+                    limit: pageSize,
+                    offset: pageSize * (page - 1),
+                });
+                await context.courseRepo.annotateVocabsByLevel(userCourses, user.id);
+
+                expect(response.statusCode).to.equal(200);
+                expect(response.json()).toEqual({
+                    page: page,
+                    pageSize: pageSize,
+                    pageCount: Math.ceil(recordsCount / pageSize),
+                    data: courseSerializer.serializeList(userCourses)
+                });
+            });
+            describe("If page is invalid return 400", () => {
+                test<LocalTestContext>("If page is less than 1 return 400", async (context) => {
+                    const user = await context.userFactory.createOne();
+                    const session = await context.sessionFactory.createOne({user: user});
+                    const response = await makeRequest("me", {page: 0}, session.token);
+
+                    expect(response.statusCode).to.equal(400);
+                });
+                test<LocalTestContext>("If page is not a number return 400", async (context) => {
+                    const user = await context.userFactory.createOne();
+                    const session = await context.sessionFactory.createOne({user: user});
+                    const response = await makeRequest("me", {page: "last"}, session.token);
+
+                    expect(response.statusCode).to.equal(400);
+                });
+            });
+        });
+        describe("test pageSize", () => {
+            test<LocalTestContext>("If pageSize is 20 split the results into 20 sized pages", async (context) => {
+                const user = await context.userFactory.createOne();
+                const session = await context.sessionFactory.createOne({user: user});
+                const courses = await context.courseFactory.create(100, {
+                    language: await context.languageFactory.createOne(),
+                    lessons: [],
+                    isPublic: true
+                });
+                let lessons: Lesson[] = [];
+                for (let i = 0; i < courses.length; i++)
+                    lessons.push(...await context.lessonFactory.create(5, {course: courses[i]}));
+                lessons = shuffleArray(lessons);
+                for (let i = 0; i < lessons.length; i++)
+                    await context.em.create(MapLearnerLesson, {learner: user.profile, lesson: lessons[i]});
+                await context.em.flush();
+                const page = 1, pageSize = 20;
+
+                const response = await makeRequest("me", {page, pageSize}, session.token);
+
+                const userCourses = await context.courseRepo.find({
+                    lessons: {learners: user.profile},
+                    $or: [{isPublic: true}, {addedBy: (user as User).profile}],
+                }, {
+                    populate: ["language", "addedBy.user"],
+                    orderBy: [{[queryDefaults.sort.sortBy]: queryDefaults.sort.sortOrder}, {id: "asc"}],
+                    limit: pageSize,
+                    offset: pageSize * (page - 1),
+                });
+                await context.courseRepo.annotateVocabsByLevel(userCourses, user.id);
+                const recordsCount = await context.courseRepo.count({
+                    lessons: {learners: user.profile},
+                    $or: [{isPublic: true}, {addedBy: (user as User).profile}],
+                });
+
+                expect(response.statusCode).to.equal(200);
+                expect(response.json()).toEqual({
+                    page: page,
+                    pageSize: pageSize,
+                    pageCount: Math.ceil(recordsCount / pageSize),
+                    data: courseSerializer.serializeList(userCourses)
+                });
+                expect(response.json().data.length).toBeLessThanOrEqual(pageSize);
+            });
+            describe("If pageSize is invalid return 400", async (context) => {
+                test<LocalTestContext>("If pageSize is too big return 400", async (context) => {
+                    const user = await context.userFactory.createOne();
+                    const session = await context.sessionFactory.createOne({user: user});
+                    const response = await makeRequest("me", {page: 1, pageSize: 250}, session.token);
+
+                    expect(response.statusCode).to.equal(400);
+                });
+                test<LocalTestContext>("If pageSize is negative return 400", async (context) => {
+                    const user = await context.userFactory.createOne();
+                    const session = await context.sessionFactory.createOne({user: user});
+                    const response = await makeRequest("me", {page: 1, pageSize: -20}, session.token);
+
+                    expect(response.statusCode).to.equal(400);
+                });
+                test<LocalTestContext>("If pageSize is not a number return 400", async (context) => {
+                    const user = await context.userFactory.createOne();
+                    const session = await context.sessionFactory.createOne({user: user});
+                    const response = await makeRequest("me", {page: 1, pageSize: "a lot"}, session.token);
+
+                    expect(response.statusCode).to.equal(400);
+                });
             });
         });
     });
