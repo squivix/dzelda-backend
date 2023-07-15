@@ -10,13 +10,21 @@ import {dictionarySerializer} from "@/src/presentation/response/serializers/enti
 import {languageCodeValidator} from "@/src/validators/languageValidators.js";
 
 class DictionaryController {
-    async getUserDictionaries(request: FastifyRequest, reply: FastifyReply) {
-        const pathParamsValidator = z.object({username: usernameValidator});
-        const pathParams = pathParamsValidator.parse(request.params);
+    async getDictionaries(request: FastifyRequest, reply: FastifyReply) {
         const queryParamsValidator = z.object({
             languageCode: languageCodeValidator.optional(),
         });
         const queryParams = queryParamsValidator.parse(request.query);
+
+        const filters = {languageCode: queryParams.languageCode};
+        const dictionaryService = new DictionaryService(request.em);
+        const dictionaries = await dictionaryService.getDictionaries(filters, {sortBy: "name", sortOrder: "asc"}, request.user);
+        reply.send(dictionarySerializer.serializeList(dictionaries));
+    }
+
+    async getUserDictionaries(request: FastifyRequest, reply: FastifyReply) {
+        const pathParamsValidator = z.object({username: usernameValidator});
+        const pathParams = pathParamsValidator.parse(request.params);
         const userService = new UserService(request.em);
         const user = await userService.getUser(pathParams.username, request.user);
         if (!user || (!user.profile.isPublic && user !== request.user))
@@ -24,9 +32,14 @@ class DictionaryController {
         if (user !== request.user)
             throw new ForbiddenAPIError();
 
-        const filters = {languageCode: queryParams.languageCode};
+        const queryParamsValidator = z.object({
+            languageCode: languageCodeValidator.optional(),
+        });
+        const queryParams = queryParamsValidator.parse(request.query);
+
+        const filters = {languageCode: queryParams.languageCode, isLearning: true};
         const dictionaryService = new DictionaryService(request.em);
-        const dictionaries = await dictionaryService.getUserDictionaries(user, filters, {sortBy: "name", sortOrder: "asc"});
+        const dictionaries = await dictionaryService.getDictionaries( filters, {sortBy: "name", sortOrder: "asc"}, user);
         reply.send(dictionarySerializer.serializeList(dictionaries));
     }
 }

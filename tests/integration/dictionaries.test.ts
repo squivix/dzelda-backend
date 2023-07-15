@@ -30,6 +30,61 @@ beforeEach<LocalTestContext>((context) => {
     context.dictionaryRepo = context.em.getRepository(Dictionary);
 });
 
+/**@link DictionaryController#getDictionaries*/
+describe("GET dictionaries/", function () {
+    const makeRequest = async (queryParams: object = {}, authToken?: string) => {
+        const options: InjectOptions = {
+            method: "GET",
+            url: `dictionaries/${buildQueryString(queryParams)}`,
+        };
+        return await fetchRequest(options, authToken);
+    };
+
+    test<LocalTestContext>("If there are no filters return all dictionaries", async (context) => {
+        const language = await context.languageFactory.createOne();
+        await context.dictionaryFactory.create(5, {language});
+
+        const response = await makeRequest({});
+
+        const dictionaries = await context.em.find(Dictionary, {}, {
+            populate: ["language"],
+            orderBy: [{name: "asc"}, {id: "asc"}]
+        });
+        expect(response.statusCode).to.equal(200);
+        expect(response.json()).toEqual(dictionarySerializer.serializeList(dictionaries));
+    });
+    describe("test language filter", () => {
+        test<LocalTestContext>("If language filter is valid and language exists only return dictionaries in that language", async (context) => {
+            const language1 = await context.languageFactory.createOne();
+            const language2 = await context.languageFactory.createOne();
+            await context.dictionaryFactory.create(5, {language: language1});
+            await context.dictionaryFactory.create(5, {language: language2});
+
+            const response = await makeRequest({languageCode: language1.code});
+
+            const dictionaries = await context.em.find(Dictionary, {language: {code: language1.code}}, {
+                populate: ["language"],
+                orderBy: [{name: "asc"}, {id: "asc"}]
+            });
+            expect(response.statusCode).to.equal(200);
+            expect(response.json()).toEqual(dictionarySerializer.serializeList(dictionaries));
+        });
+        test<LocalTestContext>("If language does not exist return empty dictionary list", async (context) => {
+            const language = await context.languageFactory.makeOne();
+            await context.dictionaryFactory.create(5, {language: await context.languageFactory.createOne()});
+
+            const response = await makeRequest({languageCode: language.code});
+
+            expect(response.statusCode).to.equal(200);
+            expect(response.json()).toEqual([]);
+        });
+        test<LocalTestContext>("If language filter is invalid return 400", async (context) => {
+            const response = await makeRequest({languageCode: 12345});
+            expect(response.statusCode).to.equal(400);
+        });
+    })
+});
+
 /**@link DictionaryController#getUserDictionaries*/
 describe("GET users/:username/dictionaries/", function () {
     const makeRequest = async (username: string | "me", queryParams: object = {}, authToken?: string) => {
@@ -75,7 +130,7 @@ describe("GET users/:username/dictionaries/", function () {
         });
     });
     describe("test language filter", () => {
-        test<LocalTestContext>("If language filter is valid and language exists only return public dictionaries in that language", async (context) => {
+        test<LocalTestContext>("If language filter is valid and language exists only return saved user dictionaries in that language", async (context) => {
             const user = await context.userFactory.createOne();
             const session = await context.sessionFactory.createOne({user: user});
             const language1 = await context.languageFactory.createOne({learners: user.profile});
@@ -140,5 +195,4 @@ describe("GET users/:username/dictionaries/", function () {
         const response = await makeRequest(otherUser.username, {}, session.token);
         expect(response.statusCode).to.equal(403);
     });
-
 });
