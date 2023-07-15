@@ -11,6 +11,7 @@ import {buildQueryString, fetchRequest} from "@/tests/integration/utils.js";
 import {faker} from "@faker-js/faker";
 import {dictionarySerializer} from "@/src/presentation/response/serializers/entities/DictionarySerializer.js";
 import {LanguageFactory} from "@/src/seeders/factories/LanguageFactory.js";
+import {courseSerializer} from "@/src/presentation/response/serializers/entities/CourseSerializer.js";
 
 interface LocalTestContext extends TestContext {
     dictionaryRepo: EntityRepository<Dictionary>;
@@ -51,7 +52,7 @@ describe("GET users/:username/dictionaries/", function () {
 
             const userDictionaries = await context.em.find(Dictionary, {learners: user.profile}, {
                 populate: ["language"],
-                orderBy: {name: "asc"}
+                orderBy: [{name: "asc"}, {id: "asc"}]
             });
             expect(response.statusCode).to.equal(200);
             expect(response.json()).toEqual(dictionarySerializer.serializeList(userDictionaries));
@@ -67,12 +68,51 @@ describe("GET users/:username/dictionaries/", function () {
 
             const userDictionaries = await context.em.find(Dictionary, {learners: user.profile}, {
                 populate: ["language"],
-                orderBy: {name: "asc"}
+                orderBy: [{name: "asc"}, {id: "asc"}]
             });
             expect(response.statusCode).to.equal(200);
             expect(response.json()).toEqual(dictionarySerializer.serializeList(userDictionaries));
         });
     });
+    describe("test language filter", () => {
+        test<LocalTestContext>("If language filter is valid and language exists only return public dictionaries in that language", async (context) => {
+            const user = await context.userFactory.createOne();
+            const session = await context.sessionFactory.createOne({user: user});
+            const language1 = await context.languageFactory.createOne({learners: user.profile});
+            const language2 = await context.languageFactory.createOne({learners: user.profile});
+            await context.dictionaryFactory.create(5, {language: language1, learners: user.profile});
+            await context.dictionaryFactory.create(5, {language: language2, learners: user.profile});
+            await context.dictionaryFactory.create(5, {language: language1});
+
+            const response = await makeRequest("me", {languageCode: language1.code}, session.token);
+
+            const userDictionaries = await context.em.find(Dictionary, {learners: user.profile, language: language1}, {
+                populate: ["language"],
+                orderBy: [{name: "asc"}, {id: "asc"}]
+            });
+            expect(response.statusCode).to.equal(200);
+            expect(response.json()).toEqual(dictionarySerializer.serializeList(userDictionaries));
+        });
+        test<LocalTestContext>("If language does not exist return empty dictionary list", async (context) => {
+            const user = await context.userFactory.createOne();
+            const session = await context.sessionFactory.createOne({user: user});
+            await context.dictionaryFactory.create(5, {
+                language: await context.languageFactory.createOne({learners: user.profile}),
+                learners: user.profile
+            });
+            const language = await context.languageFactory.makeOne()
+
+            const response = await makeRequest("me", {languageCode: language.code}, session.token);
+            expect(response.statusCode).to.equal(200);
+            expect(response.json()).toEqual([]);
+        });
+        test<LocalTestContext>("If language filter is invalid return 400", async (context) => {
+            const user = await context.userFactory.createOne();
+            const session = await context.sessionFactory.createOne({user: user});
+            const response = await makeRequest("me", {languageCode: 12345}, session.token);
+            expect(response.statusCode).to.equal(400);
+        });
+    })
     test<LocalTestContext>("If user is not logged in return 401", async () => {
         const response = await makeRequest("me");
         expect(response.statusCode).to.equal(401);
