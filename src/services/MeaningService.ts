@@ -3,10 +3,7 @@ import {Meaning} from "@/src/models/entities/Meaning.js";
 import {Vocab} from "@/src/models/entities/Vocab.js";
 import {Language} from "@/src/models/entities/Language.js";
 import {User} from "@/src/models/entities/auth/User.js";
-import {MapLearnerLesson} from "@/src/models/entities/MapLearnerLesson.js";
 import {MapLearnerMeaning} from "@/src/models/entities/MapLearnerMeaning.js";
-import {MapLearnerDictionary} from "@/src/models/entities/MapLearnerDictionary.js";
-import {MapLearnerVocab} from "@/src/models/entities/MapLearnerVocab.js";
 
 export class MeaningService {
 

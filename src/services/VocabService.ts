@@ -7,7 +7,7 @@ import {VocabRepo} from "@/src/models/repos/VocabRepo.js";
 import {VocabLevel} from "@/src/models/enums/VocabLevel.js";
 import {Lesson} from "@/src/models/entities/Lesson.js";
 import {QueryOrderMap} from "@mikro-orm/core/enums.js";
-import {Course} from "@/src/models/entities/Course.js";
+import {MapLearnerMeaning} from "@/src/models/entities/MapLearnerMeaning.js";
 
 export class VocabService {
     em: EntityManager;
@@ -110,7 +110,7 @@ export class VocabService {
         const mapping = await this.em.findOne(MapLearnerVocab, {
             vocab: vocabId,
             learner: {user: {username: user.username}}
-        }, {populate: ["vocab.meanings"]});
+        }, {populate: ["vocab.meanings"], refresh: true});
         if (mapping)
             await this.vocabRepo.annotateUserMeanings([mapping], user.profile.id);
         return mapping;
@@ -118,15 +118,23 @@ export class VocabService {
 
     async updateUserVocab(mapping: MapLearnerVocab, updatedUserVocabData: { level?: VocabLevel; notes?: string; }) {
         if (updatedUserVocabData.level !== undefined) {
-            //TODO if level is ignored delete user meanings for vocab
+            //TODO
             mapping.level = updatedUserVocabData.level;
+            if (updatedUserVocabData.level == VocabLevel.IGNORED) {
+                const meaningMappings = await this.em.find(MapLearnerMeaning, {
+                    learner: mapping.learner,
+                    meaning: {vocab: mapping.vocab}
+                });
+                this.em.remove(meaningMappings);
+                mapping.notes = "";
+            }
         }
-        if (updatedUserVocabData.notes !== undefined)
+        if (updatedUserVocabData.notes !== undefined && updatedUserVocabData.level !== VocabLevel.IGNORED)
             mapping.notes = updatedUserVocabData.notes;
 
         this.em.persist(mapping);
         await this.em.flush();
-        return mapping;
+        return await this.getUserVocab(mapping.vocab.id, mapping.learner.user);
     }
 
     async getLessonVocabs(lesson: Lesson, user: User) {

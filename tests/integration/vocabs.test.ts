@@ -19,6 +19,8 @@ import {LessonFactory} from "@/src/seeders/factories/LessonFactory.js";
 import {CourseFactory} from "@/src/seeders/factories/CourseFactory.js";
 import {LearnerVocabSchema} from "@/src/presentation/response/interfaces/mappings/LearnerVocabSchema.js";
 import * as parserExports from "@/src/utils/parsers/parsers.js";
+import {MeaningFactory} from "@/src/seeders/factories/MeaningFactory.js";
+import {MapLearnerMeaning} from "@/src/models/entities/MapLearnerMeaning.js";
 
 interface LocalTestContext extends TestContext {
     languageFactory: LanguageFactory;
@@ -26,6 +28,7 @@ interface LocalTestContext extends TestContext {
     vocabRepo: VocabRepo;
     lessonFactory: LessonFactory;
     courseFactory: CourseFactory;
+    meaningFactory: MeaningFactory;
 }
 
 beforeEach<LocalTestContext>(async (context) => {
@@ -38,6 +41,7 @@ beforeEach<LocalTestContext>(async (context) => {
     context.vocabFactory = new VocabFactory(context.em);
     context.lessonFactory = new LessonFactory(context.em);
     context.courseFactory = new CourseFactory(context.em);
+    context.meaningFactory = new MeaningFactory(context.em);
 
     context.vocabRepo = context.em.getRepository(Vocab);
 });
@@ -1108,6 +1112,25 @@ describe("PATCH users/:username/vocabs/:vocabId/", () => {
             expect(response.json()).toEqual(learnerVocabSerializer.serialize(mapping));
             const updatedFields: (keyof LearnerVocabSchema)[] = ["level", "notes"];
             expect(learnerVocabSerializer.serialize(mapping, {include: updatedFields})).toEqual(learnerVocabSerializer.serialize(updatedMapping, {include: updatedFields}));
+        });
+        test<LocalTestContext>("If updated vocab level is ignored, delete all meanings saved by user for that vocab", async (context) => {
+            const user = await context.userFactory.createOne();
+            const session = await context.sessionFactory.createOne({user});
+            const language = await context.languageFactory.createOne({learners: user.profile});
+            const vocab = await context.vocabFactory.createOne({language, learners: user.profile});
+            await context.meaningFactory.create(3, {vocab: vocab, learners: user.profile, addedBy: user.profile, language});
+            const updatedMapping = context.em.create(MapLearnerVocab,
+                {learner: user.profile, vocab, level: VocabLevel.IGNORED, notes: ""}, {persist: false});
+
+            const response = await makeRequest("me", vocab.id, {level: updatedMapping.level, notes: updatedMapping.notes}, session.token);
+            const vocabMapping = await context.em.findOneOrFail(MapLearnerVocab, {learner: user.profile, vocab}, {populate:["vocab.meanings"], refresh:true});
+            await context.vocabRepo.annotateUserMeanings([vocabMapping], user.profile.id);
+
+            expect(response.statusCode).to.equal(200);
+            expect(response.json()).toEqual(learnerVocabSerializer.serialize(vocabMapping));
+            expect(vocabMapping.userMeanings).toEqual([]);
+            const updatedFields: (keyof LearnerVocabSchema)[] = ["level", "notes"];
+            expect(learnerVocabSerializer.serialize(vocabMapping, {include: updatedFields})).toEqual(learnerVocabSerializer.serialize(updatedMapping, {include: updatedFields}));
         });
     });
     describe(`If fields are invalid return 400`, async () => {

@@ -11,7 +11,6 @@ import {buildQueryString, fetchRequest} from "@/tests/integration/utils.js";
 import {faker} from "@faker-js/faker";
 import {dictionarySerializer} from "@/src/presentation/response/serializers/entities/DictionarySerializer.js";
 import {LanguageFactory} from "@/src/seeders/factories/LanguageFactory.js";
-import {courseSerializer} from "@/src/presentation/response/serializers/entities/CourseSerializer.js";
 
 interface LocalTestContext extends TestContext {
     dictionaryRepo: EntityRepository<Dictionary>;
