@@ -33,11 +33,11 @@ export class LessonService {
                          isLearning?: boolean
                      },
                      sort: { sortBy: "title" | "createdDate" | "learnersCount", sortOrder: "asc" | "desc" },
+                     pagination: { page: number, pageSize: number },
                      user: User | AnonymousUser | null) {
         const dbFilters: FilterQuery<Lesson> = {$and: []};
         if (user && user instanceof User) {
             dbFilters.$and!.push({$or: [{course: {isPublic: true}}, {course: {addedBy: (user as User).profile}}]});
-
             if (filters.isLearning)
                 dbFilters.$and!.push({learners: user.profile});
         } else
@@ -64,13 +64,45 @@ export class LessonService {
         dbOrderBy.push({id: "asc"});
 
         let lessons = await this.lessonRepo.find(dbFilters, {
+            populate: ["course", "course.language", "course.addedBy.user"],
             orderBy: dbOrderBy,
-            populate: ["course", "course.language", "course.addedBy.user"]
+            limit: pagination.pageSize,
+            offset: pagination.pageSize * (pagination.page - 1),
         });
 
         if (user && !(user instanceof AnonymousUser))
             lessons = await this.lessonRepo.annotateVocabsByLevel(lessons, user.id);
         return lessons;
+    }
+
+    async countLessons(filters: {
+        languageCode?: string,
+        addedBy?: string,
+        searchQuery?: string,
+        level?: LanguageLevel[],
+        hasAudio?: boolean;
+        isLearning?: boolean
+    }, user: User | AnonymousUser | null) {
+        const dbFilters: FilterQuery<Lesson> = {$and: []};
+        if (user && user instanceof User) {
+            dbFilters.$and!.push({$or: [{course: {isPublic: true}}, {course: {addedBy: (user as User).profile}}]});
+            if (filters.isLearning)
+                dbFilters.$and!.push({learners: user.profile});
+        } else
+            dbFilters.$and!.push({course: {isPublic: true}});
+
+        if (filters.languageCode !== undefined)
+            dbFilters.$and!.push({course: {language: {code: filters.languageCode}}});
+        if (filters.addedBy !== undefined)
+            dbFilters.$and!.push({course: {addedBy: {user: {username: filters.addedBy}}}});
+        if (filters.searchQuery !== undefined)
+            dbFilters.$and!.push({title: {$ilike: `%${filters.searchQuery}%`}});
+        if (filters.hasAudio !== undefined)
+            dbFilters.$and!.push({audio: {[filters.hasAudio ? "$ne" : "$eq"]: ""}});
+        if (filters.level !== undefined)
+            dbFilters.$and!.push({$or: filters.level.map(level => ({level}))});
+
+        return await this.lessonRepo.count(dbFilters);
     }
 
     async createLesson(fields: {
@@ -162,18 +194,6 @@ export class LessonService {
             await this.courseRepo.annotateVocabsByLevel([lesson.course], user.id);
         }
         return lesson;
-    }
-
-    async getUserLessonsLearning(filters: {
-                                     languageCode?: string,
-                                     addedBy?: string,
-                                     searchQuery?: string,
-                                     level?: LanguageLevel[],
-                                     hasAudio?: boolean
-                                 },
-                                 sort: { sortBy: "title" | "createdDate" | "learnersCount", sortOrder: "asc" | "desc" },
-                                 user: User) {
-        return this.getLessons({...filters, isLearning: true}, sort, user);
     }
 
     async getUserLessonLearning(lesson: Lesson, user: User) {

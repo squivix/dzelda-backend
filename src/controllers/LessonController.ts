@@ -8,11 +8,17 @@ import {UnauthenticatedAPIError} from "@/src/utils/errors/UnauthenticatedAPIErro
 import {booleanStringValidator, numericStringValidator} from "@/src/validators/utilValidators.js";
 import {ValidationAPIError} from "@/src/utils/errors/ValidationAPIError.js";
 import {CourseService} from "@/src/services/CourseService.js";
-import {lessonLevelsFilterValidator, lessonLevelValidator, lessonTextValidator, lessonTitleValidator} from "@/src/validators/lessonValidators.js";
+import {
+    lessonLevelsFilterValidator,
+    lessonLevelValidator,
+    lessonTextValidator,
+    lessonTitleValidator
+} from "@/src/validators/lessonValidators.js";
 import {ForbiddenAPIError} from "@/src/utils/errors/ForbiddenAPIError.js";
 import {NotFoundAPIError} from "@/src/utils/errors/NotFoundAPIError.js";
 import {UserService} from "@/src/services/UserService.js";
 import {lessonSerializer} from "@/src/presentation/response/serializers/entities/LessonSerializer.js";
+import {courseSerializer} from "@/src/presentation/response/serializers/entities/CourseSerializer.js";
 
 class LessonController {
     async getLessons(request: FastifyRequest, reply: FastifyReply) {
@@ -24,6 +30,8 @@ class LessonController {
             hasAudio: booleanStringValidator.optional(),
             sortBy: z.union([z.literal("title"), z.literal("createdDate"), z.literal("learnersCount")]).optional().default("title"),
             sortOrder: z.union([z.literal("asc"), z.literal("desc")]).optional().default("asc"),
+            page: z.coerce.number().int().min(1).optional().default(1),
+            pageSize: z.coerce.number().int().min(1).max(100).optional().default(10),
         });
         const queryParams = validator.parse(request.query);
         if (queryParams.addedBy == "me") {
@@ -40,10 +48,16 @@ class LessonController {
             hasAudio: queryParams.hasAudio,
         };
         const sort = {sortBy: queryParams.sortBy, sortOrder: queryParams.sortOrder};
+        const pagination = {page: queryParams.page, pageSize: queryParams.pageSize};
         const lessonService = new LessonService(request.em);
-
-        const lessons = await lessonService.getLessons(filters, sort, request.user);
-        reply.send(lessonSerializer.serializeList(lessons));
+        const lessons = await lessonService.getLessons(filters, sort, pagination, request.user);
+        const recordsCount = await lessonService.countLessons(filters, request.user);
+        reply.send({
+            page: pagination.page,
+            pageSize: pagination.pageSize,
+            pageCount: Math.ceil(recordsCount / pagination.pageSize),
+            data: lessonSerializer.serializeList(lessons)
+        });
     }
 
     async createLesson(request: FastifyRequest, reply: FastifyReply) {
@@ -150,6 +164,8 @@ class LessonController {
             hasAudio: booleanStringValidator.optional(),
             sortBy: z.union([z.literal("title"), z.literal("createdDate"), z.literal("learnersCount")]).optional().default("title"),
             sortOrder: z.union([z.literal("asc"), z.literal("desc")]).optional().default("asc"),
+            page: z.coerce.number().int().min(1).optional().default(1),
+            pageSize: z.coerce.number().int().min(1).max(100).optional().default(10),
         });
         const queryParams = queryParamsValidator.parse(request.query);
 
@@ -162,11 +178,19 @@ class LessonController {
             searchQuery: queryParams.searchQuery,
             level: queryParams.level,
             hasAudio: queryParams.hasAudio,
+            isLearning: true
         };
         const sort = {sortBy: queryParams.sortBy, sortOrder: queryParams.sortOrder};
+        const pagination = {page: queryParams.page, pageSize: queryParams.pageSize};
         const lessonService = new LessonService(request.em);
-        const lessons = await lessonService.getUserLessonsLearning(filters, sort, request.user as User);
-        reply.send(lessonSerializer.serializeList(lessons));
+        const lessons = await lessonService.getLessons(filters, sort, pagination, user);
+        const recordsCount = await lessonService.countLessons(filters, user);
+        reply.send({
+            page: pagination.page,
+            pageSize: pagination.pageSize,
+            pageCount: Math.ceil(recordsCount / pagination.pageSize),
+            data: lessonSerializer.serializeList(lessons)
+        });
     }
 
     async addLessonToUserLearning(request: FastifyRequest, reply: FastifyReply) {
