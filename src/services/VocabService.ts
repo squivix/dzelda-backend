@@ -134,7 +134,7 @@ export class VocabService {
 
         this.em.persist(mapping);
         await this.em.flush();
-        return await this.getUserVocab(mapping.vocab.id, mapping.learner.user);
+        return (await this.getUserVocab(mapping.vocab.id, mapping.learner.user))!;
     }
 
     async getLessonVocabs(lesson: Lesson, user: User) {
