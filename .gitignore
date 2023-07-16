@@ -12,3 +12,4 @@ specs/schema.ts
 .idea
 .directory
 .run
+tests/temp

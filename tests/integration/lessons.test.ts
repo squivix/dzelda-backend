@@ -25,6 +25,8 @@ import fs from "fs-extra";
 import {MapLearnerLesson} from "@/src/models/entities/MapLearnerLesson.js";
 import {LessonSchema} from "@/src/presentation/response/interfaces/entities/LessonSchema.js";
 import * as fileValidatorExports from "@/src/validators/fileValidator.js";
+import * as constantExports from "@/src/constants.js";
+import {TEMP_ROOT_FILE_UPLOAD_DIR} from "@/tests/testConstants.js";
 
 interface LocalTestContext extends TestContext {
     languageFactory: LanguageFactory;
@@ -48,6 +50,7 @@ beforeEach<LocalTestContext>((context) => {
     context.vocabRepo = context.em.getRepository(Vocab);
     context.lessonRepo = context.em.getRepository(Lesson) as LessonRepo;
     context.courseRepo = context.em.getRepository(Course) as CourseRepo;
+    vi.spyOn(constantExports, "ROOT_UPLOAD_DIR", "get").mockReturnValue(TEMP_ROOT_FILE_UPLOAD_DIR);
 });
 
 /**@link LessonController#getLessons*/
@@ -2018,7 +2021,11 @@ describe("GET users/:username/lessons/", () => {
             const language = await context.languageFactory.createOne();
             const searchQuery = "search query";
             const course = await context.courseFactory.createOne({language: language, isPublic: true});
-            await context.lessonFactory.create(3, {course, learners: [user.profile], title: `${randomCase(searchQuery)}-${faker.random.alpha(10)}`});
+            await context.lessonFactory.create(3, {
+                course,
+                learners: [user.profile],
+                title: `${randomCase(searchQuery)}-${faker.random.alpha(10)}`
+            });
             await context.lessonFactory.create(3, {course, learners: [user.profile]});
             await context.lessonFactory.create(3, {course});
 
@@ -2381,7 +2388,7 @@ describe("GET users/:username/lessons/", () => {
                 expect(response.statusCode).to.equal(200);
                 expect(response.json()).toEqual({
                     page: page,
-                    pageSize:pageSize,
+                    pageSize: pageSize,
                     pageCount: Math.ceil(recordsCount / pageSize),
                     data: lessonSerializer.serializeList(userLessons)
                 });
@@ -2514,7 +2521,7 @@ describe("GET users/:username/lessons/", () => {
                 expect(response.statusCode).to.equal(200);
                 expect(response.json()).toEqual({
                     page: page,
-                    pageSize:pageSize,
+                    pageSize: pageSize,
                     pageCount: Math.ceil(recordsCount / pageSize),
                     data: lessonSerializer.serializeList(userLessons)
                 });

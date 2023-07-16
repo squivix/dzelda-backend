@@ -1,4 +1,4 @@
-import {beforeEach, describe, expect, test, TestContext, vi} from "vitest";
+import {beforeAll, beforeEach, describe, expect, test, TestContext, vi} from "vitest";
 import {orm} from "@/src/server.js";
 import {buildQueryString, fetchRequest, fetchWithFiles, mockValidateFileFields, readSampleFile} from "@/tests/integration/utils.js";
 import {UserFactory} from "@/src/seeders/factories/UserFactory.js";
@@ -22,6 +22,8 @@ import {LessonSchema} from "@/src/presentation/response/interfaces/entities/Less
 import {CourseSchema} from "@/src/presentation/response/interfaces/entities/CourseSchema.js";
 import * as fileValidatorExports from "@/src/validators/fileValidator.js";
 import {User} from "@/src/models/entities/auth/User.js";
+import * as constantExports from "@/src/constants.js";
+import {TEMP_ROOT_FILE_UPLOAD_DIR} from "@/tests/testConstants.js";
 
 interface LocalTestContext extends TestContext {
     courseRepo: CourseRepo;
@@ -42,6 +44,7 @@ beforeEach<LocalTestContext>((context) => {
     context.languageFactory = new LanguageFactory(context.em);
     context.lessonRepo = context.em.getRepository(Lesson) as LessonRepo;
     context.courseRepo = context.em.getRepository(Course) as CourseRepo;
+    vi.spyOn(constantExports, 'ROOT_UPLOAD_DIR', 'get').mockReturnValue(TEMP_ROOT_FILE_UPLOAD_DIR)
 });
 
 /**@link CourseController#getCourses*/
