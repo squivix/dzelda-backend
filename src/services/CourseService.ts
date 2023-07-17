@@ -24,22 +24,7 @@ export class CourseService {
         sortBy: "title" | "createdDate" | "learnersCount",
         sortOrder: "asc" | "desc"
     }, pagination: { page: number, pageSize: number }, user: User | AnonymousUser | null) {
-        const dbFilters: FilterQuery<Course> = {$and: []};
-
-        if (user && user instanceof User) {
-            dbFilters.$and!.push({$or: [{isPublic: true}, {addedBy: (user as User).profile}]});
-            if (filters.isLearning)
-                dbFilters.$and!.push({lessons: {learners: user.profile}});
-        } else
-            dbFilters.$and!.push({isPublic: true});
-
-        if (filters.languageCode !== undefined)
-            dbFilters.$and!.push({language: {code: filters.languageCode}});
-        if (filters.addedBy !== undefined)
-            dbFilters.$and!.push({addedBy: {user: {username: filters.addedBy}}});
-        if (filters.searchQuery !== undefined)
-            dbFilters.$and!.push({$or: [{title: {$ilike: `%${filters.searchQuery}%`}}, {description: {$ilike: `%${filters.searchQuery}%`}}]});
-
+        const dbFilters = this._buildCourseFilters(filters, user);
         const dbOrderBy: QueryOrderMap<Course>[] = [];
         if (sort.sortBy == "title")
             dbOrderBy.push({title: sort.sortOrder});
@@ -123,6 +108,16 @@ export class CourseService {
         level?: LanguageLevel,
         isLearning?: boolean
     }, user: User | AnonymousUser | null) {
+        const dbFilters = this._buildCourseFilters(filters, user);
+        return await this.courseRepo.count(dbFilters);
+    }
+
+    private _buildCourseFilters(filters: {
+        languageCode?: string,
+        addedBy?: string,
+        searchQuery?: string,
+        isLearning?: boolean
+    }, user: User | AnonymousUser | null) {
         const dbFilters: FilterQuery<Course> = {$and: []};
 
         if (user && user instanceof User) {
@@ -138,6 +133,6 @@ export class CourseService {
             dbFilters.$and!.push({addedBy: {user: {username: filters.addedBy}}});
         if (filters.searchQuery !== undefined)
             dbFilters.$and!.push({$or: [{title: {$ilike: `%${filters.searchQuery}%`}}, {description: {$ilike: `%${filters.searchQuery}%`}}]});
-        return await this.courseRepo.count(dbFilters);
+        return dbFilters;
     }
 }

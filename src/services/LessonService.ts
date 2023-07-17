@@ -35,25 +35,7 @@ export class LessonService {
                      sort: { sortBy: "title" | "createdDate" | "learnersCount", sortOrder: "asc" | "desc" },
                      pagination: { page: number, pageSize: number },
                      user: User | AnonymousUser | null) {
-        const dbFilters: FilterQuery<Lesson> = {$and: []};
-        if (user && user instanceof User) {
-            dbFilters.$and!.push({$or: [{course: {isPublic: true}}, {course: {addedBy: (user as User).profile}}]});
-            if (filters.isLearning)
-                dbFilters.$and!.push({learners: user.profile});
-        } else
-            dbFilters.$and!.push({course: {isPublic: true}});
-
-        if (filters.languageCode !== undefined)
-            dbFilters.$and!.push({course: {language: {code: filters.languageCode}}});
-        if (filters.addedBy !== undefined)
-            dbFilters.$and!.push({course: {addedBy: {user: {username: filters.addedBy}}}});
-        if (filters.searchQuery !== undefined)
-            dbFilters.$and!.push({title: {$ilike: `%${filters.searchQuery}%`}});
-        if (filters.hasAudio !== undefined)
-            dbFilters.$and!.push({audio: {[filters.hasAudio ? "$ne" : "$eq"]: ""}});
-        if (filters.level !== undefined)
-            dbFilters.$and!.push({$or: filters.level.map(level => ({level}))});
-
+        const dbFilters = this._buildLessonFilters(filters, user);
         const dbOrderBy: QueryOrderMap<Lesson>[] = [];
         if (sort.sortBy == "title")
             dbOrderBy.push({title: sort.sortOrder});
@@ -83,25 +65,7 @@ export class LessonService {
         hasAudio?: boolean;
         isLearning?: boolean
     }, user: User | AnonymousUser | null) {
-        const dbFilters: FilterQuery<Lesson> = {$and: []};
-        if (user && user instanceof User) {
-            dbFilters.$and!.push({$or: [{course: {isPublic: true}}, {course: {addedBy: (user as User).profile}}]});
-            if (filters.isLearning)
-                dbFilters.$and!.push({learners: user.profile});
-        } else
-            dbFilters.$and!.push({course: {isPublic: true}});
-
-        if (filters.languageCode !== undefined)
-            dbFilters.$and!.push({course: {language: {code: filters.languageCode}}});
-        if (filters.addedBy !== undefined)
-            dbFilters.$and!.push({course: {addedBy: {user: {username: filters.addedBy}}}});
-        if (filters.searchQuery !== undefined)
-            dbFilters.$and!.push({title: {$ilike: `%${filters.searchQuery}%`}});
-        if (filters.hasAudio !== undefined)
-            dbFilters.$and!.push({audio: {[filters.hasAudio ? "$ne" : "$eq"]: ""}});
-        if (filters.level !== undefined)
-            dbFilters.$and!.push({$or: filters.level.map(level => ({level}))});
-
+        const dbFilters: FilterQuery<Lesson> = this._buildLessonFilters(filters, user);
         return await this.lessonRepo.count(dbFilters);
     }
 
@@ -207,4 +171,32 @@ export class LessonService {
         return mapping;
     }
 
+    private _buildLessonFilters(filters: {
+        languageCode?: string,
+        addedBy?: string,
+        searchQuery?: string,
+        level?: LanguageLevel[],
+        hasAudio?: boolean;
+        isLearning?: boolean
+    }, user: User | AnonymousUser | null) {
+        const dbFilters: FilterQuery<Lesson> = {$and: []};
+        if (user && user instanceof User) {
+            dbFilters.$and!.push({$or: [{course: {isPublic: true}}, {course: {addedBy: (user as User).profile}}]});
+            if (filters.isLearning)
+                dbFilters.$and!.push({learners: user.profile});
+        } else
+            dbFilters.$and!.push({course: {isPublic: true}});
+
+        if (filters.languageCode !== undefined)
+            dbFilters.$and!.push({course: {language: {code: filters.languageCode}}});
+        if (filters.addedBy !== undefined)
+            dbFilters.$and!.push({course: {addedBy: {user: {username: filters.addedBy}}}});
+        if (filters.searchQuery !== undefined)
+            dbFilters.$and!.push({title: {$ilike: `%${filters.searchQuery}%`}});
+        if (filters.hasAudio !== undefined)
+            dbFilters.$and!.push({audio: {[filters.hasAudio ? "$ne" : "$eq"]: ""}});
+        if (filters.level !== undefined)
+            dbFilters.$and!.push({$or: filters.level.map(level => ({level}))});
+        return dbFilters;
+    }
 }

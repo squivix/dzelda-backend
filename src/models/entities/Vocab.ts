@@ -40,6 +40,7 @@ export class Vocab extends CustomBaseEntity {
     })
     learners: Collection<Profile> = new Collection<Profile>(this);
 
+    //TODO ignore ignored vocabs
     @Formula((alias: string) => `(SELECT COUNT(DISTINCT map_learner_vocab.learner_id) FROM map_learner_vocab JOIN vocab ON map_learner_vocab.vocab_id = vocab.id WHERE vocab.id = ${alias}.id)`, {
         type: "number"
     })

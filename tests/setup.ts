@@ -7,6 +7,5 @@ export async function setup() {
 }
 
 export async function teardown() {
-    await rm(TEMP_ROOT_DIR, {recursive: true});
-    await mkdir(TEMP_ROOT_DIR);
+    await fs.emptyDir(TEMP_ROOT_DIR)
 }

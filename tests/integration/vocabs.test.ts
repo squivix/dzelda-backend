@@ -20,7 +20,6 @@ import {CourseFactory} from "@/src/seeders/factories/CourseFactory.js";
 import {LearnerVocabSchema} from "@/src/presentation/response/interfaces/mappings/LearnerVocabSchema.js";
 import * as parserExports from "@/src/utils/parsers/parsers.js";
 import {MeaningFactory} from "@/src/seeders/factories/MeaningFactory.js";
-import {MapLearnerMeaning} from "@/src/models/entities/MapLearnerMeaning.js";
 
 interface LocalTestContext extends TestContext {
     languageFactory: LanguageFactory;
@@ -260,9 +259,13 @@ describe("GET vocabs/", () => {
                     data: vocabSerializer.serializeList(vocabs)
                 });
             });
+            test<LocalTestContext>("If sortBy is invalid return 400", async (context) => {
+                const response = await makeRequest({sortBy: "popularity"});
+                expect(response.statusCode).to.equal(400);
+            });
         });
         describe("test sortOrder", () => {
-            test<LocalTestContext>("If sortOrder is asc return the lessons in ascending order", async (context) => {
+            test<LocalTestContext>("If sortOrder is asc return the vocabs in ascending order", async (context) => {
                 const language = await context.languageFactory.createOne();
                 await context.vocabFactory.createOne({text: "abc", language});
                 await context.vocabFactory.createOne({text: "def", language});
@@ -286,7 +289,7 @@ describe("GET vocabs/", () => {
                     data: vocabSerializer.serializeList(vocabs)
                 });
             });
-            test<LocalTestContext>("If sortOrder is desc return the lessons in descending order", async (context) => {
+            test<LocalTestContext>("If sortOrder is desc return the vocabs in descending order", async (context) => {
                 const language = await context.languageFactory.createOne();
                 await context.vocabFactory.createOne({text: "abc", language});
                 await context.vocabFactory.createOne({text: "def", language});
@@ -310,7 +313,7 @@ describe("GET vocabs/", () => {
                     data: vocabSerializer.serializeList(vocabs)
                 });
             });
-            test<LocalTestContext>("If sortBy is invalid return 400", async (context) => {
+            test<LocalTestContext>("If sortOrder is invalid return 400", async (context) => {
                 const response = await makeRequest({sortOrder: "rising"});
                 expect(response.statusCode).to.equal(400);
             });
@@ -670,6 +673,7 @@ describe("GET users/:username/vocabs/", () => {
         };
         return await fetchRequest(options, authToken);
     };
+    const queryDefaults = {pagination: {pageSize: 25, page: 1}, sort: {vocab: {text: "asc"}}};
 
     describe("If user is logged in and there are no filters return vocabs the user is learning", () => {
         test<LocalTestContext>("If username is me", async (context) => {
@@ -681,11 +685,22 @@ describe("GET users/:username/vocabs/", () => {
 
             const response = await makeRequest("me", {}, session.token);
 
-            const mappings = await context.em.find(MapLearnerVocab, {learner: user.profile}, {populate: ["vocab", "vocab.language", "vocab.meanings"]});
+            const mappings = await context.em.find(MapLearnerVocab, {learner: user.profile}, {
+                populate: ["vocab", "vocab.language", "vocab.meanings"],
+                orderBy: queryDefaults.sort,
+                limit: queryDefaults.pagination.pageSize,
+                offset: queryDefaults.pagination.pageSize * (queryDefaults.pagination.page - 1),
+            });
             await context.vocabRepo.annotateUserMeanings(mappings, user.profile.id);
+            const recordsCount = await context.em.count(MapLearnerVocab, {learner: user.profile});
 
             expect(response.statusCode).to.equal(200);
-            expect(response.json()).toEqual(learnerVocabSerializer.serializeList(mappings));
+            expect(response.json()).toEqual({
+                page: queryDefaults.pagination.page,
+                pageSize: queryDefaults.pagination.pageSize,
+                pageCount: Math.ceil(recordsCount / queryDefaults.pagination.pageSize),
+                data: learnerVocabSerializer.serializeList(mappings)
+            });
         });
         test<LocalTestContext>("If username belongs to the currently logged in user", async (context) => {
             const user = await context.userFactory.createOne();
@@ -696,11 +711,22 @@ describe("GET users/:username/vocabs/", () => {
 
             const response = await makeRequest(user.username, {}, session.token);
 
-            const mappings = await context.em.find(MapLearnerVocab, {learner: user.profile}, {populate: ["vocab", "vocab.language", "vocab.meanings"]});
+            const mappings = await context.em.find(MapLearnerVocab, {learner: user.profile}, {
+                populate: ["vocab", "vocab.language", "vocab.meanings"],
+                orderBy: queryDefaults.sort,
+                limit: queryDefaults.pagination.pageSize,
+                offset: queryDefaults.pagination.pageSize * (queryDefaults.pagination.page - 1),
+            });
             await context.vocabRepo.annotateUserMeanings(mappings, user.profile.id);
+            const recordsCount = await context.em.count(MapLearnerVocab, {learner: user.profile});
 
             expect(response.statusCode).to.equal(200);
-            expect(response.json()).toEqual(learnerVocabSerializer.serializeList(mappings));
+            expect(response.json()).toEqual({
+                page: queryDefaults.pagination.page,
+                pageSize: queryDefaults.pagination.pageSize,
+                pageCount: Math.ceil(recordsCount / queryDefaults.pagination.pageSize),
+                data: learnerVocabSerializer.serializeList(mappings)
+            });
         });
     });
     describe("test languageCode filter", () => {
@@ -719,11 +745,22 @@ describe("GET users/:username/vocabs/", () => {
             const mappings = await context.em.find(MapLearnerVocab, {
                 learner: user.profile,
                 vocab: {language: language1}
-            }, {populate: ["vocab", "vocab.language", "vocab.meanings"]});
+            }, {
+                populate: ["vocab", "vocab.language", "vocab.meanings"],
+                orderBy: queryDefaults.sort,
+                limit: queryDefaults.pagination.pageSize,
+                offset: queryDefaults.pagination.pageSize * (queryDefaults.pagination.page - 1),
+            });
             await context.vocabRepo.annotateUserMeanings(mappings, user.profile.id);
+            const recordsCount = await context.em.count(MapLearnerVocab, {learner: user.profile, vocab: {language: language1}});
 
             expect(response.statusCode).to.equal(200);
-            expect(response.json()).toEqual(learnerVocabSerializer.serializeList(mappings));
+            expect(response.json()).toEqual({
+                page: queryDefaults.pagination.page,
+                pageSize: queryDefaults.pagination.pageSize,
+                pageCount: Math.ceil(recordsCount / queryDefaults.pagination.pageSize),
+                data: learnerVocabSerializer.serializeList(mappings)
+            });
         });
         test<LocalTestContext>("If language does not exist return empty vocab list", async (context) => {
             const user = await context.userFactory.createOne();
@@ -733,7 +770,12 @@ describe("GET users/:username/vocabs/", () => {
             const response = await makeRequest("me", {languageCode: language.code}, session.token);
 
             expect(response.statusCode).to.equal(200);
-            expect(response.json()).toEqual([]);
+            expect(response.json()).toEqual({
+                page: queryDefaults.pagination.page,
+                pageSize: queryDefaults.pagination.pageSize,
+                pageCount: 0,
+                data: []
+            });
         });
         test<LocalTestContext>("If language filter is invalid return 400", async (context) => {
             const user = await context.userFactory.createOne();
@@ -764,11 +806,25 @@ describe("GET users/:username/vocabs/", () => {
             const mappings = await context.em.find(MapLearnerVocab, {
                 learner: user.profile,
                 level
-            }, {populate: ["vocab", "vocab.language", "vocab.meanings"]});
+            }, {
+                populate: ["vocab", "vocab.language", "vocab.meanings"],
+                orderBy: queryDefaults.sort,
+                limit: queryDefaults.pagination.pageSize,
+                offset: queryDefaults.pagination.pageSize * (queryDefaults.pagination.page - 1),
+            });
             await context.vocabRepo.annotateUserMeanings(mappings, user.profile.id);
+            const recordsCount = await context.em.count(MapLearnerVocab, {
+                learner: user.profile,
+                level
+            });
 
             expect(response.statusCode).to.equal(200);
-            expect(response.json()).toEqual(learnerVocabSerializer.serializeList(mappings));
+            expect(response.json()).toEqual({
+                page: queryDefaults.pagination.page,
+                pageSize: queryDefaults.pagination.pageSize,
+                pageCount: Math.ceil(recordsCount / queryDefaults.pagination.pageSize),
+                data: learnerVocabSerializer.serializeList(mappings)
+            });
         });
         test<LocalTestContext>("If language filter is invalid return 400", async (context) => {
             const user = await context.userFactory.createOne();
@@ -799,10 +855,24 @@ describe("GET users/:username/vocabs/", () => {
             const response = await makeRequest("me", {searchQuery: searchQuery}, session.token);
 
             const mappings = await context.em.find(MapLearnerVocab, {learner: user.profile, vocab: {text: {$ilike: `%${searchQuery}%`}}},
-                {populate: ["vocab", "vocab.language", "vocab.meanings"]});
+                {
+                    populate: ["vocab", "vocab.language", "vocab.meanings"],
+                    orderBy: queryDefaults.sort,
+                    limit: queryDefaults.pagination.pageSize,
+                    offset: queryDefaults.pagination.pageSize * (queryDefaults.pagination.page - 1),
+                });
             await context.vocabRepo.annotateUserMeanings(mappings, user.profile.id);
+            const recordsCount = await context.em.count(MapLearnerVocab, {
+                learner: user.profile,
+                vocab: {text: {$ilike: `%${searchQuery}%`}}
+            });
             expect(response.statusCode).to.equal(200);
-            expect(response.json()).toEqual(learnerVocabSerializer.serializeList(mappings));
+            expect(response.json()).toEqual({
+                page: queryDefaults.pagination.page,
+                pageSize: queryDefaults.pagination.pageSize,
+                pageCount: Math.ceil(recordsCount / queryDefaults.pagination.pageSize),
+                data: learnerVocabSerializer.serializeList(mappings)
+            });
         });
         test<LocalTestContext>("If searchQuery is invalid return 400", async (context) => {
             const user = await context.userFactory.createOne();
@@ -821,12 +891,351 @@ describe("GET users/:username/vocabs/", () => {
             const response = await makeRequest("me", {searchQuery: faker.random.alpha({count: 200})}, session.token);
 
             expect(response.statusCode).to.equal(200);
-            expect(response.json()).toEqual([]);
+            expect(response.json()).toEqual({
+                page: queryDefaults.pagination.page,
+                pageSize: queryDefaults.pagination.pageSize,
+                pageCount: 0,
+                data: []
+            });
+        });
+    });
+    describe("test sort", function () {
+        describe("test sortBy", () => {
+            test<LocalTestContext>("test sortBy title", async (context) => {
+                const user = await context.userFactory.createOne();
+                const session = await context.sessionFactory.createOne({user: user});
+                const language = await context.languageFactory.createOne();
+                await context.vocabFactory.createOne({language, learners: user.profile, text: "abc"});
+                await context.vocabFactory.createOne({language, learners: user.profile, text: "def"});
+                await context.vocabFactory.createOne({language});
+
+                const response = await makeRequest("me", {sortBy: "text"}, session.token);
+
+                const mappings = await context.em.find(MapLearnerVocab, {learner: user.profile}, {
+                    populate: ["vocab", "vocab.language", "vocab.meanings"],
+                    orderBy: {vocab: {text: "asc"}},
+                    limit: queryDefaults.pagination.pageSize,
+                    offset: queryDefaults.pagination.pageSize * (queryDefaults.pagination.page - 1),
+                });
+                await context.vocabRepo.annotateUserMeanings(mappings, user.profile.id);
+                const recordsCount = await context.em.count(MapLearnerVocab, {learner: user.profile});
+
+                expect(response.statusCode).to.equal(200);
+                expect(response.json()).toEqual({
+                    page: queryDefaults.pagination.page,
+                    pageSize: queryDefaults.pagination.pageSize,
+                    pageCount: Math.ceil(recordsCount / queryDefaults.pagination.pageSize),
+                    data: learnerVocabSerializer.serializeList(mappings)
+                });
+            });
+            test<LocalTestContext>("test sortBy learnersCount", async (context) => {
+                const user = await context.userFactory.createOne();
+                const session = await context.sessionFactory.createOne({user: user});
+                const language = await context.languageFactory.createOne();
+                await context.vocabFactory.createOne({language, learners: user.profile, text: "abc"});
+                await context.vocabFactory.createOne({language, learners: user.profile, text: "def"});
+                await context.vocabFactory.createOne({language});
+
+                const response = await makeRequest("me", {sortBy: "learnersCount"}, session.token);
+
+                const mappings = await context.em.find(MapLearnerVocab, {learner: user.profile}, {
+                    populate: ["vocab", "vocab.language", "vocab.meanings"],
+                    orderBy: {vocab: {learnersCount: "asc"}},
+                    limit: queryDefaults.pagination.pageSize,
+                    offset: queryDefaults.pagination.pageSize * (queryDefaults.pagination.page - 1),
+                });
+                await context.vocabRepo.annotateUserMeanings(mappings, user.profile.id);
+                const recordsCount = await context.em.count(MapLearnerVocab, {learner: user.profile});
+
+                expect(response.statusCode).to.equal(200);
+                expect(response.json()).toEqual({
+                    page: queryDefaults.pagination.page,
+                    pageSize: queryDefaults.pagination.pageSize,
+                    pageCount: Math.ceil(recordsCount / queryDefaults.pagination.pageSize),
+                    data: learnerVocabSerializer.serializeList(mappings)
+                });
+            });
+            test<LocalTestContext>("test sortBy lessonsCount", async (context) => {
+                const user = await context.userFactory.createOne();
+                const session = await context.sessionFactory.createOne({user: user});
+                const language = await context.languageFactory.createOne();
+                await context.vocabFactory.createOne({language, learners: user.profile, text: "abc"});
+                await context.vocabFactory.createOne({language, learners: user.profile, text: "def"});
+                await context.vocabFactory.createOne({language});
+
+                const response = await makeRequest("me", {sortBy: "lessonsCount"}, session.token);
+
+                const mappings = await context.em.find(MapLearnerVocab, {learner: user.profile}, {
+                    populate: ["vocab", "vocab.language", "vocab.meanings"],
+                    orderBy: {vocab: {lessonsCount: "asc"}},
+                    limit: queryDefaults.pagination.pageSize,
+                    offset: queryDefaults.pagination.pageSize * (queryDefaults.pagination.page - 1),
+                });
+                await context.vocabRepo.annotateUserMeanings(mappings, user.profile.id);
+                const recordsCount = await context.em.count(MapLearnerVocab, {learner: user.profile});
+
+                expect(response.statusCode).to.equal(200);
+                expect(response.json()).toEqual({
+                    page: queryDefaults.pagination.page,
+                    pageSize: queryDefaults.pagination.pageSize,
+                    pageCount: Math.ceil(recordsCount / queryDefaults.pagination.pageSize),
+                    data: learnerVocabSerializer.serializeList(mappings)
+                });
+            });
+            test<LocalTestContext>("If sortBy is invalid return 400", async (context) => {
+                const user = await context.userFactory.createOne();
+                const session = await context.sessionFactory.createOne({user: user});
+                const response = await makeRequest("me", {sortBy: "popularity"}, session.token);
+                expect(response.statusCode).to.equal(400);
+            });
+        });
+        describe("test sortOrder", () => {
+            test<LocalTestContext>("If sortOrder is asc return the vocabs in ascending order", async (context) => {
+                const user = await context.userFactory.createOne();
+                const session = await context.sessionFactory.createOne({user: user});
+                const language = await context.languageFactory.createOne();
+                await context.vocabFactory.createOne({language, learners: user.profile, text: "abc"});
+                await context.vocabFactory.createOne({language, learners: user.profile, text: "def"});
+                await context.vocabFactory.createOne({language});
+
+                const response = await makeRequest("me", {sortBy: "text", sortOrder: "asc"}, session.token);
+
+                const mappings = await context.em.find(MapLearnerVocab, {learner: user.profile}, {
+                    populate: ["vocab", "vocab.language", "vocab.meanings"],
+                    orderBy: {vocab: {text: "asc"}},
+                    limit: queryDefaults.pagination.pageSize,
+                    offset: queryDefaults.pagination.pageSize * (queryDefaults.pagination.page - 1),
+                });
+                await context.vocabRepo.annotateUserMeanings(mappings, user.profile.id);
+                const recordsCount = await context.em.count(MapLearnerVocab, {learner: user.profile});
+
+                expect(response.statusCode).to.equal(200);
+                expect(response.json()).toEqual({
+                    page: queryDefaults.pagination.page,
+                    pageSize: queryDefaults.pagination.pageSize,
+                    pageCount: Math.ceil(recordsCount / queryDefaults.pagination.pageSize),
+                    data: learnerVocabSerializer.serializeList(mappings)
+                });
+            });
+            test<LocalTestContext>("If sortOrder is desc return the vocabs in descending order", async (context) => {
+                const user = await context.userFactory.createOne();
+                const session = await context.sessionFactory.createOne({user: user});
+                const language = await context.languageFactory.createOne();
+                await context.vocabFactory.createOne({language, learners: user.profile, text: "abc"});
+                await context.vocabFactory.createOne({language, learners: user.profile, text: "def"});
+                await context.vocabFactory.createOne({language});
+
+                const response = await makeRequest("me", {sortBy: "text", sortOrder: "desc"}, session.token);
+
+                const mappings = await context.em.find(MapLearnerVocab, {learner: user.profile}, {
+                    populate: ["vocab", "vocab.language", "vocab.meanings"],
+                    orderBy: {vocab: {text: "desc"}},
+                    limit: queryDefaults.pagination.pageSize,
+                    offset: queryDefaults.pagination.pageSize * (queryDefaults.pagination.page - 1),
+                });
+                await context.vocabRepo.annotateUserMeanings(mappings, user.profile.id);
+                const recordsCount = await context.em.count(MapLearnerVocab, {learner: user.profile});
+
+                expect(response.statusCode).to.equal(200);
+                expect(response.json()).toEqual({
+                    page: queryDefaults.pagination.page,
+                    pageSize: queryDefaults.pagination.pageSize,
+                    pageCount: Math.ceil(recordsCount / queryDefaults.pagination.pageSize),
+                    data: learnerVocabSerializer.serializeList(mappings)
+                });
+            });
+            test<LocalTestContext>("If sortOrder is invalid return 400", async (context) => {
+                const user = await context.userFactory.createOne();
+                const session = await context.sessionFactory.createOne({user: user});
+                const response = await makeRequest("me", {sortOrder: "rising"}, session.token);
+                expect(response.statusCode).to.equal(400);
+            });
+        });
+    });
+    describe("test pagination", () => {
+        describe("test page", () => {
+            test<LocalTestContext>("If page is 1 return the first page of results", async (context) => {
+                const user = await context.userFactory.createOne();
+                const session = await context.sessionFactory.createOne({user: user});
+                const language = await context.languageFactory.createOne();
+                await context.vocabFactory.create(10, {language, learners: user.profile});
+                await context.vocabFactory.create(10, {language});
+                const page = 1, pageSize = 3;
+
+                const response = await makeRequest("me", {page, pageSize}, session.token);
+
+                const mappings = await context.em.find(MapLearnerVocab, {learner: user.profile}, {
+                    populate: ["vocab", "vocab.language", "vocab.meanings"],
+                    orderBy: queryDefaults.sort,
+                    limit: pageSize,
+                    offset: pageSize * (page - 1),
+                });
+                await context.vocabRepo.annotateUserMeanings(mappings, user.profile.id);
+                const recordsCount = await context.em.count(MapLearnerVocab, {learner: user.profile});
+
+                expect(response.statusCode).to.equal(200);
+                expect(response.json()).toEqual({
+                    page: page,
+                    pageSize: pageSize,
+                    pageCount: Math.ceil(recordsCount / pageSize),
+                    data: learnerVocabSerializer.serializeList(mappings)
+                });
+            });
+            test<LocalTestContext>("If page is 2 return the second page of results", async (context) => {
+                const user = await context.userFactory.createOne();
+                const session = await context.sessionFactory.createOne({user: user});
+                const language = await context.languageFactory.createOne();
+                await context.vocabFactory.create(10, {language, learners: user.profile});
+                await context.vocabFactory.create(10, {language});
+                const page = 2, pageSize = 3;
+
+                const response = await makeRequest("me", {page, pageSize}, session.token);
+
+                const mappings = await context.em.find(MapLearnerVocab, {learner: user.profile}, {
+                    populate: ["vocab", "vocab.language", "vocab.meanings"],
+                    orderBy: queryDefaults.sort,
+                    limit: pageSize,
+                    offset: pageSize * (page - 1),
+                });
+                await context.vocabRepo.annotateUserMeanings(mappings, user.profile.id);
+                const recordsCount = await context.em.count(MapLearnerVocab, {learner: user.profile});
+
+                expect(response.statusCode).to.equal(200);
+                expect(response.json()).toEqual({
+                    page: page,
+                    pageSize: pageSize,
+                    pageCount: Math.ceil(recordsCount / pageSize),
+                    data: learnerVocabSerializer.serializeList(mappings)
+                });
+            });
+            test<LocalTestContext>("If page is last return the last page of results", async (context) => {
+                const user = await context.userFactory.createOne();
+                const session = await context.sessionFactory.createOne({user: user});
+                const language = await context.languageFactory.createOne();
+                await context.vocabFactory.create(10, {language, learners: user.profile});
+                await context.vocabFactory.create(10, {language});
+                const recordsCount = await context.em.count(MapLearnerVocab, {learner: user.profile});
+                const pageSize = 3;
+                const page = Math.ceil(recordsCount / pageSize);
+
+                const response = await makeRequest("me", {page, pageSize}, session.token);
+
+                const mappings = await context.em.find(MapLearnerVocab, {learner: user.profile}, {
+                    populate: ["vocab", "vocab.language", "vocab.meanings"],
+                    orderBy: queryDefaults.sort,
+                    limit: pageSize,
+                    offset: pageSize * (page - 1),
+                });
+                await context.vocabRepo.annotateUserMeanings(mappings, user.profile.id);
+
+                expect(response.statusCode).to.equal(200);
+                expect(response.json()).toEqual({
+                    page: page,
+                    pageSize: pageSize,
+                    pageCount: Math.ceil(recordsCount / pageSize),
+                    data: learnerVocabSerializer.serializeList(mappings)
+                });
+            });
+            test<LocalTestContext>("If page is more than last return empty page", async (context) => {
+                const user = await context.userFactory.createOne();
+                const session = await context.sessionFactory.createOne({user: user});
+                const language = await context.languageFactory.createOne();
+                await context.vocabFactory.create(10, {language, learners: user.profile});
+                await context.vocabFactory.create(10, {language});
+                const recordsCount = await context.em.count(MapLearnerVocab, {learner: user.profile});
+                const pageSize = 3;
+                const page = Math.ceil(recordsCount / pageSize) + 1;
+
+                const response = await makeRequest("me", {page, pageSize}, session.token);
+
+                const mappings = await context.em.find(MapLearnerVocab, {learner: user.profile}, {
+                    populate: ["vocab", "vocab.language", "vocab.meanings"],
+                    orderBy: queryDefaults.sort,
+                    limit: pageSize,
+                    offset: pageSize * (page - 1),
+                });
+                await context.vocabRepo.annotateUserMeanings(mappings, user.profile.id);
+
+                expect(response.statusCode).to.equal(200);
+                expect(response.json()).toEqual({
+                    page: page,
+                    pageSize: pageSize,
+                    pageCount: Math.ceil(recordsCount / pageSize),
+                    data: []
+                });
+            });
+            describe("If page is invalid return 400", () => {
+                test<LocalTestContext>("If page is less than 1 return 400", async (context) => {
+                    const user = await context.userFactory.createOne();
+                    const session = await context.sessionFactory.createOne({user: user});
+                    const response = await makeRequest("me", {page: 0, pageSize: 3}, session.token);
+
+                    expect(response.statusCode).to.equal(400);
+                });
+                test<LocalTestContext>("If page is not a number return 400", async (context) => {
+                    const user = await context.userFactory.createOne();
+                    const session = await context.sessionFactory.createOne({user: user});
+                    const response = await makeRequest("me", {page: "last", pageSize: 3}, session.token);
+
+                    expect(response.statusCode).to.equal(400);
+                });
+            });
+        });
+        describe("test pageSize", () => {
+            test<LocalTestContext>("If pageSize is 10 split the results into 10 sized pages", async (context) => {
+                const user = await context.userFactory.createOne();
+                const session = await context.sessionFactory.createOne({user: user});
+                const language = await context.languageFactory.createOne();
+                await context.vocabFactory.create(10, {language, learners: user.profile});
+                await context.vocabFactory.create(10, {language});
+                const page = 1, pageSize = 10;
+
+                const response = await makeRequest("me", {page, pageSize}, session.token);
+
+                const mappings = await context.em.find(MapLearnerVocab, {learner: user.profile}, {
+                    populate: ["vocab", "vocab.language", "vocab.meanings"],
+                    orderBy: queryDefaults.sort,
+                    limit: pageSize,
+                    offset: pageSize * (page - 1),
+                });
+                await context.vocabRepo.annotateUserMeanings(mappings, user.profile.id);
+                const recordsCount = await context.em.count(MapLearnerVocab, {learner: user.profile});
+
+                expect(response.statusCode).to.equal(200);
+                expect(response.json()).toEqual({
+                    page: page,
+                    pageSize: pageSize,
+                    pageCount: Math.ceil(recordsCount / pageSize),
+                    data: learnerVocabSerializer.serializeList(mappings)
+                });
+            });
+            describe("If pageSize is invalid return 400", () => {
+                test<LocalTestContext>("If pageSize is too big return 400", async (context) => {
+                    const user = await context.userFactory.createOne();
+                    const session = await context.sessionFactory.createOne({user: user});
+                    const response = await makeRequest("me", {page: 1, pageSize: 500}, session.token);
+
+                    expect(response.statusCode).to.equal(400);
+                });
+                test<LocalTestContext>("If pageSize is negative return 400", async (context) => {
+                    const user = await context.userFactory.createOne();
+                    const session = await context.sessionFactory.createOne({user: user});
+                    const response = await makeRequest("me", {page: 1, pageSize: -10}, session.token);
+
+                    expect(response.statusCode).to.equal(400);
+                });
+                test<LocalTestContext>("If pageSize is not a number return 400", async (context) => {
+                    const user = await context.userFactory.createOne();
+                    const session = await context.sessionFactory.createOne({user: user});
+                    const response = await makeRequest("me", {page: 1, pageSize: "a lot"}, session.token);
+
+                    expect(response.statusCode).to.equal(400);
+                });
+            });
         });
     });
     test<LocalTestContext>("If username is not logged in return 401", async (context) => {
         const response = await makeRequest("me", {});
-
         expect(response.statusCode).to.equal(401);
     });
 });
@@ -1123,7 +1532,10 @@ describe("PATCH users/:username/vocabs/:vocabId/", () => {
                 {learner: user.profile, vocab, level: VocabLevel.IGNORED, notes: ""}, {persist: false});
 
             const response = await makeRequest("me", vocab.id, {level: updatedMapping.level, notes: updatedMapping.notes}, session.token);
-            const vocabMapping = await context.em.findOneOrFail(MapLearnerVocab, {learner: user.profile, vocab}, {populate:["vocab.meanings"], refresh:true});
+            const vocabMapping = await context.em.findOneOrFail(MapLearnerVocab, {
+                learner: user.profile,
+                vocab
+            }, {populate: ["vocab.meanings"], refresh: true});
             await context.vocabRepo.annotateUserMeanings([vocabMapping], user.profile.id);
 
             expect(response.statusCode).to.equal(200);
