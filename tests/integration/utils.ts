@@ -5,6 +5,7 @@ import FormData from "form-data";
 import fs from "fs-extra";
 import path from "path";
 import {File, Files} from "fastify-formidable/lib/mjs/index.js";
+import {EntityClass} from "@mikro-orm/core/typings.js";
 
 export async function fetchRequest(options: InjectOptions, authToken?: string) {
     options.headers = options.headers ?? {};
@@ -82,5 +83,25 @@ export function mockValidateFileFields(fakeFieldFileSizes: { [fieldName: string]
                 file.size = fakeFieldFileSizes[fieldName];
             return field.validate(file);
         }));
+    };
+}
+
+export function createComparator<T>(entityName: EntityClass<T>, properties: {
+    property: keyof T,
+    order: "asc" | "desc",
+    preProcess?: (value: any) => any
+}[]): (obj1: T, obj2: T) => number {
+    return (obj1, obj2) => {
+        for (const {property, order, preProcess} of properties) {
+            let value1 = obj1[property];
+            let value2 = obj2[property];
+            if (preProcess !== undefined) {
+                value1 = preProcess(value1);
+                value2 = preProcess(value2);
+            }
+            if (value1 < value2) return order == "asc" ? -1 : 1;
+            if (value1 > value2) return order == "asc" ? 1 : -1;
+        }
+        return 0;
     };
 }
