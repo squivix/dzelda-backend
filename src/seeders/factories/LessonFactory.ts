@@ -25,17 +25,17 @@ export class LessonFactory extends CustomFactory<Lesson> {
     }
 
 
-    async createOne(overrideParameters?: EntityData<Lesson>): Promise<Lesson> {
-        const lesson = await super.createOne(overrideParameters);
-        const em = ((this as any).em as EntityManager);
-        const language = await em.findOneOrFail(Language, {courses: {lessons: lesson}})
-
-        const lessonWords = parsers["en"].parseText(`${lesson.title} ${lesson.text}`);
-        await em.upsertMany(Vocab, lessonWords.map(word => ({text: word, language: lesson.course.language.id})));
-        const lessonVocabs = await em.find(Vocab, {text: lessonWords, language: language.id});
-        await em.insertMany(MapLessonVocab, lessonVocabs.map(vocab => ({lesson: lesson.id, vocab: vocab.id})));
-        return lesson;
-    }
+    // async createOne(overrideParameters?: EntityData<Lesson>): Promise<Lesson> {
+    //     const lesson = await super.createOne(overrideParameters);
+    //     const em = ((this as any).em as EntityManager);
+    //     const language = await em.findOneOrFail(Language, {courses: {lessons: lesson}})
+    //
+    //     const lessonWords = parsers["en"].parseText(`${lesson.title} ${lesson.text}`);
+    //     await em.upsertMany(Vocab, lessonWords.map(word => ({text: word, language: lesson.course.language.id})));
+    //     const lessonVocabs = await em.find(Vocab, {text: lessonWords, language: language.id});
+    //     await em.insertMany(MapLessonVocab, lessonVocabs.map(vocab => ({lesson: lesson.id, vocab: vocab.id})));
+    //     return lesson;
+    // }
 
     protected definition(faker: Faker): EntityData<User> {
         return LessonFactory.makeDefinition(faker);
