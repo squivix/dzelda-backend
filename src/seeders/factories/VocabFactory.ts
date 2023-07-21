@@ -15,5 +15,11 @@ export class VocabFactory extends CustomFactory<Vocab> {
         };
     }
 
-
+    makeEntity(overrideParameters?: EntityData<Vocab>): Vocab {
+        if (overrideParameters?.lessonsAppearingIn !== undefined && Array.isArray(overrideParameters?.lessonsAppearingIn))
+            overrideParameters.lessonsCount = overrideParameters.lessonsAppearingIn.length;
+        if (overrideParameters?.learners !== undefined && Array.isArray(overrideParameters?.learners))
+            overrideParameters.learnersCount = overrideParameters.learners.length;
+        return super.makeEntity(overrideParameters);
+    }
 }
