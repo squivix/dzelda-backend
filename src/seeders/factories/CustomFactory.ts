@@ -7,22 +7,18 @@ import {EntityData, EntityManager} from "@mikro-orm/core";
 export abstract class CustomFactory<T extends Object> extends Factory<T> {
 
     makeOne(overrideParameters?: EntityData<T>): T {
-        const em = (this as any).em as EntityManager;
-        let ret = super.makeOne(overrideParameters);
-        em.clear();
-        return ret;
+        return this.makeEntity(overrideParameters);
     }
 
     make(amount: number, overrideParameters?: EntityData<T>): T[] {
-        const em = (this as any).em as EntityManager;
-        let ret = super.make(amount, overrideParameters);
-        em.clear();
-        return ret;
+        return [...Array(amount)].map(() => {
+            return this.makeEntity(overrideParameters);
+        });
     }
 
     async createOne(overrideParameters?: EntityData<T>): Promise<T> {
         const em = (this as any).em as EntityManager;
-        const entity = this.makeEntity(overrideParameters);
+        const entity = this.makeOne(overrideParameters);
         em.persist(entity);
         await em.flush();
         return entity;
@@ -30,9 +26,7 @@ export abstract class CustomFactory<T extends Object> extends Factory<T> {
 
     async create(amount: number, overrideParameters?: EntityData<T>): Promise<T[]> {
         const em = (this as any).em as EntityManager;
-        const entities = [...Array(amount)].map(() => {
-            return this.makeEntity(overrideParameters);
-        });
+        const entities = this.make(amount, overrideParameters);
         em.persist(entities);
         await em.flush();
         return entities;
