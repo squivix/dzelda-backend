@@ -208,8 +208,8 @@ describe("GET vocabs/", () => {
                 const lesson2 = await context.lessonFactory.createOne({course});
                 const language = await context.languageFactory.createOne();
                 const expectedVocabs = [
+                    await context.vocabFactory.createOne({language, lessonsAppearingIn: [lesson1]}),
                     await context.vocabFactory.createOne({language, lessonsAppearingIn: [lesson1, lesson2]}),
-                    await context.vocabFactory.createOne({language, lessonsAppearingIn: [lesson1]})
                 ];
                 const response = await makeRequest({sortBy: "lessonsCount"});
 
@@ -621,7 +621,7 @@ describe("GET users/:username/vocabs/", () => {
             const mappings = await context.em.find(MapLearnerVocab, {learner: user.profile}, {
                 populate: ["vocab", "vocab.language", "vocab.meanings"],
                 orderBy: queryDefaults.sort,
-                limit: queryDefaults.pagination.pageSize - 1,
+                limit: queryDefaults.pagination.pageSize,
                 offset: queryDefaults.pagination.pageSize * (queryDefaults.pagination.page - 1),
             });
             await context.vocabRepo.annotateUserMeanings(mappings, user.profile.id);
@@ -647,7 +647,7 @@ describe("GET users/:username/vocabs/", () => {
             const mappings = await context.em.find(MapLearnerVocab, {learner: user.profile}, {
                 populate: ["vocab", "vocab.language", "vocab.meanings"],
                 orderBy: queryDefaults.sort,
-                limit: queryDefaults.pagination.pageSize - 1,
+                limit: queryDefaults.pagination.pageSize,
                 offset: queryDefaults.pagination.pageSize * (queryDefaults.pagination.page - 1),
             });
             await context.vocabRepo.annotateUserMeanings(mappings, user.profile.id);
@@ -681,7 +681,7 @@ describe("GET users/:username/vocabs/", () => {
             }, {
                 populate: ["vocab", "vocab.language", "vocab.meanings"],
                 orderBy: queryDefaults.sort,
-                limit: queryDefaults.pagination.pageSize - 1,
+                limit: queryDefaults.pagination.pageSize,
                 offset: queryDefaults.pagination.pageSize * (queryDefaults.pagination.page - 1),
             });
             await context.vocabRepo.annotateUserMeanings(mappings, user.profile.id);
@@ -742,7 +742,7 @@ describe("GET users/:username/vocabs/", () => {
             }, {
                 populate: ["vocab", "vocab.language", "vocab.meanings"],
                 orderBy: queryDefaults.sort,
-                limit: queryDefaults.pagination.pageSize - 1,
+                limit: queryDefaults.pagination.pageSize,
                 offset: queryDefaults.pagination.pageSize * (queryDefaults.pagination.page - 1),
             });
             await context.vocabRepo.annotateUserMeanings(mappings, user.profile.id);
@@ -794,7 +794,7 @@ describe("GET users/:username/vocabs/", () => {
                 {
                     populate: ["vocab", "vocab.language", "vocab.meanings"],
                     orderBy: queryDefaults.sort,
-                    limit: queryDefaults.pagination.pageSize - 1,
+                    limit: queryDefaults.pagination.pageSize,
                     offset: queryDefaults.pagination.pageSize * (queryDefaults.pagination.page - 1),
                 });
             await context.vocabRepo.annotateUserMeanings(mappings, user.profile.id);
@@ -850,7 +850,7 @@ describe("GET users/:username/vocabs/", () => {
                 const mappings = await context.em.find(MapLearnerVocab, {learner: user.profile}, {
                     populate: ["vocab", "vocab.language", "vocab.meanings"],
                     orderBy: {vocab: {text: "asc"}},
-                    limit: queryDefaults.pagination.pageSize - 1,
+                    limit: queryDefaults.pagination.pageSize,
                     offset: queryDefaults.pagination.pageSize * (queryDefaults.pagination.page - 1),
                 });
                 await context.vocabRepo.annotateUserMeanings(mappings, user.profile.id);
@@ -866,10 +866,12 @@ describe("GET users/:username/vocabs/", () => {
             });
             test<LocalTestContext>("test sortBy learnersCount", async (context) => {
                 const user = await context.userFactory.createOne();
+                const user1 = await context.userFactory.createOne();
+                const user2 = await context.userFactory.createOne();
                 const session = await context.sessionFactory.createOne({user: user});
                 const language = await context.languageFactory.createOne();
-                await context.vocabFactory.createOne({language, learners: user.profile, text: "abc"});
-                await context.vocabFactory.createOne({language, learners: user.profile, text: "def"});
+                await context.vocabFactory.createOne({language, learners: [user1.profile]});
+                await context.vocabFactory.createOne({language, learners: [user1.profile, user2.profile]});
                 await context.vocabFactory.createOne({language});
 
                 const response = await makeRequest("me", {sortBy: "learnersCount"}, session.token);
@@ -877,7 +879,7 @@ describe("GET users/:username/vocabs/", () => {
                 const mappings = await context.em.find(MapLearnerVocab, {learner: user.profile}, {
                     populate: ["vocab", "vocab.language", "vocab.meanings"],
                     orderBy: {vocab: {learnersCount: "asc"}},
-                    limit: queryDefaults.pagination.pageSize - 1,
+                    limit: queryDefaults.pagination.pageSize,
                     offset: queryDefaults.pagination.pageSize * (queryDefaults.pagination.page - 1),
                 });
                 await context.vocabRepo.annotateUserMeanings(mappings, user.profile.id);
@@ -895,8 +897,11 @@ describe("GET users/:username/vocabs/", () => {
                 const user = await context.userFactory.createOne();
                 const session = await context.sessionFactory.createOne({user: user});
                 const language = await context.languageFactory.createOne();
-                await context.vocabFactory.createOne({language, learners: user.profile, text: "abc"});
-                await context.vocabFactory.createOne({language, learners: user.profile, text: "def"});
+                const course = await context.courseFactory.createOne({language});
+                const lesson1 = await context.lessonFactory.createOne({course});
+                const lesson2 = await context.lessonFactory.createOne({course});
+                await context.vocabFactory.createOne({language, learners: user.profile, lessonsAppearingIn: [lesson1]});
+                await context.vocabFactory.createOne({language, learners: user.profile, lessonsAppearingIn: [lesson1, lesson2]});
                 await context.vocabFactory.createOne({language});
 
                 const response = await makeRequest("me", {sortBy: "lessonsCount"}, session.token);
@@ -904,7 +909,7 @@ describe("GET users/:username/vocabs/", () => {
                 const mappings = await context.em.find(MapLearnerVocab, {learner: user.profile}, {
                     populate: ["vocab", "vocab.language", "vocab.meanings"],
                     orderBy: {vocab: {lessonsCount: "asc"}},
-                    limit: queryDefaults.pagination.pageSize - 1,
+                    limit: queryDefaults.pagination.pageSize,
                     offset: queryDefaults.pagination.pageSize * (queryDefaults.pagination.page - 1),
                 });
                 await context.vocabRepo.annotateUserMeanings(mappings, user.profile.id);
@@ -939,7 +944,7 @@ describe("GET users/:username/vocabs/", () => {
                 const mappings = await context.em.find(MapLearnerVocab, {learner: user.profile}, {
                     populate: ["vocab", "vocab.language", "vocab.meanings"],
                     orderBy: {vocab: {text: "asc"}},
-                    limit: queryDefaults.pagination.pageSize - 1,
+                    limit: queryDefaults.pagination.pageSize,
                     offset: queryDefaults.pagination.pageSize * (queryDefaults.pagination.page - 1),
                 });
                 await context.vocabRepo.annotateUserMeanings(mappings, user.profile.id);
@@ -966,7 +971,7 @@ describe("GET users/:username/vocabs/", () => {
                 const mappings = await context.em.find(MapLearnerVocab, {learner: user.profile}, {
                     populate: ["vocab", "vocab.language", "vocab.meanings"],
                     orderBy: {vocab: {text: "desc"}},
-                    limit: queryDefaults.pagination.pageSize - 1,
+                    limit: queryDefaults.pagination.pageSize,
                     offset: queryDefaults.pagination.pageSize * (queryDefaults.pagination.page - 1),
                 });
                 await context.vocabRepo.annotateUserMeanings(mappings, user.profile.id);
@@ -1003,7 +1008,7 @@ describe("GET users/:username/vocabs/", () => {
                 const mappings = await context.em.find(MapLearnerVocab, {learner: user.profile}, {
                     populate: ["vocab", "vocab.language", "vocab.meanings"],
                     orderBy: queryDefaults.sort,
-                    limit: pageSize - 1,
+                    limit: pageSize,
                     offset: pageSize * (page - 1),
                 });
                 await context.vocabRepo.annotateUserMeanings(mappings, user.profile.id);

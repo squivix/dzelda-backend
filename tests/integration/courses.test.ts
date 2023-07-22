@@ -966,7 +966,7 @@ describe("PUT courses/:courseId/", function () {
                     lessonsOrder: shuffledLessonIds
                 }
             }, session.token);
-
+            context.em.clear();
             course = await context.courseRepo.findOneOrFail({id: course.id}, {populate: ["language", "addedBy", "addedBy.user", "addedBy.languagesLearning"]});
             await context.em.populate(course, ["lessons"], {orderBy: {lessons: {orderInCourse: "asc"}}});
             await context.courseRepo.annotateVocabsByLevel([course], author.id);
@@ -1002,6 +1002,7 @@ describe("PUT courses/:courseId/", function () {
                 files: {image: {value: ""}}
             }, session.token);
 
+            context.em.clear();
             course = await context.courseRepo.findOneOrFail({id: course.id}, {populate: ["language", "addedBy", "addedBy.user", "addedBy.languagesLearning"]});
             await context.em.populate(course, ["lessons"], {orderBy: {lessons: {orderInCourse: "asc"}}});
             await context.courseRepo.annotateVocabsByLevel([course], author.id);
@@ -1037,6 +1038,7 @@ describe("PUT courses/:courseId/", function () {
                 files: {image: readSampleFile("images/lorem-ipsum-69_8KB-1_1ratio.png")}
             }, session.token);
 
+            context.em.clear();
             course = await context.courseRepo.findOneOrFail({id: course.id}, {populate: ["language", "addedBy", "addedBy.user", "addedBy.languagesLearning"]});
             await context.em.populate(course, ["lessons"], {orderBy: {lessons: {orderInCourse: "asc"}}});
             await context.courseRepo.annotateVocabsByLevel([course], author.id);
