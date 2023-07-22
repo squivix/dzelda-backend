@@ -1,6 +1,6 @@
 import {APIError} from "@/src/utils/errors/APIError.js";
 import {StatusCodes} from "http-status-codes";
-import {MAX_TOTAL_FILE_UPLOAD_SIZE} from "@/src/middlewares/fileUploadMiddleware.js";
+import {MAX_TOTAL_FILE_UPLOAD_SIZE} from "@/src/constants.js";
 
 export class FilesTooLargeAPIError extends APIError {
     constructor({field, maxSizeInKb}: { field?: string; maxSizeInKb?: number } = {}) {

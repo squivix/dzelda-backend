@@ -72,6 +72,7 @@ class VocabController {
         const sort = {sortBy: queryParams.sortBy, sortOrder: queryParams.sortOrder};
         const pagination = {page: queryParams.page, pageSize: queryParams.pageSize};
         const vocabs = await vocabService.getVocabs(filters, sort, pagination);
+        //TODO use em.findAndCount instead of counting separately
         const recordsCount = await vocabService.countVocabs(filters);
         reply.send({
             //TODO check if recordsCount is 0 to avoid a message like Page 1 out of 0

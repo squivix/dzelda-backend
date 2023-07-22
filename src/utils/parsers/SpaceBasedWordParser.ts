@@ -16,6 +16,7 @@ export class SpaceBasedWordParser extends WordParser {
     }
 
     parseText(text: string, keepDuplicates = false): string[] {
+        //TODO investigate why - is being added as a vocab with sample data
         let parsedText = text;
 
         //replace special characters
