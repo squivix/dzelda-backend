@@ -53,8 +53,8 @@
     "openapi-typescript": "^6.1.0",
     "tsx": "^3.12.7",
     "typescript": "^4.8.4",
-    "vite": "^4.4.7",
-    "vitest": "^0.28.4"
+    "vite": "^3.2.5",
+    "vitest": "^0.33.0"
   },
   "mikro-orm": {
     "configPaths": [
