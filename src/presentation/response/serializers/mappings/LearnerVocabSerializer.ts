@@ -28,8 +28,8 @@ export class LearnerVocabSerializer extends CustomEntitySerializer<Vocab | MapLe
                 level: () => vocabOrMapping.level,
                 notes: () => vocabOrMapping.notes,
                 language: () => vocabOrMapping.vocab.language.code,
-                userMeanings: () => vocabOrMapping.userMeanings !== undefined ? meaningSerializer.serializeList(vocabOrMapping.userMeanings) : undefined,
-                allMeanings: () => meaningSerializer.serializeList(vocabOrMapping.vocab.meanings.getItems())
+                userMeanings: () => vocabOrMapping.userMeanings !== undefined ? meaningSerializer.serializeList(vocabOrMapping.userMeanings, {ignore: ["vocab"]}) : undefined,
+                allMeanings: () => meaningSerializer.serializeList(vocabOrMapping.vocab.meanings.getItems(), {ignore: ["vocab"]})
             };
         }
     }

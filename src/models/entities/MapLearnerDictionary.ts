@@ -4,7 +4,7 @@ import {Profile} from "@/src/models/entities/Profile.js";
 import {Dictionary} from "@/src/models/entities/Dictionary.js";
 
 @Entity()
-@Unique({properties: ["learner", "dictionary"]})
+@Unique({properties: ["dictionary", "learner"]})
 export class MapLearnerDictionary extends CustomBaseEntity {
     @ManyToOne({entity: () => Dictionary})
     dictionary!: Dictionary;

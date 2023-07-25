@@ -4,7 +4,7 @@ import {Profile} from "@/src/models/entities/Profile.js";
 import {Language} from "@/src/models/entities/Language.js";
 
 @Entity()
-@Unique({properties: ["learner", "language"]})
+@Unique({properties: ["language", "learner"]})
 export class MapLearnerLanguage extends CustomBaseEntity {
     constructor(learner: Profile, language: Language) {
         super();
@@ -19,10 +19,10 @@ export class MapLearnerLanguage extends CustomBaseEntity {
     learner!: Profile;
 
     @Property({type: types.datetime, defaultRaw: "now()"})
-    addedOn!: Date
+    addedOn!: Date;
 
     @Property({type: types.datetime, defaultRaw: "now()"})
-    lastOpened!: Date
+    lastOpened!: Date;
 
-    [OptionalProps]?: "addedOn" | "lastOpened"
+    [OptionalProps]?: "addedOn" | "lastOpened";
 }

@@ -6,7 +6,7 @@ import {VocabLevel} from "@/src/models/enums/VocabLevel.js";
 import {Meaning} from "@/src/models/entities/Meaning.js";
 
 @Entity()
-@Unique({properties: ["learner", "vocab"]})
+@Unique({properties: ["vocab", "learner"]})
 export class MapLearnerVocab extends CustomBaseEntity {
     @ManyToOne({entity: () => Vocab})
     vocab!: Vocab;

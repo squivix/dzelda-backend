@@ -576,10 +576,10 @@
       "schema": "public",
       "indexes": [
         {
-          "keyName": "map_learner_language_learner_id_language_id_unique",
+          "keyName": "map_learner_language_language_id_learner_id_unique",
           "columnNames": [
-            "learner_id",
-            "language_id"
+            "language_id",
+            "learner_id"
           ],
           "composite": true,
           "primary": false,
@@ -657,10 +657,10 @@
       "schema": "public",
       "indexes": [
         {
-          "keyName": "map_learner_dictionary_learner_id_dictionary_id_unique",
+          "keyName": "map_learner_dictionary_dictionary_id_learner_id_unique",
           "columnNames": [
-            "learner_id",
-            "dictionary_id"
+            "dictionary_id",
+            "learner_id"
           ],
           "composite": true,
           "primary": false,
@@ -1056,6 +1056,16 @@
       "schema": "public",
       "indexes": [
         {
+          "keyName": "map_learner_lesson_lesson_id_learner_id_unique",
+          "columnNames": [
+            "lesson_id",
+            "learner_id"
+          ],
+          "composite": true,
+          "primary": false,
+          "unique": true
+        },
+        {
           "keyName": "map_learner_lesson_pkey",
           "columnNames": [
             "id"
@@ -1367,10 +1377,10 @@
       "schema": "public",
       "indexes": [
         {
-          "keyName": "map_learner_meaning_learner_id_meaning_id_unique",
+          "keyName": "map_learner_meaning_meaning_id_learner_id_unique",
           "columnNames": [
-            "learner_id",
-            "meaning_id"
+            "meaning_id",
+            "learner_id"
           ],
           "composite": true,
           "primary": false,
@@ -1448,10 +1458,10 @@
       "schema": "public",
       "indexes": [
         {
-          "keyName": "map_lesson_vocab_lesson_id_vocab_id_unique",
+          "keyName": "map_lesson_vocab_vocab_id_lesson_id_unique",
           "columnNames": [
-            "lesson_id",
-            "vocab_id"
+            "vocab_id",
+            "lesson_id"
           ],
           "composite": true,
           "primary": false,
@@ -1550,10 +1560,10 @@
       "schema": "public",
       "indexes": [
         {
-          "keyName": "map_learner_vocab_learner_id_vocab_id_unique",
+          "keyName": "map_learner_vocab_vocab_id_learner_id_unique",
           "columnNames": [
-            "learner_id",
-            "vocab_id"
+            "vocab_id",
+            "learner_id"
           ],
           "composite": true,
           "primary": false,

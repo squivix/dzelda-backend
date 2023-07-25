@@ -4,7 +4,7 @@ import {Profile} from "@/src/models/entities/Profile.js";
 import {Meaning} from "@/src/models/entities/Meaning.js";
 
 @Entity()
-@Unique({properties: ["learner", "meaning"]})
+@Unique({properties: ["meaning", "learner"]})
 export class MapLearnerMeaning extends CustomBaseEntity {
     @ManyToOne({entity: () => Meaning})
     meaning!: Meaning;
