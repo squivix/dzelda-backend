@@ -5,15 +5,9 @@
 import {defineConfig} from "vite";
 import {defaultExclude} from "vitest/config";
 import path from "path";
-import vavite from "vavite";
 
 export default defineConfig({
     plugins: [
-        vavite({
-            serverEntry: "/src/server.ts",
-            reloadOn: "static-deps-change",
-            serveClientAssetsInDev: true,
-        }),
     ],
     resolve: {
         alias: {

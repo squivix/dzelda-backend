@@ -15,10 +15,11 @@
     "typeRoots": [
       "./types"
     ],
-    "baseUrl": ".", // this must be specified if "paths" is specified.
-
+    "baseUrl": ".",
     "paths": {
-      "@/*" :["./*"],
+      "@/*": [
+        "./*"
+      ]
     }
   }
 }
