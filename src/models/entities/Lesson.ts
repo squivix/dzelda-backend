@@ -60,7 +60,7 @@ export class Lesson extends CustomBaseEntity {
     @Property({persist: false, type: types.json})
     vocabsByLevel?: Record<VocabLevel, number>;
 
-    @Formula((alias: string) => `(SELECT COUNT(DISTINCT map_learner_lesson.learner_id) FROM map_learner_lesson JOIN lesson ON map_learner_lesson.lesson_id = lesson.id WHERE lesson.id = ${alias}.id)`, {
+    @Formula((alias: string) => `(SELECT COUNT(DISTINCT map_learner_lesson.learner_id) FROM map_learner_lesson WHERE lesson_id = ${alias}.id)`, {
         type: "number"
     })
     learnersCount?: number;

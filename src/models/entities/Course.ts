@@ -37,7 +37,7 @@ export class Course extends CustomBaseEntity {
     @OneToMany({entity: () => Lesson, mappedBy: (lesson) => lesson.course})
     lessons: Collection<Lesson> = new Collection<Lesson>(this);
 
-    [OptionalProps]?: "description" | "image" | "isPublic"  | "addedOn" | "learnersCount";
+    [OptionalProps]?: "description" | "image" | "isPublic" | "addedOn" | "learnersCount";
 
     //annotated properties
     @Property({persist: false, type: types.json})
