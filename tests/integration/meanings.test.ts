@@ -38,7 +38,7 @@ beforeEach<LocalTestContext>((context) => {
     context.meaningRepo = context.em.getRepository(Meaning);
 });
 
-/**@link MeaningController#createMeaning*/
+/**{@link MeaningController#createMeaning}*/
 describe("POST meanings/", () => {
     const makeRequest = async (body: object = {}, authToken?: string) => {
         const options: InjectOptions = {
@@ -236,7 +236,7 @@ describe("POST meanings/", () => {
     });
 });
 
-/**@link MeaningController#getUserMeanings*/
+/**{@link MeaningController#getUserMeanings}*/
 describe("GET users/:username/meanings/", () => {
     const makeRequest = async (username: string | "me", queryParams: object = {}, authToken?: string) => {
         const options: InjectOptions = {
@@ -360,7 +360,7 @@ describe("GET users/:username/meanings/", () => {
     });
 });
 
-/**@link MeaningController#addMeaningToUser*/
+/**{@link MeaningController#addMeaningToUser}*/
 describe("POST users/:username/meanings/", () => {
     const makeRequest = async (username: string | "me", body: object = {}, authToken?: string) => {
         const options: InjectOptions = {
@@ -490,7 +490,7 @@ describe("POST users/:username/meanings/", () => {
     });
 });
 
-/**@link MeaningController#removeMeaningFromUser*/
+/**{@link MeaningController#removeMeaningFromUser}*/
 describe("DELETE users/:username/meanings/:meaningId/", () => {
     const makeRequest = async (username: string | "me", meaningId: number | string, authToken?: string) => {
         const options: InjectOptions = {

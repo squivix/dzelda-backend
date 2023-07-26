@@ -47,7 +47,7 @@ beforeEach<LocalTestContext>((context) => {
     vi.spyOn(constantExports, 'ROOT_UPLOAD_DIR', 'get').mockReturnValue(TEMP_ROOT_FILE_UPLOAD_DIR)
 });
 
-/**@link CourseController#getCourses*/
+/**{@link CourseController#getCourses}*/
 describe("GET courses/", function () {
     const makeRequest = async (queryParams: object = {}, authToken?: string) => {
         const options: InjectOptions = {
@@ -574,7 +574,7 @@ describe("GET courses/", function () {
 
 });
 
-/**@link CourseController#createCourse*/
+/**{@link CourseController#createCourse}*/
 describe("POST courses/", function () {
     const makeRequest = async ({data, files = {}}: {
         data: object; files?: { [key: string]: { value: ""; } | { value: Buffer; fileName?: string, mimeType?: string } };
@@ -848,7 +848,7 @@ describe("POST courses/", function () {
     });
 });
 
-/**@link CourseController#getCourse*/
+/**{@link CourseController#getCourse}*/
 describe("GET courses/:courseId/", function () {
     const makeRequest = async (courseId: number | string, authToken?: string) => {
         const options: InjectOptions = {
@@ -925,7 +925,7 @@ describe("GET courses/:courseId/", function () {
     });
 });
 
-/**@link CourseController#updateCourse*/
+/**{@link CourseController#updateCourse}*/
 describe("PUT courses/:courseId/", function () {
     const makeRequest = async (courseId: number | string, {data, files = {}}: {
         data?: object; files?: { [key: string]: { value: ""; } | { value: Buffer; fileName?: string, mimeType?: string } };
@@ -1538,7 +1538,7 @@ describe("PUT courses/:courseId/", function () {
     });
 });
 
-/**@link CourseController#getUserCoursesLearning*/
+/**{@link CourseController#getUserCoursesLearning}*/
 describe("GET users/{username}/courses/", () => {
     const makeRequest = async (username: string | "me", queryParams: object = {}, authToken?: string) => {
         const options: InjectOptions = {

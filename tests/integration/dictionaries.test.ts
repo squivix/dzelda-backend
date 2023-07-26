@@ -29,7 +29,7 @@ beforeEach<LocalTestContext>((context) => {
     context.dictionaryRepo = context.em.getRepository(Dictionary);
 });
 
-/**@link DictionaryController#getDictionaries*/
+/**{@link DictionaryController#getDictionaries}*/
 describe("GET dictionaries/", function () {
     const makeRequest = async (queryParams: object = {}, authToken?: string) => {
         const options: InjectOptions = {
@@ -84,7 +84,7 @@ describe("GET dictionaries/", function () {
     })
 });
 
-/**@link DictionaryController#getUserDictionaries*/
+/**{@link DictionaryController#getUserDictionaries}*/
 describe("GET users/:username/dictionaries/", function () {
     const makeRequest = async (username: string | "me", queryParams: object = {}, authToken?: string) => {
         const options: InjectOptions = {

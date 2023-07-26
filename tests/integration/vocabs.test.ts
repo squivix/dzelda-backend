@@ -48,7 +48,7 @@ beforeEach<LocalTestContext>(async (context) => {
     await orm.getSchemaGenerator().clearDatabase();
 });
 
-/**@link VocabController#getVocabs*/
+/**{@link VocabController#getVocabs}*/
 describe("GET vocabs/", () => {
     const makeRequest = async (queryParams: object = {}, authToken?: string) => {
         const options: InjectOptions = {
@@ -405,7 +405,7 @@ describe("GET vocabs/", () => {
 })
 ;
 
-/**@link VocabController#createVocab*/
+/**{@link VocabController#createVocab}*/
 describe("POST vocabs/", () => {
     const makeRequest = async (body: object = {}, authToken?: string) => {
         const options: InjectOptions = {
@@ -597,7 +597,7 @@ describe("POST vocabs/", () => {
     });
 });
 
-/**@link VocabController#getUserVocabs*/
+/**{@link VocabController#getUserVocabs}*/
 describe("GET users/:username/vocabs/", () => {
     const makeRequest = async (username: string | "me", queryParams: object = {}, authToken?: string) => {
         const options: InjectOptions = {
@@ -1181,7 +1181,7 @@ describe("GET users/:username/vocabs/", () => {
     });
 });
 
-/**@link VocabController#addVocabToUser*/
+/**{@link VocabController#addVocabToUser}*/
 describe("POST users/:username/vocabs/", () => {
     const makeRequest = async (username: string | "me", body: object = {}, authToken?: string) => {
         const options: InjectOptions = {
@@ -1317,7 +1317,7 @@ describe("POST users/:username/vocabs/", () => {
 
 });
 
-/**@link VocabController#getUserVocab*/
+/**{@link VocabController#getUserVocab}*/
 describe("GET users/:username/vocabs/:vocabId/", () => {
     const makeRequest = async (username: string | "me", vocabId: number | string, authToken?: string) => {
         const options: InjectOptions = {
@@ -1414,7 +1414,7 @@ describe("GET users/:username/vocabs/:vocabId/", () => {
 
 });
 
-/**@link VocabController#updateUserVocab*/
+/**{@link VocabController#updateUserVocab}*/
 describe("PATCH users/:username/vocabs/:vocabId/", () => {
     const makeRequest = async (username: string | "me", vocabId: number | string, body: object, authToken?: string) => {
         const options: InjectOptions = {
@@ -1576,7 +1576,7 @@ describe("PATCH users/:username/vocabs/:vocabId/", () => {
 
 });
 
-/**@link VocabController#getLessonVocabs*/
+/**{@link VocabController#getLessonVocabs}*/
 describe("GET lessons/:lessonId/vocabs/", () => {
     const makeRequest = async (lessonId: number | string, authToken?: string) => {
         const options: InjectOptions = {

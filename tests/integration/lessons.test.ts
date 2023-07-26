@@ -53,7 +53,7 @@ beforeEach<LocalTestContext>((context) => {
     vi.spyOn(constantExports, "ROOT_UPLOAD_DIR", "get").mockReturnValue(TEMP_ROOT_FILE_UPLOAD_DIR);
 });
 
-/**@link LessonController#getLessons*/
+/**{@link LessonController#getLessons}*/
 describe("GET lessons/", () => {
     const makeRequest = async (queryParams: object = {}, authToken?: string) => {
         const options: InjectOptions = {
@@ -781,7 +781,7 @@ describe("GET lessons/", () => {
     });
 });
 
-/**@link LessonController#createLesson*/
+/**{@link LessonController#createLesson}*/
 describe("POST lessons/", () => {
     const makeRequest = async ({data, files = {}}: {
         data: object; files?: { [key: string]: { value: ""; } | { value: Buffer; fileName?: string, mimeType?: string } };
@@ -1140,7 +1140,7 @@ describe("POST lessons/", () => {
     });
 });
 
-/**@link LessonController#getLesson*/
+/**{@link LessonController#getLesson}*/
 describe("GET lessons/:lessonId/", () => {
     const makeRequest = async (lessonId: number | string, authToken?: string) => {
         const options: InjectOptions = {
@@ -1232,7 +1232,7 @@ describe("GET lessons/:lessonId/", () => {
     });
 });
 
-/**@link LessonController#updateLesson*/
+/**{@link LessonController#updateLesson}*/
 describe("PUT lessons/:lessonId/", () => {
     const makeRequest = async (lessonId: number | string, {data, files = {}}: {
         data?: object; files?: { [key: string]: { value: ""; } | { value: Buffer; fileName?: string, mimeType?: string } };
@@ -1777,7 +1777,7 @@ describe("PUT lessons/:lessonId/", () => {
     });
 });
 
-/**@link LessonController#getUserLessonsLearning*/
+/**{@link LessonController#getUserLessonsLearning}*/
 describe("GET users/:username/lessons/", () => {
     const makeRequest = async (username: string | "me", queryParams: object = {}, authToken?: string) => {
         const options: InjectOptions = {
@@ -2581,7 +2581,7 @@ describe("GET users/:username/lessons/", () => {
     });
 });
 
-/**@link LessonController#addLessonToUserLearning*/
+/**{@link LessonController#addLessonToUserLearning}*/
 describe("POST users/:username/lessons/", () => {
     const makeRequest = async (username: string | "me", body: object, authToken?: string) => {
         const options: InjectOptions = {
