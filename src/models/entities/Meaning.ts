@@ -35,9 +35,7 @@ export class Meaning extends CustomBaseEntity {
     })
     learners: Collection<Profile> = new Collection<Profile>(this);
 
-    @Formula((alias: string) => `(SELECT COUNT(learner_id) FROM map_learner_meaning WHERE meaning_id=${alias}.id)`, {
-        type: "number"
-    })
+    @Formula((alias: string) => `(SELECT COUNT(learner_id) FROM map_learner_meaning WHERE meaning_id=${alias}.id)`, {type: "number"})
     learnersCount!: number;
 
     [OptionalProps]?: "addedOn" | "learnersCount";

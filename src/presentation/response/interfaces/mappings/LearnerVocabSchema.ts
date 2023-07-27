@@ -8,5 +8,5 @@ export interface LearnerVocabSchema {
     notes: string | null;
     language: string;
     allMeanings: Partial<MeaningSchema>[];
-    userMeanings: Partial<MeaningSchema>[];
+    learnerMeanings: Partial<MeaningSchema>[];
 }

@@ -1,13 +1,15 @@
 import {EntityManager, FilterQuery} from "@mikro-orm/core";
 import {Language} from "@/src/models/entities/Language.js";
 import {Vocab} from "@/src/models/entities/Vocab.js";
-import {AnonymousUser, User} from "@/src/models/entities/auth/User.js";
+import {User} from "@/src/models/entities/auth/User.js";
 import {MapLearnerVocab} from "@/src/models/entities/MapLearnerVocab.js";
 import {VocabRepo} from "@/src/models/repos/VocabRepo.js";
 import {VocabLevel} from "@/src/models/enums/VocabLevel.js";
 import {Lesson} from "@/src/models/entities/Lesson.js";
 import {QueryOrderMap} from "@mikro-orm/core/enums.js";
 import {MapLearnerMeaning} from "@/src/models/entities/MapLearnerMeaning.js";
+import {EntityField} from "@mikro-orm/core/drivers/IDatabaseDriver.js";
+import {Profile} from "@/src/models/entities/Profile.js";
 
 export class VocabService {
     em: EntityManager;
@@ -19,10 +21,15 @@ export class VocabService {
         this.vocabRepo = this.em.getRepository(Vocab);
     }
 
-    async getVocabs(filters: { languageCode?: string, searchQuery?: string },
-                    sort: { sortBy: "text" | "lessonsCount" | "learnersCount", sortOrder: "asc" | "desc" },
-                    pagination: { page: number, pageSize: number }) {
-        const dbFilters = this._buildVocabFilters(filters);
+    async getPaginatedVocabs(filters: { languageCode?: string, searchQuery?: string },
+                             sort: { sortBy: "text" | "lessonsCount" | "learnersCount", sortOrder: "asc" | "desc" },
+                             pagination: { page: number, pageSize: number }) {
+        const dbFilters: FilterQuery<Vocab> = {$and: []};
+
+        if (filters.languageCode !== undefined)
+            dbFilters.$and!.push({language: {code: filters.languageCode}});
+        if (filters.searchQuery !== undefined)
+            dbFilters.$and!.push({text: {$ilike: `%${filters.searchQuery}%`}});
         const dbOrderBy: QueryOrderMap<Vocab>[] = [];
         if (sort.sortBy == "text")
             dbOrderBy.push({text: sort.sortOrder});
@@ -32,17 +39,12 @@ export class VocabService {
             dbOrderBy.push({lessonsCount: sort.sortOrder});
         dbOrderBy.push({id: "asc"});
 
-        return await this.vocabRepo.find(dbFilters, {
+        return await this.vocabRepo.findAndCount(dbFilters, {
             populate: ["language", "meanings", "meanings.addedBy.user", "learnersCount", "lessonsCount"],
             orderBy: dbOrderBy,
             limit: pagination.pageSize,
             offset: pagination.pageSize * (pagination.page - 1),
         });
-    }
-
-    async countVocabs(filters: { languageCode?: string, searchQuery?: string }) {
-        const dbFilters: FilterQuery<Vocab> = this._buildVocabFilters(filters);
-        return await this.vocabRepo.count(dbFilters);
     }
 
     async createVocab(vocabData: { text: string; language: Language; isPhrase: boolean }) {
@@ -70,10 +72,18 @@ export class VocabService {
         }, {populate: ["meanings"]});
     }
 
-    async getUserVocabs(filters: { languageCode?: string, level?: VocabLevel, searchQuery?: string },
-                        sort: { sortBy: "text" | "lessonsCount" | "learnersCount", sortOrder: "asc" | "desc" },
-                        pagination: { page: number, pageSize: number }, user: User) {
-        const dbFilters = this._buildUserVocabFilters(filters, user);
+    async getPaginatedLearnerVocabs(filters: { languageCode?: string, level?: VocabLevel, searchQuery?: string },
+                                    sort: { sortBy: "text" | "lessonsCount" | "learnersCount", sortOrder: "asc" | "desc" },
+                                    pagination: { page: number, pageSize: number }, user: User): Promise<[MapLearnerVocab[], number]> {
+        const dbFilters: FilterQuery<MapLearnerVocab> = {$and: []};
+        dbFilters.$and!.push({learner: user.profile});
+
+        if (filters.languageCode !== undefined)
+            dbFilters.$and!.push({vocab: {language: {code: filters.languageCode}}});
+        if (filters.level !== undefined)
+            dbFilters.$and!.push({level: filters.level});
+        if (filters.searchQuery !== undefined)
+            dbFilters.$and!.push({vocab: {text: {$ilike: `%${filters.searchQuery}%`}}});
         const dbOrderBy: QueryOrderMap<MapLearnerVocab>[] = [];
         if (sort.sortBy == "text")
             dbOrderBy.push({vocab: {text: sort.sortOrder}});
@@ -83,19 +93,16 @@ export class VocabService {
             dbOrderBy.push({vocab: {lessonsCount: sort.sortOrder}});
         dbOrderBy.push({vocab: {id: "asc"}});
 
-        const mappings = await this.em.find(MapLearnerVocab, dbFilters, {
-            populate: ["vocab", "vocab.language", "vocab.meanings"],
+        const [mappings, totalCount] = await this.em.findAndCount(MapLearnerVocab, dbFilters, {
+            populate: ["vocab", "vocab.language", "vocab.meanings", "vocab.meanings.addedBy.user"],
             orderBy: dbOrderBy,
             limit: pagination.pageSize,
             offset: pagination.pageSize * (pagination.page - 1),
         });
-        await this.vocabRepo.annotateUserMeanings(mappings, user.profile.id);
-        return mappings;
-    }
-
-    async countUserVocabs(filters: { languageCode?: string, level?: VocabLevel, searchQuery?: string }, user: User) {
-        const dbFilters = this._buildUserVocabFilters(filters, user);
-        return await this.em.count(MapLearnerVocab, dbFilters);
+        await this.em.populate(mappings, ["vocab.learnerMeanings", "vocab.learnerMeanings.addedBy.user"], {
+            where: {vocab: {learnerMeanings: {learners: user.profile}}}
+        });
+        return [mappings, totalCount];
     }
 
     async addVocabToUserLearning(vocab: Vocab, user: User) {
@@ -104,17 +111,14 @@ export class VocabService {
             vocab: vocab
         });
         await this.em.flush();
-        await this.vocabRepo.annotateUserMeanings([mapping], user.profile.id);
-        return mapping;
+        return (await this.getUserVocab(vocab.id, user.profile))!;
     }
 
-    async getUserVocab(vocabId: number, user: User) {
-        const mapping = await this.em.findOne(MapLearnerVocab, {
-            vocab: vocabId,
-            learner: {user: {username: user.username}}
-        }, {populate: ["vocab.meanings"], refresh: true});
-        if (mapping)
-            await this.vocabRepo.annotateUserMeanings([mapping], user.profile.id);
+    async getUserVocab(vocabId: number, learner: Profile) {
+        const mapping = await this.em.findOne(MapLearnerVocab, {vocab: vocabId, learner}, {populate: ["vocab.meanings"]});
+        if (mapping) {
+            await this.em.populate(mapping, ["vocab.learnerMeanings", "vocab.learnerMeanings.addedBy.user"], {where: {vocab: {learnerMeanings: {learners: learner}}}});
+        }
         return mapping;
     }
 
@@ -135,7 +139,7 @@ export class VocabService {
 
         this.em.persist(mapping);
         await this.em.flush();
-        return (await this.getUserVocab(mapping.vocab.id, mapping.learner.user))!;
+        return (await this.getUserVocab(mapping.vocab.id, mapping.learner))!;
     }
 
     async getLessonVocabs(lesson: Lesson, user: User) {
@@ -143,7 +147,9 @@ export class VocabService {
             vocab: {lessonsAppearingIn: lesson},
             learner: {user: user}
         }, {populate: ["vocab.meanings"]});
-        await this.vocabRepo.annotateUserMeanings(existingMappings, user.profile.id);
+        await this.em.populate(existingMappings, ["vocab.learnerMeanings", "vocab.learnerMeanings.addedBy.user"], {
+            where: {vocab: {learnerMeanings: {learners: user.profile}}}
+        });
 
         const newVocabs = await this.em.find(Vocab, {
             lessonsAppearingIn: lesson,
@@ -153,26 +159,12 @@ export class VocabService {
         return [...existingMappings, ...newVocabs];
     }
 
-    private _buildVocabFilters(filters: { languageCode?: string, searchQuery?: string }) {
-        const dbFilters: FilterQuery<Vocab> = {$and: []};
-
-        if (filters.languageCode !== undefined)
-            dbFilters.$and!.push({language: {code: filters.languageCode}});
-        if (filters.searchQuery !== undefined)
-            dbFilters.$and!.push({text: {$ilike: `%${filters.searchQuery}%`}});
-        return dbFilters;
+    async findVocab(where: FilterQuery<Vocab>, fields: EntityField<Vocab>[] = ["id", "language"]) {
+        return await this.vocabRepo.findOne(where, {fields});
     }
 
-    private _buildUserVocabFilters(filters: { languageCode?: string, level?: VocabLevel, searchQuery?: string }, user: User) {
-        const dbFilters: FilterQuery<MapLearnerVocab> = {$and: []};
-        dbFilters.$and!.push({learner: user.profile});
-
-        if (filters.languageCode !== undefined)
-            dbFilters.$and!.push({vocab: {language: {code: filters.languageCode}}});
-        if (filters.level !== undefined)
-            dbFilters.$and!.push({level: filters.level});
-        if (filters.searchQuery !== undefined)
-            dbFilters.$and!.push({vocab: {text: {$ilike: `%${filters.searchQuery}%`}}});
-        return dbFilters;
+    async findLearnerVocab(where: FilterQuery<MapLearnerVocab>, fields?: EntityField<MapLearnerVocab>[]) {
+        return await this.em.findOne(MapLearnerVocab, where, {fields});
     }
+
 }

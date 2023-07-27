@@ -210,6 +210,7 @@ class LessonController {
         const lesson = await lessonService.getLesson(body.lessonId, request.user);
         if (!lesson || (!lesson.course.isPublic && request?.user?.profile !== lesson.course.addedBy))
             throw new ValidationAPIError({lesson: {message: "Not found"}});
+        // TODO: explicitly fetch request.user.profile.languagesLearning instead of populating in middleware
         if (!(request.user as User).profile.languagesLearning.contains(lesson.course.language))
             throw new ValidationAPIError({lesson: {message: "not in a language the user is learning"}});
 

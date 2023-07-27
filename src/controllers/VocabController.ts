@@ -15,9 +15,34 @@ import {numericStringValidator} from "@/src/validators/utilValidators.js";
 import {LessonService} from "@/src/services/LessonService.js";
 import {vocabSerializer} from "@/src/presentation/response/serializers/entities/VocabSerializer.js";
 import {learnerVocabSerializer} from "@/src/presentation/response/serializers/mappings/LearnerVocabSerializer.js";
-import {VocabLevel} from "@/src/models/enums/VocabLevel.js";
 
 class VocabController {
+
+    async getVocabs(request: FastifyRequest, reply: FastifyReply) {
+        const queryParamsValidator = z.object({
+            languageCode: languageCodeValidator.optional(),
+            searchQuery: z.string().min(1).max(256).optional(),
+            sortBy: z.union([z.literal("text"), z.literal("lessonsCount"), z.literal("learnersCount")]).optional().default("text"),
+            sortOrder: z.union([z.literal("asc"), z.literal("desc")]).optional().default("asc"),
+            page: z.coerce.number().int().min(1).optional().default(1),
+            pageSize: z.coerce.number().int().min(1).max(200).optional().default(25),
+        });
+
+        const queryParams = queryParamsValidator.parse(request.query);
+        const vocabService = new VocabService(request.em);
+        const filters = {languageCode: queryParams.languageCode, searchQuery: queryParams.searchQuery};
+        const sort = {sortBy: queryParams.sortBy, sortOrder: queryParams.sortOrder};
+        const pagination = {page: queryParams.page, pageSize: queryParams.pageSize};
+        const [vocabs, recordsCount] = await vocabService.getPaginatedVocabs(filters, sort, pagination);
+        reply.send({
+            //TODO check if recordsCount is 0 to avoid a message like Page 1 out of 0
+            page: pagination.page,
+            pageSize: pagination.pageSize,
+            pageCount: Math.ceil(recordsCount / pagination.pageSize),
+            data: vocabSerializer.serializeList(vocabs)
+        });
+    }
+
     async createVocab(request: FastifyRequest, reply: FastifyReply) {
         const bodyValidator = z.object({
             languageCode: languageCodeValidator,
@@ -27,7 +52,7 @@ class VocabController {
         const body = bodyValidator.parse(request.body);
 
         const languageService = new LanguageService(request.em);
-        const language = await languageService.getLanguage(body.languageCode);
+        const language = await languageService.findLanguage({code: body.languageCode});
         if (!language)
             throw new ValidationAPIError({language: {message: "not found"}});
         if (!language.isSupported)
@@ -56,33 +81,6 @@ class VocabController {
         reply.status(201).send(vocabSerializer.serialize(newVocab));
     }
 
-    async getVocabs(request: FastifyRequest, reply: FastifyReply) {
-        const queryParamsValidator = z.object({
-            languageCode: languageCodeValidator.optional(),
-            searchQuery: z.string().min(1).max(256).optional(),
-            sortBy: z.union([z.literal("text"), z.literal("lessonsCount"), z.literal("learnersCount")]).optional().default("text"),
-            sortOrder: z.union([z.literal("asc"), z.literal("desc")]).optional().default("asc"),
-            page: z.coerce.number().int().min(1).optional().default(1),
-            pageSize: z.coerce.number().int().min(1).max(200).optional().default(25),
-        });
-
-        const queryParams = queryParamsValidator.parse(request.query);
-        const vocabService = new VocabService(request.em);
-        const filters = {languageCode: queryParams.languageCode, searchQuery: queryParams.searchQuery};
-        const sort = {sortBy: queryParams.sortBy, sortOrder: queryParams.sortOrder};
-        const pagination = {page: queryParams.page, pageSize: queryParams.pageSize};
-        const vocabs = await vocabService.getVocabs(filters, sort, pagination);
-        //TODO use em.findAndCount instead of counting separately
-        const recordsCount = await vocabService.countVocabs(filters);
-        reply.send({
-            //TODO check if recordsCount is 0 to avoid a message like Page 1 out of 0
-            page: pagination.page,
-            pageSize: pagination.pageSize,
-            pageCount: Math.ceil(recordsCount / pagination.pageSize),
-            data: vocabSerializer.serializeList(vocabs)
-        });
-    }
-
     async getUserVocabs(request: FastifyRequest, reply: FastifyReply) {
         const pathParamsValidator = z.object({username: usernameValidator});
         const pathParams = pathParamsValidator.parse(request.params);
@@ -108,8 +106,7 @@ class VocabController {
         const filters = {languageCode: queryParams.languageCode, level: queryParams.level, searchQuery: queryParams.searchQuery};
         const sort = {sortBy: queryParams.sortBy, sortOrder: queryParams.sortOrder};
         const pagination = {page: queryParams.page, pageSize: queryParams.pageSize};
-        const vocabs = await vocabService.getUserVocabs(filters, sort, pagination, user);
-        const recordsCount = await vocabService.countUserVocabs(filters, user);
+        const [vocabs, recordsCount] = await vocabService.getPaginatedLearnerVocabs(filters, sort, pagination, user);
         reply.send({
             page: pagination.page,
             pageSize: pagination.pageSize,
@@ -132,13 +129,13 @@ class VocabController {
         const body = bodyValidator.parse(request.body);
 
         const vocabService = new VocabService(request.em);
-        const vocab = await vocabService.getVocab(body.vocabId);
+        const vocab = await vocabService.findVocab({id: body.vocabId});
         if (!vocab)
             throw new ValidationAPIError({vocab: {message: "Not found"}});
         if (!(request.user as User).profile.languagesLearning.contains(vocab.language))
             throw new ValidationAPIError({vocab: {message: "not in a language the user is learning"}});
 
-        const existingVocabMapping = await vocabService.getUserVocab(vocab.id, user);
+        const existingVocabMapping = await vocabService.getUserVocab(vocab.id, user.profile);
         if (existingVocabMapping)
             reply.status(200).send(learnerVocabSerializer.serialize(existingVocabMapping));
 
@@ -147,7 +144,6 @@ class VocabController {
     }
 
     async getUserVocab(request: FastifyRequest, reply: FastifyReply) {
-        2;
         const pathParamsValidator = z.object({
             username: usernameValidator,
             vocabId: numericStringValidator
@@ -161,7 +157,7 @@ class VocabController {
             throw new ForbiddenAPIError();
 
         const vocabService = new VocabService(request.em);
-        const mapping = await vocabService.getUserVocab(pathParams.vocabId, user);
+        const mapping = await vocabService.getUserVocab(pathParams.vocabId, user.profile);
         if (!mapping)
             throw new NotFoundAPIError("Vocab");
         reply.send(learnerVocabSerializer.serialize(mapping));
@@ -187,7 +183,7 @@ class VocabController {
         const body = bodyValidator.parse(request.body);
 
         const vocabService = new VocabService(request.em);
-        const mapping = await vocabService.getUserVocab(pathParams.vocabId, user);
+        const mapping = await vocabService.findLearnerVocab({vocab: pathParams.vocabId, learner: user.profile});
         if (!mapping)
             throw new NotFoundAPIError("Vocab");
         const updatedMapping = await vocabService.updateUserVocab(mapping, body);

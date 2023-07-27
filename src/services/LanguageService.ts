@@ -7,6 +7,7 @@ import {MapLearnerLesson} from "@/src/models/entities/MapLearnerLesson.js";
 import {MapLearnerDictionary} from "@/src/models/entities/MapLearnerDictionary.js";
 import {MapLearnerVocab} from "@/src/models/entities/MapLearnerVocab.js";
 import {MapLearnerMeaning} from "@/src/models/entities/MapLearnerMeaning.js";
+import {EntityField} from "@mikro-orm/core/drivers/IDatabaseDriver.js";
 
 export class LanguageService {
     em: EntityManager;
@@ -38,12 +39,6 @@ export class LanguageService {
         return await this.languageRepo.updateUserLanguageTimeStamp(languageMapping);
     }
 
-    async getLanguage(code: string) {
-        const language = await this.languageRepo.findOne({code});
-        await this.em.flush();
-        return language;
-    }
-
 
     async addLanguageToUser(user: User, language: Language) {
         const mapping = this.em.create(MapLearnerLanguage, {learner: user.profile, language: language});
@@ -66,5 +61,11 @@ export class LanguageService {
         this.em.remove(vocabMappings);
         this.em.remove(meaningMappings);
         await this.em.flush();
+    }
+
+    async findLanguage(where: FilterQuery<Language>, fields: EntityField<Language>[] = ["id", "code", "isSupported"]) {
+        const language = await this.languageRepo.findOne(where, {fields});
+        await this.em.flush();
+        return language;
     }
 }

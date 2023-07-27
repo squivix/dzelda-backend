@@ -32,12 +32,12 @@ const devOptions: Options = {
         path: "build/src/seeders/",
         pathTs: "src/seeders/",
     },
-    persistOnCreate: true,
+    persistOnCreate: true
 };
 
 const testOptions: Options = {
     ...devOptions,
-    debug: false,       //SQL queries too verbose
+    debug: true,       //SQL queries too verbose
 };
 
 const prodOptions: Options = {

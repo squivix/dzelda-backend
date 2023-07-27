@@ -5,8 +5,8 @@ import {Profile} from "@/src/models/entities/Profile.js";
 import {MapLearnerDictionary} from "@/src/models/entities/MapLearnerDictionary.js";
 
 @Entity()
-@Index({properties: ['language']})
-@Index({properties: ['name']})
+@Index({properties: ["language"]})
+@Index({properties: ["name"]})
 export class Dictionary extends CustomBaseEntity {
     @ManyToOne({entity: () => Language, inversedBy: (language) => language.dictionaries})
     language!: Language;
@@ -21,7 +21,7 @@ export class Dictionary extends CustomBaseEntity {
     dictionaryLink!: string;
 
     @Property({type: types.boolean, default: false})
-    isDefault!: boolean;
+    isDefault: boolean = false;
 
     @ManyToMany({
         entity: () => Profile,

@@ -15,14 +15,10 @@ export class MapLearnerVocab extends CustomBaseEntity {
     learner!: Profile;
 
     @Enum({items: () => VocabLevel, type: types.enum, default: VocabLevel.LEVEL_1})
-    level!: VocabLevel;
+    level: VocabLevel = VocabLevel.LEVEL_1;
 
-    @Property({type: types.string, default: "", length: 2048})
-    notes!: string;
+    @Property({type: types.string, length: 2048, default: ""})
+    notes: string = "";
 
     [OptionalProps]?: "level" | "notes";
-
-    @Property({persist: false, type: () => Meaning})
-    userMeanings?: Meaning[];
-
 }

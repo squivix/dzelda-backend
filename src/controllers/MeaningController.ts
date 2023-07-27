@@ -24,7 +24,7 @@ class MeaningController {
         const body = bodyValidator.parse(request.body);
 
         const languageService = new LanguageService(request.em);
-        const language = await languageService.getLanguage(body.languageCode);
+        const language = await languageService.findLanguage({code: body.languageCode});
         if (!language)
             throw new ValidationAPIError({language: {message: "not found"}});
 

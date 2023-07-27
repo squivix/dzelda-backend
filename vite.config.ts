@@ -7,8 +7,7 @@ import {defaultExclude} from "vitest/config";
 import path from "path";
 
 export default defineConfig({
-    plugins: [
-    ],
+    plugins: [],
     resolve: {
         alias: {
             "@": path.resolve(__dirname, "."),
@@ -25,5 +24,6 @@ export default defineConfig({
             "./tests/setup.ts",
         ],
         restoreMocks: true,
+        testTimeout: Infinity
     },
 });

@@ -19,10 +19,17 @@ export class Vocab extends CustomBaseEntity {
     language!: Language;
 
     @Property({type: types.boolean, default: false})
-    isPhrase!: boolean;
+    isPhrase: boolean = false;
 
     @OneToMany({entity: () => Meaning, mappedBy: (meaning: Meaning) => meaning.vocab, orderBy: {learnersCount: "desc", text: "asc"}})
     meanings: Collection<Meaning> = new Collection<Meaning>(this);
+
+    @OneToMany({
+        entity: () => Meaning, mappedBy: (meaning: Meaning) => meaning.vocab,
+        orderBy: {learnersCount: "desc", text: "asc"},
+        lazy: true,
+    })
+    learnerMeanings: Collection<Meaning> = new Collection<Meaning>(this);
 
     @ManyToMany({
         entity: () => Lesson,

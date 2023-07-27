@@ -20,16 +20,16 @@ export class Language extends CustomBaseEntity {
     greeting!: string;
 
     @Property({type: types.string, length: 500, nullable: true, default: null})
-    flag?: string;
+    flag: string | null = null;
 
     @Property({type: types.string, length: 500, nullable: true, default: null})
-    flagCircular?: string;
+    flagCircular: string | null = null;
 
     @Property({type: types.string, length: 32, nullable: true, default: null})
-    flagEmoji?: string;
+    flagEmoji?: string | null = null;
 
     @Property({type: types.boolean, default: false})
-    isSupported!: boolean;
+    isSupported: boolean = false;
 
     @Property({
         type: types.json,
@@ -67,7 +67,10 @@ export class Language extends CustomBaseEntity {
     learners: Collection<Profile> = new Collection<Profile>(this);
 
 
-    @Formula((alias: string) => `(SELECT COUNT(learner_id) FROM map_learner_language WHERE language_id=${alias}.id)`, {type: "number"})
+    @Formula((alias: string) => `(SELECT COUNT(learner_id) FROM map_learner_language WHERE language_id=${alias}.id)`, {
+        type: types.integer,
+        // lazy: true
+    })
     learnersCount!: number;
 
 

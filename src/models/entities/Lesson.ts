@@ -21,16 +21,16 @@ export class Lesson extends CustomBaseEntity {
     text!: string;
 
     @Property({type: types.string, length: 500, default: ""})
-    audio!: string;
+    audio: string = "";
 
     @Property({type: types.string, length: 500, default: ""})
-    image!: string;
+    image: string = "";
 
     @ManyToOne({entity: () => Course, inversedBy: (course) => course.lessons})
     course!: Course;
 
     @Property({type: types.integer, default: 0})
-    orderInCourse!: number;
+    orderInCourse: number = 0;
 
     @Enum({items: () => LanguageLevel, type: types.enum, default: LanguageLevel.ADVANCED_1})
     level: LanguageLevel = LanguageLevel.ADVANCED_1;

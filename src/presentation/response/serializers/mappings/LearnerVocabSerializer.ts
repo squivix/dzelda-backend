@@ -17,7 +17,7 @@ export class LearnerVocabSerializer extends CustomEntitySerializer<Vocab | MapLe
                 level: () => VocabLevel.NEW,
                 notes: () => null,
                 language: () => vocabOrMapping.language.code,
-                userMeanings: () => [],
+                learnerMeanings: () => [],
                 allMeanings: () => meaningSerializer.serializeList(vocabOrMapping.meanings.getItems())
             };
         } else {
@@ -28,7 +28,7 @@ export class LearnerVocabSerializer extends CustomEntitySerializer<Vocab | MapLe
                 level: () => vocabOrMapping.level,
                 notes: () => vocabOrMapping.notes,
                 language: () => vocabOrMapping.vocab.language.code,
-                userMeanings: () => vocabOrMapping.userMeanings !== undefined ? meaningSerializer.serializeList(vocabOrMapping.userMeanings, {ignore: ["vocab"]}) : undefined,
+                learnerMeanings: () => meaningSerializer.serializeList(vocabOrMapping.vocab.learnerMeanings.getItems(), {ignore: ["vocab"]}),
                 allMeanings: () => meaningSerializer.serializeList(vocabOrMapping.vocab.meanings.getItems(), {ignore: ["vocab"]})
             };
         }

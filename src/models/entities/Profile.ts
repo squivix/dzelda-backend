@@ -24,13 +24,13 @@ export class Profile extends CustomBaseEntity {
     user!: User;
 
     @Property({type: types.string, length: 500, default: ""})
-    profilePicture!: string;
+    profilePicture: string = "";
 
     @Property({type: types.text, length: 255, default: ""})
-    bio!: string;
+    bio: string = "";
 
     @Property({type: types.boolean, default: true})
-    isPublic!: boolean;
+    isPublic: boolean = true;
 
     @ManyToMany({
         entity: () => Language,

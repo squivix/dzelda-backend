@@ -27,16 +27,16 @@ export class User extends CustomBaseEntity {
     @OneToOne({entity: () => Profile, mappedBy: (profile: Profile) => profile.user})
     profile!: Profile;
 
-    @Property({type: types.boolean, default: false, hidden: true})
-    isStaff!: boolean;
+    @Property({type: types.boolean, hidden: true, default: false})
+    isStaff: boolean = false;
 
-    @Property({type: types.boolean, default: false, hidden: true})
-    isAdmin!: boolean;
+    @Property({type: types.boolean, hidden: true, default: false})
+    isAdmin: boolean = false;
 
-    @Property({type: types.datetime, defaultRaw: "now()", hidden: true})
+    @Property({type: types.datetime, hidden: true, defaultRaw: "now()"})
     accountCreatedAt!: Date;
 
-    @Property({type: types.datetime, defaultRaw: "now()", hidden: true})
+    @Property({type: types.datetime, hidden: true, defaultRaw: "now()"})
     lastLogin!: Date;
 
     @OneToOne({entity: () => Session, mappedBy: (session: Session) => session.user, hidden: true})

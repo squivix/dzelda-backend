@@ -54,7 +54,7 @@ class LanguageController {
         });
         const body = bodyValidator.parse(request.body);
         const languageService = new LanguageService(request.em);
-        const language = await languageService.getLanguage(body.languageCode);
+        const language = await languageService.findLanguage({code: body.languageCode});
         if (!language)
             throw new ValidationAPIError({language: {message: "not found"}});
         if (!language.isSupported)
@@ -86,7 +86,7 @@ class LanguageController {
         const languageService = new LanguageService(request.em);
         const languageMapping = await languageService.getUserLanguage(pathParams.languageCode, request.user as User);
         if (!languageMapping)
-            throw  new NotFoundAPIError("Language");
+            throw new NotFoundAPIError("Language");
         const updatedLanguageMapping = await languageService.updateUserLanguage(languageMapping);
         reply.status(200).send(learnerLanguageSerializer.serialize(updatedLanguageMapping));
     }
@@ -105,7 +105,7 @@ class LanguageController {
         const languageService = new LanguageService(request.em);
         const languageMapping = await languageService.getUserLanguage(pathParams.languageCode, request.user as User);
         if (!languageMapping)
-            throw  new NotFoundAPIError("Language");
+            throw new NotFoundAPIError("Language");
         await languageService.removeLanguageFromUser(languageMapping);
         reply.status(204);
     }
