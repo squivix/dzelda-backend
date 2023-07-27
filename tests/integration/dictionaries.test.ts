@@ -18,7 +18,8 @@ interface LocalTestContext extends TestContext {
     languageFactory: LanguageFactory;
 }
 
-beforeEach<LocalTestContext>((context) => {
+beforeEach<LocalTestContext>(async (context) => {
+    await orm.getSchemaGenerator().clearDatabase();
     context.em = orm.em.fork();
 
     context.userFactory = new UserFactory(context.em);
@@ -81,7 +82,7 @@ describe("GET dictionaries/", function () {
             const response = await makeRequest({languageCode: 12345});
             expect(response.statusCode).to.equal(400);
         });
-    })
+    });
 });
 
 /**{@link DictionaryController#getUserDictionaries}*/
@@ -154,7 +155,7 @@ describe("GET users/:username/dictionaries/", function () {
                 language: await context.languageFactory.createOne({learners: user.profile}),
                 learners: user.profile
             });
-            const language = await context.languageFactory.makeOne()
+            const language = await context.languageFactory.makeOne();
 
             const response = await makeRequest("me", {languageCode: language.code}, session.token);
             expect(response.statusCode).to.equal(200);
@@ -166,7 +167,7 @@ describe("GET users/:username/dictionaries/", function () {
             const response = await makeRequest("me", {languageCode: 12345}, session.token);
             expect(response.statusCode).to.equal(400);
         });
-    })
+    });
     test<LocalTestContext>("If user is not logged in return 401", async () => {
         const response = await makeRequest("me");
         expect(response.statusCode).to.equal(401);

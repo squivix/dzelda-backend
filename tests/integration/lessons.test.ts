@@ -37,7 +37,8 @@ interface LocalTestContext extends TestContext {
     vocabRepo: EntityRepository<Vocab>;
 }
 
-beforeEach<LocalTestContext>((context) => {
+beforeEach<LocalTestContext>(async (context) => {
+    await orm.getSchemaGenerator().clearDatabase();
     context.em = orm.em.fork();
 
     context.userFactory = new UserFactory(context.em);
@@ -681,7 +682,7 @@ describe("GET lessons/", () => {
         describe("test pageSize", () => {
             test<LocalTestContext>("If pageSize is 20 split the results into 20 sized pages", async (context) => {
                 const language = await context.languageFactory.createOne();
-                await context.lessonFactory.create(50, {course: await context.courseFactory.createOne({language, isPublic: false})});
+                await context.lessonFactory.create(50, {course: await context.courseFactory.createOne({language, isPublic: true})});
                 const recordsCount = await context.lessonRepo.count({course: {isPublic: true}});
                 const pageSize = 20;
                 const page = Math.ceil(recordsCount / pageSize);

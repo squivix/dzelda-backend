@@ -21,7 +21,7 @@ export class MapLearnerLanguage extends CustomBaseEntity {
     @Property({type: types.datetime, defaultRaw: "now()"})
     addedOn!: Date;
 
-    @Property({type: types.datetime, defaultRaw: "now()"})
+    @Property({type: types.datetime, defaultRaw: "now()", hidden: true})
     lastOpened!: Date;
 
     [OptionalProps]?: "addedOn" | "lastOpened";

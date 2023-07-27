@@ -31,6 +31,7 @@ interface LocalTestContext extends TestContext {
 }
 
 beforeEach<LocalTestContext>(async (context) => {
+    await orm.getSchemaGenerator().clearDatabase();
     context.em = orm.em.fork();
 
     context.userFactory = new UserFactory(context.em);
@@ -43,9 +44,6 @@ beforeEach<LocalTestContext>(async (context) => {
     context.meaningFactory = new MeaningFactory(context.em);
 
     context.vocabRepo = context.em.getRepository(Vocab);
-
-
-    await orm.getSchemaGenerator().clearDatabase();
 });
 
 /**{@link VocabController#getVocabs}*/

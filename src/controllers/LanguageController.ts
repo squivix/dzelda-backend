@@ -62,7 +62,7 @@ class LanguageController {
 
         const existingLanguageMapping = await languageService.getUserLanguage(language.code, user);
         if (existingLanguageMapping)
-            reply.status(200).send(languageSerializer.serialize(existingLanguageMapping.language));
+            reply.status(200).send(learnerLanguageSerializer.serialize(existingLanguageMapping));
         const newLanguageMapping = await languageService.addLanguageToUser(user, language);
         reply.status(201).send(learnerLanguageSerializer.serialize(newLanguageMapping));
     }

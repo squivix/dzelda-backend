@@ -37,7 +37,7 @@ const devOptions: Options = {
 
 const testOptions: Options = {
     ...devOptions,
-    debug: true,       //SQL queries too verbose
+    debug: false,       //SQL queries too verbose
 };
 
 const prodOptions: Options = {

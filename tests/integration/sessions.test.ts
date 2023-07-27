@@ -11,7 +11,8 @@ interface LocalTestContext extends TestContext {
     sessionRepo: EntityRepository<Session>;
 }
 
-beforeEach<LocalTestContext>((context) => {
+beforeEach<LocalTestContext>(async (context) => {
+    await orm.getSchemaGenerator().clearDatabase();
     context.em = orm.em.fork();
 
     context.userFactory = new UserFactory(context.em);
