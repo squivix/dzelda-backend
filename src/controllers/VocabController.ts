@@ -194,7 +194,7 @@ class VocabController {
         const pathParamsValidator = z.object({lessonId: numericStringValidator});
         const pathParams = pathParamsValidator.parse(request.params);
         const lessonService = new LessonService(request.em);
-        const lesson = await lessonService.getLesson(pathParams.lessonId, request.user);
+        const lesson = await lessonService.findLesson({id: pathParams.lessonId});
         if (!lesson || (!lesson.course.isPublic && request?.user?.profile !== lesson.course.addedBy))
             throw new NotFoundAPIError("Lesson");
 

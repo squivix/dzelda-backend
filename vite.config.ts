@@ -20,8 +20,9 @@ export default defineConfig({
         /* for example, use global to avoid globals imports (describe, test, expect): */
         exclude: [...defaultExclude, "build/**"],
         threads: false,
+        setupFiles: ["./tests/setup.ts"],
         globalSetup: [
-            "./tests/setup.ts",
+            "./tests/globalSetup.ts",
         ],
         restoreMocks: true,
         testTimeout: Infinity

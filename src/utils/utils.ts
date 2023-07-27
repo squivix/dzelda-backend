@@ -18,5 +18,6 @@ export function escapeRegExp(text: string) {
 type Enum<E> = Record<keyof E, number | string> & { [k: number]: string };
 
 export function numericEnumValues<E extends Enum<E>>(inputEnum: E): number[] {
-    return Object.values(inputEnum).filter((v) => !isNaN(Number(v))).map(v => Number(v))
+    return Object.values(inputEnum).filter((v) => !isNaN(Number(v))).map(v => Number(v));
 }
+

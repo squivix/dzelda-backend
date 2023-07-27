@@ -1515,27 +1515,33 @@ describe("GET lessons/:lessonId/vocabs/", () => {
         };
         return await fetchRequest(options, authToken);
     };
-
+    const defaultSortComparator = createComparator(Vocab, [
+        {property: "text", order: "asc", preProcess: (v: string) => v.toLowerCase()},
+        {property: "id", order: "asc"}]
+    );
     test<LocalTestContext>("If user is logged in, lesson exists return vocabs in lesson", async (context) => {
         const user = await context.userFactory.createOne();
         const session = await context.sessionFactory.createOne({user: user});
         const language = await context.languageFactory.createOne();
         const course = await context.courseFactory.createOne({language, isPublic: true});
         const lesson = await context.lessonFactory.createOne({course, learners: user.profile});
-        await context.vocabFactory.create(10, {language, lessonsAppearingIn: lesson, learners: user.profile});
-        await context.vocabFactory.create(10, {language, lessonsAppearingIn: lesson});
+        const expectedNewVocabs = await context.vocabFactory.create(3, {language, lessonsAppearingIn: lesson});
+        const expectedExistingVocabs = await context.vocabFactory.create(3, {language, lessonsAppearingIn: lesson});
+        const expectedExistingMappings = [];
+        for (let vocab of expectedExistingVocabs)
+            expectedExistingMappings.push(context.em.create(MapLearnerVocab, {learner: user.profile, vocab}));
+        await context.em.flush();
+        const expectedLessonVocabs = [...expectedExistingMappings, ...expectedNewVocabs];
         await context.vocabFactory.create(10, {language});
-
         const response = await makeRequest(lesson.id, session.token);
 
-        const existingMappings = await context.em.find(MapLearnerVocab, {vocab: {lessonsAppearingIn: lesson}, learner: {user: user}},
-            {populate: ["vocab.meanings"]});
-
-        const newVocabs = await context.em.find(Vocab, {lessonsAppearingIn: lesson, $not: {learners: {user: user}}},
-            {populate: ["meanings"]});
-        const lessonVocabs = [...existingMappings, ...newVocabs];
         expect(response.statusCode).to.equal(200);
-        expect(response.json()).toEqual(learnerVocabSerializer.serializeList(lessonVocabs));
+        const responseBody = response.json();
+        const expectedBody = learnerVocabSerializer.serializeList(expectedLessonVocabs);
+        //ignore order
+        expect(responseBody.length).toEqual(expectedBody.length);
+        expect(responseBody).toEqual(expect.arrayContaining(expectedBody));
+
     });
     test<LocalTestContext>("If user is not logged in return 401", async (context) => {
         const user = await context.userFactory.createOne();
@@ -1572,20 +1578,22 @@ describe("GET lessons/:lessonId/vocabs/", () => {
         const language = await context.languageFactory.createOne();
         const course = await context.courseFactory.createOne({language, isPublic: false, addedBy: user.profile});
         const lesson = await context.lessonFactory.createOne({course, learners: user.profile});
-        await context.vocabFactory.create(10, {language, lessonsAppearingIn: lesson, learners: user.profile});
-        await context.vocabFactory.create(10, {language, lessonsAppearingIn: lesson});
+        const expectedNewVocabs = await context.vocabFactory.create(3, {language, lessonsAppearingIn: lesson});
+        const expectedExistingVocabs = await context.vocabFactory.create(3, {language, lessonsAppearingIn: lesson});
+        const expectedExistingMappings = [];
+        for (let vocab of expectedExistingVocabs)
+            expectedExistingMappings.push(context.em.create(MapLearnerVocab, {learner: user.profile, vocab}));
+        await context.em.flush();
+        const expectedLessonVocabs = [...expectedExistingMappings, ...expectedNewVocabs];
         await context.vocabFactory.create(10, {language});
-
         const response = await makeRequest(lesson.id, session.token);
 
-        const existingMappings = await context.em.find(MapLearnerVocab, {vocab: {lessonsAppearingIn: lesson}, learner: {user: user}},
-            {populate: ["vocab.meanings"]});
-
-        const newVocabs = await context.em.find(Vocab, {lessonsAppearingIn: lesson, $not: {learners: {user: user}}},
-            {populate: ["meanings"]});
-        const lessonVocabs = [...existingMappings, ...newVocabs];
         expect(response.statusCode).to.equal(200);
-        expect(response.json()).toEqual(learnerVocabSerializer.serializeList(lessonVocabs));
+        const responseBody = response.json();
+        const expectedBody = learnerVocabSerializer.serializeList(expectedLessonVocabs);
+        //ignore order
+        expect(responseBody.length).toEqual(expectedBody.length);
+        expect(responseBody).toEqual(expect.arrayContaining(expectedBody));
     });
 
 

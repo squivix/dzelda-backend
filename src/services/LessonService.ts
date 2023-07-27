@@ -11,6 +11,7 @@ import {MapLessonVocab} from "@/src/models/entities/MapLessonVocab.js";
 import {CourseRepo} from "@/src/models/repos/CourseRepo.js";
 import {MapLearnerLesson} from "@/src/models/entities/MapLearnerLesson.js";
 import {QueryOrderMap} from "@mikro-orm/core/enums.js";
+import {EntityField} from "@mikro-orm/core/drivers/IDatabaseDriver.js";
 
 export class LessonService {
     em: SqlEntityManager;
@@ -198,5 +199,9 @@ export class LessonService {
         if (filters.level !== undefined)
             dbFilters.$and!.push({$or: filters.level.map(level => ({level}))});
         return dbFilters;
+    }
+
+    async findLesson(where: FilterQuery<Lesson>, fields: EntityField<Lesson>[] = ["id", "course"]) {
+        return await this.lessonRepo.findOne(where, {fields});
     }
 }
