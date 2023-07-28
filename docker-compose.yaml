@@ -8,47 +8,17 @@ services:
       POSTGRES_PASSWORD: "123456789"
       POSTGRES_DB: "dzelda-db-test"
       PGDATA: "/var/lib/postgresql/data"
-    profiles:
-      - "test"
     ports:
-      - "54320:5432"
-  tests:
-    build:
-      dockerfile: "./tests.dockerfile"
-      context: "."
-    env_file:
-      - "./env/test.env"
-    depends_on:
-      - "test-db"
-    profiles:
-      - "test"
+      - "54321:5432"
   dev-db:
     image: "postgres:15"
     environment:
       POSTGRES_USER: "devin"
       POSTGRES_PASSWORD: "123456789"
       POSTGRES_DB: "dzelda-db"
-    profiles:
-      - dev
     volumes:
       - "postgres-data:/var/lib/postgresql/data"
-  backend:
-    build:
-      dockerfile: "./backend.dockerfile"
-      context: "."
-    volumes:
-      - ".:/app:ro"
-      - "./build:/app/build"
-      - "./src/migrations:/app/src/migrations"
-      - "/app/node_modules"
-    env_file:
-      - "./env/dev.env"
     ports:
-      - "8000:80"
-    profiles:
-      - dev
-      - prod
-    depends_on:
-    - "dev-db"
+      - "54320:5432"
 volumes:
   postgres-data: null
