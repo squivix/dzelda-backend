@@ -14,7 +14,7 @@ export class CourseFactory extends CustomFactory<Course> {
             title: faker.random.words(faker.datatype.number({min: 5, max: 20})),
             description: faker.random.words(faker.datatype.number({min: 20, max: 30})),
             image: faker.image.imageUrl(100, 100),
-            isPublic: faker.datatype.boolean(),
+            isPublic: true,
             addedBy: {
                 ...ProfileFactory.makeDefinition(faker),
                 user: {...UserFactory.makeDefinition(faker), profile: null}

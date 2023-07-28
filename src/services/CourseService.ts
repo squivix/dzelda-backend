@@ -20,11 +20,26 @@ export class CourseService {
         this.lessonRepo = this.em.getRepository(Lesson) as LessonRepo;
     }
 
-    async getCourses(filters: { languageCode?: string, addedBy?: string, searchQuery?: string, isLearning?: boolean }, sort: {
+    async getPaginatedCourses(filters: { languageCode?: string, addedBy?: string, searchQuery?: string, isLearning?: boolean }, sort: {
         sortBy: "title" | "createdDate" | "learnersCount",
         sortOrder: "asc" | "desc"
-    }, pagination: { page: number, pageSize: number }, user: User | AnonymousUser | null) {
-        const dbFilters = this._buildCourseFilters(filters, user);
+    }, pagination: { page: number, pageSize: number }, user: User | AnonymousUser | null): Promise<[Course[], number]> {
+        const dbFilters: FilterQuery<Course> = {$and: []};
+
+        if (user && user instanceof User) {
+            dbFilters.$and!.push({$or: [{isPublic: true}, {addedBy: (user as User).profile}]});
+            if (filters.isLearning)
+                dbFilters.$and!.push({lessons: {learners: user.profile}});
+        } else
+            dbFilters.$and!.push({isPublic: true});
+
+        if (filters.languageCode !== undefined)
+            dbFilters.$and!.push({language: {code: filters.languageCode}});
+        if (filters.addedBy !== undefined)
+            dbFilters.$and!.push({addedBy: {user: {username: filters.addedBy}}});
+        if (filters.searchQuery !== undefined)
+            dbFilters.$and!.push({$or: [{title: {$ilike: `%${filters.searchQuery}%`}}, {description: {$ilike: `%${filters.searchQuery}%`}}]});
+
         const dbOrderBy: QueryOrderMap<Course>[] = [];
         if (sort.sortBy == "title")
             dbOrderBy.push({title: sort.sortOrder});
@@ -33,7 +48,8 @@ export class CourseService {
         else if (sort.sortBy == "learnersCount")
             dbOrderBy.push({learnersCount: sort.sortOrder});
         dbOrderBy.push({id: "asc"});
-        const courses = await this.courseRepo.find(dbFilters, {
+
+        const [courses, totalCount] = await this.courseRepo.findAndCount(dbFilters, {
             populate: ["language", "addedBy.user"],
             orderBy: dbOrderBy,
             limit: pagination.pageSize,
@@ -42,13 +58,13 @@ export class CourseService {
         if (user && !(user instanceof AnonymousUser))
             await this.courseRepo.annotateVocabsByLevel(courses, user.id);
 
-        return courses;
+        return [courses, totalCount];
     }
 
     async createCourse(fields: {
         language: Language, title: string, description?: string, isPublic?: boolean, image?: string, level?: LanguageLevel
     }, user: User) {
-        const newCourse = await this.courseRepo.create({
+        const newCourse = this.courseRepo.create({
             title: fields.title,
             addedBy: user.profile,
             language: fields.language,
@@ -101,38 +117,5 @@ export class CourseService {
         return course;
     }
 
-    async countCourses(filters: {
-        languageCode?: string,
-        addedBy?: string,
-        searchQuery?: string,
-        level?: LanguageLevel,
-        isLearning?: boolean
-    }, user: User | AnonymousUser | null) {
-        const dbFilters = this._buildCourseFilters(filters, user);
-        return await this.courseRepo.count(dbFilters);
-    }
 
-    private _buildCourseFilters(filters: {
-        languageCode?: string,
-        addedBy?: string,
-        searchQuery?: string,
-        isLearning?: boolean
-    }, user: User | AnonymousUser | null) {
-        const dbFilters: FilterQuery<Course> = {$and: []};
-
-        if (user && user instanceof User) {
-            dbFilters.$and!.push({$or: [{isPublic: true}, {addedBy: (user as User).profile}]});
-            if (filters.isLearning)
-                dbFilters.$and!.push({lessons: {learners: user.profile}});
-        } else
-            dbFilters.$and!.push({isPublic: true});
-
-        if (filters.languageCode !== undefined)
-            dbFilters.$and!.push({language: {code: filters.languageCode}});
-        if (filters.addedBy !== undefined)
-            dbFilters.$and!.push({addedBy: {user: {username: filters.addedBy}}});
-        if (filters.searchQuery !== undefined)
-            dbFilters.$and!.push({$or: [{title: {$ilike: `%${filters.searchQuery}%`}}, {description: {$ilike: `%${filters.searchQuery}%`}}]});
-        return dbFilters;
-    }
 }

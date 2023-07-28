@@ -41,8 +41,7 @@ class CourseController {
         const sort = {sortBy: queryParams.sortBy, sortOrder: queryParams.sortOrder};
         const pagination = {page: queryParams.page, pageSize: queryParams.pageSize};
         const courseService = new CourseService(request.em);
-        const courses = await courseService.getCourses(filters, sort, pagination, request.user);
-        const recordsCount = await courseService.countCourses(filters, request.user);
+        const [courses, recordsCount] = await courseService.getPaginatedCourses(filters, sort, pagination, request.user);
         reply.send({
             page: pagination.page,
             pageSize: pagination.pageSize,
@@ -168,8 +167,7 @@ class CourseController {
         const sort = {sortBy: queryParams.sortBy, sortOrder: queryParams.sortOrder};
         const pagination = {page: queryParams.page, pageSize: queryParams.pageSize};
         const courseService = new CourseService(request.em);
-        const courses = await courseService.getCourses(filters, sort, pagination, user);
-        const recordsCount = await courseService.countCourses(filters, user);
+        const [courses, recordsCount] = await courseService.getPaginatedCourses(filters, sort, pagination, user);
         reply.send({
             page: pagination.page,
             pageSize: pagination.pageSize,

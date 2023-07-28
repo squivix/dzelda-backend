@@ -1,6 +1,6 @@
-import {beforeAll, beforeEach, describe, expect, test, TestContext, vi} from "vitest";
+import {beforeEach, describe, expect, test, TestContext, vi} from "vitest";
 import {orm} from "@/src/server.js";
-import {buildQueryString, fetchRequest, fetchWithFiles, mockValidateFileFields, readSampleFile} from "@/tests/integration/utils.js";
+import {buildQueryString, createComparator, fetchRequest, fetchWithFiles, mockValidateFileFields, readSampleFile} from "@/tests/integration/utils.js";
 import {UserFactory} from "@/src/seeders/factories/UserFactory.js";
 import {SessionFactory} from "@/src/seeders/factories/SessionFactory.js";
 import {ProfileFactory} from "@/src/seeders/factories/ProfileFactory.js";
@@ -61,52 +61,45 @@ describe("GET courses/", function () {
         pagination: { pageSize: number, page: number },
         sort: { sortBy: "title" | "createdDate" | "learnersCount", sortOrder: "asc" | "desc" }
     } = {pagination: {pageSize: 10, page: 1}, sort: {sortBy: "title", sortOrder: "asc"}};
-
+    const defaultSortComparator = createComparator(Course, [
+        {property: "title", order: "asc", preProcess: (v: string) => v.toLowerCase()},
+        {property: "id", order: "asc"}]
+    );
     test<LocalTestContext>("If there are no filters return all public courses", async (context) => {
-        await context.courseFactory.create(5, {language: await context.languageFactory.createOne()});
+        const language = await context.languageFactory.createOne();
+        const expectedCourses = await context.courseFactory.create(5, {language, isPublic: true});
+        await context.courseFactory.create(5, {language, isPublic: false});
+        expectedCourses.sort(defaultSortComparator)
+        const recordsCount = expectedCourses.length;
 
         const response = await makeRequest();
-        const courses = await context.courseRepo.find({isPublic: true}, {
-            populate: ["language", "addedBy.user"],
-            orderBy: [{[queryDefaults.sort.sortBy]: queryDefaults.sort.sortOrder}, {id: "asc"}],
-            limit: queryDefaults.pagination.pageSize,
-            offset: queryDefaults.pagination.pageSize * (queryDefaults.pagination.page - 1),
-        });
-        const recordsCount = await context.courseRepo.count({isPublic: true});
 
         expect(response.statusCode).to.equal(200);
         expect(response.json()).toEqual({
             page: queryDefaults.pagination.page,
             pageSize: queryDefaults.pagination.pageSize,
             pageCount: Math.ceil(recordsCount / queryDefaults.pagination.pageSize),
-            data: courseSerializer.serializeList(courses)
+            data: courseSerializer.serializeList(expectedCourses)
         });
     });
     describe("test languageCode filter", () => {
         test<LocalTestContext>("If language filter is valid and language exists only return public courses in that language", async (context) => {
             const language1 = await context.languageFactory.createOne();
-            await context.courseFactory.create(3, {language: language1});
-            await context.courseFactory.create(3, {language: await context.languageFactory.createOne()});
+            const language2 = await context.languageFactory.createOne()
+            const expectedCourses = await context.courseFactory.create(3, {language: language1, isPublic: true});
+            await context.courseFactory.create(3, {language: language2, isPublic: true});
+            await context.courseFactory.create(3, {language: language1, isPublic: false});
+            expectedCourses.sort(defaultSortComparator)
+            const recordsCount = expectedCourses.length;
 
             const response = await makeRequest({languageCode: language1.code});
-            const courses = await context.courseRepo.find({
-                isPublic: true,
-                language: language1
-            }, {
-                populate: ["addedBy.user"],
-                orderBy: [{[queryDefaults.sort.sortBy]: queryDefaults.sort.sortOrder}, {id: "asc"}],
-                limit: queryDefaults.pagination.pageSize,
-                offset: queryDefaults.pagination.pageSize * (queryDefaults.pagination.page - 1),
-                refresh: true
-            });
-            const recordsCount = await context.courseRepo.count({isPublic: true, language: language1});
 
             expect(response.statusCode).to.equal(200);
             expect(response.json()).toEqual({
                 page: queryDefaults.pagination.page,
                 pageSize: queryDefaults.pagination.pageSize,
                 pageCount: Math.ceil(recordsCount / queryDefaults.pagination.pageSize),
-                data: courseSerializer.serializeList(courses)
+                data: courseSerializer.serializeList(expectedCourses)
             });
         });
         test<LocalTestContext>("If language does not exist return empty course list", async (context) => {
@@ -128,56 +121,46 @@ describe("GET courses/", function () {
     });
     describe("test addedBy filter", () => {
         test<LocalTestContext>("If addedBy filter is valid and user exists only return public courses added by that user", async (context) => {
-            const user = await context.userFactory.createOne();
-            await context.courseFactory.create(3, {language: await context.languageFactory.createOne(), addedBy: user.profile});
-            await context.courseFactory.create(3, {language: await context.languageFactory.createOne()});
+            const user1 = await context.userFactory.createOne();
+            const language = await context.languageFactory.createOne();
+            const expectedCourses = await context.courseFactory.create(3, {language, addedBy: user1.profile, isPublic: true});
+            await context.courseFactory.create(3, {language});
+            await context.courseFactory.create(3, {language, addedBy: user1.profile, isPublic: false});
+            expectedCourses.sort(defaultSortComparator)
+            const recordsCount = expectedCourses.length;
 
-            const response = await makeRequest({addedBy: user.username});
-            const courses = await context.courseRepo.find({
-                isPublic: true,
-                addedBy: user.profile
-            }, {
-                populate: ["addedBy.user"],
-                orderBy: [{[queryDefaults.sort.sortBy]: queryDefaults.sort.sortOrder}, {id: "asc"}],
-                limit: queryDefaults.pagination.pageSize,
-                offset: queryDefaults.pagination.pageSize * (queryDefaults.pagination.page - 1),
-                refresh: true
-            });
-            const recordsCount = await context.courseRepo.count({isPublic: true, addedBy: user.profile});
+            const response = await makeRequest({addedBy: user1.username});
 
             expect(response.statusCode).to.equal(200);
             expect(response.json()).toEqual({
                 page: queryDefaults.pagination.page,
                 pageSize: queryDefaults.pagination.pageSize,
                 pageCount: Math.ceil(recordsCount / queryDefaults.pagination.pageSize),
-                data: courseSerializer.serializeList(courses)
+                data: courseSerializer.serializeList(expectedCourses)
             });
         });
         test<LocalTestContext>("If addedBy is me and signed in return courses added by that user", async (context) => {
             const user = await context.userFactory.createOne();
             const session = await context.sessionFactory.createOne({user: user});
-            await context.courseFactory.create(3, {language: await context.languageFactory.createOne(), addedBy: user.profile});
-            await context.courseFactory.create(3, {language: await context.languageFactory.createOne()});
+            const language = await context.languageFactory.createOne();
+            const expectedCourses = [
+                ...await context.courseFactory.create(3, {language, addedBy: user.profile, isPublic: true}),
+                ...await context.courseFactory.create(3, {language, addedBy: user.profile, isPublic: false})
+            ];
+            await context.courseRepo.annotateVocabsByLevel(expectedCourses, user.profile.id)
+            await context.courseFactory.create(3, {language});
+
+            expectedCourses.sort(defaultSortComparator)
+            const recordsCount = expectedCourses.length;
 
             const response = await makeRequest({addedBy: "me"}, session.token);
-            let courses = await context.courseRepo.find({
-                addedBy: user.profile
-            }, {
-                populate: ["addedBy.user"],
-                orderBy: [{[queryDefaults.sort.sortBy]: queryDefaults.sort.sortOrder}, {id: "asc"}],
-                limit: queryDefaults.pagination.pageSize,
-                offset: queryDefaults.pagination.pageSize * (queryDefaults.pagination.page - 1),
-                refresh: true
-            });
-            courses = await context.courseRepo.annotateVocabsByLevel(courses, user.id);
-            const recordsCount = await context.courseRepo.count({addedBy: user.profile});
 
             expect(response.statusCode).to.equal(200);
             expect(response.json()).toEqual({
                 page: queryDefaults.pagination.page,
                 pageSize: queryDefaults.pagination.pageSize,
                 pageCount: Math.ceil(recordsCount / queryDefaults.pagination.pageSize),
-                data: courseSerializer.serializeList(courses)
+                data: courseSerializer.serializeList(expectedCourses)
             });
         });
         test<LocalTestContext>("If addedBy is me and not signed in return 401", async (context) => {
@@ -203,45 +186,32 @@ describe("GET courses/", function () {
     });
     describe("test searchQuery filter", () => {
         test<LocalTestContext>("If searchQuery is valid return courses with query in title or description", async (context) => {
-            const searchQuery = "search query";
             const language = await context.languageFactory.createOne();
-            for (let i = 0; i < 10; i++) {
-                if (i % 2 == 0)
-                    context.em.persist(context.courseFactory.makeOne({
-                        language: language,
-                        title: `title ${randomCase(searchQuery)} ${faker.random.alphaNumeric(10)}`
-                    }));
-                else
-                    context.em.persist(context.courseFactory.makeOne({
-                        language: language,
-                        description: `description ${randomCase(searchQuery)} ${faker.random.alphaNumeric(10)}`
-                    }));
-            }
-            await context.em.flush();
-            await context.courseFactory.create(5, {language: language,});
+            const searchQuery = "search query";
+            const expectedCourses = [
+                await context.courseFactory.createOne({
+                    language,
+                    isPublic: true,
+                    title: `title ${randomCase(searchQuery)} ${faker.random.alphaNumeric(10)}`
+                }),
+                await context.courseFactory.createOne({
+                    language,
+                    isPublic: true,
+                    description: `description ${randomCase(searchQuery)} ${faker.random.alphaNumeric(10)}`
+                })
+            ]
+            await context.courseFactory.create(3, {language: language});
+            expectedCourses.sort(defaultSortComparator)
+            const recordsCount = expectedCourses.length;
 
             const response = await makeRequest({searchQuery: searchQuery});
-
-            const courses = await context.courseRepo.find({
-                isPublic: true,
-                $or: [{title: {$ilike: `%${searchQuery}%`}}, {description: {$ilike: `%${searchQuery}%`}}]
-            }, {
-                populate: ["addedBy.user", "language"],
-                orderBy: [{[queryDefaults.sort.sortBy]: queryDefaults.sort.sortOrder}, {id: "asc"}],
-                limit: queryDefaults.pagination.pageSize,
-                offset: queryDefaults.pagination.pageSize * (queryDefaults.pagination.page - 1),
-            });
-            const recordsCount = await context.courseRepo.count({
-                isPublic: true,
-                $or: [{title: {$ilike: `%${searchQuery}%`}}, {description: {$ilike: `%${searchQuery}%`}}]
-            });
             expect(response.statusCode).to.equal(200);
 
             expect(response.json()).toEqual({
                 page: queryDefaults.pagination.page,
                 pageSize: queryDefaults.pagination.pageSize,
                 pageCount: Math.ceil(recordsCount / queryDefaults.pagination.pageSize),
-                data: courseSerializer.serializeList(courses)
+                data: courseSerializer.serializeList(expectedCourses)
             });
         });
         test<LocalTestContext>("If searchQuery is invalid return 400", async (context) => {
@@ -250,7 +220,7 @@ describe("GET courses/", function () {
             expect(response.statusCode).to.equal(400);
         });
         test<LocalTestContext>("If no courses match search query return empty list", async (context) => {
-            await context.courseFactory.create(3, {language: await context.languageFactory.createOne()});
+            await context.courseFactory.create(3, {language: await context.languageFactory.createOne(), isPublic: true});
 
             const response = await makeRequest({searchQuery: faker.random.alpha({count: 200})});
 
@@ -267,69 +237,67 @@ describe("GET courses/", function () {
         describe("test sortBy", () => {
             test<LocalTestContext>("test sortBy title", async (context) => {
                 const language = await context.languageFactory.createOne();
-                await context.courseFactory.createOne({title: "abc", language});
-                await context.courseFactory.createOne({title: "def", language});
+                const expectedCourses = [
+                    await context.courseFactory.createOne({title: "abc", isPublic: true, language}),
+                    await context.courseFactory.createOne({title: "def", isPublic: true, language})
+                ]
+                const recordsCount = expectedCourses.length;
 
                 const response = await makeRequest({sortBy: "title"});
-                const courses = await context.courseRepo.find({isPublic: true}, {
-                    populate: ["language", "addedBy.user"],
-                    orderBy: [{title: "asc"}, {id: "asc"}],
-                    limit: queryDefaults.pagination.pageSize,
-                    offset: queryDefaults.pagination.pageSize * (queryDefaults.pagination.page - 1),
-                });
-                const recordsCount = await context.courseRepo.count({isPublic: true});
 
                 expect(response.statusCode).to.equal(200);
                 expect(response.json()).toEqual({
                     page: queryDefaults.pagination.page,
                     pageSize: queryDefaults.pagination.pageSize,
                     pageCount: Math.ceil(recordsCount / queryDefaults.pagination.pageSize),
-                    data: courseSerializer.serializeList(courses)
+                    data: courseSerializer.serializeList(expectedCourses)
                 });
             });
             test<LocalTestContext>("test sortBy createdDate", async (context) => {
                 const language = await context.languageFactory.createOne();
-                await context.courseFactory.createOne({addedOn: "2023-03-15T20:29:42.765Z", language});
-                await context.courseFactory.createOne({addedOn: "2018-07-22T10:30:45.000Z", language});
+                const expectedCourses = [
+                    await context.courseFactory.createOne({addedOn: "2018-07-22T10:30:45.000Z", isPublic: true, language}),
+                    await context.courseFactory.createOne({addedOn: "2023-03-15T20:29:42.765Z", isPublic: true, language}),
+                ]
+                const recordsCount = expectedCourses.length;
 
                 const response = await makeRequest({sortBy: "createdDate"});
-                const courses = await context.courseRepo.find({isPublic: true}, {
-                    populate: ["language", "addedBy.user"],
-                    orderBy: [{addedOn: "asc"}, {id: "asc"}],
-                    limit: queryDefaults.pagination.pageSize,
-                    offset: queryDefaults.pagination.pageSize * (queryDefaults.pagination.page - 1),
-                });
-                const recordsCount = await context.courseRepo.count({isPublic: true});
 
                 expect(response.statusCode).to.equal(200);
                 expect(response.json()).toEqual({
                     page: queryDefaults.pagination.page,
                     pageSize: queryDefaults.pagination.pageSize,
                     pageCount: Math.ceil(recordsCount / queryDefaults.pagination.pageSize),
-                    data: courseSerializer.serializeList(courses)
+                    data: courseSerializer.serializeList(expectedCourses)
                 });
             });
             test<LocalTestContext>("test sortBy learnersCount", async (context) => {
                 const user = await context.userFactory.createOne();
+                const user1 = await context.userFactory.createOne();
+                const user2 = await context.userFactory.createOne();
+
                 const language = await context.languageFactory.createOne();
-                await context.lessonFactory.create(3, {course: await context.courseFactory.createOne({language}), learners: user.profile});
-                await context.courseFactory.createOne({language});
+                const expectedCourses = [
+                    await context.courseFactory.createOne({language, isPublic: true, lessons: [context.lessonFactory.makeOne({learners: []})]}),
+                    await context.courseFactory.createOne({
+                        language, isPublic: true,
+                        lessons: [context.lessonFactory.makeOne({learners: [user1.profile]})]
+                    }),
+                    await context.courseFactory.createOne({
+                        language, isPublic: true,
+                        lessons: [context.lessonFactory.makeOne({learners: [user1.profile, user2.profile]})]
+                    }),
+                ]
+                const recordsCount = expectedCourses.length;
 
                 const response = await makeRequest({sortBy: "learnersCount"});
-                const courses = await context.courseRepo.find({isPublic: true}, {
-                    populate: ["language", "addedBy.user"],
-                    orderBy: [{learnersCount: "asc"}, {id: "asc"}],
-                    limit: queryDefaults.pagination.pageSize,
-                    offset: queryDefaults.pagination.pageSize * (queryDefaults.pagination.page - 1),
-                });
-                const recordsCount = await context.courseRepo.count({isPublic: true});
 
                 expect(response.statusCode).to.equal(200);
                 expect(response.json()).toEqual({
                     page: queryDefaults.pagination.page,
                     pageSize: queryDefaults.pagination.pageSize,
                     pageCount: Math.ceil(recordsCount / queryDefaults.pagination.pageSize),
-                    data: courseSerializer.serializeList(courses)
+                    data: courseSerializer.serializeList(expectedCourses)
                 });
             });
             test<LocalTestContext>("if sortBy is invalid return 400", async (context) => {
@@ -340,46 +308,38 @@ describe("GET courses/", function () {
         describe("test sortOrder", () => {
             test<LocalTestContext>("test sortOrder ascending", async (context) => {
                 const language = await context.languageFactory.createOne();
-                await context.courseFactory.createOne({title: "abc", language});
-                await context.courseFactory.createOne({title: "def", language});
+                const expectedCourses = [
+                    await context.courseFactory.createOne({title: "abc", isPublic: true, language}),
+                    await context.courseFactory.createOne({title: "def", isPublic: true, language})
+                ]
+                const recordsCount = expectedCourses.length;
 
-                const response = await makeRequest({sortBy: "title", sortOrder: "asc"});
-                const courses = await context.courseRepo.find({isPublic: true}, {
-                    populate: ["language", "addedBy.user"],
-                    orderBy: [{title: "asc"}, {id: "asc"}],
-                    limit: queryDefaults.pagination.pageSize,
-                    offset: queryDefaults.pagination.pageSize * (queryDefaults.pagination.page - 1),
-                });
-                const recordsCount = await context.courseRepo.count({isPublic: true});
+                const response = await makeRequest({sortOrder: "asc"});
 
                 expect(response.statusCode).to.equal(200);
                 expect(response.json()).toEqual({
                     page: queryDefaults.pagination.page,
                     pageSize: queryDefaults.pagination.pageSize,
                     pageCount: Math.ceil(recordsCount / queryDefaults.pagination.pageSize),
-                    data: courseSerializer.serializeList(courses)
+                    data: courseSerializer.serializeList(expectedCourses)
                 });
             });
             test<LocalTestContext>("test sortOrder descending", async (context) => {
                 const language = await context.languageFactory.createOne();
-                await context.courseFactory.createOne({title: "abc", language});
-                await context.courseFactory.createOne({title: "def", language});
+                const expectedCourses = [
+                    await context.courseFactory.createOne({title: "def", isPublic: true, language}),
+                    await context.courseFactory.createOne({title: "abc", isPublic: true, language}),
+                ]
+                const recordsCount = expectedCourses.length;
 
-                const response = await makeRequest({sortBy: "title", sortOrder: "desc"});
-                const courses = await context.courseRepo.find({isPublic: true}, {
-                    populate: ["language", "addedBy.user"],
-                    orderBy: [{title: "desc"}, {id: "asc"}],
-                    limit: queryDefaults.pagination.pageSize,
-                    offset: queryDefaults.pagination.pageSize * (queryDefaults.pagination.page - 1),
-                });
-                const recordsCount = await context.courseRepo.count({isPublic: true});
+                const response = await makeRequest({sortOrder: "desc"});
 
                 expect(response.statusCode).to.equal(200);
                 expect(response.json()).toEqual({
                     page: queryDefaults.pagination.page,
                     pageSize: queryDefaults.pagination.pageSize,
                     pageCount: Math.ceil(recordsCount / queryDefaults.pagination.pageSize),
-                    data: courseSerializer.serializeList(courses)
+                    data: courseSerializer.serializeList(expectedCourses)
                 });
             });
             test<LocalTestContext>("if sortBy is invalid return 400", async (context) => {
@@ -391,74 +351,63 @@ describe("GET courses/", function () {
     describe("test pagination", () => {
         describe("test page", () => {
             test<LocalTestContext>("If page is 1 return the first page of results", async (context) => {
-                await context.courseFactory.create(10, {language: await context.languageFactory.createOne()});
+                const allCourses = await context.courseFactory.create(10, {language: await context.languageFactory.createOne()});
+                allCourses.sort(defaultSortComparator);
+                const recordsCount = allCourses.length;
                 const page = 1, pageSize = 3;
+                const expectedCourses = allCourses.slice(pageSize * (page - 1), pageSize * (page - 1) + pageSize);
 
                 const response = await makeRequest({page, pageSize});
-                const courses = await context.courseRepo.find({isPublic: true}, {
-                    populate: ["language", "addedBy.user"],
-                    orderBy: [{[queryDefaults.sort.sortBy]: queryDefaults.sort.sortOrder}, {id: "asc"}],
-                    limit: pageSize,
-                    offset: pageSize * (page - 1),
-                });
-                const recordsCount = await context.courseRepo.count({isPublic: true});
 
                 expect(response.statusCode).to.equal(200);
                 expect(response.json()).toEqual({
                     page: page,
                     pageSize: pageSize,
                     pageCount: Math.ceil(recordsCount / pageSize),
-                    data: courseSerializer.serializeList(courses)
+                    data: courseSerializer.serializeList(expectedCourses)
                 });
             });
             test<LocalTestContext>("If page is 2 return the second page of results", async (context) => {
-                await context.courseFactory.create(10, {language: await context.languageFactory.createOne()});
+                const allCourses = await context.courseFactory.create(10, {language: await context.languageFactory.createOne()});
+                allCourses.sort(defaultSortComparator);
+                const recordsCount = allCourses.length;
                 const page = 2, pageSize = 3;
+                const expectedCourses = allCourses.slice(pageSize * (page - 1), pageSize * (page - 1) + pageSize);
 
                 const response = await makeRequest({page, pageSize});
-                const courses = await context.courseRepo.find({isPublic: true}, {
-                    populate: ["language", "addedBy.user"],
-                    orderBy: [{[queryDefaults.sort.sortBy]: queryDefaults.sort.sortOrder}, {id: "asc"}],
-                    limit: pageSize,
-                    offset: pageSize * (page - 1),
-                });
-                const recordsCount = await context.courseRepo.count({isPublic: true});
 
                 expect(response.statusCode).to.equal(200);
                 expect(response.json()).toEqual({
                     page: page,
                     pageSize: pageSize,
                     pageCount: Math.ceil(recordsCount / pageSize),
-                    data: courseSerializer.serializeList(courses)
+                    data: courseSerializer.serializeList(expectedCourses)
                 });
             });
             test<LocalTestContext>("If page is last return the last page of results", async (context) => {
-                await context.courseFactory.create(10, {language: await context.languageFactory.createOne()});
-                const recordsCount = await context.courseRepo.count({isPublic: true});
+                const allCourses = await context.courseFactory.create(10, {language: await context.languageFactory.createOne()});
+                allCourses.sort(defaultSortComparator);
+                const recordsCount = allCourses.length;
                 const pageSize = 3;
-                const page = Math.ceil(recordsCount / pageSize);
+                const page = Math.ceil(recordsCount / pageSize)
+                const expectedCourses = allCourses.slice(pageSize * (page - 1), pageSize * (page - 1) + pageSize);
 
                 const response = await makeRequest({page, pageSize});
-                const courses = await context.courseRepo.find({isPublic: true}, {
-                    populate: ["language", "addedBy.user"],
-                    orderBy: [{[queryDefaults.sort.sortBy]: queryDefaults.sort.sortOrder}, {id: "asc"}],
-                    limit: pageSize,
-                    offset: pageSize * (page - 1),
-                });
 
                 expect(response.statusCode).to.equal(200);
                 expect(response.json()).toEqual({
                     page: page,
                     pageSize: pageSize,
                     pageCount: Math.ceil(recordsCount / pageSize),
-                    data: courseSerializer.serializeList(courses)
+                    data: courseSerializer.serializeList(expectedCourses)
                 });
             });
             test<LocalTestContext>("If page is more than last return empty page", async (context) => {
-                await context.courseFactory.create(10, {language: await context.languageFactory.createOne()});
-                const recordsCount = await context.courseRepo.count({isPublic: true});
+                const allCourses = await context.courseFactory.create(10, {language: await context.languageFactory.createOne()});
+                const recordsCount = allCourses.length;
                 const pageSize = 3;
                 const page = Math.ceil(recordsCount / pageSize) + 1;
+                const expectedCourses = allCourses.slice(pageSize * (page - 1), pageSize * (page - 1) + pageSize);
 
                 const response = await makeRequest({page, pageSize});
 
@@ -485,24 +434,20 @@ describe("GET courses/", function () {
         });
         describe("test pageSize", () => {
             test<LocalTestContext>("If pageSize is 20 split the results into 20 sized pages", async (context) => {
-                await context.courseFactory.create(50, {language: await context.languageFactory.createOne()});
+                const allCourses = await context.courseFactory.create(50, {language: await context.languageFactory.createOne()});
+                allCourses.sort(defaultSortComparator);
+                const recordsCount = allCourses.length;
                 const page = 2, pageSize = 20;
+                const expectedCourses = allCourses.slice(pageSize * (page - 1), pageSize * (page - 1) + pageSize);
 
                 const response = await makeRequest({page, pageSize});
-                const courses = await context.courseRepo.find({isPublic: true}, {
-                    populate: ["language", "addedBy.user"],
-                    orderBy: [{[queryDefaults.sort.sortBy]: queryDefaults.sort.sortOrder}, {id: "asc"}],
-                    limit: pageSize,
-                    offset: pageSize * (page - 1),
-                });
-                const recordsCount = await context.courseRepo.count({isPublic: true});
 
                 expect(response.statusCode).to.equal(200);
                 expect(response.json()).toEqual({
                     page: page,
                     pageSize: pageSize,
                     pageCount: Math.ceil(recordsCount / pageSize),
-                    data: courseSerializer.serializeList(courses)
+                    data: courseSerializer.serializeList(expectedCourses)
                 });
                 expect(response.json().data.length).toBeLessThanOrEqual(pageSize);
             });
@@ -529,47 +474,44 @@ describe("GET courses/", function () {
     test<LocalTestContext>("If logged in return courses with vocab levels for user", async (context) => {
         const user = await context.userFactory.createOne();
         const session = await context.sessionFactory.createOne({user: user});
-        await context.courseFactory.create(10, {language: await context.languageFactory.createOne()});
+        const language = await context.languageFactory.createOne();
+        const expectedCourses = await context.courseFactory.create(5, {language, isPublic: true});
+        await context.courseFactory.create(5, {language, isPublic: false});
+        expectedCourses.sort(defaultSortComparator)
+        await context.courseRepo.annotateVocabsByLevel(expectedCourses, user.id);
+        const recordsCount = expectedCourses.length;
 
         const response = await makeRequest({}, session.token);
 
-        let courses = await context.courseRepo.find({isPublic: true}, {
-            populate: ["language", "addedBy.user"],
-            orderBy: [{[queryDefaults.sort.sortBy]: queryDefaults.sort.sortOrder}, {id: "asc"}],
-            limit: queryDefaults.pagination.pageSize,
-            offset: queryDefaults.pagination.pageSize * (queryDefaults.pagination.page - 1),
-        });
-        courses = await context.courseRepo.annotateVocabsByLevel(courses, user.id);
-        const recordsCount = await context.courseRepo.count({isPublic: true});
         expect(response.statusCode).to.equal(200);
         expect(response.json()).toEqual({
             page: queryDefaults.pagination.page,
             pageSize: queryDefaults.pagination.pageSize,
             pageCount: Math.ceil(recordsCount / queryDefaults.pagination.pageSize),
-            data: courseSerializer.serializeList(courses)
+            data: courseSerializer.serializeList(expectedCourses)
         });
     });
     test<LocalTestContext>("If logged in as author of courses return private courses", async (context) => {
         const user = await context.userFactory.createOne();
         const session = await context.sessionFactory.createOne({user: user});
-        await context.courseFactory.create(10, {addedBy: user.profile, language: await context.languageFactory.createOne()});
+        const language = await context.languageFactory.createOne();
+        const expectedCourses = [
+            ...await context.courseFactory.create(5, {language, isPublic: true}),
+            ...await context.courseFactory.create(5, {language, isPublic: false, addedBy: user.profile}),
+        ];
+        await context.courseFactory.create(5, {language, isPublic: false});
+        expectedCourses.sort(defaultSortComparator)
+        await context.courseRepo.annotateVocabsByLevel(expectedCourses, user.id);
+        const recordsCount = expectedCourses.length;
 
         const response = await makeRequest({}, session.token);
 
-        let courses = await context.courseRepo.find({$or: [{isPublic: true}, {addedBy: user.profile}]}, {
-            populate: ["language", "addedBy.user"],
-            orderBy: [{[queryDefaults.sort.sortBy]: queryDefaults.sort.sortOrder}, {id: "asc"}],
-            limit: queryDefaults.pagination.pageSize,
-            offset: queryDefaults.pagination.pageSize * (queryDefaults.pagination.page - 1),
-        });
-        courses = await context.courseRepo.annotateVocabsByLevel(courses, user.id);
-        const recordsCount = await context.courseRepo.count({$or: [{isPublic: true}, {addedBy: user.profile}]});
         expect(response.statusCode).to.equal(200);
         expect(response.json()).toEqual({
             page: queryDefaults.pagination.page,
             pageSize: queryDefaults.pagination.pageSize,
             pageCount: Math.ceil(recordsCount / queryDefaults.pagination.pageSize),
-            data: courseSerializer.serializeList(courses)
+            data: courseSerializer.serializeList(expectedCourses)
         });
     });
 
