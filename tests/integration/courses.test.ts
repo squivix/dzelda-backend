@@ -1,6 +1,13 @@
 import {beforeEach, describe, expect, test, TestContext, vi} from "vitest";
 import {orm} from "@/src/server.js";
-import {buildQueryString, createComparator, fetchRequest, fetchWithFiles, mockValidateFileFields, readSampleFile} from "@/tests/integration/utils.js";
+import {
+    buildQueryString,
+    createComparator,
+    fetchRequest,
+    fetchWithFiles,
+    mockValidateFileFields,
+    readSampleFile
+} from "@/tests/integration/utils.js";
 import {UserFactory} from "@/src/seeders/factories/UserFactory.js";
 import {SessionFactory} from "@/src/seeders/factories/SessionFactory.js";
 import {ProfileFactory} from "@/src/seeders/factories/ProfileFactory.js";
@@ -45,7 +52,7 @@ beforeEach<LocalTestContext>(async (context) => {
     context.languageFactory = new LanguageFactory(context.em);
     context.lessonRepo = context.em.getRepository(Lesson) as LessonRepo;
     context.courseRepo = context.em.getRepository(Course) as CourseRepo;
-    vi.spyOn(constantExports, 'ROOT_UPLOAD_DIR', 'get').mockReturnValue(TEMP_ROOT_FILE_UPLOAD_DIR)
+    vi.spyOn(constantExports, "ROOT_UPLOAD_DIR", "get").mockReturnValue(TEMP_ROOT_FILE_UPLOAD_DIR);
 });
 
 /**{@link CourseController#getCourses}*/
@@ -69,7 +76,7 @@ describe("GET courses/", function () {
         const language = await context.languageFactory.createOne();
         const expectedCourses = await context.courseFactory.create(5, {language, isPublic: true});
         await context.courseFactory.create(5, {language, isPublic: false});
-        expectedCourses.sort(defaultSortComparator)
+        expectedCourses.sort(defaultSortComparator);
         const recordsCount = expectedCourses.length;
 
         const response = await makeRequest();
@@ -85,11 +92,11 @@ describe("GET courses/", function () {
     describe("test languageCode filter", () => {
         test<LocalTestContext>("If language filter is valid and language exists only return public courses in that language", async (context) => {
             const language1 = await context.languageFactory.createOne();
-            const language2 = await context.languageFactory.createOne()
+            const language2 = await context.languageFactory.createOne();
             const expectedCourses = await context.courseFactory.create(3, {language: language1, isPublic: true});
             await context.courseFactory.create(3, {language: language2, isPublic: true});
             await context.courseFactory.create(3, {language: language1, isPublic: false});
-            expectedCourses.sort(defaultSortComparator)
+            expectedCourses.sort(defaultSortComparator);
             const recordsCount = expectedCourses.length;
 
             const response = await makeRequest({languageCode: language1.code});
@@ -126,7 +133,7 @@ describe("GET courses/", function () {
             const expectedCourses = await context.courseFactory.create(3, {language, addedBy: user1.profile, isPublic: true});
             await context.courseFactory.create(3, {language});
             await context.courseFactory.create(3, {language, addedBy: user1.profile, isPublic: false});
-            expectedCourses.sort(defaultSortComparator)
+            expectedCourses.sort(defaultSortComparator);
             const recordsCount = expectedCourses.length;
 
             const response = await makeRequest({addedBy: user1.username});
@@ -147,10 +154,10 @@ describe("GET courses/", function () {
                 ...await context.courseFactory.create(3, {language, addedBy: user.profile, isPublic: true}),
                 ...await context.courseFactory.create(3, {language, addedBy: user.profile, isPublic: false})
             ];
-            await context.courseRepo.annotateVocabsByLevel(expectedCourses, user.profile.id)
+            await context.courseRepo.annotateVocabsByLevel(expectedCourses, user.profile.id);
             await context.courseFactory.create(3, {language});
 
-            expectedCourses.sort(defaultSortComparator)
+            expectedCourses.sort(defaultSortComparator);
             const recordsCount = expectedCourses.length;
 
             const response = await makeRequest({addedBy: "me"}, session.token);
@@ -199,9 +206,9 @@ describe("GET courses/", function () {
                     isPublic: true,
                     description: `description ${randomCase(searchQuery)} ${faker.random.alphaNumeric(10)}`
                 })
-            ]
+            ];
             await context.courseFactory.create(3, {language: language});
-            expectedCourses.sort(defaultSortComparator)
+            expectedCourses.sort(defaultSortComparator);
             const recordsCount = expectedCourses.length;
 
             const response = await makeRequest({searchQuery: searchQuery});
@@ -240,7 +247,7 @@ describe("GET courses/", function () {
                 const expectedCourses = [
                     await context.courseFactory.createOne({title: "abc", isPublic: true, language}),
                     await context.courseFactory.createOne({title: "def", isPublic: true, language})
-                ]
+                ];
                 const recordsCount = expectedCourses.length;
 
                 const response = await makeRequest({sortBy: "title"});
@@ -256,9 +263,9 @@ describe("GET courses/", function () {
             test<LocalTestContext>("test sortBy createdDate", async (context) => {
                 const language = await context.languageFactory.createOne();
                 const expectedCourses = [
-                    await context.courseFactory.createOne({addedOn: "2018-07-22T10:30:45.000Z", isPublic: true, language}),
-                    await context.courseFactory.createOne({addedOn: "2023-03-15T20:29:42.765Z", isPublic: true, language}),
-                ]
+                    await context.courseFactory.createOne({addedOn: new Date("2018-07-22T10:30:45.000Z"), isPublic: true, language}),
+                    await context.courseFactory.createOne({addedOn: new Date("2023-03-15T20:29:42.000Z"), isPublic: true, language}),
+                ];
                 const recordsCount = expectedCourses.length;
 
                 const response = await makeRequest({sortBy: "createdDate"});
@@ -278,7 +285,11 @@ describe("GET courses/", function () {
 
                 const language = await context.languageFactory.createOne();
                 const expectedCourses = [
-                    await context.courseFactory.createOne({language, isPublic: true, lessons: [context.lessonFactory.makeOne({learners: []})]}),
+                    await context.courseFactory.createOne({
+                        language,
+                        isPublic: true,
+                        lessons: [context.lessonFactory.makeOne({learners: []})]
+                    }),
                     await context.courseFactory.createOne({
                         language, isPublic: true,
                         lessons: [context.lessonFactory.makeOne({learners: [user1.profile]})]
@@ -287,7 +298,7 @@ describe("GET courses/", function () {
                         language, isPublic: true,
                         lessons: [context.lessonFactory.makeOne({learners: [user1.profile, user2.profile]})]
                     }),
-                ]
+                ];
                 const recordsCount = expectedCourses.length;
 
                 const response = await makeRequest({sortBy: "learnersCount"});
@@ -311,7 +322,7 @@ describe("GET courses/", function () {
                 const expectedCourses = [
                     await context.courseFactory.createOne({title: "abc", isPublic: true, language}),
                     await context.courseFactory.createOne({title: "def", isPublic: true, language})
-                ]
+                ];
                 const recordsCount = expectedCourses.length;
 
                 const response = await makeRequest({sortOrder: "asc"});
@@ -329,7 +340,7 @@ describe("GET courses/", function () {
                 const expectedCourses = [
                     await context.courseFactory.createOne({title: "def", isPublic: true, language}),
                     await context.courseFactory.createOne({title: "abc", isPublic: true, language}),
-                ]
+                ];
                 const recordsCount = expectedCourses.length;
 
                 const response = await makeRequest({sortOrder: "desc"});
@@ -389,7 +400,7 @@ describe("GET courses/", function () {
                 allCourses.sort(defaultSortComparator);
                 const recordsCount = allCourses.length;
                 const pageSize = 3;
-                const page = Math.ceil(recordsCount / pageSize)
+                const page = Math.ceil(recordsCount / pageSize);
                 const expectedCourses = allCourses.slice(pageSize * (page - 1), pageSize * (page - 1) + pageSize);
 
                 const response = await makeRequest({page, pageSize});
@@ -477,7 +488,7 @@ describe("GET courses/", function () {
         const language = await context.languageFactory.createOne();
         const expectedCourses = await context.courseFactory.create(5, {language, isPublic: true});
         await context.courseFactory.create(5, {language, isPublic: false});
-        expectedCourses.sort(defaultSortComparator)
+        expectedCourses.sort(defaultSortComparator);
         await context.courseRepo.annotateVocabsByLevel(expectedCourses, user.id);
         const recordsCount = expectedCourses.length;
 
@@ -500,7 +511,7 @@ describe("GET courses/", function () {
             ...await context.courseFactory.create(5, {language, isPublic: false, addedBy: user.profile}),
         ];
         await context.courseFactory.create(5, {language, isPublic: false});
-        expectedCourses.sort(defaultSortComparator)
+        expectedCourses.sort(defaultSortComparator);
         await context.courseRepo.annotateVocabsByLevel(expectedCourses, user.id);
         const recordsCount = expectedCourses.length;
 
@@ -918,7 +929,7 @@ describe("PUT courses/:courseId/", function () {
             expect(response.statusCode).to.equal(200);
             expect(response.json()).toEqual(courseSerializer.serialize(course));
             expect(response.json().lessons.map((l: LessonSchema) => l.id)).toEqual(shuffledLessonIds);
-            const updatedFields: (keyof CourseSchema)[] = ["title", "description", "isPublic", "level"];
+            const updatedFields: (keyof CourseSchema)[] = ["title", "description", "isPublic"];
             expect(courseSerializer.serialize(course, {include: updatedFields})).toEqual(courseSerializer.serialize(updatedCourse, {include: updatedFields}));
         });
         test<LocalTestContext>("If new image is blank clear course image", async (context) => {
@@ -954,7 +965,7 @@ describe("PUT courses/:courseId/", function () {
             expect(response.json()).toEqual(courseSerializer.serialize(course));
             expect(course.image).toEqual("");
             expect(response.json().lessons.map((l: LessonSchema) => l.id)).toEqual(shuffledLessonIds);
-            const updatedFields: (keyof CourseSchema)[] = ["title", "description", "isPublic", "level", "image"];
+            const updatedFields: (keyof CourseSchema)[] = ["title", "description", "isPublic", "image"];
             expect(courseSerializer.serialize(course, {include: updatedFields})).toEqual(courseSerializer.serialize(updatedCourse, {include: updatedFields}));
         });
         test<LocalTestContext>("If new image is provided, update course image", async (context) => {
@@ -990,7 +1001,7 @@ describe("PUT courses/:courseId/", function () {
             expect(response.json()).toEqual(courseSerializer.serialize(course));
             expect(fs.existsSync(course.image)).toBeTruthy();
             expect(response.json().lessons.map((l: LessonSchema) => l.id)).toEqual(shuffledLessonIds);
-            const updatedFields: (keyof CourseSchema)[] = ["title", "description", "isPublic", "level"];
+            const updatedFields: (keyof CourseSchema)[] = ["title", "description", "isPublic"];
             expect(courseSerializer.serialize(course, {include: updatedFields})).toEqual(courseSerializer.serialize(updatedCourse, {include: updatedFields}));
         });
     });

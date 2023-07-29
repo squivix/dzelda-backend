@@ -25,6 +25,5 @@ export default defineConfig({
             "./tests/globalSetup.ts",
         ],
         restoreMocks: true,
-        testTimeout: Infinity
     },
 });

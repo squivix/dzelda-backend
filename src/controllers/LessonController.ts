@@ -18,7 +18,6 @@ import {ForbiddenAPIError} from "@/src/utils/errors/ForbiddenAPIError.js";
 import {NotFoundAPIError} from "@/src/utils/errors/NotFoundAPIError.js";
 import {UserService} from "@/src/services/UserService.js";
 import {lessonSerializer} from "@/src/presentation/response/serializers/entities/LessonSerializer.js";
-import {courseSerializer} from "@/src/presentation/response/serializers/entities/CourseSerializer.js";
 
 class LessonController {
     async getLessons(request: FastifyRequest, reply: FastifyReply) {
@@ -50,8 +49,7 @@ class LessonController {
         const sort = {sortBy: queryParams.sortBy, sortOrder: queryParams.sortOrder};
         const pagination = {page: queryParams.page, pageSize: queryParams.pageSize};
         const lessonService = new LessonService(request.em);
-        const lessons = await lessonService.getLessons(filters, sort, pagination, request.user);
-        const recordsCount = await lessonService.countLessons(filters, request.user);
+        const [lessons, recordsCount] = await lessonService.getPaginatedLessons(filters, sort, pagination, request.user);
         reply.send({
             page: pagination.page,
             pageSize: pagination.pageSize,
@@ -133,7 +131,7 @@ class LessonController {
         if (request?.user?.profile !== newCourse.addedBy)
             throw newCourse.isPublic ? new ForbiddenAPIError() : new ValidationAPIError({course: {message: "Not found"}});
         if (newCourse.language !== lesson.course.language)
-            throw   new ValidationAPIError({course: {message: "Cannot move lesson to a course in a different language"}});
+            throw new ValidationAPIError({course: {message: "Cannot move lesson to a course in a different language"}});
 
         const updatedLesson = await lessonService.updateLesson(lesson, {
             course: newCourse,
@@ -183,8 +181,7 @@ class LessonController {
         const sort = {sortBy: queryParams.sortBy, sortOrder: queryParams.sortOrder};
         const pagination = {page: queryParams.page, pageSize: queryParams.pageSize};
         const lessonService = new LessonService(request.em);
-        const lessons = await lessonService.getLessons(filters, sort, pagination, user);
-        const recordsCount = await lessonService.countLessons(filters, user);
+        const [lessons, recordsCount] = await lessonService.getPaginatedLessons(filters, sort, pagination, user);
         reply.send({
             page: pagination.page,
             pageSize: pagination.pageSize,

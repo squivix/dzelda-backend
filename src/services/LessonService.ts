@@ -25,18 +25,36 @@ export class LessonService {
 
     }
 
-    async getLessons(filters: {
-                         languageCode?: string,
-                         addedBy?: string,
-                         searchQuery?: string,
-                         level?: LanguageLevel[],
-                         hasAudio?: boolean;
-                         isLearning?: boolean
-                     },
-                     sort: { sortBy: "title" | "createdDate" | "learnersCount", sortOrder: "asc" | "desc" },
-                     pagination: { page: number, pageSize: number },
-                     user: User | AnonymousUser | null) {
-        const dbFilters = this._buildLessonFilters(filters, user);
+    async getPaginatedLessons(filters: {
+                                  languageCode?: string,
+                                  addedBy?: string,
+                                  searchQuery?: string,
+                                  level?: LanguageLevel[],
+                                  hasAudio?: boolean;
+                                  isLearning?: boolean
+                              },
+                              sort: { sortBy: "title" | "createdDate" | "learnersCount", sortOrder: "asc" | "desc" },
+                              pagination: { page: number, pageSize: number },
+                              user: User | AnonymousUser | null): Promise<[Lesson[], number]> {
+        const dbFilters: FilterQuery<Lesson> = {$and: []};
+        if (user && user instanceof User) {
+            dbFilters.$and!.push({$or: [{course: {isPublic: true}}, {course: {addedBy: (user as User).profile}}]});
+            if (filters.isLearning)
+                dbFilters.$and!.push({learners: user.profile});
+        } else
+            dbFilters.$and!.push({course: {isPublic: true}});
+
+        if (filters.languageCode !== undefined)
+            dbFilters.$and!.push({course: {language: {code: filters.languageCode}}});
+        if (filters.addedBy !== undefined)
+            dbFilters.$and!.push({course: {addedBy: {user: {username: filters.addedBy}}}});
+        if (filters.searchQuery !== undefined)
+            dbFilters.$and!.push({title: {$ilike: `%${filters.searchQuery}%`}});
+        if (filters.hasAudio !== undefined)
+            dbFilters.$and!.push({audio: {[filters.hasAudio ? "$ne" : "$eq"]: ""}});
+        if (filters.level !== undefined)
+            dbFilters.$and!.push({$or: filters.level.map(level => ({level}))});
+
         const dbOrderBy: QueryOrderMap<Lesson>[] = [];
         if (sort.sortBy == "title")
             dbOrderBy.push({title: sort.sortOrder});
@@ -46,7 +64,7 @@ export class LessonService {
             dbOrderBy.push({learnersCount: sort.sortOrder});
         dbOrderBy.push({id: "asc"});
 
-        let lessons = await this.lessonRepo.find(dbFilters, {
+        let [lessons, totalCount] = await this.lessonRepo.findAndCount(dbFilters, {
             populate: ["course", "course.language", "course.addedBy.user"],
             orderBy: dbOrderBy,
             limit: pagination.pageSize,
@@ -55,19 +73,7 @@ export class LessonService {
 
         if (user && !(user instanceof AnonymousUser))
             lessons = await this.lessonRepo.annotateVocabsByLevel(lessons, user.id);
-        return lessons;
-    }
-
-    async countLessons(filters: {
-        languageCode?: string,
-        addedBy?: string,
-        searchQuery?: string,
-        level?: LanguageLevel[],
-        hasAudio?: boolean;
-        isLearning?: boolean
-    }, user: User | AnonymousUser | null) {
-        const dbFilters: FilterQuery<Lesson> = this._buildLessonFilters(filters, user);
-        return await this.lessonRepo.count(dbFilters);
+        return [lessons, totalCount];
     }
 
     async createLesson(fields: {
@@ -78,7 +84,7 @@ export class LessonService {
         image?: string;
         audio?: string;
     }, user: User) {
-        let newLesson = await this.lessonRepo.create({
+        let newLesson = this.lessonRepo.create({
             title: fields.title,
             text: fields.text,
             level: fields.level,
@@ -170,35 +176,6 @@ export class LessonService {
         await this.em.flush();
         await this.em.refresh(mapping.lesson);
         return mapping;
-    }
-
-    private _buildLessonFilters(filters: {
-        languageCode?: string,
-        addedBy?: string,
-        searchQuery?: string,
-        level?: LanguageLevel[],
-        hasAudio?: boolean;
-        isLearning?: boolean
-    }, user: User | AnonymousUser | null) {
-        const dbFilters: FilterQuery<Lesson> = {$and: []};
-        if (user && user instanceof User) {
-            dbFilters.$and!.push({$or: [{course: {isPublic: true}}, {course: {addedBy: (user as User).profile}}]});
-            if (filters.isLearning)
-                dbFilters.$and!.push({learners: user.profile});
-        } else
-            dbFilters.$and!.push({course: {isPublic: true}});
-
-        if (filters.languageCode !== undefined)
-            dbFilters.$and!.push({course: {language: {code: filters.languageCode}}});
-        if (filters.addedBy !== undefined)
-            dbFilters.$and!.push({course: {addedBy: {user: {username: filters.addedBy}}}});
-        if (filters.searchQuery !== undefined)
-            dbFilters.$and!.push({title: {$ilike: `%${filters.searchQuery}%`}});
-        if (filters.hasAudio !== undefined)
-            dbFilters.$and!.push({audio: {[filters.hasAudio ? "$ne" : "$eq"]: ""}});
-        if (filters.level !== undefined)
-            dbFilters.$and!.push({$or: filters.level.map(level => ({level}))});
-        return dbFilters;
     }
 
     async findLesson(where: FilterQuery<Lesson>, fields: EntityField<Lesson>[] = ["id", "course"]) {

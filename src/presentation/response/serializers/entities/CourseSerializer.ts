@@ -14,9 +14,9 @@ export class CourseSerializer extends CustomEntitySerializer<Course, CourseSchem
             description: () => course.description,
             image: () => course.image,
             isPublic: () => course.isPublic,
-            level: () => course.level,
             language: () => course.language.code,
             lessons: () => lessonSerializer.serializeList(course.lessons.getItems(), {ignore: ["course"]}),
+            addedOn: () => course.addedOn.toISOString(),
             addedBy: () => course.addedBy.user.username,
             vocabsByLevel: () => course.vocabsByLevel
         };

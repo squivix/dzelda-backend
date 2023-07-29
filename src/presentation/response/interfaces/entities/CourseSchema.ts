@@ -9,9 +9,9 @@ export interface CourseSchema {
     /** Format: uri */
     image: string;
     isPublic: boolean;
-    /** @enum {string} */
-    level: LanguageLevel;
     language: string;
+    /** Format: date-time */
+    addedOn: string;
     addedBy: string;
     lessons?: Partial<LessonSchema>[];
     vocabsByLevel?: Record<VocabLevel, number>;
