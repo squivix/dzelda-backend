@@ -1,13 +1,6 @@
 import {beforeEach, describe, expect, test, TestContext, vi} from "vitest";
 import {orm} from "@/src/server.js";
-import {
-    buildQueryString,
-    createComparator,
-    fetchRequest,
-    fetchWithFiles,
-    mockValidateFileFields,
-    readSampleFile
-} from "@/tests/integration/utils.js";
+import {buildQueryString, createComparator, fetchRequest, fetchWithFiles, mockValidateFileFields, readSampleFile} from "@/tests/integration/utils.js";
 import {UserFactory} from "@/src/seeders/factories/UserFactory.js";
 import {SessionFactory} from "@/src/seeders/factories/SessionFactory.js";
 import {ProfileFactory} from "@/src/seeders/factories/ProfileFactory.js";
@@ -31,6 +24,7 @@ import * as fileValidatorExports from "@/src/validators/fileValidator.js";
 import {User} from "@/src/models/entities/auth/User.js";
 import * as constantExports from "@/src/constants.js";
 import {TEMP_ROOT_FILE_UPLOAD_DIR} from "@/tests/testConstants.js";
+import {escapeRegExp} from "@/src/utils/utils.js";
 
 interface LocalTestContext extends TestContext {
     courseRepo: CourseRepo;
@@ -545,7 +539,7 @@ describe("POST courses/", function () {
             authToken: authToken
         });
     };
-
+    const imagePathRegex = new RegExp(`^${escapeRegExp(`${TEMP_ROOT_FILE_UPLOAD_DIR}/courses/images/`)}.*-.*\.(png|jpg|jpeg)$`)
     describe("If all fields are valid a new course should be created and return 201", () => {
         test<LocalTestContext>("If optional fields are missing use default values", async (context) => {
             const user = await context.userFactory.createOne();
@@ -569,19 +563,28 @@ describe("POST courses/", function () {
                 },
             }, session.token);
 
+            const responseBody = response.json();
             expect(response.statusCode).to.equal(201);
-            expect(response.json()).toEqual(expect.objectContaining(courseSerializer.serialize(newCourse)));
-            expect(await context.courseRepo.findOne({title: newCourse.title, language})).not.toBeNull();
+            expect(responseBody).toMatchObject(courseSerializer.serialize(newCourse));
+
+            const dbRecord = await context.courseRepo.findOne({title: newCourse.title, language}, {populate: ["lessons"]})
+            expect(dbRecord).not.toBeNull();
+            if (dbRecord != null) {
+                await context.courseRepo.annotateVocabsByLevel([dbRecord], user.profile.id)
+                expect(courseSerializer.serialize(dbRecord)).toMatchObject(courseSerializer.serialize(newCourse));
+            }
         });
         test<LocalTestContext>("If optional fields are provided use provided values", async (context) => {
             const user = await context.userFactory.createOne();
             const session = await context.sessionFactory.createOne({user: user});
             const language = await context.languageFactory.createOne();
 
+            const imageFileName = "lorem-ipsum-69_8KB-1_1ratio.png";
             const newCourse = context.courseFactory.makeOne({
                 addedBy: user.profile,
                 language: language,
                 lessons: [],
+                image: `${TEMP_ROOT_FILE_UPLOAD_DIR}/courses/images/${imageFileName}`,
                 vocabsByLevel: defaultVocabsByLevel()
             });
             const response = await makeRequest({
@@ -591,13 +594,20 @@ describe("POST courses/", function () {
                     languageCode: language.code,
                     isPublic: newCourse.isPublic,
                 },
-                files: {image: readSampleFile("images/lorem-ipsum-69_8KB-1_1ratio.png")}
+                files: {image: readSampleFile(`images/${imageFileName}`)}
             }, session.token);
 
+            const responseBody = response.json();
             expect(response.statusCode).to.equal(201);
-            expect(response.json()).toEqual(expect.objectContaining(courseSerializer.serialize(newCourse, {ignore: ["image"]})));
-            expect(await context.courseRepo.findOne({title: newCourse.title, language})).not.toBeNull();
-            expect(fs.existsSync(response.json().image)).toBeTruthy();
+            expect(responseBody).toEqual(expect.objectContaining(courseSerializer.serialize(newCourse, {ignore: ["image"]})));
+            expect(fs.existsSync(responseBody.image)).toBeTruthy();
+
+            const dbRecord = await context.courseRepo.findOne({title: newCourse.title, language}, {populate: ["lessons"]})
+            expect(dbRecord).not.toBeNull();
+            if (dbRecord != null) {
+                await context.courseRepo.annotateVocabsByLevel([dbRecord], user.profile.id)
+                expect(dbRecord.image).toEqual(expect.stringMatching(imagePathRegex));
+            }
         });
     });
     test<LocalTestContext>("If user not logged in return 401", async (context) => {
@@ -825,10 +835,10 @@ describe("GET courses/:courseId/", function () {
             const user = await context.userFactory.createOne();
             const session = await context.sessionFactory.createOne({user: user});
             const course = await context.courseFactory.createOne({isPublic: true, language: await context.languageFactory.createOne()});
+            await context.courseRepo.annotateVocabsByLevel([course], user.id);
 
             const response = await makeRequest(course.id, session.token);
 
-            await context.courseRepo.annotateVocabsByLevel([course], user.id);
             expect(response.statusCode).to.equal(200);
             expect(response.json()).toEqual(courseSerializer.serialize(course));
         });
@@ -924,7 +934,6 @@ describe("PUT courses/:courseId/", function () {
             course = await context.courseRepo.findOneOrFail({id: course.id}, {populate: ["language", "addedBy", "addedBy.user", "addedBy.languagesLearning"]});
             await context.em.populate(course, ["lessons"], {orderBy: {lessons: {orderInCourse: "asc"}}});
             await context.courseRepo.annotateVocabsByLevel([course], author.id);
-
 
             expect(response.statusCode).to.equal(200);
             expect(response.json()).toEqual(courseSerializer.serialize(course));

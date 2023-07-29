@@ -196,15 +196,15 @@ describe("POST users/:username/languages/", function () {
             const response = await makeRequest("me", {languageCode: language.code}, session.token);
 
             const responseBody = response.json();
-            const dbRecord = await context.em.findOne(MapLearnerLanguage, {language, learner: user.profile});
             expect(response.statusCode).to.equal(201);
             expect(responseBody).toMatchObject(learnerLanguageSerializer.serialize(expectedMapping, {ignore: ["addedOn", "lastOpened"]}));
+            const dbRecord = await context.em.findOne(MapLearnerLanguage, {language, learner: user.profile});
             expect(dbRecord).not.toBeNull();
-            if (dbRecord != null)
+            if (dbRecord != null) {
                 expect(learnerLanguageSerializer.serialize(dbRecord)).toMatchObject(learnerLanguageSerializer.serialize(expectedMapping, {ignore: ["addedOn", "lastOpened"]}));
+            }
         });
         test<LocalTestContext>("If username is not me and authenticated as user with username return 201", async (context) => {
-
             const user = await context.userFactory.createOne();
             const session = await context.sessionFactory.createOne({user});
             const language = await context.languageFactory.createOne({learnersCount: 1});
@@ -213,12 +213,14 @@ describe("POST users/:username/languages/", function () {
             const response = await makeRequest(user.username, {languageCode: language.code}, session.token);
 
             const responseBody = response.json();
-            const dbRecord = await context.em.findOne(MapLearnerLanguage, {language, learner: user.profile});
             expect(response.statusCode).to.equal(201);
             expect(responseBody).toMatchObject(learnerLanguageSerializer.serialize(expectedMapping, {ignore: ["addedOn", "lastOpened"]}));
+
+            const dbRecord = await context.em.findOne(MapLearnerLanguage, {language, learner: user.profile});
             expect(dbRecord).not.toBeNull();
-            if (dbRecord != null)
+            if (dbRecord != null) {
                 expect(learnerLanguageSerializer.serialize(dbRecord)).toMatchObject(learnerLanguageSerializer.serialize(expectedMapping, {ignore: ["addedOn", "lastOpened"]}));
+            }
         });
     });
     test<LocalTestContext>("If user is already learning language return 200", async (context) => {

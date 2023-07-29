@@ -400,8 +400,7 @@ describe("GET vocabs/", () => {
             });
         });
     });
-})
-;
+});
 
 /**{@link VocabController#createVocab}*/
 describe("POST vocabs/", () => {
