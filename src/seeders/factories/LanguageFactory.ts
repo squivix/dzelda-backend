@@ -1,13 +1,12 @@
 import {Faker} from "@mikro-orm/seeder";
-import {EntityData, EntityManager, UniqueConstraintViolationException} from "@mikro-orm/core";
+import {EntityData} from "@mikro-orm/core";
 import {Language} from "@/src/models/entities/Language.js";
 import {CustomFactory} from "@/src/seeders/factories/CustomFactory.js";
-import {Vocab} from "@/src/models/entities/Vocab.js";
 
 export class LanguageFactory extends CustomFactory<Language> {
     readonly model = Language;
 
-    public static makeDefinition(faker: Faker): EntityData<Language> {
+    protected definition(faker: Faker): EntityData<Language> {
         return {
             code: faker.random.alpha({count: 20}),
             name: faker.random.word(),
@@ -28,14 +27,10 @@ export class LanguageFactory extends CustomFactory<Language> {
         };
     }
 
-
-    makeEntity(overrideParameters?: EntityData<Language>): Language {
+    override makeDefinition(overrideParameters?: EntityData<Language>): EntityData<Language> {
         if (overrideParameters?.learners !== undefined && Array.isArray(overrideParameters?.learners))
             overrideParameters.learnersCount = overrideParameters.learners.length;
-        return super.makeEntity(overrideParameters);
+        return super.makeDefinition(overrideParameters)
     }
 
-    protected definition(faker: Faker): EntityData<Language> {
-        return LanguageFactory.makeDefinition(faker);
-    }
 }

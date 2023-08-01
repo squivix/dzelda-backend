@@ -8,21 +8,14 @@ export class UserFactory extends CustomFactory<User> {
 
     readonly model = User;
 
-    async createOne(overrideParameters?: EntityData<User>): Promise<User> {
-        return await super.createOne(overrideParameters);
-    }
-
-
-    public static makeDefinition(faker: Faker): EntityData<User> {
+    protected definition(faker: Faker): EntityData<User> {
+        const em = (this as any).em as EntityManager;
+        const profileFactory = new ProfileFactory(em);
         return {
             username: faker.random.alpha({count: 20}),
             email: `${faker.random.alpha({count: 10})}_${faker.internet.email()}`,
             password: faker.random.alphaNumeric(128),    // password not hashed because hashing is async
-            profile: ProfileFactory.makeDefinition(faker)
+            profile: profileFactory.makeDefinition()
         };
-    }
-
-    protected definition(faker: Faker): EntityData<User> {
-        return UserFactory.makeDefinition(faker);
     }
 }
