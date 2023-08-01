@@ -7,6 +7,7 @@ import {Meaning} from "@/src/models/entities/Meaning.js";
 import {Profile} from "@/src/models/entities/Profile.js";
 import {MapLearnerVocab} from "@/src/models/entities/MapLearnerVocab.js";
 import {VocabRepo} from "@/src/models/repos/VocabRepo.js";
+import {VocabLevel} from "@/src/models/enums/VocabLevel.js";
 
 @Entity({customRepository: () => VocabRepo})
 @Unique({properties: ["language", "text"]})
@@ -47,8 +48,7 @@ export class Vocab extends CustomBaseEntity {
     })
     learners: Collection<Profile> = new Collection<Profile>(this);
 
-    //TODO ignore ignored vocabs
-    @Formula((alias: string) => `(SELECT COUNT(DISTINCT map_learner_vocab.learner_id) FROM map_learner_vocab WHERE vocab_id = ${alias}.id)`, {
+    @Formula((alias: string) => `(SELECT COUNT(DISTINCT map_learner_vocab.learner_id) FROM map_learner_vocab WHERE "vocab_id" = ${alias}.id AND "level" != ${VocabLevel.IGNORED})`, {
         type: "number"
     })
     learnersCount?: number;
