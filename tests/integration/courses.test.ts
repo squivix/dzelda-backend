@@ -1,6 +1,13 @@
 import {beforeEach, describe, expect, test, TestContext, vi} from "vitest";
 import {orm} from "@/src/server.js";
-import {buildQueryString, createComparator, fetchRequest, fetchWithFiles, mockValidateFileFields, readSampleFile} from "@/tests/integration/utils.js";
+import {
+    buildQueryString,
+    createComparator,
+    fetchRequest,
+    fetchWithFiles,
+    mockValidateFileFields,
+    readSampleFile
+} from "@/tests/integration/utils.js";
 import {UserFactory} from "@/src/seeders/factories/UserFactory.js";
 import {SessionFactory} from "@/src/seeders/factories/SessionFactory.js";
 import {ProfileFactory} from "@/src/seeders/factories/ProfileFactory.js";
@@ -243,6 +250,10 @@ describe("GET courses/", function () {
     describe("test sort", () => {
         describe("test sortBy", () => {
             test<LocalTestContext>("test sortBy title", async (context) => {
+                //TODO pick a consistent collation in db and tests to stop flaky tests with ORDER BY not matching in-code sorting
+                //See https://stackoverflow.com/questions/62525260/what-is-the-best-way-to-replicate-postgresql-sorting-results-in-javascript
+                //and https://stackoverflow.com/questions/44055727/localecompare-when-testing-strings-sorted-in-en-us-utf8
+                //failing case compare ('North Konopelski'),('Northeast Northeast')
                 const language = await context.languageFactory.createOne();
                 const expectedCourses = [
                     await context.courseFactory.createOne({title: "abc", isPublic: true, language}),
@@ -445,7 +456,8 @@ describe("GET courses/", function () {
         });
         describe("test pageSize", () => {
             test<LocalTestContext>("If pageSize is 20 split the results into 20 sized pages", async (context) => {
-                const allCourses = await context.courseFactory.create(50, {language: await context.languageFactory.createOne()});
+                const language = await context.languageFactory.createOne();
+                const allCourses = await context.courseFactory.create(50, {language});
                 allCourses.sort(defaultSortComparator);
                 const recordsCount = allCourses.length;
                 const page = 2, pageSize = 20;
@@ -554,7 +566,7 @@ describe("POST courses/", function () {
             authToken: authToken
         });
     };
-    const imagePathRegex = new RegExp(`^${escapeRegExp(`${TEMP_ROOT_FILE_UPLOAD_DIR}/courses/images/`)}.*-.*\.(png|jpg|jpeg)$`)
+    const imagePathRegex = new RegExp(`^${escapeRegExp(`${TEMP_ROOT_FILE_UPLOAD_DIR}/courses/images/`)}.*-.*\.(png|jpg|jpeg)$`);
     describe("If all fields are valid a new course should be created and return 201", () => {
         test<LocalTestContext>("If optional fields are missing use default values", async (context) => {
             const user = await context.userFactory.createOne();
@@ -582,10 +594,10 @@ describe("POST courses/", function () {
             expect(response.statusCode).to.equal(201);
             expect(responseBody).toMatchObject(courseSerializer.serialize(newCourse));
 
-            const dbRecord = await context.courseRepo.findOne({title: newCourse.title, language}, {populate: ["lessons"]})
+            const dbRecord = await context.courseRepo.findOne({title: newCourse.title, language}, {populate: ["lessons"]});
             expect(dbRecord).not.toBeNull();
             if (dbRecord != null) {
-                await context.courseRepo.annotateVocabsByLevel([dbRecord], user.profile.id)
+                await context.courseRepo.annotateVocabsByLevel([dbRecord], user.profile.id);
                 expect(courseSerializer.serialize(dbRecord)).toMatchObject(courseSerializer.serialize(newCourse));
             }
         });
@@ -617,10 +629,10 @@ describe("POST courses/", function () {
             expect(responseBody).toEqual(expect.objectContaining(courseSerializer.serialize(newCourse, {ignore: ["image"]})));
             expect(fs.existsSync(responseBody.image)).toBeTruthy();
 
-            const dbRecord = await context.courseRepo.findOne({title: newCourse.title, language}, {populate: ["lessons"]})
+            const dbRecord = await context.courseRepo.findOne({title: newCourse.title, language}, {populate: ["lessons"]});
             expect(dbRecord).not.toBeNull();
             if (dbRecord != null) {
-                await context.courseRepo.annotateVocabsByLevel([dbRecord], user.profile.id)
+                await context.courseRepo.annotateVocabsByLevel([dbRecord], user.profile.id);
                 expect(dbRecord.image).toEqual(expect.stringMatching(imagePathRegex));
             }
         });

@@ -115,7 +115,7 @@ export class VocabService {
     }
 
     async getUserVocab(vocabId: number, learner: Profile) {
-        const mapping = await this.em.findOne(MapLearnerVocab, {vocab: vocabId, learner}, {populate: ["vocab.meanings"]});
+        const mapping = await this.em.findOne(MapLearnerVocab, {vocab: vocabId, learner}, {populate: ["vocab.meanings.learnersCount"]});
         if (mapping) {
             await this.em.populate(mapping, ["vocab.learnerMeanings", "vocab.learnerMeanings.addedBy.user"], {where: {vocab: {learnerMeanings: {learners: learner}}}});
         }

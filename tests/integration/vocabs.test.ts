@@ -17,9 +17,10 @@ import {VocabLevel} from "@/src/models/enums/VocabLevel.js";
 import {learnerVocabSerializer} from "@/src/presentation/response/serializers/mappings/LearnerVocabSerializer.js";
 import {LessonFactory} from "@/src/seeders/factories/LessonFactory.js";
 import {CourseFactory} from "@/src/seeders/factories/CourseFactory.js";
-import {LearnerVocabSchema} from "@/src/presentation/response/interfaces/mappings/LearnerVocabSchema.js";
 import * as parserExports from "@/src/utils/parsers/parsers.js";
 import {MeaningFactory} from "@/src/seeders/factories/MeaningFactory.js";
+import {MapLearnerMeaning} from "@/src/models/entities/MapLearnerMeaning.js";
+import {Meaning} from "@/src/models/entities/Meaning.js";
 
 interface LocalTestContext extends TestContext {
     languageFactory: LanguageFactory;
@@ -1142,7 +1143,11 @@ describe("POST users/:username/vocabs/", () => {
 
             expect(response.statusCode).to.equal(201);
             expect(response.json()).toEqual(learnerVocabSerializer.serialize(expectedMapping));
-            expect(await context.em.findOne(MapLearnerVocab, {learner: user.profile, vocab})).not.toBeNull();
+            const dbRecord = await context.em.findOne(MapLearnerVocab, {learner: user.profile, vocab});
+            expect(dbRecord).not.toBeNull();
+            if (dbRecord != null) {
+                expect(learnerVocabSerializer.serialize(dbRecord)).toEqual(learnerVocabSerializer.serialize(expectedMapping));
+            }
         });
         test<LocalTestContext>("If username is belongs to the current user", async (context) => {
             const user = await context.userFactory.createOne();
@@ -1155,7 +1160,11 @@ describe("POST users/:username/vocabs/", () => {
 
             expect(response.statusCode).to.equal(201);
             expect(response.json()).toEqual(learnerVocabSerializer.serialize(expectedMapping));
-            expect(await context.em.findOne(MapLearnerVocab, {learner: user.profile, vocab})).not.toBeNull();
+            const dbRecord = await context.em.findOne(MapLearnerVocab, {learner: user.profile, vocab});
+            expect(dbRecord).not.toBeNull();
+            if (dbRecord != null) {
+                expect(learnerVocabSerializer.serialize(dbRecord)).toEqual(learnerVocabSerializer.serialize(expectedMapping));
+            }
         });
     });
     test<LocalTestContext>("If user is already learning vocab return 200", async (context) => {
@@ -1354,7 +1363,11 @@ describe("PATCH users/:username/vocabs/:vocabId/", () => {
         };
         return await fetchRequest(options, authToken);
     };
-
+    const meaningSortComparator = createComparator(Meaning, [
+        {property: "learnersCount", order: "asc"},
+        {property: "text", order: "asc", preProcess: (v: string) => v.toLowerCase()},
+        {property: "id", order: "asc"}]
+    );
     describe("If all fields are valid, the vocab exists and user is learning it update user vocab", () => {
         test<LocalTestContext>("If username is me", async (context) => {
             const user = await context.userFactory.createOne();
@@ -1368,12 +1381,11 @@ describe("PATCH users/:username/vocabs/:vocabId/", () => {
                 level: updatedMapping.level,
                 notes: updatedMapping.notes
             }, session.token);
-            const mapping = await context.em.findOneOrFail(MapLearnerVocab, {learner: user.profile, vocab});
 
+            const dbRecord = await context.em.findOneOrFail(MapLearnerVocab, {learner: user.profile, vocab});
             expect(response.statusCode).to.equal(200);
-            expect(response.json()).toEqual(learnerVocabSerializer.serialize(mapping));
-            const updatedFields: (keyof LearnerVocabSchema)[] = ["level", "notes"];
-            expect(learnerVocabSerializer.serialize(mapping, {include: updatedFields})).toEqual(learnerVocabSerializer.serialize(updatedMapping, {include: updatedFields}));
+            expect(response.json()).toEqual(learnerVocabSerializer.serialize(updatedMapping));
+            expect(learnerVocabSerializer.serialize(dbRecord)).toEqual(learnerVocabSerializer.serialize(updatedMapping));
         });
         test<LocalTestContext>("If username is belongs to the current user", async (context) => {
             const user = await context.userFactory.createOne();
@@ -1387,36 +1399,38 @@ describe("PATCH users/:username/vocabs/:vocabId/", () => {
                 level: updatedMapping.level,
                 notes: updatedMapping.notes
             }, session.token);
-            const mapping = await context.em.findOneOrFail(MapLearnerVocab, {learner: user.profile, vocab});
 
+            const dbRecord = await context.em.findOneOrFail(MapLearnerVocab, {learner: user.profile, vocab});
             expect(response.statusCode).to.equal(200);
-            expect(response.json()).toEqual(learnerVocabSerializer.serialize(mapping));
-            const updatedFields: (keyof LearnerVocabSchema)[] = ["level", "notes"];
-            expect(learnerVocabSerializer.serialize(mapping, {include: updatedFields})).toEqual(learnerVocabSerializer.serialize(updatedMapping, {include: updatedFields}));
+            expect(response.json()).toEqual(learnerVocabSerializer.serialize(updatedMapping));
+            expect(learnerVocabSerializer.serialize(dbRecord)).toEqual(learnerVocabSerializer.serialize(updatedMapping));
         });
         test<LocalTestContext>("If updated vocab level is ignored, delete all meanings saved by user for that vocab", async (context) => {
             const user = await context.userFactory.createOne();
             const session = await context.sessionFactory.createOne({user});
             const language = await context.languageFactory.createOne({learners: user.profile});
-            const vocab = await context.vocabFactory.createOne({language, learners: user.profile});
-            await context.meaningFactory.create(3, {vocab: vocab, learners: user.profile, addedBy: user.profile, language});
+            const vocab = await context.vocabFactory.createOne({
+                language, learners: user.profile,
+                meanings: context.meaningFactory.makeDefinitions(3, {learners: [user.profile], addedBy: user.profile, language}).sort(meaningSortComparator)
+            });
+
             const updatedMapping = context.em.create(MapLearnerVocab,
                 {learner: user.profile, vocab, level: VocabLevel.IGNORED, notes: ""}, {persist: false});
+            updatedMapping.vocab.meanings.getItems().forEach(m => {
+                m.learners.set([]);
+                m.learnersCount = 0;
+            });
 
             const response = await makeRequest("me", vocab.id, {
                 level: updatedMapping.level,
                 notes: updatedMapping.notes
             }, session.token);
-            const vocabMapping = await context.em.findOneOrFail(MapLearnerVocab, {
-                learner: user.profile,
-                vocab
-            }, {populate: ["vocab.meanings"], refresh: true});
 
+            const dbRecord = await context.em.findOneOrFail(MapLearnerVocab, {learner: user.profile, vocab});
             expect(response.statusCode).to.equal(200);
-            expect(response.json()).toEqual(learnerVocabSerializer.serialize(vocabMapping));
-            expect(vocabMapping.vocab.learnerMeanings.getItems()).toEqual([]);
-            const updatedFields: (keyof LearnerVocabSchema)[] = ["level", "notes"];
-            expect(learnerVocabSerializer.serialize(vocabMapping, {include: updatedFields})).toEqual(learnerVocabSerializer.serialize(updatedMapping, {include: updatedFields}));
+            expect(response.json()).toEqual(learnerVocabSerializer.serialize(updatedMapping));
+            expect(learnerVocabSerializer.serialize(dbRecord)).toEqual(learnerVocabSerializer.serialize(updatedMapping));
+            expect(await context.em.find(MapLearnerMeaning, {learner: user.profile, meaning: {vocab: vocab}})).toEqual([]);
         });
     });
     describe(`If fields are invalid return 400`, async () => {
