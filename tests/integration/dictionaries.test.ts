@@ -7,10 +7,11 @@ import {EntityRepository} from "@mikro-orm/core";
 import {DictionaryFactory} from "@/src/seeders/factories/DictionaryFactory.js";
 import {Dictionary} from "@/src/models/entities/Dictionary.js";
 import {InjectOptions} from "light-my-request";
-import {buildQueryString, fetchRequest} from "@/tests/integration/utils.js";
+import {buildQueryString, createComparator, fetchRequest} from "@/tests/integration/utils.js";
 import {faker} from "@faker-js/faker";
 import {dictionarySerializer} from "@/src/presentation/response/serializers/entities/DictionarySerializer.js";
 import {LanguageFactory} from "@/src/seeders/factories/LanguageFactory.js";
+import {Meaning} from "@/src/models/entities/Meaning.js";
 
 interface LocalTestContext extends TestContext {
     dictionaryRepo: EntityRepository<Dictionary>;
@@ -39,35 +40,32 @@ describe("GET dictionaries/", function () {
         };
         return await fetchRequest(options, authToken);
     };
-
+    const defaultSortComparator = createComparator(Dictionary, [
+        {property: "name", order: "asc"},
+        {property: "id", order: "asc"}]
+    );
     test<LocalTestContext>("If there are no filters return all dictionaries", async (context) => {
         const language = await context.languageFactory.createOne();
-        await context.dictionaryFactory.create(5, {language});
+        const expectedDictionaries = await context.dictionaryFactory.create(5, {language});
+        expectedDictionaries.sort(defaultSortComparator);
 
         const response = await makeRequest({});
 
-        const dictionaries = await context.em.find(Dictionary, {}, {
-            populate: ["language"],
-            orderBy: [{name: "asc"}, {id: "asc"}]
-        });
         expect(response.statusCode).to.equal(200);
-        expect(response.json()).toEqual(dictionarySerializer.serializeList(dictionaries));
+        expect(response.json()).toEqual(dictionarySerializer.serializeList(expectedDictionaries));
     });
     describe("test language filter", () => {
         test<LocalTestContext>("If language filter is valid and language exists only return dictionaries in that language", async (context) => {
             const language1 = await context.languageFactory.createOne();
             const language2 = await context.languageFactory.createOne();
-            await context.dictionaryFactory.create(5, {language: language1});
+            const expectedDictionaries = await context.dictionaryFactory.create(5, {language: language1});
             await context.dictionaryFactory.create(5, {language: language2});
+            expectedDictionaries.sort(defaultSortComparator);
 
             const response = await makeRequest({languageCode: language1.code});
 
-            const dictionaries = await context.em.find(Dictionary, {language: {code: language1.code}}, {
-                populate: ["language"],
-                orderBy: [{name: "asc"}, {id: "asc"}]
-            });
             expect(response.statusCode).to.equal(200);
-            expect(response.json()).toEqual(dictionarySerializer.serializeList(dictionaries));
+            expect(response.json()).toEqual(dictionarySerializer.serializeList(expectedDictionaries));
         });
         test<LocalTestContext>("If language does not exist return empty dictionary list", async (context) => {
             const language = await context.languageFactory.makeOne();
@@ -94,39 +92,37 @@ describe("GET users/:username/dictionaries/", function () {
         };
         return await fetchRequest(options, authToken);
     };
+    const defaultSortComparator = createComparator(Dictionary, [
+        {property: "name", order: "asc"},
+        {property: "id", order: "asc"}]
+    );
 
     describe("If user is logged in and there are no filters return dictionaries user has saved", () => {
         test<LocalTestContext>("If username is me", async (context) => {
             const user = await context.userFactory.createOne();
             const session = await context.sessionFactory.createOne({user: user});
             const language = await context.languageFactory.createOne({learners: user.profile});
-            await context.dictionaryFactory.create(5, {language, learners: user.profile});
+            const expectedDictionaries = await context.dictionaryFactory.create(5, {language, learners: user.profile});
             await context.dictionaryFactory.create(5, {language});
+            expectedDictionaries.sort(defaultSortComparator);
 
             const response = await makeRequest("me", {}, session.token);
 
-            const userDictionaries = await context.em.find(Dictionary, {learners: user.profile}, {
-                populate: ["language"],
-                orderBy: [{name: "asc"}, {id: "asc"}]
-            });
             expect(response.statusCode).to.equal(200);
-            expect(response.json()).toEqual(dictionarySerializer.serializeList(userDictionaries));
+            expect(response.json()).toEqual(dictionarySerializer.serializeList(expectedDictionaries));
         });
         test<LocalTestContext>("If username belongs to the currently logged in user", async (context) => {
             const user = await context.userFactory.createOne();
             const session = await context.sessionFactory.createOne({user: user});
             const language = await context.languageFactory.createOne({learners: user.profile});
-            await context.dictionaryFactory.create(5, {language, learners: user.profile});
+            const expectedDictionaries = await context.dictionaryFactory.create(5, {language, learners: user.profile});
             await context.dictionaryFactory.create(5, {language});
+            expectedDictionaries.sort(defaultSortComparator);
 
             const response = await makeRequest(user.username, {}, session.token);
 
-            const userDictionaries = await context.em.find(Dictionary, {learners: user.profile}, {
-                populate: ["language"],
-                orderBy: [{name: "asc"}, {id: "asc"}]
-            });
             expect(response.statusCode).to.equal(200);
-            expect(response.json()).toEqual(dictionarySerializer.serializeList(userDictionaries));
+            expect(response.json()).toEqual(dictionarySerializer.serializeList(expectedDictionaries));
         });
     });
     describe("test language filter", () => {
@@ -135,18 +131,15 @@ describe("GET users/:username/dictionaries/", function () {
             const session = await context.sessionFactory.createOne({user: user});
             const language1 = await context.languageFactory.createOne({learners: user.profile});
             const language2 = await context.languageFactory.createOne({learners: user.profile});
-            await context.dictionaryFactory.create(5, {language: language1, learners: user.profile});
+            const expectedDictionaries = await context.dictionaryFactory.create(5, {language: language1, learners: user.profile});
             await context.dictionaryFactory.create(5, {language: language2, learners: user.profile});
             await context.dictionaryFactory.create(5, {language: language1});
+            expectedDictionaries.sort(defaultSortComparator);
 
             const response = await makeRequest("me", {languageCode: language1.code}, session.token);
 
-            const userDictionaries = await context.em.find(Dictionary, {learners: user.profile, language: language1}, {
-                populate: ["language"],
-                orderBy: [{name: "asc"}, {id: "asc"}]
-            });
             expect(response.statusCode).to.equal(200);
-            expect(response.json()).toEqual(dictionarySerializer.serializeList(userDictionaries));
+            expect(response.json()).toEqual(dictionarySerializer.serializeList(expectedDictionaries));
         });
         test<LocalTestContext>("If language does not exist return empty dictionary list", async (context) => {
             const user = await context.userFactory.createOne();
