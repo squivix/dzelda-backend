@@ -25,7 +25,7 @@ class LanguageController {
 
     async getUserLanguages(request: FastifyRequest, reply: FastifyReply) {
         const validator = z.object({
-            username: usernameValidator
+            username: usernameValidator.or(z.literal("me"))
         });
         const pathParams = validator.parse(request.params);
         const userService = new UserService(request.em);
@@ -41,7 +41,7 @@ class LanguageController {
 
     async addLanguageToUser(request: FastifyRequest, reply: FastifyReply) {
         const pathParamsValidator = z.object({
-            username: usernameValidator,
+            username: usernameValidator.or(z.literal("me")),
         });
         const pathParams = pathParamsValidator.parse(request.params);
         const userService = new UserService(request.em);
@@ -69,7 +69,7 @@ class LanguageController {
 
     async updateUserLanguage(request: FastifyRequest, reply: FastifyReply) {
         const pathParamsValidator = z.object({
-            username: usernameValidator,
+            username: usernameValidator.or(z.literal("me")),
             languageCode: languageCodeValidator
         });
         const pathParams = pathParamsValidator.parse(request.params);
@@ -93,7 +93,7 @@ class LanguageController {
 
     async deleteUserLanguage(request: FastifyRequest, reply: FastifyReply) {
         const pathParamsValidator = z.object({
-            username: usernameValidator,
+            username: usernameValidator.or(z.literal("me")),
             languageCode: languageCodeValidator
         });
         const pathParams = pathParamsValidator.parse(request.params);

@@ -35,10 +35,8 @@ class UserController {
     }
 
     async getUser(request: FastifyRequest, reply: FastifyReply) {
-        const validator = z.object({
-            username: usernameValidator,
-        });
-        const pathParams = validator.parse(request.params);
+        const pathParamsValidator = z.object({username: usernameValidator.or(z.literal("me")),});
+        const pathParams = pathParamsValidator.parse(request.params);
         const userService = new UserService(request.em);
         const user = await userService.getUser(pathParams.username, request.user);
         // private user don't exist to the outside

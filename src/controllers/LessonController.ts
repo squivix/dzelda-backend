@@ -23,7 +23,7 @@ class LessonController {
     async getLessons(request: FastifyRequest, reply: FastifyReply) {
         const validator = z.object({
             languageCode: languageCodeValidator.optional(),
-            addedBy: usernameValidator.optional(),
+            addedBy: usernameValidator.or(z.literal("me")).optional(),
             searchQuery: z.string().min(1).max(256).optional(),
             level: lessonLevelsFilterValidator.default([]),
             hasAudio: booleanStringValidator.optional(),
@@ -145,7 +145,7 @@ class LessonController {
     }
 
     async getUserLessonsLearning(request: FastifyRequest, reply: FastifyReply) {
-        const pathParamsValidator = z.object({username: usernameValidator});
+        const pathParamsValidator = z.object({username: usernameValidator.or(z.literal("me"))});
         const pathParams = pathParamsValidator.parse(request.params);
         const userService = new UserService(request.em);
         const user = await userService.getUser(pathParams.username, request.user);
@@ -156,7 +156,7 @@ class LessonController {
 
         const queryParamsValidator = z.object({
             languageCode: languageCodeValidator.optional(),
-            addedBy: usernameValidator.optional(),
+            addedBy: usernameValidator.or(z.literal("me")).optional(),
             searchQuery: z.string().min(1).max(256).optional(),
             level: lessonLevelsFilterValidator.default([]),
             hasAudio: booleanStringValidator.optional(),
@@ -191,7 +191,7 @@ class LessonController {
     }
 
     async addLessonToUserLearning(request: FastifyRequest, reply: FastifyReply) {
-        const pathParamsValidator = z.object({username: usernameValidator});
+        const pathParamsValidator = z.object({username: usernameValidator.or(z.literal("me"))});
         const pathParams = pathParamsValidator.parse(request.params);
         const userService = new UserService(request.em);
         const user = await userService.getUser(pathParams.username, request.user);

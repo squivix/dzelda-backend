@@ -49,7 +49,7 @@ class MeaningController {
     }
 
     async getUserMeanings(request: FastifyRequest, reply: FastifyReply) {
-        const pathParamsValidator = z.object({username: usernameValidator});
+        const pathParamsValidator = z.object({username: usernameValidator.or(z.literal("me"))});
         const pathParams = pathParamsValidator.parse(request.params);
         const userService = new UserService(request.em);
         const user = await userService.getUser(pathParams.username, request.user);
@@ -82,7 +82,7 @@ class MeaningController {
     }
 
     async addMeaningToUser(request: FastifyRequest, reply: FastifyReply) {
-        const pathParamsValidator = z.object({username: usernameValidator});
+        const pathParamsValidator = z.object({username: usernameValidator.or(z.literal("me"))});
         const pathParams = pathParamsValidator.parse(request.params);
         const userService = new UserService(request.em);
         const user = await userService.getUser(pathParams.username, request.user);
@@ -111,7 +111,7 @@ class MeaningController {
 
     async removeMeaningFromUser(request: FastifyRequest, reply: FastifyReply) {
         const pathParamsValidator = z.object({
-            username: usernameValidator,
+            username: usernameValidator.or(z.literal("me")),
             meaningId: numericStringValidator,
         });
         const pathParams = pathParamsValidator.parse(request.params);

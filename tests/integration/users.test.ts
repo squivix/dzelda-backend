@@ -11,6 +11,7 @@ import {EntityRepository} from "@mikro-orm/core";
 import {InjectOptions} from "light-my-request";
 import {userSerializer} from "@/src/presentation/response/serializers/entities/UserSerializer.js";
 import {SessionFactory} from "@/src/seeders/factories/SessionFactory.js";
+import {BANNED_LITERAL_USERNAMES} from "@/src/validators/userValidator.js";
 
 interface LocalTestContext extends TestContext {
     languageRepo: EntityRepository<Language>;
@@ -140,6 +141,16 @@ describe("POST users/", function () {
                 const newUser = context.userFactory.makeOne();
                 const response = await makeRequest({
                     username: otherUser.username,
+                    password: newUser.password,
+                    email: newUser.email
+                });
+
+                expect(response.statusCode).to.equal(400);
+            });
+            test<LocalTestContext>("If username is a banned literal username return 400", async (context) => {
+                const newUser = context.userFactory.makeOne();
+                const response = await makeRequest({
+                    username: faker.helpers.arrayElement(BANNED_LITERAL_USERNAMES),
                     password: newUser.password,
                     email: newUser.email
                 });

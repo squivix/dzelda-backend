@@ -14,13 +14,12 @@ import {LanguageService} from "@/src/services/LanguageService.js";
 import {numericStringValidator} from "@/src/validators/utilValidators.js";
 import {UserService} from "@/src/services/UserService.js";
 import {courseSerializer} from "@/src/presentation/response/serializers/entities/CourseSerializer.js";
-import {vocabSerializer} from "@/src/presentation/response/serializers/entities/VocabSerializer.js";
 
 class CourseController {
     async getCourses(request: FastifyRequest, reply: FastifyReply) {
         const queryParamsValidator = z.object({
             languageCode: languageCodeValidator.optional(),
-            addedBy: usernameValidator.optional(),
+            addedBy: usernameValidator.or(z.literal("me")).optional(),
             searchQuery: z.string().min(1).max(256).optional(),
             sortBy: z.union([z.literal("title"), z.literal("createdDate"), z.literal("learnersCount")]).optional().default("title"),
             sortOrder: z.union([z.literal("asc"), z.literal("desc")]).optional().default("asc"),
@@ -133,7 +132,7 @@ class CourseController {
     }
 
     async getUserCoursesLearning(request: FastifyRequest, reply: FastifyReply) {
-        const pathParamsValidator = z.object({username: usernameValidator});
+        const pathParamsValidator = z.object({username: usernameValidator.or(z.literal("me"))});
         const pathParams = pathParamsValidator.parse(request.params);
         const userService = new UserService(request.em);
         const user = await userService.getUser(pathParams.username, request.user);
@@ -144,7 +143,7 @@ class CourseController {
 
         const queryParamsValidator = z.object({
             languageCode: languageCodeValidator.optional(),
-            addedBy: usernameValidator.optional(),
+            addedBy: usernameValidator.or(z.literal("me")).optional(),
             searchQuery: z.string().min(1).max(256).optional(),
             level: z.nativeEnum(LanguageLevel).optional(),
             sortBy: z.union([z.literal("title"), z.literal("createdDate"), z.literal("learnersCount")]).optional().default("title"),

@@ -82,7 +82,7 @@ class VocabController {
     }
 
     async getUserVocabs(request: FastifyRequest, reply: FastifyReply) {
-        const pathParamsValidator = z.object({username: usernameValidator});
+        const pathParamsValidator = z.object({username: usernameValidator.or(z.literal("me"))});
         const pathParams = pathParamsValidator.parse(request.params);
         const userService = new UserService(request.em);
         const user = await userService.getUser(pathParams.username, request.user);
@@ -116,7 +116,7 @@ class VocabController {
     }
 
     async addVocabToUser(request: FastifyRequest, reply: FastifyReply) {
-        const pathParamsValidator = z.object({username: usernameValidator});
+        const pathParamsValidator = z.object({username: usernameValidator.or(z.literal("me"))});
         const pathParams = pathParamsValidator.parse(request.params);
         const userService = new UserService(request.em);
         const user = await userService.getUser(pathParams.username, request.user);
@@ -145,7 +145,7 @@ class VocabController {
 
     async getUserVocab(request: FastifyRequest, reply: FastifyReply) {
         const pathParamsValidator = z.object({
-            username: usernameValidator,
+            username: usernameValidator.or(z.literal("me")),
             vocabId: numericStringValidator
         });
         const pathParams = pathParamsValidator.parse(request.params);
@@ -165,7 +165,7 @@ class VocabController {
 
     async updateUserVocab(request: FastifyRequest, reply: FastifyReply) {
         const pathParamsValidator = z.object({
-            username: usernameValidator,
+            username: usernameValidator.or(z.literal("me")),
             vocabId: numericStringValidator
         });
         const pathParams = pathParamsValidator.parse(request.params);
