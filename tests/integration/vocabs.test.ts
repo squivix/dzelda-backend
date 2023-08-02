@@ -58,7 +58,7 @@ describe("GET vocabs/", () => {
     };
     const queryDefaults = {pagination: {pageSize: 25, page: 1}, sort: {sortBy: "text", sortOrder: "asc"}};
     const defaultSortComparator = createComparator(Vocab, [
-        {property: "text", order: "asc", preProcess: (v: string) => v.toLowerCase()},
+        {property: "text", order: "asc"},
         {property: "id", order: "asc"}]
     );
     test<LocalTestContext>("If there are no filters return all vocabs paginated", async (context) => {
@@ -606,7 +606,7 @@ describe("GET users/:username/vocabs/", () => {
     };
     const queryDefaults = {pagination: {pageSize: 25, page: 1}, sort: {vocab: {text: "asc"}}};
     const defaultSortComparator = createComparator(Vocab, [
-        {property: "text", order: "asc", preProcess: (v: string) => v.toLowerCase()},
+        {property: "text", order: "asc"},
         {property: "id", order: "asc"}]
     );
     describe("If user is logged in and there are no filters return vocabs the user is learning", () => {
@@ -1365,7 +1365,7 @@ describe("PATCH users/:username/vocabs/:vocabId/", () => {
     };
     const meaningSortComparator = createComparator(Meaning, [
         {property: "learnersCount", order: "asc"},
-        {property: "text", order: "asc", preProcess: (v: string) => v.toLowerCase()},
+        {property: "text", order: "asc"},
         {property: "id", order: "asc"}]
     );
     describe("If all fields are valid, the vocab exists and user is learning it update user vocab", () => {
@@ -1527,7 +1527,7 @@ describe("GET lessons/:lessonId/vocabs/", () => {
         return await fetchRequest(options, authToken);
     };
     const defaultSortComparator = createComparator(Vocab, [
-        {property: "text", order: "asc", preProcess: (v: string) => v.toLowerCase()},
+        {property: "text", order: "asc"},
         {property: "id", order: "asc"}]
     );
     test<LocalTestContext>("If user is logged in, lesson exists return vocabs in lesson", async (context) => {

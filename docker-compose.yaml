@@ -1,6 +1,6 @@
 services:
   test-db:
-    image: "postgres:15"
+    image: "postgres:15.3"
     command: "postgres -c fsync=off -c synchronous_commit=off -c full_page_writes=off -c random_page_cost=1.0"
     tmpfs: "/var/lib/postgresql/data"
     environment:
@@ -8,14 +8,19 @@ services:
       POSTGRES_PASSWORD: "123456789"
       POSTGRES_DB: "dzelda-db-test"
       PGDATA: "/var/lib/postgresql/data"
+      POSTGRES_INITDB_ARGS: "--lc-collate=C"
     ports:
       - "54321:5432"
   dev-db:
-    image: "postgres:15"
+    image: "postgres:15.3"
     environment:
       POSTGRES_USER: "devin"
       POSTGRES_PASSWORD: "123456789"
       POSTGRES_DB: "dzelda-db"
+      #TODO use a different collation per query based on language, and update tests to match
+      #See https://stackoverflow.com/questions/62525260/what-is-the-best-way-to-replicate-postgresql-sorting-results-in-javascript
+      #and https://stackoverflow.com/questions/44055727/localecompare-when-testing-strings-sorted-in-en-us-utf8
+      POSTGRES_INITDB_ARGS: "--lc-collate=C"
     volumes:
       - "postgres-data:/var/lib/postgresql/data"
     ports:

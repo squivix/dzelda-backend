@@ -76,7 +76,7 @@ describe("GET courses/", function () {
         }
     } = {pagination: {pageSize: 10, page: 1}, sort: {sortBy: "title", sortOrder: "asc"}};
     const defaultSortComparator = createComparator(Course, [
-        {property: "title", order: "asc", preProcess: (v: string) => v.toLowerCase()},
+        {property: "title", order: "asc"},
         {property: "id", order: "asc"}]
     );
     test<LocalTestContext>("If there are no filters return all public courses", async (context) => {
@@ -250,10 +250,6 @@ describe("GET courses/", function () {
     describe("test sort", () => {
         describe("test sortBy", () => {
             test<LocalTestContext>("test sortBy title", async (context) => {
-                //TODO pick a consistent collation in db and tests to stop flaky tests with ORDER BY not matching in-code sorting
-                //See https://stackoverflow.com/questions/62525260/what-is-the-best-way-to-replicate-postgresql-sorting-results-in-javascript
-                //and https://stackoverflow.com/questions/44055727/localecompare-when-testing-strings-sorted-in-en-us-utf8
-                //failing case compare ('North Konopelski'),('Northeast Northeast')
                 const language = await context.languageFactory.createOne();
                 const expectedCourses = [
                     await context.courseFactory.createOne({title: "abc", isPublic: true, language}),
@@ -1557,7 +1553,7 @@ describe("GET users/{username}/courses/", () => {
         }
     } = {pagination: {pageSize: 10, page: 1}, sort: {sortBy: "title", sortOrder: "asc"}};
     const defaultSortComparator = createComparator(Course, [
-        {property: "title", order: "asc", preProcess: (v: string) => v.toLowerCase()},
+        {property: "title", order: "asc"},
         {property: "id", order: "asc"}]
     );
     describe("If user is logged in and there are no filters return courses with a lesson the user is learning", () => {

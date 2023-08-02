@@ -76,7 +76,7 @@ describe("GET lessons/", () => {
         sort: { sortBy: "title" | "createdDate" | "learnersCount", sortOrder: "asc" | "desc" }
     } = {pagination: {pageSize: 10, page: 1}, sort: {sortBy: "title", sortOrder: "asc"}};
     const defaultSortComparator = createComparator(Lesson, [
-        {property: "title", order: "asc", preProcess: (v: string) => v.toLowerCase()},
+        {property: "title", order: "asc"},
         {property: "id", order: "asc"}]
     );
     test<LocalTestContext>("If there are no filters and not logged in return all public lessons", async (context) => {
@@ -1673,7 +1673,7 @@ describe("GET users/:username/lessons/", () => {
         sort: { sortBy: "title" | "createdDate" | "learnersCount", sortOrder: "asc" | "desc" }
     } = {pagination: {pageSize: 10, page: 1}, sort: {sortBy: "title", sortOrder: "asc"}};
     const defaultSortComparator = createComparator(Lesson, [
-        {property: "title", order: "asc", preProcess: (v: string) => v.toLowerCase()},
+        {property: "title", order: "asc"},
         {property: "id", order: "asc"}]
     );
     describe("If user is logged in and there are no filters return lessons the user is learning", () => {
