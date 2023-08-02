@@ -17,6 +17,7 @@ jobs:
           POSTGRES_PASSWORD: "123456789"
           POSTGRES_DB: "dzelda-db-test"
           PGDATA: "/var/lib/postgresql/data"
+          POSTGRES_INITDB_ARGS: "--lc-collate=C"
     steps:
       - name: "Checkout code"
         uses: actions/checkout@v3
