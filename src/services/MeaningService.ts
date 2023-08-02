@@ -1,9 +1,10 @@
-import {EntityManager, EntityRepository, FilterQuery} from "@mikro-orm/core";
+import {EntityManager, EntityRepository, FilterQuery, QueryOrder} from "@mikro-orm/core";
 import {Meaning} from "@/src/models/entities/Meaning.js";
 import {Vocab} from "@/src/models/entities/Vocab.js";
 import {Language} from "@/src/models/entities/Language.js";
 import {User} from "@/src/models/entities/auth/User.js";
 import {MapLearnerMeaning} from "@/src/models/entities/MapLearnerMeaning.js";
+import {QueryOrderMap} from "@mikro-orm/core/enums.js";
 
 export class MeaningService {
 
@@ -25,7 +26,7 @@ export class MeaningService {
     }
 
     async createMeaning(meaningData: { vocab: Vocab; language: Language; text: string }, user: User) {
-        const newMeaning = await this.meaningRepo.create({
+        const newMeaning = this.meaningRepo.create({
             text: meaningData.text,
             language: meaningData.language,
             vocab: meaningData.vocab,
@@ -36,12 +37,27 @@ export class MeaningService {
         return newMeaning;
     }
 
-    async getUserMeanings(filters: { vocabId?: number }, user: User) {
+    async getUserMeanings(filters: { vocabId?: number },
+                          sort: { sortBy: "text" | "learnersCount", sortOrder: "asc" | "desc" },
+                          pagination: { page: number, pageSize: number },
+                          user: User): Promise<[Meaning[], number]> {
         const dbFilters: FilterQuery<Meaning> = {$and: []};
         dbFilters.$and!.push({learners: user.profile});
         if (filters.vocabId)
             dbFilters.$and!.push({vocab: filters.vocabId});
-        return await this.meaningRepo.find(dbFilters, {populate: ["language", "vocab.language", "addedBy.user", "learnersCount"]});
+
+        const dbOrderBy: QueryOrderMap<Meaning>[] = [];
+        if (sort.sortBy == "text")
+            dbOrderBy.push({text: sort.sortOrder});
+        else if (sort.sortBy == "learnersCount")
+            dbOrderBy.push({learnersCount: sort.sortOrder});
+
+        return await this.meaningRepo.findAndCount(dbFilters, {
+            populate: ["language", "vocab.language", "addedBy.user", "learnersCount"],
+            orderBy: dbOrderBy,
+            limit: pagination.pageSize,
+            offset: pagination.pageSize * (pagination.page - 1),
+        });
     }
 
     async getUserMeaning(meaningId: number, user: User) {

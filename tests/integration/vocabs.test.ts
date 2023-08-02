@@ -56,7 +56,7 @@ describe("GET vocabs/", () => {
         };
         return await fetchRequest(options, authToken);
     };
-    const queryDefaults = {pagination: {pageSize: 25, page: 1}, sort: {sortBy: "text", sortOrder: "asc"}};
+    const queryDefaults = {pagination: {pageSize: 25, page: 1}};
     const defaultSortComparator = createComparator(Vocab, [
         {property: "text", order: "asc"},
         {property: "id", order: "asc"}]
@@ -604,7 +604,7 @@ describe("GET users/:username/vocabs/", () => {
         };
         return await fetchRequest(options, authToken);
     };
-    const queryDefaults = {pagination: {pageSize: 25, page: 1}, sort: {vocab: {text: "asc"}}};
+    const queryDefaults = {pagination: {pageSize: 25, page: 1}};
     const defaultSortComparator = createComparator(Vocab, [
         {property: "text", order: "asc"},
         {property: "id", order: "asc"}]
@@ -794,7 +794,7 @@ describe("GET users/:username/vocabs/", () => {
     });
     describe("test sort", () => {
         describe("test sortBy", () => {
-            test<LocalTestContext>("test sortBy title", async (context) => {
+            test<LocalTestContext>("test sortBy text", async (context) => {
                 const user = await context.userFactory.createOne();
                 const session = await context.sessionFactory.createOne({user: user});
                 const language = await context.languageFactory.createOne();
@@ -1275,6 +1275,7 @@ describe("GET users/:username/vocabs/:vocabId/", () => {
             const vocab = await context.vocabFactory.createOne({language});
             const expectedMapping = context.em.create(MapLearnerVocab, {vocab, learner: user.profile});
             await context.em.flush();
+
             const response = await makeRequest("me", vocab.id, session.token);
 
             expect(response.statusCode).to.equal(200);

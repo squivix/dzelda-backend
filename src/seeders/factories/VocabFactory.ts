@@ -16,10 +16,10 @@ export class VocabFactory extends CustomFactory<Vocab> {
     }
 
     override makeDefinition(overrideParameters?: EntityData<Vocab>): EntityData<Vocab> {
-        if (overrideParameters?.lessonsAppearingIn !== undefined && Array.isArray(overrideParameters?.lessonsAppearingIn))
-            overrideParameters.lessonsCount = overrideParameters.lessonsAppearingIn.length;
-        if (overrideParameters?.learners !== undefined && Array.isArray(overrideParameters?.learners))
-            overrideParameters.learnersCount = overrideParameters.learners.length;
+        if (overrideParameters?.lessonsAppearingIn !== undefined)
+            overrideParameters.lessonsCount = Array.isArray(overrideParameters?.lessonsAppearingIn) ? overrideParameters.lessonsAppearingIn.length : 1;
+        if (overrideParameters?.learners !== undefined)
+            overrideParameters.learnersCount = Array.isArray(overrideParameters?.learners) ? overrideParameters.learners.length : 1;
         return super.makeDefinition(overrideParameters);
     }
 }

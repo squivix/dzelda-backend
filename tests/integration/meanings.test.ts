@@ -8,7 +8,7 @@ import {UserFactory} from "@/src/seeders/factories/UserFactory.js";
 import {ProfileFactory} from "@/src/seeders/factories/ProfileFactory.js";
 import {SessionFactory} from "@/src/seeders/factories/SessionFactory.js";
 import {InjectOptions} from "light-my-request";
-import {buildQueryString, fetchRequest} from "@/tests/integration/utils.js";
+import {buildQueryString, createComparator, fetchRequest} from "@/tests/integration/utils.js";
 import {MeaningFactory} from "@/src/seeders/factories/MeaningFactory.js";
 import {meaningSerializer} from "@/src/presentation/response/serializers/entities/MeaningSerializer.js";
 import {Meaning} from "@/src/models/entities/Meaning.js";
@@ -55,16 +55,22 @@ describe("POST meanings/", () => {
         const language = await context.languageFactory.createOne();
         const vocab = await context.vocabFactory.createOne({language: language});
         const newMeaning = context.meaningFactory.makeOne({language: language, vocab: vocab, addedBy: user.profile, learnersCount: 0});
+
         const response = await makeRequest({
             languageCode: language.code,
             text: newMeaning.text,
             vocabId: vocab.id
         }, session.token);
+
         expect(response.statusCode).toEqual(201);
-        expect(response.json()).toEqual(expect.objectContaining(meaningSerializer.serialize(newMeaning, {ignore: ["addedOn"]})));
-        expect(await context.meaningRepo.findOne({text: newMeaning.text, language, vocab})).not.toBeNull();
+        expect(response.json()).toMatchObject(meaningSerializer.serialize(newMeaning, {ignore: ["addedOn"]}));
+        const dbRecord = await context.meaningRepo.findOne({text: newMeaning.text, language, vocab});
+        expect(dbRecord).not.toBeNull();
+        if (dbRecord != null) {
+            expect(meaningSerializer.serialize(dbRecord)).toMatchObject(meaningSerializer.serialize(newMeaning, {ignore: ["addedOn"]}));
+        }
     });
-    test<LocalTestContext>("If meaning already exists return 200", async (context) => {
+    test<LocalTestContext>("If meaning with same text and language for same vocab already exists return 200", async (context) => {
         const user = await context.userFactory.createOne();
         const session = await context.sessionFactory.createOne({user: user});
         const language = await context.languageFactory.createOne();
@@ -214,27 +220,6 @@ describe("POST meanings/", () => {
             });
         });
     });
-    test<LocalTestContext>("If meaning with same text and language for same vocab  already exists return 200", async (context) => {
-        const user = await context.userFactory.createOne();
-        const session = await context.sessionFactory.createOne({user: user});
-        const language = await context.languageFactory.createOne();
-        const vocab = await context.vocabFactory.createOne({language: language});
-        const oldMeaning = await context.meaningFactory.createOne({
-            language: language,
-            vocab: vocab,
-            addedBy: user.profile,
-            learnersCount: 0
-        });
-        const newMeaning = context.meaningFactory.makeOne({language: language, vocab: vocab, addedBy: user.profile, text: oldMeaning.text});
-        const response = await makeRequest({
-            languageCode: language.code,
-            text: newMeaning.text,
-            vocabId: vocab.id
-        }, session.token);
-
-        expect(response.statusCode).toEqual(200);
-        expect(response.json()).toEqual(meaningSerializer.serialize(oldMeaning));
-    });
 });
 
 /**{@link MeaningController#getUserMeanings}*/
@@ -246,24 +231,33 @@ describe("GET users/:username/meanings/", () => {
         };
         return await fetchRequest(options, authToken);
     };
+    const queryDefaults = {pagination: {pageSize: 10, page: 1}};
+    // TODO allow sorting by multiple columns and make learnersCount desc, text asc, id asc the default
+    const defaultSortComparator = createComparator(Meaning, [
+        {property: "text", order: "asc"},
+        {property: "id", order: "asc"}]
+    );
 
     describe("If user is logged in and there are no filters return meanings the user is learning", () => {
         test<LocalTestContext>("If username is me", async (context) => {
             const user = await context.userFactory.createOne();
-            const otherUser = await context.userFactory.createOne();
             const session = await context.sessionFactory.createOne({user: user});
             const language = await context.languageFactory.createOne();
             const vocab = await context.vocabFactory.createOne({language});
-            await context.meaningFactory.create(5, {vocab, language, addedBy: otherUser.profile, learners: user.profile,});
-            await context.meaningFactory.create(5, {vocab, language, addedBy: otherUser.profile});
+            const expectedMeanings = await context.meaningFactory.create(5, {vocab, language, learners: user.profile});
+            await context.meaningFactory.create(5, {vocab, language});
+            expectedMeanings.sort(defaultSortComparator);
+            const recordsCount = expectedMeanings.length;
 
             const response = await makeRequest("me", {}, session.token);
 
-            const meanings = await context.meaningRepo.find({learners: user.profile}, {
-                populate: ["language", "vocab.language", "addedBy.user", "learnersCount"], refresh: true
-            });
             expect(response.statusCode).to.equal(200);
-            expect(response.json()).toEqual(meaningSerializer.serializeList(meanings));
+            expect(response.json()).toEqual({
+                page: queryDefaults.pagination.page,
+                pageSize: queryDefaults.pagination.pageSize,
+                pageCount: Math.ceil(recordsCount / queryDefaults.pagination.pageSize),
+                data: meaningSerializer.serializeList(expectedMeanings)
+            });
         });
         test<LocalTestContext>("If username belongs to the currently logged in user", async (context) => {
             const user = await context.userFactory.createOne();
@@ -271,66 +265,345 @@ describe("GET users/:username/meanings/", () => {
             const session = await context.sessionFactory.createOne({user: user});
             const language = await context.languageFactory.createOne();
             const vocab = await context.vocabFactory.createOne({language});
-            await context.meaningFactory.create(5, {vocab, language, addedBy: otherUser.profile, learners: user.profile,});
+            const expectedMeanings = await context.meaningFactory.create(5, {vocab, language, addedBy: otherUser.profile, learners: user.profile});
             await context.meaningFactory.create(5, {vocab, language, addedBy: otherUser.profile});
+            expectedMeanings.sort(defaultSortComparator);
+            const recordsCount = expectedMeanings.length;
 
             const response = await makeRequest(user.username, {}, session.token);
 
-            const meanings = await context.meaningRepo.find({learners: user.profile}, {
-                populate: ["language", "vocab.language", "addedBy.user", "learnersCount"], refresh: true
-            });
             expect(response.statusCode).to.equal(200);
-            expect(response.json()).toEqual(meaningSerializer.serializeList(meanings));
+            expect(response.json()).toEqual({
+                page: queryDefaults.pagination.page,
+                pageSize: queryDefaults.pagination.pageSize,
+                pageCount: Math.ceil(recordsCount / queryDefaults.pagination.pageSize),
+                data: meaningSerializer.serializeList(expectedMeanings)
+            });
         });
     });
-    describe("test vocab filter", () => {
-        test<LocalTestContext>("If vocab filter is valid return only meanings for that vocab", async (context) => {
-            const user = await context.userFactory.createOne();
-            const otherUser = await context.userFactory.createOne();
-            const session = await context.sessionFactory.createOne({user: user});
-            const language = await context.languageFactory.createOne();
-            const vocab1 = await context.vocabFactory.createOne({language});
-            const vocab2 = await context.vocabFactory.createOne({language});
-            await context.meaningFactory.create(5, {vocab: vocab1, language, addedBy: otherUser.profile, learners: user.profile,});
-            await context.meaningFactory.create(5, {vocab: vocab2, language, addedBy: otherUser.profile, learners: user.profile,});
-            await context.meaningFactory.create(5, {vocab: vocab1, language, addedBy: otherUser.profile});
-            await context.meaningFactory.create(5, {vocab: vocab2, language, addedBy: otherUser.profile});
+    describe("test filters", () => {
+        describe("test vocab filter", () => {
+            test<LocalTestContext>("If vocab filter is valid return only meanings for that vocab", async (context) => {
+                const user = await context.userFactory.createOne();
+                const session = await context.sessionFactory.createOne({user: user});
+                const language = await context.languageFactory.createOne();
+                const vocab1 = await context.vocabFactory.createOne({language});
+                const vocab2 = await context.vocabFactory.createOne({language});
+                const expectedMeanings = await context.meaningFactory.create(5, {vocab: vocab1, language, learners: [user.profile]});
+                await context.meaningFactory.create(5, {vocab: vocab2, language, learners: [user.profile]});
+                await context.meaningFactory.create(5, {vocab: vocab1, language});
+                await context.meaningFactory.create(5, {vocab: vocab2, language});
+                expectedMeanings.sort(defaultSortComparator);
+                const recordsCount = expectedMeanings.length;
 
-            const response = await makeRequest("me", {vocabId: vocab1.id}, session.token);
+                const response = await makeRequest("me", {vocabId: vocab1.id}, session.token);
 
-            const meanings = await context.meaningRepo.find({
-                learners: user.profile,
-                vocab: vocab1
-            }, {populate: ["language", "vocab.language", "addedBy.user", "learnersCount"], refresh: true});
-            expect(response.statusCode).to.equal(200);
-            expect(response.json()).toEqual(meaningSerializer.serializeList(meanings));
+                expect(response.statusCode).to.equal(200);
+                expect(response.json()).toEqual({
+                    page: queryDefaults.pagination.page,
+                    pageSize: queryDefaults.pagination.pageSize,
+                    pageCount: Math.ceil(recordsCount / queryDefaults.pagination.pageSize),
+                    data: meaningSerializer.serializeList(expectedMeanings)
+                });
+            });
+            test<LocalTestContext>("If the user is not meanings for that vocab return empty list", async (context) => {
+                const user = await context.userFactory.createOne();
+                const otherUser = await context.userFactory.createOne();
+                const session = await context.sessionFactory.createOne({user: user});
+                const language = await context.languageFactory.createOne();
+                const vocab1 = await context.vocabFactory.createOne({language});
+                const vocab2 = await context.vocabFactory.createOne({language});
+                await context.meaningFactory.create(5, {vocab: vocab2, language, addedBy: otherUser.profile, learners: user.profile,});
+                await context.meaningFactory.create(5, {vocab: vocab1, language, addedBy: otherUser.profile});
+                await context.meaningFactory.create(5, {vocab: vocab2, language, addedBy: otherUser.profile});
+
+                const response = await makeRequest("me", {vocabId: vocab1.id}, session.token);
+
+                expect(response.statusCode).to.equal(200);
+                expect(response.json()).toEqual({
+                    page: queryDefaults.pagination.page,
+                    pageSize: queryDefaults.pagination.pageSize,
+                    pageCount: 0,
+                    data: []
+                });
+            });
+            test<LocalTestContext>("If vocab filter is invalid return 400", async (context) => {
+                const user = await context.userFactory.createOne();
+                const session = await context.sessionFactory.createOne({user: user});
+
+                const response = await makeRequest("me", {vocabId: "all"}, session.token);
+
+                expect(response.statusCode).to.equal(400);
+            });
         });
+    });
+    describe("test sort", () => {
+        describe("test sortBy", () => {
+            test<LocalTestContext>("test sortBy text", async (context) => {
+                const user = await context.userFactory.createOne();
+                const session = await context.sessionFactory.createOne({user: user});
+                const language = await context.languageFactory.createOne();
+                const vocab = await context.vocabFactory.createOne({language});
+                const expectedMeanings = [
+                    await context.meaningFactory.createOne({text: "abc", vocab, language, learners: user.profile}),
+                    await context.meaningFactory.createOne({text: "def", vocab, language, learners: user.profile}),
+                ];
+                await context.meaningFactory.create(5, {vocab, language});
+                const recordsCount = expectedMeanings.length;
 
-        test<LocalTestContext>("If vocab filter is invalid return 400", async (context) => {
-            const user = await context.userFactory.createOne();
-            const session = await context.sessionFactory.createOne({user: user});
+                const response = await makeRequest("me", {sortBy: "text"}, session.token);
 
-            const response = await makeRequest("me", {vocabId: "all"}, session.token);
+                expect(response.statusCode).to.equal(200);
+                expect(response.json()).toEqual({
+                    page: queryDefaults.pagination.page,
+                    pageSize: queryDefaults.pagination.pageSize,
+                    pageCount: Math.ceil(recordsCount / queryDefaults.pagination.pageSize),
+                    data: meaningSerializer.serializeList(expectedMeanings)
+                });
+            });
+            test<LocalTestContext>("test sortBy learnersCount", async (context) => {
+                const user = await context.userFactory.createOne();
+                const user1 = await context.userFactory.createOne();
+                const user2 = await context.userFactory.createOne();
+                const session = await context.sessionFactory.createOne({user: user});
+                const language = await context.languageFactory.createOne();
+                const vocab = await context.vocabFactory.createOne({language});
+                const expectedMeanings = [
+                    await context.meaningFactory.createOne({vocab, language, learners: [user.profile]}),
+                    await context.meaningFactory.createOne({vocab, language, learners: [user.profile, user1.profile]}),
+                    await context.meaningFactory.createOne({vocab, language, learners: [user.profile, user1.profile, user2.profile]}),
+                ];
+                await context.meaningFactory.create(5, {vocab, language});
+                const recordsCount = expectedMeanings.length;
 
-            expect(response.statusCode).to.equal(400);
+                const response = await makeRequest("me", {sortBy: "learnersCount"}, session.token);
+
+                expect(response.statusCode).to.equal(200);
+                expect(response.json()).toEqual({
+                    page: queryDefaults.pagination.page,
+                    pageSize: queryDefaults.pagination.pageSize,
+                    pageCount: Math.ceil(recordsCount / queryDefaults.pagination.pageSize),
+                    data: meaningSerializer.serializeList(expectedMeanings)
+                });
+            });
+            test<LocalTestContext>("If sortBy is invalid return 400", async (context) => {
+                const user = await context.userFactory.createOne();
+                const session = await context.sessionFactory.createOne({user: user});
+                const response = await makeRequest("me", {sortBy: "popularity"}, session.token);
+                expect(response.statusCode).to.equal(400);
+            });
         });
-        test<LocalTestContext>("If the user is not meanings for that vocab return empty list", async (context) => {
-            const user = await context.userFactory.createOne();
-            const otherUser = await context.userFactory.createOne();
-            const session = await context.sessionFactory.createOne({user: user});
-            const language = await context.languageFactory.createOne();
-            const vocab1 = await context.vocabFactory.createOne({language});
-            const vocab2 = await context.vocabFactory.createOne({language});
-            await context.meaningFactory.create(5, {vocab: vocab2, language, addedBy: otherUser.profile, learners: user.profile,});
-            await context.meaningFactory.create(5, {vocab: vocab1, language, addedBy: otherUser.profile});
-            await context.meaningFactory.create(5, {vocab: vocab2, language, addedBy: otherUser.profile});
+        describe("test sortOrder", () => {
+            test<LocalTestContext>("If sortOrder is asc return the vocabs in ascending order", async (context) => {
+                const user = await context.userFactory.createOne();
+                const user1 = await context.userFactory.createOne();
+                const user2 = await context.userFactory.createOne();
+                const session = await context.sessionFactory.createOne({user: user});
+                const language = await context.languageFactory.createOne();
+                const vocab = await context.vocabFactory.createOne({language});
+                const expectedMeanings = [
+                    await context.meaningFactory.createOne({text: "abc", vocab, language, learners: user.profile}),
+                    await context.meaningFactory.createOne({text: "def", vocab, language, learners: user.profile}),
+                ];
+                await context.meaningFactory.create(5, {vocab, language});
+                const recordsCount = expectedMeanings.length;
 
-            const response = await makeRequest("me", {vocabId: vocab1.id}, session.token);
+                const response = await makeRequest("me", {sortOrder: "asc"}, session.token);
 
-            expect(response.statusCode).to.equal(200);
-            expect(response.json()).toEqual([]);
+                expect(response.statusCode).to.equal(200);
+                expect(response.json()).toEqual({
+                    page: queryDefaults.pagination.page,
+                    pageSize: queryDefaults.pagination.pageSize,
+                    pageCount: Math.ceil(recordsCount / queryDefaults.pagination.pageSize),
+                    data: meaningSerializer.serializeList(expectedMeanings)
+                });
+            });
+            test<LocalTestContext>("If sortOrder is desc return the vocabs in descending order", async (context) => {
+                const user = await context.userFactory.createOne();
+                const session = await context.sessionFactory.createOne({user: user});
+                const language = await context.languageFactory.createOne();
+                const vocab = await context.vocabFactory.createOne({language});
+                const expectedMeanings = [
+                    await context.meaningFactory.createOne({text: "def", vocab, language, learners: user.profile}),
+                    await context.meaningFactory.createOne({text: "abc", vocab, language, learners: user.profile}),
+                ];
+                await context.meaningFactory.create(5, {vocab, language});
+                const recordsCount = expectedMeanings.length;
+
+                const response = await makeRequest("me", {sortOrder: "desc"}, session.token);
+
+                expect(response.statusCode).to.equal(200);
+                expect(response.json()).toEqual({
+                    page: queryDefaults.pagination.page,
+                    pageSize: queryDefaults.pagination.pageSize,
+                    pageCount: Math.ceil(recordsCount / queryDefaults.pagination.pageSize),
+                    data: meaningSerializer.serializeList(expectedMeanings)
+                });
+            });
+            test<LocalTestContext>("If sortOrder is invalid return 400", async (context) => {
+                const user = await context.userFactory.createOne();
+                const session = await context.sessionFactory.createOne({user: user});
+                const response = await makeRequest("me", {sortOrder: "rising"}, session.token);
+                expect(response.statusCode).to.equal(400);
+            });
         });
+    });
+    describe("test pagination", () => {
+        describe("test page", () => {
+            test<LocalTestContext>("If page is 1 return the first page of results", async (context) => {
+                const user = await context.userFactory.createOne();
+                const session = await context.sessionFactory.createOne({user: user});
+                const language = await context.languageFactory.createOne();
+                const vocab = await context.vocabFactory.createOne({language});
+                const allMeanings = await context.meaningFactory.create(10, {vocab, language, learners: user.profile});
+                await context.meaningFactory.create(5, {vocab, language});
+                allMeanings.sort(defaultSortComparator);
+                const recordsCount = allMeanings.length;
+                const page = 1, pageSize = 3;
+                const expectedMeanings = allMeanings.slice(pageSize * (page - 1), pageSize * (page - 1) + pageSize);
 
+                const response = await makeRequest("me", {page, pageSize}, session.token);
+
+                expect(response.statusCode).to.equal(200);
+                expect(response.json()).toEqual({
+                    page: page,
+                    pageSize: pageSize,
+                    pageCount: Math.ceil(recordsCount / pageSize),
+                    data: meaningSerializer.serializeList(expectedMeanings)
+                });
+            });
+            test<LocalTestContext>("If page is 2 return the second page of results", async (context) => {
+                const user = await context.userFactory.createOne();
+                const session = await context.sessionFactory.createOne({user: user});
+                const language = await context.languageFactory.createOne();
+                const vocab = await context.vocabFactory.createOne({language});
+                const allMeanings = await context.meaningFactory.create(10, {vocab, language, learners: user.profile});
+                await context.meaningFactory.create(5, {vocab, language});
+                allMeanings.sort(defaultSortComparator);
+                const recordsCount = allMeanings.length;
+                const page = 2, pageSize = 3;
+                const expectedMeanings = allMeanings.slice(pageSize * (page - 1), pageSize * (page - 1) + pageSize);
+
+                const response = await makeRequest("me", {page, pageSize}, session.token);
+
+                expect(response.statusCode).to.equal(200);
+                expect(response.json()).toEqual({
+                    page: page,
+                    pageSize: pageSize,
+                    pageCount: Math.ceil(recordsCount / pageSize),
+                    data: meaningSerializer.serializeList(expectedMeanings)
+                });
+            });
+            test<LocalTestContext>("If page is last return the last page of results", async (context) => {
+                const user = await context.userFactory.createOne();
+                const session = await context.sessionFactory.createOne({user: user});
+                const language = await context.languageFactory.createOne();
+                const vocab = await context.vocabFactory.createOne({language});
+                const allMeanings = await context.meaningFactory.create(10, {vocab, language, learners: user.profile});
+                await context.meaningFactory.create(5, {vocab, language});
+                allMeanings.sort(defaultSortComparator);
+                const recordsCount = allMeanings.length;
+                const pageSize = 3;
+                const page = Math.ceil(recordsCount / pageSize);
+                const expectedMeanings = allMeanings.slice(pageSize * (page - 1), pageSize * (page - 1) + pageSize);
+
+                const response = await makeRequest("me", {page, pageSize}, session.token);
+
+                expect(response.statusCode).to.equal(200);
+                expect(response.json()).toEqual({
+                    page: page,
+                    pageSize: pageSize,
+                    pageCount: Math.ceil(recordsCount / pageSize),
+                    data: meaningSerializer.serializeList(expectedMeanings)
+                });
+            });
+            test<LocalTestContext>("If page is more than last return empty page", async (context) => {
+                const user = await context.userFactory.createOne();
+                const session = await context.sessionFactory.createOne({user: user});
+                const language = await context.languageFactory.createOne();
+                const vocab = await context.vocabFactory.createOne({language});
+                const allMeanings = await context.meaningFactory.create(10, {vocab, language, learners: user.profile});
+                await context.meaningFactory.create(5, {vocab, language});
+                allMeanings.sort(defaultSortComparator);
+                const recordsCount = allMeanings.length;
+                const pageSize = 3;
+                const page = Math.ceil(recordsCount / pageSize) + 1;
+
+                const response = await makeRequest("me", {page, pageSize}, session.token);
+
+                expect(response.statusCode).to.equal(200);
+                expect(response.json()).toEqual({
+                    page: page,
+                    pageSize: pageSize,
+                    pageCount: Math.ceil(recordsCount / pageSize),
+                    data: []
+                });
+            });
+            describe("If page is invalid return 400", () => {
+                test<LocalTestContext>("If page is less than 1 return 400", async (context) => {
+                    const user = await context.userFactory.createOne();
+                    const session = await context.sessionFactory.createOne({user: user});
+                    const response = await makeRequest("me", {page: 0, pageSize: 3}, session.token);
+
+                    expect(response.statusCode).to.equal(400);
+                });
+                test<LocalTestContext>("If page is not a number return 400", async (context) => {
+                    const user = await context.userFactory.createOne();
+                    const session = await context.sessionFactory.createOne({user: user});
+                    const response = await makeRequest("me", {page: "last", pageSize: 3}, session.token);
+
+                    expect(response.statusCode).to.equal(400);
+                });
+            });
+        });
+        describe("test pageSize", () => {
+            test<LocalTestContext>("If pageSize is 10 split the results into 10 sized pages", async (context) => {
+                const user = await context.userFactory.createOne();
+                const session = await context.sessionFactory.createOne({user: user});
+                const language = await context.languageFactory.createOne();
+                const vocab = await context.vocabFactory.createOne({language});
+                const allMeanings = await context.meaningFactory.create(50, {vocab, language, learners: user.profile});
+                await context.meaningFactory.create(5, {vocab, language});
+                allMeanings.sort(defaultSortComparator);
+                const recordsCount = allMeanings.length;
+                const pageSize = 20;
+                const page = Math.ceil(recordsCount / pageSize) + 1;
+                const expectedMeanings = allMeanings.slice(pageSize * (page - 1), pageSize * (page - 1) + pageSize);
+
+                const response = await makeRequest("me", {page, pageSize}, session.token);
+
+                expect(response.statusCode).to.equal(200);
+                expect(response.json()).toEqual({
+                    page: page,
+                    pageSize: pageSize,
+                    pageCount: Math.ceil(recordsCount / pageSize),
+                    data: meaningSerializer.serializeList(expectedMeanings)
+                });
+            });
+            describe("If pageSize is invalid return 400", () => {
+                test<LocalTestContext>("If pageSize is too big return 400", async (context) => {
+                    const user = await context.userFactory.createOne();
+                    const session = await context.sessionFactory.createOne({user: user});
+                    const response = await makeRequest("me", {page: 1, pageSize: 75}, session.token);
+
+                    expect(response.statusCode).to.equal(400);
+                });
+                test<LocalTestContext>("If pageSize is negative return 400", async (context) => {
+                    const user = await context.userFactory.createOne();
+                    const session = await context.sessionFactory.createOne({user: user});
+                    const response = await makeRequest("me", {page: 1, pageSize: -10}, session.token);
+
+                    expect(response.statusCode).to.equal(400);
+                });
+                test<LocalTestContext>("If pageSize is not a number return 400", async (context) => {
+                    const user = await context.userFactory.createOne();
+                    const session = await context.sessionFactory.createOne({user: user});
+                    const response = await makeRequest("me", {page: 1, pageSize: "a lot"}, session.token);
+
+                    expect(response.statusCode).to.equal(400);
+                });
+            });
+        });
     });
     test<LocalTestContext>("If user is not logged in return 401", async (context) => {
         const response = await makeRequest("me", {});
@@ -375,48 +648,41 @@ describe("POST users/:username/meanings/", () => {
     describe("If the meaning exists and user is learning meaning vocab language add meaning to user's meanings learning", () => {
         test<LocalTestContext>("If username is me", async (context) => {
             const user = await context.userFactory.createOne();
-            const otherUser = await context.userFactory.createOne();
             const session = await context.sessionFactory.createOne({user});
             const language = await context.languageFactory.createOne({learners: user.profile});
             const vocab = await context.vocabFactory.createOne({language});
-            const meaning = await context.meaningFactory.createOne({vocab, language, addedBy: otherUser.profile});
+            const meaning = await context.meaningFactory.createOne({vocab, language});
+            const oldLearnersCount = meaning.learnersCount;
 
             const response = await makeRequest("me", {meaningId: meaning.id}, session.token);
-            meaning.learnersCount = await meaning.learners.loadCount();
 
             expect(response.statusCode).to.equal(201);
+            expect(response.json()).toMatchObject(meaningSerializer.serialize(meaning, {ignore: ["learnersCount"]}));
             expect(await context.em.findOne(MapLearnerMeaning, {learner: user.profile, meaning})).not.toBeNull();
-            expect(response.json()).toEqual(meaningSerializer.serialize(meaning));
+            expect(await meaning.learners.loadCount()).toEqual(oldLearnersCount + 1);
         });
         test<LocalTestContext>("If username is belongs to the current user", async (context) => {
             const user = await context.userFactory.createOne();
-            const otherUser = await context.userFactory.createOne();
             const session = await context.sessionFactory.createOne({user});
             const language = await context.languageFactory.createOne({learners: user.profile});
             const vocab = await context.vocabFactory.createOne({language});
-            const meaning = await context.meaningFactory.createOne({vocab, language, addedBy: otherUser.profile});
+            const meaning = await context.meaningFactory.createOne({vocab, language});
+            const oldLearnersCount = meaning.learnersCount;
 
             const response = await makeRequest(user.username, {meaningId: meaning.id}, session.token);
-            meaning.learnersCount = await meaning.learners.loadCount();
 
             expect(response.statusCode).to.equal(201);
+            expect(response.json()).toMatchObject(meaningSerializer.serialize(meaning, {ignore: ["learnersCount"]}));
             expect(await context.em.findOne(MapLearnerMeaning, {learner: user.profile, meaning})).not.toBeNull();
-            expect(response.json()).toEqual(meaningSerializer.serialize(meaning));
+            expect(await meaning.learners.loadCount()).toEqual(oldLearnersCount + 1);
         });
     });
     test<LocalTestContext>("If user is already learning meaning return 200", async (context) => {
         const user = await context.userFactory.createOne();
-        const otherUser = await context.userFactory.createOne();
         const session = await context.sessionFactory.createOne({user});
         const language = await context.languageFactory.createOne({learners: user.profile});
         const vocab = await context.vocabFactory.createOne({language});
-        const meaning = await context.meaningFactory.createOne({
-            vocab,
-            language,
-            addedBy: otherUser.profile,
-            learners: user.profile,
-            learnersCount: 1
-        });
+        const meaning = await context.meaningFactory.createOne({vocab, language, learners: user.profile});
 
         const response = await makeRequest("me", {meaningId: meaning.id}, session.token);
 
@@ -508,11 +774,13 @@ describe("DELETE users/:username/meanings/:meaningId/", () => {
             const language = await context.languageFactory.createOne({learners: user.profile});
             const vocab = await context.vocabFactory.createOne({language});
             const meaning = await context.meaningFactory.createOne({vocab, language, addedBy: user.profile, learners: user.profile});
+            const oldLearnersCount = meaning.learnersCount;
 
             const response = await makeRequest("me", meaning.id, session.token);
 
             expect(response.statusCode).to.equal(204);
-            expect((await context.em.findOne(MapLearnerMeaning, {learner: user.profile, meaning}))?.toObject() ?? null).toBeNull();
+            expect(await context.em.findOne(MapLearnerMeaning, {learner: user.profile, meaning})).toBeNull();
+            expect(await meaning.learners.loadCount()).toEqual(oldLearnersCount - 1);
         });
         test<LocalTestContext>("If username is not me and authenticated as user with username return 204", async (context) => {
             const user = await context.userFactory.createOne();
@@ -520,11 +788,13 @@ describe("DELETE users/:username/meanings/:meaningId/", () => {
             const language = await context.languageFactory.createOne({learners: user.profile});
             const vocab = await context.vocabFactory.createOne({language});
             const meaning = await context.meaningFactory.createOne({vocab, language, addedBy: user.profile, learners: user.profile});
+            const oldLearnersCount = meaning.learnersCount;
 
             const response = await makeRequest(user.username, meaning.id, session.token);
 
             expect(response.statusCode).to.equal(204);
-            expect((await context.em.findOne(MapLearnerMeaning, {learner: user.profile, meaning}))?.toObject() ?? null).toBeNull();
+            expect(await context.em.findOne(MapLearnerMeaning, {learner: user.profile, meaning})).toBeNull();
+            expect(await meaning.learners.loadCount()).toEqual(oldLearnersCount - 1);
         });
     });
     test<LocalTestContext>("If user is not learning meaning return 404", async (context) => {

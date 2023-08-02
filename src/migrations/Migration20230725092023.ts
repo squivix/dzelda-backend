@@ -44,7 +44,7 @@ export class Migration20230725092023 extends Migration {
     this.addSql('create index "vocab_language_id_index" on "vocab" ("language_id");');
     this.addSql('alter table "vocab" add constraint "vocab_language_id_text_unique" unique ("language_id", "text");');
 
-    this.addSql('create table "meaning" ("id" serial primary key, "text" varchar(1000) not null, "vocab_id" int not null, "added_by_id" int not null, "added_on" timestamptz(0) not null default now(), "language_id" int not null);');
+    this.addSql('create table "meaning" ("id" serial primary key, "text" varchar(1000) not null, "vocab_id" int not null, "added_by_id" int, "added_on" timestamptz(0) not null default now(), "language_id" int not null);');
     this.addSql('create index "meaning_added_by_id_index" on "meaning" ("added_by_id");');
     this.addSql('create index "meaning_language_id_index" on "meaning" ("language_id");');
     this.addSql('create index "meaning_vocab_id_index" on "meaning" ("vocab_id");');

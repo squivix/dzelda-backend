@@ -71,10 +71,7 @@ describe("GET lessons/", () => {
         };
         return await fetchRequest(options, authToken);
     };
-    const queryDefaults: {
-        pagination: { pageSize: number, page: number },
-        sort: { sortBy: "title" | "createdDate" | "learnersCount", sortOrder: "asc" | "desc" }
-    } = {pagination: {pageSize: 10, page: 1}, sort: {sortBy: "title", sortOrder: "asc"}};
+    const queryDefaults = {pagination: {pageSize: 10, page: 1}};
     const defaultSortComparator = createComparator(Lesson, [
         {property: "title", order: "asc"},
         {property: "id", order: "asc"}]
@@ -1668,10 +1665,7 @@ describe("GET users/:username/lessons/", () => {
         };
         return await fetchRequest(options, authToken);
     };
-    const queryDefaults: {
-        pagination: { pageSize: number, page: number },
-        sort: { sortBy: "title" | "createdDate" | "learnersCount", sortOrder: "asc" | "desc" }
-    } = {pagination: {pageSize: 10, page: 1}, sort: {sortBy: "title", sortOrder: "asc"}};
+    const queryDefaults = {pagination: {pageSize: 10, page: 1}};
     const defaultSortComparator = createComparator(Lesson, [
         {property: "title", order: "asc"},
         {property: "id", order: "asc"}]

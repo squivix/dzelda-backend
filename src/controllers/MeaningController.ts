@@ -13,6 +13,7 @@ import {NotFoundAPIError} from "@/src/utils/errors/NotFoundAPIError.js";
 import {ForbiddenAPIError} from "@/src/utils/errors/ForbiddenAPIError.js";
 import {numericStringValidator} from "@/src/validators/utilValidators.js";
 import {meaningSerializer} from "@/src/presentation/response/serializers/entities/MeaningSerializer.js";
+import {learnerVocabSerializer} from "@/src/presentation/response/serializers/mappings/LearnerVocabSerializer.js";
 
 class MeaningController {
     async createMeaning(request: FastifyRequest, reply: FastifyReply) {
@@ -58,14 +59,26 @@ class MeaningController {
             throw new ForbiddenAPIError();
 
         const queryParamsValidator = z.object({
-            vocabId: numericStringValidator.optional()
+            vocabId: numericStringValidator.optional(),
+            sortBy: z.union([z.literal("text"), z.literal("learnersCount")]).optional().default("text"),
+            sortOrder: z.union([z.literal("asc"), z.literal("desc")]).optional().default("asc"),
+            page: z.coerce.number().int().min(1).optional().default(1),
+            pageSize: z.coerce.number().int().min(1).max(50).optional().default(10),
         });
         const queryParams = queryParamsValidator.parse(request.query);
+        const filters = {vocabId: queryParams.vocabId}
+        const sort = {sortBy: queryParams.sortBy, sortOrder: queryParams.sortOrder};
+        const pagination = {page: queryParams.page, pageSize: queryParams.pageSize}
 
         const meaningService = new MeaningService(request.em);
-        const meanings = await meaningService.getUserMeanings(queryParams, user);
+        const [meanings, recordsCount] = await meaningService.getUserMeanings(filters, sort, pagination, user);
 
-        reply.send(meaningSerializer.serializeList(meanings));
+        reply.send({
+            page: pagination.page,
+            pageSize: pagination.pageSize,
+            pageCount: Math.ceil(recordsCount / pagination.pageSize),
+            data: meaningSerializer.serializeList(meanings)
+        })
     }
 
     async addMeaningToUser(request: FastifyRequest, reply: FastifyReply) {

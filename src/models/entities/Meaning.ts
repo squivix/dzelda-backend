@@ -17,8 +17,8 @@ export class Meaning extends CustomBaseEntity {
     @ManyToOne({entity: () => Vocab, inversedBy: (vocab) => vocab.meanings})
     vocab!: Vocab;
 
-    @ManyToOne({entity: () => Profile, inversedBy: (profile) => profile.meaningsAdded})
-    addedBy!: Profile;
+    @ManyToOne({entity: () => Profile, inversedBy: (profile) => profile.meaningsAdded, nullable: true})
+    addedBy!: Profile | null;
 
     @Property({type: types.datetime, defaultRaw: "now()"})
     addedOn!: Date;

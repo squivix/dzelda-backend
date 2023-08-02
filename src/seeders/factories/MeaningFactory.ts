@@ -3,6 +3,7 @@ import {EntityData} from "@mikro-orm/core";
 import {Faker} from "@mikro-orm/seeder";
 import {Meaning} from "@/src/models/entities/Meaning.js";
 import {Language} from "@/src/models/entities/Language.js";
+import {Vocab} from "@/src/models/entities/Vocab.js";
 
 export class MeaningFactory extends CustomFactory<Meaning> {
     readonly model = Meaning;

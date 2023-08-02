@@ -28,8 +28,8 @@ export class LanguageFactory extends CustomFactory<Language> {
     }
 
     override makeDefinition(overrideParameters?: EntityData<Language>): EntityData<Language> {
-        if (overrideParameters?.learners !== undefined && Array.isArray(overrideParameters?.learners))
-            overrideParameters.learnersCount = overrideParameters.learners.length;
+        if (overrideParameters?.learners !== undefined)
+            overrideParameters.learnersCount = Array.isArray(overrideParameters?.learners) ? overrideParameters.learners.length : 1;
         return super.makeDefinition(overrideParameters)
     }
 
