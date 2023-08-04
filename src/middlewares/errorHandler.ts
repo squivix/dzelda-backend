@@ -4,6 +4,7 @@ import {FastifyError, FastifyReply, FastifyRequest} from "fastify";
 import {APIError} from "@/src/utils/errors/APIError.js";
 import {FieldsObject, ValidationAPIError} from "@/src/utils/errors/ValidationAPIError.js";
 import {NotFoundAPIError} from "@/src/utils/errors/NotFoundAPIError.js";
+import * as process from "process";
 
 const isFastifyError = (error: Error): error is FastifyError => {
     return error.name === "FastifyError";
@@ -12,7 +13,8 @@ const isFastifyError = (error: Error): error is FastifyError => {
 
 export const errorHandler = (error: Error, request: FastifyRequest, reply: FastifyReply) => {
     let apiError: APIError | undefined;
-
+    if (process.env.NODE_ENV == "dev")
+        console.log(error);
     if (error instanceof APIError)
         apiError = error;
     else if (error instanceof ZodError) {

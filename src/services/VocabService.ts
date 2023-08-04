@@ -72,7 +72,7 @@ export class VocabService {
         }, {populate: ["meanings"]});
     }
 
-    async getPaginatedLearnerVocabs(filters: { languageCode?: string, level?: VocabLevel, searchQuery?: string },
+    async getPaginatedLearnerVocabs(filters: { languageCode?: string, level?: VocabLevel[], searchQuery?: string },
                                     sort: { sortBy: "text" | "lessonsCount" | "learnersCount", sortOrder: "asc" | "desc" },
                                     pagination: { page: number, pageSize: number }, user: User): Promise<[MapLearnerVocab[], number]> {
         const dbFilters: FilterQuery<MapLearnerVocab> = {$and: []};

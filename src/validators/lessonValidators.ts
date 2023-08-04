@@ -12,8 +12,8 @@ export async function lessonImageValidator(imageFile?: File) {
     const FIELD_NAME = "image";
     if (imageFile) {
         await validateFileType(imageFile, FIELD_NAME, "image");
-        await validateFileSize(imageFile, FIELD_NAME, 500);
-        await validateImageAspectRatio(imageFile, FIELD_NAME, 1, 1);
+        validateFileSize(imageFile, FIELD_NAME, 500);
+        validateImageAspectRatio(imageFile, FIELD_NAME, 1, 1);
     }
 }
 
@@ -21,6 +21,6 @@ export async function lessonAudioValidator(audioFile?: File) {
     const FIELD_NAME = "audio";
     if (audioFile) {
         await validateFileType(audioFile, FIELD_NAME, "audio");
-        await validateFileSize(audioFile, FIELD_NAME, 100 * 1024);
+        validateFileSize(audioFile, FIELD_NAME, 100 * 1024);
     }
 }

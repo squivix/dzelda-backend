@@ -43,7 +43,6 @@ export class UserService {
         if (user && await passwordHasher.validate(password, user.password)) {
             const token = crypto.randomBytes(AUTH_TOKEN_LENGTH).toString("hex");
             await this.em.upsert(Session, {user: user, token: token});
-            await this.em.flush();
             return token;
         } else {
             throw new APIError(

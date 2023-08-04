@@ -21,6 +21,7 @@ import * as parserExports from "@/src/utils/parsers/parsers.js";
 import {MeaningFactory} from "@/src/seeders/factories/MeaningFactory.js";
 import {MapLearnerMeaning} from "@/src/models/entities/MapLearnerMeaning.js";
 import {Meaning} from "@/src/models/entities/Meaning.js";
+import {LanguageLevel} from "@/src/models/enums/LanguageLevel.js";
 
 interface LocalTestContext extends TestContext {
     languageFactory: LanguageFactory;
@@ -710,7 +711,7 @@ describe("GET users/:username/vocabs/", () => {
         });
     });
     describe("test level filter", () => {
-        test<LocalTestContext>("If level filter is valid only return vocabs the user is learning with that level ", async (context) => {
+        test<LocalTestContext>("If level filter is valid only return vocabs the user is learning with that level", async (context) => {
             const user = await context.userFactory.createOne();
             const session = await context.sessionFactory.createOne({user: user});
             const language = await context.languageFactory.createOne();
@@ -725,6 +726,32 @@ describe("GET users/:username/vocabs/", () => {
             await context.em.flush();
             const recordsCount = expectedMappings.length;
             const response = await makeRequest("me", {level: level}, session.token);
+
+            expect(response.statusCode).to.equal(200);
+            expect(response.json()).toEqual({
+                page: queryDefaults.pagination.page,
+                pageSize: queryDefaults.pagination.pageSize,
+                pageCount: Math.ceil(recordsCount / queryDefaults.pagination.pageSize),
+                data: learnerVocabSerializer.serializeList(expectedMappings)
+            });
+        });
+        test<LocalTestContext>("If multiple levels are sent return lessons in any of those levels", async (context) => {
+            const user = await context.userFactory.createOne();
+            const session = await context.sessionFactory.createOne({user: user});
+            const language = await context.languageFactory.createOne();
+            const levels = [VocabLevel.LEVEL_3, VocabLevel.LEVEL_2];
+            const expectedVocabs = await context.vocabFactory.create(8, {language});
+            for (let vocab of await context.vocabFactory.create(5, {language}))
+                context.em.create(MapLearnerVocab, {learner: user.profile, vocab, level: randomEnum(VocabLevel, levels)});
+            expectedVocabs.sort(defaultSortComparator);
+            const expectedMappings: MapLearnerVocab[] = [];
+            expectedVocabs.forEach(vocab => expectedMappings.push(context.em.create(MapLearnerVocab,
+                {learner: user.profile, vocab, level: faker.helpers.arrayElement(levels)}
+            )));
+
+            await context.em.flush();
+            const recordsCount = expectedMappings.length;
+            const response = await makeRequest("me", {level: levels}, session.token);
 
             expect(response.statusCode).to.equal(200);
             expect(response.json()).toEqual({
@@ -1412,7 +1439,11 @@ describe("PATCH users/:username/vocabs/:vocabId/", () => {
             const language = await context.languageFactory.createOne({learners: user.profile});
             const vocab = await context.vocabFactory.createOne({
                 language, learners: user.profile,
-                meanings: context.meaningFactory.makeDefinitions(3, {learners: [user.profile], addedBy: user.profile, language}).sort(meaningSortComparator)
+                meanings: context.meaningFactory.makeDefinitions(3, {
+                    learners: [user.profile],
+                    addedBy: user.profile,
+                    language
+                }).sort(meaningSortComparator)
             });
 
             const updatedMapping = context.em.create(MapLearnerVocab,
