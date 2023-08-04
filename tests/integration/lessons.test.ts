@@ -11,14 +11,7 @@ import {orm} from "@/src/server.js";
 import {Lesson} from "@/src/models/entities/Lesson.js";
 import {Course} from "@/src/models/entities/Course.js";
 import {InjectOptions} from "light-my-request";
-import {
-    buildQueryString,
-    createComparator,
-    fetchRequest,
-    fetchWithFiles,
-    mockValidateFileFields,
-    readSampleFile
-} from "@/tests/integration/utils.js";
+import {buildQueryString, createComparator, fetchRequest, fetchWithFiles, mockValidateFileFields, readSampleFile} from "@/tests/integration/utils.js";
 import {lessonSerializer} from "@/src/presentation/response/serializers/entities/LessonSerializer.js";
 import {faker} from "@faker-js/faker";
 import {randomCase, randomEnum} from "@/tests/utils.js";
@@ -30,7 +23,6 @@ import {getParser, parsers} from "@/src/utils/parsers/parsers.js";
 import {MapLessonVocab} from "@/src/models/entities/MapLessonVocab.js";
 import fs from "fs-extra";
 import {MapLearnerLesson} from "@/src/models/entities/MapLearnerLesson.js";
-import {LessonSchema} from "@/src/presentation/response/interfaces/entities/LessonSchema.js";
 import * as fileValidatorExports from "@/src/validators/fileValidator.js";
 import * as constantExports from "@/src/constants.js";
 import {TEMP_ROOT_FILE_UPLOAD_DIR} from "@/tests/testConstants.js";
@@ -262,6 +254,25 @@ describe("GET lessons/", () => {
             const recordsCount = expectedLessons.length;
 
             const response = await makeRequest({level: level});
+
+            expect(response.statusCode).to.equal(200);
+            expect(response.json()).toEqual({
+                page: queryDefaults.pagination.page,
+                pageSize: queryDefaults.pagination.pageSize,
+                pageCount: Math.ceil(recordsCount / queryDefaults.pagination.pageSize),
+                data: lessonSerializer.serializeList(expectedLessons)
+            });
+        });
+        test<LocalTestContext>("If multiple levels are sent return lessons in any of those levels", async (context) => {
+            const levels = [LanguageLevel.BEGINNER_1, LanguageLevel.ADVANCED_2];
+            const language = await context.languageFactory.createOne();
+            const course = await context.courseFactory.createOne({isPublic: true, language: language});
+            const expectedLessons = (await Promise.all(levels.map(level => context.lessonFactory.create(3, {level, course})))).flat();
+            await context.lessonFactory.create(3, {course, level: randomEnum(LanguageLevel, levels)});
+            expectedLessons.sort(defaultSortComparator);
+            const recordsCount = expectedLessons.length;
+
+            const response = await makeRequest({level: levels});
 
             expect(response.statusCode).to.equal(200);
             expect(response.json()).toEqual({
@@ -1467,7 +1478,7 @@ describe("PUT lessons/:lessonId/", () => {
                 const course = await context.courseFactory.createOne({addedBy: author.profile, language: language, lessons: []});
                 let lesson = await context.lessonFactory.createOne({course: course});
 
-                const updatedLesson = await context.lessonFactory.makeOne({course: course});
+                const updatedLesson = context.lessonFactory.makeOne({course: course});
 
                 const response = await makeRequest(lesson.id, {
                     data: {
@@ -1931,6 +1942,33 @@ describe("GET users/:username/lessons/", () => {
                 data: lessonSerializer.serializeList(expectedLessons)
             });
         });
+        test<LocalTestContext>("If multiple levels are sent return lessons in any of those levels", async (context) => {
+            const user = await context.userFactory.createOne();
+            const session = await context.sessionFactory.createOne({user: user});
+            const language = await context.languageFactory.createOne();
+            const course = await context.courseFactory.createOne({language, isPublic: true});
+            const levels = [LanguageLevel.BEGINNER_1, LanguageLevel.ADVANCED_2];
+            const expectedLessons = (await Promise.all(levels.map(level => context.lessonFactory.create(3, {
+                course,
+                level,
+                learners: [user.profile],
+            })))).flat();
+            await context.lessonFactory.create(3, {course, learners: [user.profile], level: randomEnum(LanguageLevel, levels)});
+            await Promise.all(levels.map(level => context.lessonFactory.create(3, {course, level})));
+            expectedLessons.sort(defaultSortComparator);
+            await context.lessonRepo.annotateVocabsByLevel(expectedLessons, user.id);
+            const recordsCount = expectedLessons.length;
+
+            const response = await makeRequest("me", {level: levels}, session.token);
+
+            expect(response.statusCode).to.equal(200);
+            expect(response.json()).toEqual({
+                page: queryDefaults.pagination.page,
+                pageSize: queryDefaults.pagination.pageSize,
+                pageCount: Math.ceil(recordsCount / queryDefaults.pagination.pageSize),
+                data: lessonSerializer.serializeList(expectedLessons)
+            });
+        });
         test<LocalTestContext>("If the level is invalid return 400", async (context) => {
             const user = await context.userFactory.createOne();
             const session = await context.sessionFactory.createOne({user: user});
@@ -2358,6 +2396,7 @@ describe("POST users/:username/lessons/", () => {
 
             const response = await makeRequest("me", {lessonId: expectedLesson.id}, session.token);
 
+            expectedLesson.learnersCount++;
             expect(response.statusCode).to.equal(201);
             expect(response.json()).toEqual(lessonSerializer.serialize(expectedLesson));
             const dbRecord = await context.em.findOne(MapLearnerLesson, {
@@ -2378,6 +2417,7 @@ describe("POST users/:username/lessons/", () => {
 
             const response = await makeRequest(user.username, {lessonId: expectedLesson.id}, session.token);
 
+            expectedLesson.learnersCount++;
             expect(response.statusCode).to.equal(201);
             expect(response.json()).toEqual(lessonSerializer.serialize(expectedLesson));
             const dbRecord = await context.em.findOne(MapLearnerLesson, {

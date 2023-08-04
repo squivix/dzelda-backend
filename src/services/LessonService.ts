@@ -91,7 +91,8 @@ export class LessonService {
             image: fields.image,
             audio: fields.audio,
             course: fields.course,
-            orderInCourse: fields.course.lessons.count()
+            orderInCourse: fields.course.lessons.count(),
+            learnersCount: 0
         });
         await this.em.flush();
 

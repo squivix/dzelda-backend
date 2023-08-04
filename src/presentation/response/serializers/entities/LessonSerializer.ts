@@ -15,7 +15,8 @@ export class LessonSerializer extends CustomEntitySerializer<Lesson, LessonSchem
             course: () => courseSerializer.serialize(lesson.course, {ignore: ["lessons"]}),
             orderInCourse: () => lesson.orderInCourse,
             addedOn: () => lesson.addedOn.toISOString(),
-            vocabsByLevel: () => lesson.vocabsByLevel
+            vocabsByLevel: () => lesson.vocabsByLevel,
+            learnersCount: () => Number(lesson.learnersCount)
         };
     }
 

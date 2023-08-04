@@ -30,6 +30,7 @@ export class UserSeeder extends Seeder {
         })
         await em.flush();
         await syncIdSequence(em, "user")
+        await syncIdSequence(em, "profile")
         console.log("done");
     }
 }

@@ -17,7 +17,7 @@ services:
       POSTGRES_USER: "devin"
       POSTGRES_PASSWORD: "123456789"
       POSTGRES_DB: "dzelda-db"
-      #TODO use a different collation per query based on language, and update tests to match
+      #TODO maybe use a different collation per query based on language, and update tests to match
       #See https://stackoverflow.com/questions/62525260/what-is-the-best-way-to-replicate-postgresql-sorting-results-in-javascript
       #and https://stackoverflow.com/questions/44055727/localecompare-when-testing-strings-sorted-in-en-us-utf8
       POSTGRES_INITDB_ARGS: "--lc-collate=C"

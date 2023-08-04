@@ -2,8 +2,6 @@ import {CustomFactory} from "@/src/seeders/factories/CustomFactory.js";
 import {EntityData} from "@mikro-orm/core";
 import {Faker} from "@mikro-orm/seeder";
 import {Meaning} from "@/src/models/entities/Meaning.js";
-import {Language} from "@/src/models/entities/Language.js";
-import {Vocab} from "@/src/models/entities/Vocab.js";
 
 export class MeaningFactory extends CustomFactory<Meaning> {
     readonly model = Meaning;
@@ -16,7 +14,7 @@ export class MeaningFactory extends CustomFactory<Meaning> {
         };
     }
 
-    override makeDefinition(overrideParameters?: EntityData<Language>): EntityData<Language> {
+    override makeDefinition(overrideParameters?: EntityData<Meaning>): EntityData<Meaning> {
         if (overrideParameters?.learners !== undefined)
             overrideParameters.learnersCount = Array.isArray(overrideParameters?.learners) ? overrideParameters.learners.length : 1;
         return super.makeDefinition(overrideParameters);

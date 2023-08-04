@@ -54,7 +54,7 @@ export class Lesson extends CustomBaseEntity {
     })
     learners: Collection<Profile> = new Collection<Profile>(this);
 
-    [OptionalProps]?: "image" | "audio" | "level" | "addedOn";
+    [OptionalProps]?: "image" | "audio" | "level" | "addedOn" | "learnersCount";
 
     //annotated properties
     @Property({persist: false, type: types.json})
@@ -63,5 +63,5 @@ export class Lesson extends CustomBaseEntity {
     @Formula((alias: string) => `(SELECT COUNT(DISTINCT map_learner_lesson.learner_id) FROM map_learner_lesson WHERE lesson_id = ${alias}.id)`, {
         type: "number"
     })
-    learnersCount?: number;
+    learnersCount!: number;
 }

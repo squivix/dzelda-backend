@@ -14,5 +14,5 @@ export interface LessonSchema {
     /** Format: date-time */
     addedOn: string;
     vocabsByLevel?: Record<VocabLevel, number>;
-
+    learnersCount: number;
 }

@@ -15,7 +15,14 @@ export class LessonFactory extends CustomFactory<Lesson> {
             image: faker.image.imageUrl(100, 100),
             level: randomEnum(LanguageLevel),
             addedOn: new Date(Math.round(Date.now() / 1000) * 1000), // now rounded to nearest second because db column is timestampz(0)
-            audio: "https://upload.wikimedia.org/wikipedia/commons/d/de/Lorem_ipsum.ogg"
+            audio: "https://upload.wikimedia.org/wikipedia/commons/d/de/Lorem_ipsum.ogg",
+            learnersCount: 0
         };
+    }
+
+    override makeDefinition(overrideParameters?: EntityData<Lesson>): EntityData<Lesson> {
+        if (overrideParameters?.learners !== undefined)
+            overrideParameters.learnersCount = Array.isArray(overrideParameters?.learners) ? overrideParameters.learners.length : 1;
+        return super.makeDefinition(overrideParameters);
     }
 }
