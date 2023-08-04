@@ -22,7 +22,7 @@ beforeEach<LocalTestContext>(async (context) => {
 
 
 /**{@link UserController#login}*/
-describe("POST sessions/", function () {
+describe("POST sessions/", () => {
     const makeRequest = async (body: object) => {
         return await fetchRequest({
             method: "POST",
@@ -90,3 +90,33 @@ describe("POST sessions/", function () {
     });
 
 });
+
+
+/**{@link UserController#logout}*/
+describe("DELETE sessions/", () => {
+    const makeRequest = async (authToken?: string) => {
+        return await fetchRequest({
+            method: "DELETE",
+            url: `sessions/`
+        }, authToken);
+    };
+
+    test<LocalTestContext>("If user is logged in return 204", async (context) => {
+        const user = await context.userFactory.createOne();
+        const session = await context.sessionFactory.createOne({user: user});
+
+        const response = await makeRequest(session.token);
+        expect(response.statusCode).to.equal(204);
+        expect(await context.sessionRepo.findOne({token: session.token})).toBeNull();
+    });
+    test<LocalTestContext>("If session token is invalid return 401", async (context) => {
+        const session = context.sessionFactory.makeOne();
+
+        const response = await makeRequest(session.token);
+        expect(response.statusCode).to.equal(401);
+    });
+    test<LocalTestContext>("If user is not logged in return 401", async (context) => {
+        const response = await makeRequest();
+        expect(response.statusCode).to.equal(401);
+    });
+})

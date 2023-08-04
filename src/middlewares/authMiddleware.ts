@@ -15,10 +15,12 @@ export const authMiddleware: preParsingAsyncHookHandler = async (request) => {
     const token = tokenArray[1];
 
     const userService = new UserService(request.em);
-    const user = await userService.getUserBySession(token);
+    const session = await userService.getLoginSession(token);
 
-    if (user)
-        request.user = user;
+    if (session) {
+        request.session = session;
+        request.user = session.user;
+    }
 };
 
 export const requiresAuth: preHandlerAsyncHookHandler = async (request) => {

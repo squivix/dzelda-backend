@@ -34,6 +34,13 @@ class UserController {
         reply.status(201).send({authToken: token});
     }
 
+    async logout(request: FastifyRequest, reply: FastifyReply) {
+        const userService = new UserService(request.em);
+        await userService.deleteSession(request.session!);
+
+        reply.status(204)
+    }
+
     async getUser(request: FastifyRequest, reply: FastifyReply) {
         const pathParamsValidator = z.object({username: usernameValidator.or(z.literal("me")),});
         const pathParams = pathParamsValidator.parse(request.params);

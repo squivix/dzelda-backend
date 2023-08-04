@@ -65,8 +65,11 @@ export class UserService {
         return user;
     }
 
-    async getUserBySession(sessionToken: string) {
-        return await this.em.findOne(User, {session: {token: sessionToken}}, {populate: ["profile", "profile.languagesLearning"]});
+    async getLoginSession(sessionToken: string) {
+        return await this.em.findOne(Session, {token: sessionToken}, {populate: ["user", "user.profile", "user.profile.languagesLearning"]});
     }
 
+    async deleteSession(session: Session) {
+        await this.em.nativeDelete(Session, {id: session.id});
+    }
 }
