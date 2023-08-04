@@ -20,6 +20,7 @@
   "author": "squivix <devintheamateurdevin@gmail.com> (https://github.com/squivix)",
   "license": "MIT",
   "dependencies": {
+    "@fastify/cors": "^8.3.0",
     "@fastify/one-line-logger": "^1.0.0",
     "@fastify/static": "^6.6.1",
     "@mikro-orm/core": "^5.6.7",

@@ -1,4 +1,5 @@
 import Fastify from "fastify";
+import cors from '@fastify/cors'
 import options from "@/src/mikro-orm.config.js";
 import {PKDF2Hasher} from "@/src/utils/auth/PKDF2Hasher.js";
 import rootRouter from "@/src/routers/rootRouter.js";
@@ -16,6 +17,7 @@ export const API_ROOT = `/api/v${API_VERSION}`;
 export const passwordHasher: PasswordHasher = new PKDF2Hasher();
 
 export const server = Fastify({logger: {transport: {target: "@fastify/one-line-logger"}}});
+await server.register(cors, {})
 export const orm = await MikroORM.init(options);
 server.register(fastifyStatic, {
     root: path.join(__dirname, "..", "..", "public"),
@@ -23,4 +25,4 @@ server.register(fastifyStatic, {
 })
 server.register(rootRouter, {prefix: API_ROOT});
 
-server.setErrorHandler(errorHandler);
+server.setErrorHandler(errorHandler);2
