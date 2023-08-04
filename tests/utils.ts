@@ -13,7 +13,8 @@ function randomNonNumericEnum<T extends Record<string, any>>(e: T, exclude?: str
     return filteredValues[randomIndex];
 }
 
-// TypeScript's implementation of numeric enums makes reliably detecting enum type or picking a random enum value hard :(
+// TypeScript's garbage implementation of numeric enums makes reliably detecting enum type or picking a random enum value hard :(
+// Note this function fails if an enum includes a mix of numeric and non-numeric values as it will treat it as non-numeric and return a key as a value
 export function randomEnum<T extends Record<string, number | string>>(e: T, exclude?: (number | string)[]): T[keyof T] {
     const values = Object.values(e);
     const numericCount = values.filter((value) => typeof value === "number").length;
@@ -21,6 +22,21 @@ export function randomEnum<T extends Record<string, number | string>>(e: T, excl
         return randomNumericEnum(e, exclude as number[]) as T[keyof T];
     else
         return randomNonNumericEnum(e, exclude as string[]) as T[keyof T];
+}
+
+export function randomEnums<T extends Record<string, number | string>>(count: number, e: T, exclude?: (number | string)[]): T[keyof T][] {
+    const values = Object.values(e);
+    const numericCount = values.filter((value) => typeof value === "number").length;
+    const numberOfElements = numericCount === values.length / 2 ? numericCount : values.length
+    // if count is more than number of elements return randomEnums with no replacement
+    if (count > (numberOfElements - (exclude?.length ?? 0)))
+        return [...Array(count)].map(() => randomEnum(e, exclude));
+    const enumsList: T[keyof T][] = [];
+    for (let i = 0; i < count; i++) {
+        const next = randomEnum(e, [...exclude ?? [], ...enumsList]);
+        enumsList.push(next)
+    }
+    return enumsList;
 }
 
 

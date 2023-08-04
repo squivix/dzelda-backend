@@ -14,7 +14,7 @@ import {InjectOptions} from "light-my-request";
 import {buildQueryString, createComparator, fetchRequest, fetchWithFiles, mockValidateFileFields, readSampleFile} from "@/tests/integration/utils.js";
 import {lessonSerializer} from "@/src/presentation/response/serializers/entities/LessonSerializer.js";
 import {faker} from "@faker-js/faker";
-import {randomCase, randomEnum} from "@/tests/utils.js";
+import {randomCase, randomEnum, randomEnums} from "@/tests/utils.js";
 import {LanguageLevel} from "@/src/models/enums/LanguageLevel.js";
 import {Vocab} from "@/src/models/entities/Vocab.js";
 import {EntityRepository} from "@mikro-orm/core";
@@ -27,6 +27,7 @@ import * as fileValidatorExports from "@/src/validators/fileValidator.js";
 import * as constantExports from "@/src/constants.js";
 import {TEMP_ROOT_FILE_UPLOAD_DIR} from "@/tests/testConstants.js";
 import {escapeRegExp} from "@/src/utils/utils.js";
+import {VocabLevel} from "@/src/models/enums/VocabLevel.js";
 
 interface LocalTestContext extends TestContext {
     languageFactory: LanguageFactory;
@@ -264,7 +265,7 @@ describe("GET lessons/", () => {
             });
         });
         test<LocalTestContext>("If multiple levels are sent return lessons in any of those levels", async (context) => {
-            const levels = [LanguageLevel.BEGINNER_1, LanguageLevel.ADVANCED_2];
+            const levels = randomEnums(2, LanguageLevel);
             const language = await context.languageFactory.createOne();
             const course = await context.courseFactory.createOne({isPublic: true, language: language});
             const expectedLessons = (await Promise.all(levels.map(level => context.lessonFactory.create(3, {level, course})))).flat();
@@ -1947,7 +1948,7 @@ describe("GET users/:username/lessons/", () => {
             const session = await context.sessionFactory.createOne({user: user});
             const language = await context.languageFactory.createOne();
             const course = await context.courseFactory.createOne({language, isPublic: true});
-            const levels = [LanguageLevel.BEGINNER_1, LanguageLevel.ADVANCED_2];
+            const levels = randomEnums(2, LanguageLevel);
             const expectedLessons = (await Promise.all(levels.map(level => context.lessonFactory.create(3, {
                 course,
                 level,

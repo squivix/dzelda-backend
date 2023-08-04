@@ -12,7 +12,7 @@ import {vocabSerializer} from "@/src/presentation/response/serializers/entities/
 import {faker} from "@faker-js/faker";
 import {MapLearnerVocab} from "@/src/models/entities/MapLearnerVocab.js";
 import {VocabRepo} from "@/src/models/repos/VocabRepo.js";
-import {randomCase, randomEnum} from "@/tests/utils.js";
+import {randomCase, randomEnum, randomEnums} from "@/tests/utils.js";
 import {VocabLevel} from "@/src/models/enums/VocabLevel.js";
 import {learnerVocabSerializer} from "@/src/presentation/response/serializers/mappings/LearnerVocabSerializer.js";
 import {LessonFactory} from "@/src/seeders/factories/LessonFactory.js";
@@ -739,7 +739,7 @@ describe("GET users/:username/vocabs/", () => {
             const user = await context.userFactory.createOne();
             const session = await context.sessionFactory.createOne({user: user});
             const language = await context.languageFactory.createOne();
-            const levels = [VocabLevel.LEVEL_3, VocabLevel.LEVEL_2];
+            const levels = randomEnums(2, VocabLevel);
             const expectedVocabs = await context.vocabFactory.create(8, {language});
             for (let vocab of await context.vocabFactory.create(5, {language}))
                 context.em.create(MapLearnerVocab, {learner: user.profile, vocab, level: randomEnum(VocabLevel, levels)});
