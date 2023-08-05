@@ -94,7 +94,7 @@ class VocabController {
         const queryParamsValidator = z.object({
             languageCode: languageCodeValidator.optional(),
             searchQuery: z.string().min(1).max(256).optional(),
-            level: vocabLevelValidator.optional(),
+            level: vocabLevelValidator.transform(l => [l]).or(z.array(vocabLevelValidator)).optional(),
             sortBy: z.union([z.literal("text"), z.literal("lessonsCount"), z.literal("learnersCount")]).optional().default("text"),
             sortOrder: z.union([z.literal("asc"), z.literal("desc")]).optional().default("asc"),
             page: z.coerce.number().int().min(1).optional().default(1),

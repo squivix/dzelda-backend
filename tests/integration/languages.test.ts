@@ -2,7 +2,7 @@ import {beforeEach, describe, expect, test, TestContext, vi} from "vitest";
 import {faker} from "@faker-js/faker";
 import {orm} from "@/src/server.js";
 import {LanguageFactory} from "@/src/seeders/factories/LanguageFactory.js";
-import {buildQueryString, fetchRequest} from "@/tests/integration/utils.js";
+import {buildQueryString, createComparator, fetchRequest} from "@/tests/integration/utils.js";
 import {UserFactory} from "@/src/seeders/factories/UserFactory.js";
 import {SessionFactory} from "@/src/seeders/factories/SessionFactory.js";
 import {InjectOptions} from "light-my-request";
@@ -61,37 +61,42 @@ describe("GET languages/", function () {
             url: `languages/${buildQueryString(queryParams)}`,
         });
     };
+    const defaultSortComparator = createComparator(Language, [
+        {property: "name", order: "asc"},
+        {property: "code", order: "asc"},
+        {property: "id", order: "asc"}
+    ]);
 
     test<LocalTestContext>("If there are no filters return all languages", async (context) => {
         const expectedLanguages = await context.languageFactory.create(10);
+        expectedLanguages.sort(defaultSortComparator)
 
         const response = await makeRequest();
 
         expect(response.statusCode).to.equal(200);
         expect(response.json()).toEqual(languageSerializer.serializeList(expectedLanguages));
     });
-
     describe("If there are filters return languages that match those filters", async () => {
         describe("tests isSupported filter", async () => {
             test<LocalTestContext>("If isSupported filter is true return only supported languages", async (context) => {
-                await context.languageFactory.create(5, {isSupported: true});
+                const expectedLanguages = await context.languageFactory.create(5, {isSupported: true});
                 await context.languageFactory.create(5, {isSupported: false});
+                expectedLanguages.sort(defaultSortComparator)
 
                 const response = await makeRequest({isSupported: true});
 
-                const supportedLanguages = await context.languageRepo.find({isSupported: true}, {refresh: true});
                 expect(response.statusCode).to.equal(200);
-                expect(response.json()).toEqual(languageSerializer.serializeList(supportedLanguages));
+                expect(response.json()).toEqual(languageSerializer.serializeList(expectedLanguages));
             });
             test<LocalTestContext>("If isSupported filter is false return only unsupported languages", async (context) => {
+                const expectedLanguages = await context.languageFactory.create(5, {isSupported: false});
                 await context.languageFactory.create(5, {isSupported: true});
-                await context.languageFactory.create(5, {isSupported: false});
+                expectedLanguages.sort(defaultSortComparator)
 
                 const response = await makeRequest({isSupported: false});
 
-                const unsupportedLanguages = await context.languageRepo.find({isSupported: false}, {refresh: true});
                 expect(response.statusCode).to.equal(200);
-                expect(response.json()).toEqual(languageSerializer.serializeList(unsupportedLanguages));
+                expect(response.json()).toEqual(languageSerializer.serializeList(expectedLanguages));
             });
             test<LocalTestContext>("If isSupported filter is invalid return 400", async (context) => {
                 await context.languageFactory.create(5, {isSupported: true});
@@ -102,23 +107,91 @@ describe("GET languages/", function () {
             });
         });
     });
+    describe("test sort", () => {
+        describe("test sortBy", () => {
+            test<LocalTestContext>("test sortBy name", async (context) => {
+                const expectedLanguages = [
+                    await context.languageFactory.createOne({name: "abc"}),
+                    await context.languageFactory.createOne({name: "def"}),
+                ];
+
+                const response = await makeRequest({sortBy: "name"});
+
+                expect(response.statusCode).to.equal(200);
+                expect(response.json()).toEqual(languageSerializer.serializeList(expectedLanguages));
+            });
+            test<LocalTestContext>("test sortBy learnersCount", async (context) => {
+                const user1 = await context.userFactory.createOne();
+                const user2 = await context.userFactory.createOne();
+                const expectedLanguages = [
+                    await context.languageFactory.createOne({learners: []}),
+                    await context.languageFactory.createOne({learners: [user1]}),
+                    await context.languageFactory.createOne({learners: [user1, user2]}),
+                ];
+
+                const response = await makeRequest({sortBy: "learnersCount"});
+
+                expect(response.statusCode).to.equal(200);
+                expect(response.json()).toEqual(languageSerializer.serializeList(expectedLanguages));
+            });
+            test<LocalTestContext>("if sortBy is invalid return 400", async (context) => {
+                const response = await makeRequest({sortBy: "flag"});
+                expect(response.statusCode).to.equal(400);
+            });
+        })
+        describe("test sortOrder", () => {
+            test<LocalTestContext>("If sortOrder is asc return the languages in ascending order", async (context) => {
+                const expectedLanguages = [
+                    await context.languageFactory.createOne({name: "abc"}),
+                    await context.languageFactory.createOne({name: "def"}),
+                ];
+
+                const response = await makeRequest({sortOrder: "asc"});
+
+                expect(response.statusCode).to.equal(200);
+                expect(response.json()).toEqual(languageSerializer.serializeList(expectedLanguages));
+            });
+            test<LocalTestContext>("If sortOrder is desc return the languages in ascending order", async (context) => {
+                const expectedLanguages = [
+                    await context.languageFactory.createOne({name: "def"}),
+                    await context.languageFactory.createOne({name: "abc"}),
+                ];
+
+                const response = await makeRequest({sortOrder: "desc"});
+
+                expect(response.statusCode).to.equal(200);
+                expect(response.json()).toEqual(languageSerializer.serializeList(expectedLanguages));
+            });
+            test<LocalTestContext>("If sortOrder is invalid return 400", async (context) => {
+                const response = await makeRequest({sortOrder: "rising"});
+                expect(response.statusCode).to.equal(400);
+            });
+        })
+    })
 });
 
 /**{@link LanguageController#getUserLanguages}*/
 describe("GET users/:username/languages/", function () {
-    const makeRequest = async (username: string, authToken?: string) => {
+    const makeRequest = async (username: string, queryParams: object = {}, authToken?: string) => {
         const options: InjectOptions = {
             method: "GET",
-            url: `users/${username}/languages/`,
+            url: `users/${username}/languages/${buildQueryString(queryParams)}`,
         };
         return await fetchRequest(options, authToken);
     };
+    const defaultSortComparator = createComparator(Language, [
+        {property: "name", order: "asc"},
+        {property: "code", order: "asc"},
+        {property: "id", order: "asc"}
+    ]);
     test<LocalTestContext>(`If username exists and is public return languages user is learning`, async (context) => {
         const user = await context.userFactory.createOne({profile: {isPublic: true}});
-        const expectedLanguages = await context.languageFactory.create(10, {learnersCount: 1});
-        const expectedMappings = expectedLanguages.map(language => context.em.create(MapLearnerLanguage, {
-            language, learner: user.profile
-        }));
+        const expectedLanguages = await context.languageFactory.create(10);
+        expectedLanguages.sort(defaultSortComparator)
+        const expectedMappings = expectedLanguages.map(language => {
+            language.learnersCount++;
+            return context.em.create(MapLearnerLanguage, {language, learner: user.profile})
+        });
         await context.em.flush();
 
         const response = await makeRequest(user.username);
@@ -127,6 +200,7 @@ describe("GET users/:username/languages/", function () {
         expect(response.statusCode).to.equal(200);
         expect(response.json()).toEqual(learnerLanguageSerializer.serializeList(expectedMappings));
     });
+
     test<LocalTestContext>("If username does not exist return 404", async () => {
         const response = await makeRequest(faker.random.alphaNumeric(20));
         expect(response.statusCode).to.equal(404);
@@ -141,13 +215,15 @@ describe("GET users/:username/languages/", function () {
     test<LocalTestContext>(`If username exists and is not public but authenticated as user return languages`, async (context) => {
         const user = await context.userFactory.createOne({profile: {isPublic: false}});
         const session = await context.sessionFactory.createOne({user: user});
-        const expectedLanguages = await context.languageFactory.create(10, {learnersCount: 1});
-        const expectedMappings = expectedLanguages.map(language => context.em.create(MapLearnerLanguage, {
-            language, learner: user.profile
-        }));
+        const expectedLanguages = await context.languageFactory.create(10);
+        expectedLanguages.sort(defaultSortComparator)
+        const expectedMappings = expectedLanguages.map(language => {
+            language.learnersCount++;
+            return context.em.create(MapLearnerLanguage, {language, learner: user.profile})
+        });
         await context.em.flush();
 
-        const response = await makeRequest(user.username, session.token);
+        const response = await makeRequest(user.username, {}, session.token);
 
         expect(response.statusCode).to.equal(200);
         expect(response.json()).toEqual(learnerLanguageSerializer.serializeList(expectedMappings));
@@ -162,17 +238,130 @@ describe("GET users/:username/languages/", function () {
     test<LocalTestContext>(`If username is me and authenticated as user return languages`, async (context) => {
         const user = await context.userFactory.createOne({profile: {isPublic: false}});
         const session = await context.sessionFactory.createOne({user: user});
-        const expectedLanguages = await context.languageFactory.create(10, {learnersCount: 1});
-        const expectedMappings = expectedLanguages.map(language => context.em.create(MapLearnerLanguage, {
-            language, learner: user.profile
-        }));
+        const expectedLanguages = await context.languageFactory.create(10);
+        expectedLanguages.sort(defaultSortComparator)
+        const expectedMappings = expectedLanguages.map(language => {
+            language.learnersCount++;
+            return context.em.create(MapLearnerLanguage, {language, learner: user.profile})
+        });
         await context.em.flush();
 
-        const response = await makeRequest("me", session.token);
+        const response = await makeRequest("me", {}, session.token);
 
         expect(response.statusCode).to.equal(200);
         expect(response.json()).toEqual(learnerLanguageSerializer.serializeList(expectedMappings));
     });
+
+    describe("test sort", () => {
+        describe("test sortBy", () => {
+            test<LocalTestContext>("test sortBy name", async (context) => {
+                const user = await context.userFactory.createOne({profile: {isPublic: true}});
+                const expectedLanguages = [
+                    await context.languageFactory.createOne({name: "abc"}),
+                    await context.languageFactory.createOne({name: "def"})
+                ];
+                const expectedMappings = expectedLanguages.map(language => {
+                    language.learnersCount++;
+                    return context.em.create(MapLearnerLanguage, {language, learner: user.profile})
+                });
+                await context.em.flush();
+
+                const response = await makeRequest(user.username, {sortBy: "name"});
+
+                expect(response.statusCode).to.equal(200);
+                expect(response.json()).toEqual(learnerLanguageSerializer.serializeList(expectedMappings));
+            });
+            test<LocalTestContext>("test sortBy learnersCount", async (context) => {
+                const user = await context.userFactory.createOne({profile: {isPublic: true}});
+                const user1 = await context.userFactory.createOne();
+                const user2 = await context.userFactory.createOne();
+                const expectedLanguages = [
+                    await context.languageFactory.createOne({learners: []}),
+                    await context.languageFactory.createOne({learners: [user1.profile]}),
+                    await context.languageFactory.createOne({learners: [user1.profile, user2.profile]})
+                ];
+                const expectedMappings = expectedLanguages.map(language => {
+                    language.learnersCount++;
+                    return context.em.create(MapLearnerLanguage, {language, learner: user.profile})
+                });
+                await context.em.flush();
+
+                const response = await makeRequest(user.username, {sortBy: "learnersCount"});
+
+                expect(response.statusCode).to.equal(200);
+                expect(response.json()).toEqual(learnerLanguageSerializer.serializeList(expectedMappings));
+            });
+            test<LocalTestContext>("test sortBy lastOpened", async (context) => {
+                const user = await context.userFactory.createOne({profile: {isPublic: true}});
+                const expectedMappings = [
+                    context.em.create(MapLearnerLanguage, {
+                        language: context.languageFactory.makeDefinition({learnersCount: 1}), learner: user.profile,
+                        lastOpened: new Date("2018-07-22T10:30:45.000Z")
+                    }),
+                    context.em.create(MapLearnerLanguage, {
+                        language: context.languageFactory.makeDefinition({learnersCount: 1}), learner: user.profile,
+                        lastOpened: new Date("2023-03-15T20:29:42.000Z")
+                    }),
+                ]
+                await context.em.flush();
+
+                const response = await makeRequest(user.username, {sortBy: "lastOpened"});
+
+                expect(response.statusCode).to.equal(200);
+                expect(response.json()).toEqual(learnerLanguageSerializer.serializeList(expectedMappings));
+            });
+            test<LocalTestContext>("if sortBy is invalid return 400", async (context) => {
+                const user = await context.userFactory.createOne({profile: {isPublic: true}});
+
+                const response = await makeRequest(user.username, {sortBy: "flag"});
+
+                expect(response.statusCode).to.equal(400);
+            });
+        })
+        describe("test sortOrder", () => {
+            test<LocalTestContext>("If sortOrder is asc return the languages in ascending order", async (context) => {
+                const user = await context.userFactory.createOne({profile: {isPublic: true}});
+                const expectedLanguages = [
+                    await context.languageFactory.createOne({name: "abc"}),
+                    await context.languageFactory.createOne({name: "def"})
+                ];
+                const expectedMappings = expectedLanguages.map(language => {
+                    language.learnersCount++;
+                    return context.em.create(MapLearnerLanguage, {language, learner: user.profile})
+                });
+                await context.em.flush();
+
+                const response = await makeRequest(user.username, {sortOrder: "asc"});
+
+                expect(response.statusCode).to.equal(200);
+                expect(response.json()).toEqual(learnerLanguageSerializer.serializeList(expectedMappings));
+            });
+            test<LocalTestContext>("If sortOrder is desc return the languages in ascending order", async (context) => {
+                const user = await context.userFactory.createOne({profile: {isPublic: true}});
+                const expectedLanguages = [
+                    await context.languageFactory.createOne({name: "def"}),
+                    await context.languageFactory.createOne({name: "abc"}),
+                ];
+                const expectedMappings = expectedLanguages.map(language => {
+                    language.learnersCount++;
+                    return context.em.create(MapLearnerLanguage, {language, learner: user.profile})
+                });
+                await context.em.flush();
+
+                const response = await makeRequest(user.username, {sortOrder: "desc"});
+
+                expect(response.statusCode).to.equal(200);
+                expect(response.json()).toEqual(learnerLanguageSerializer.serializeList(expectedMappings));
+            });
+            test<LocalTestContext>("If sortOrder is invalid return 400", async (context) => {
+                const user = await context.userFactory.createOne({profile: {isPublic: true}});
+
+                const response = await makeRequest(user.username, {sortOrder: "rising"});
+
+                expect(response.statusCode).to.equal(400);
+            });
+        })
+    })
 });
 
 /**{@link LanguageController#addLanguageToUser}*/

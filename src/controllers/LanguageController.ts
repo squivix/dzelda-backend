@@ -14,28 +14,35 @@ import {learnerLanguageSerializer} from "@/src/presentation/response/serializers
 class LanguageController {
     async getLanguages(request: FastifyRequest, reply: FastifyReply) {
         const queryParamsValidator = z.object({
-            isSupported: z.string().regex(/(true|false)/ig).transform(v => v.toLowerCase() == "true").optional()
+            isSupported: z.string().regex(/(true|false)/ig).transform(v => v.toLowerCase() == "true").optional(),
+            sortBy: z.union([z.literal("name"), z.literal("learnersCount")]).optional().default("name"),
+            sortOrder: z.union([z.literal("asc"), z.literal("desc")]).optional().default("asc"),
         });
         const queryParams = queryParamsValidator.parse(request.query);
 
         const languageService = new LanguageService(request.em);
-        const languages = await languageService.getLanguages(queryParams);
+        const filters = {isSupported: queryParams.isSupported};
+        const sort = {sortBy: queryParams.sortBy, sortOrder: queryParams.sortOrder};
+        const languages = await languageService.getLanguages(filters, sort);
         reply.send(languageSerializer.serializeList(languages));
     }
 
     async getUserLanguages(request: FastifyRequest, reply: FastifyReply) {
-        const validator = z.object({
-            username: usernameValidator.or(z.literal("me"))
-        });
-        const pathParams = validator.parse(request.params);
+        const pathParamsValidator = z.object({username: usernameValidator.or(z.literal("me"))});
+        const pathParams = pathParamsValidator.parse(request.params);
         const userService = new UserService(request.em);
         const user = await userService.getUser(pathParams.username, request.user);
         if (!user || (!user.profile.isPublic && user !== request.user))
             throw new NotFoundAPIError("User");
-
+        const queryParamsValidator = z.object({
+            sortBy: z.union([z.literal("name"), z.literal("learnersCount"), z.literal("lastOpened")]).optional().default("name"),
+            sortOrder: z.union([z.literal("asc"), z.literal("desc")]).optional().default("asc"),
+        });
+        const queryParams = queryParamsValidator.parse(request.query);
         const languageService = new LanguageService(request.em);
         const filters = {};
-        const languageMappings = await languageService.getUserLanguages(user, filters);
+        const sort = {sortBy: queryParams.sortBy, sortOrder: queryParams.sortOrder};
+        const languageMappings = await languageService.getUserLanguages(user, filters, sort);
         reply.send(learnerLanguageSerializer.serializeList(languageMappings));
     }
 

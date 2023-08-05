@@ -740,7 +740,7 @@ describe("GET users/:username/vocabs/", () => {
             const session = await context.sessionFactory.createOne({user: user});
             const language = await context.languageFactory.createOne();
             const levels = randomEnums(2, VocabLevel);
-            const expectedVocabs = await context.vocabFactory.create(8, {language});
+            const expectedVocabs = await context.vocabFactory.create(1, {language});
             for (let vocab of await context.vocabFactory.create(5, {language}))
                 context.em.create(MapLearnerVocab, {learner: user.profile, vocab, level: randomEnum(VocabLevel, levels)});
             expectedVocabs.sort(defaultSortComparator);

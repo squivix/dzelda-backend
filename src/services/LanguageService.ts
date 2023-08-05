@@ -8,6 +8,8 @@ import {MapLearnerDictionary} from "@/src/models/entities/MapLearnerDictionary.j
 import {MapLearnerVocab} from "@/src/models/entities/MapLearnerVocab.js";
 import {MapLearnerMeaning} from "@/src/models/entities/MapLearnerMeaning.js";
 import {EntityField} from "@mikro-orm/core/drivers/IDatabaseDriver.js";
+import {QueryOrderMap} from "@mikro-orm/core/enums.js";
+import {Lesson} from "@/src/models/entities/Lesson.js";
 
 export class LanguageService {
     em: EntityManager;
@@ -18,17 +20,40 @@ export class LanguageService {
         this.languageRepo = this.em.getRepository(Language);
     }
 
-    async getLanguages(filters: { isSupported?: boolean }) {
+    async getLanguages(filters: { isSupported?: boolean }, sort: { sortBy: "name" | "learnersCount", sortOrder: "asc" | "desc" }) {
         const dbFilters: FilterQuery<Language> = {$and: []};
         if (filters.isSupported !== undefined)
             dbFilters.$and!.push({isSupported: filters.isSupported});
-        return await this.languageRepo.find(filters, {populate: ["learnersCount"]});
+
+        const dbOrderBy: QueryOrderMap<Language>[] = [];
+        if (sort.sortBy == "name")
+            dbOrderBy.push({name: sort.sortOrder});
+        else if (sort.sortBy == "learnersCount")
+            dbOrderBy.push({learnersCount: sort.sortOrder});
+
+        dbOrderBy.push({code: "asc"});
+        dbOrderBy.push({id: "asc"});
+        return await this.languageRepo.find(dbFilters, {
+            populate: ["learnersCount"],
+            orderBy: dbOrderBy,
+        });
     }
 
-    async getUserLanguages(user: User, filters: {}) {
+    async getUserLanguages(user: User, filters: {}, sort: { sortBy: "name" | "learnersCount" | "lastOpened", sortOrder: "asc" | "desc" }) {
         const dbFilters: FilterQuery<MapLearnerLanguage> = {$and: []};
         dbFilters.$and!.push({learner: user.profile});
-        return await this.em.find(MapLearnerLanguage, dbFilters);
+
+        const dbOrderBy: QueryOrderMap<MapLearnerLanguage>[] = [];
+        if (sort.sortBy == "name")
+            dbOrderBy.push({language: {name: sort.sortOrder}});
+        else if (sort.sortBy == "learnersCount")
+            dbOrderBy.push({language: {learnersCount: sort.sortOrder}});
+        else if (sort.sortBy == "lastOpened")
+            dbOrderBy.push({lastOpened: sort.sortOrder});
+
+        dbOrderBy.push({language: {code: "asc"}});
+        dbOrderBy.push({language: {id: "asc"}});
+        return await this.em.find(MapLearnerLanguage, dbFilters, {orderBy: dbOrderBy});
     }
 
     async getUserLanguage(code: string, user: User) {

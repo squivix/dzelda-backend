@@ -21,7 +21,7 @@ import {lessonSerializer} from "@/src/presentation/response/serializers/entities
 
 class LessonController {
     async getLessons(request: FastifyRequest, reply: FastifyReply) {
-        const validator = z.object({
+        const queryParamsValidator = z.object({
             languageCode: languageCodeValidator.optional(),
             addedBy: usernameValidator.or(z.literal("me")).optional(),
             searchQuery: z.string().min(1).max(256).optional(),
@@ -32,7 +32,7 @@ class LessonController {
             page: z.coerce.number().int().min(1).optional().default(1),
             pageSize: z.coerce.number().int().min(1).max(100).optional().default(10),
         });
-        const queryParams = validator.parse(request.query);
+        const queryParams = queryParamsValidator.parse(request.query);
         if (queryParams.addedBy == "me") {
             if (!request.user || request.user instanceof AnonymousUser)
                 throw new UnauthenticatedAPIError(request.user);

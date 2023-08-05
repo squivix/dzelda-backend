@@ -381,8 +381,7 @@ describe("GET lessons/", () => {
                     pageCount: Math.ceil(recordsCount / queryDefaults.pagination.pageSize),
                     data: lessonSerializer.serializeList(expectedLessons)
                 });
-            })
-            ;
+            });
             test<LocalTestContext>("test sortBy learnersCount", async (context) => {
                 const user1 = await context.userFactory.createOne();
                 const user2 = await context.userFactory.createOne();
