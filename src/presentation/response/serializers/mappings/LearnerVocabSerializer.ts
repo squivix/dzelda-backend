@@ -1,7 +1,7 @@
 import {CustomCallbackObject, CustomEntitySerializer} from "@/src/presentation/response/serializers/CustomEntitySerializer.js";
 import {MapLearnerVocab} from "@/src/models/entities/MapLearnerVocab.js";
 import {Vocab} from "@/src/models/entities/Vocab.js";
-import {LearnerVocabSchema} from "@/src/presentation/response/interfaces/mappings/LearnerVocabSchema.js";
+import {LearnerVocabSchema, MeaningSchema} from "dzelda-types";
 import {meaningSerializer} from "@/src/presentation/response/serializers/entities/MeaningSerializer.js";
 import {VocabLevel} from "@/src/models/enums/VocabLevel.js";
 
@@ -18,7 +18,7 @@ export class LearnerVocabSerializer extends CustomEntitySerializer<Vocab | MapLe
                 notes: () => null,
                 language: () => vocabOrMapping.language.code,
                 learnerMeanings: () => [],
-                allMeanings: () => meaningSerializer.serializeList(vocabOrMapping.meanings.getItems())
+                meanings: () => meaningSerializer.serializeList(vocabOrMapping.meanings.getItems(), {ignore: ["vocab"]}) as Omit<MeaningSchema, "vocab">[]
             };
         } else {
             return {
@@ -28,8 +28,8 @@ export class LearnerVocabSerializer extends CustomEntitySerializer<Vocab | MapLe
                 level: () => vocabOrMapping.level,
                 notes: () => vocabOrMapping.notes,
                 language: () => vocabOrMapping.vocab.language.code,
-                learnerMeanings: () => meaningSerializer.serializeList(vocabOrMapping.vocab.learnerMeanings.getItems(), {ignore: ["vocab"]}),
-                allMeanings: () => meaningSerializer.serializeList(vocabOrMapping.vocab.meanings.getItems(), {ignore: ["vocab"]})
+                learnerMeanings: () => meaningSerializer.serializeList(vocabOrMapping.vocab.learnerMeanings.getItems(), {ignore: ["vocab"]}) as Omit<MeaningSchema, "vocab">[],
+                meanings: () => meaningSerializer.serializeList(vocabOrMapping.vocab.meanings.getItems(), {ignore: ["vocab"]}) as Omit<MeaningSchema, "vocab">[]
             };
         }
     }

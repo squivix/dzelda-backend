@@ -1,8 +1,7 @@
 import {Course} from "@/src/models/entities/Course.js";
-import {CourseSchema} from "@/src/presentation/response/interfaces/entities/CourseSchema.js";
 import {CustomCallbackObject, CustomEntitySerializer} from "@/src/presentation/response/serializers/CustomEntitySerializer.js";
 import {lessonSerializer} from "@/src/presentation/response/serializers/entities/LessonSerializer.js";
-
+import {CourseSchema, LessonSchema} from "dzelda-types";
 
 export class CourseSerializer extends CustomEntitySerializer<Course, CourseSchema> {
 
@@ -15,7 +14,7 @@ export class CourseSerializer extends CustomEntitySerializer<Course, CourseSchem
             image: () => course.image,
             isPublic: () => course.isPublic,
             language: () => course.language.code,
-            lessons: () => lessonSerializer.serializeList(course.lessons.getItems(), {ignore: ["course"]}),
+            lessons: () => lessonSerializer.serializeList(course.lessons.getItems(), {ignore: ["course"]}) as Omit<LessonSchema, "course">[],
             addedOn: () => course.addedOn.toISOString(),
             addedBy: () => course.addedBy.user.username,
             vocabsByLevel: () => course.vocabsByLevel

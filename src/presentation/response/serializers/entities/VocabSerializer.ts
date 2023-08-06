@@ -1,6 +1,6 @@
 import {CustomCallbackObject, CustomEntitySerializer} from "@/src/presentation/response/serializers/CustomEntitySerializer.js";
 import {Vocab} from "@/src/models/entities/Vocab.js";
-import {VocabSchema} from "@/src/presentation/response/interfaces/entities/VocabSchema.js";
+import {MeaningSchema, VocabSchema} from "dzelda-types";
 import {meaningSerializer} from "@/src/presentation/response/serializers/entities/MeaningSerializer.js";
 
 class VocabSerializer extends CustomEntitySerializer<Vocab, VocabSchema> {
@@ -10,7 +10,7 @@ class VocabSerializer extends CustomEntitySerializer<Vocab, VocabSchema> {
             text: () => vocab.text,
             isPhrase: () => vocab.isPhrase,
             language: () => vocab.language.code,
-            meanings: () => meaningSerializer.serializeList(vocab.meanings.getItems(), {ignore: ["vocab"]}),
+            meanings: () => meaningSerializer.serializeList(vocab.meanings.getItems(), {ignore: ["vocab"]}) as Omit<MeaningSchema, "vocab">[],
             learnersCount: () => Number(vocab.learnersCount!),
             lessonsCount: () => Number(vocab.lessonsCount!)
         };
