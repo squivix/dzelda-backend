@@ -11,7 +11,7 @@ jobs:
         MIKRO_ORM_CLIENT_URL: "postgresql://devin:123456789@test-db:5432/dzelda-db-test"
     services:
       test-db:
-        image: "postgres:15"
+        image: "postgres:15.3"
         env:
           POSTGRES_USER: "devin"
           POSTGRES_PASSWORD: "123456789"

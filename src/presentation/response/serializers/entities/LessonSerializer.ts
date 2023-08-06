@@ -1,5 +1,5 @@
 import {Lesson} from "@/src/models/entities/Lesson.js";
-import {LessonSchema} from "@/src/presentation/response/interfaces/entities/LessonSchema.js";
+import {CourseSchema, LessonSchema} from "dzelda-types";
 import {courseSerializer} from "@/src/presentation/response/serializers/entities/CourseSerializer.js";
 import {CustomCallbackObject, CustomEntitySerializer} from "@/src/presentation/response/serializers/CustomEntitySerializer.js";
 
@@ -12,7 +12,7 @@ export class LessonSerializer extends CustomEntitySerializer<Lesson, LessonSchem
             text: () => lesson.text,
             audio: () => lesson.audio,
             image: () => lesson.image,
-            course: () => courseSerializer.serialize(lesson.course, {ignore: ["lessons"]}),
+            course: () => courseSerializer.serialize(lesson.course, {ignore: ["lessons"]}) as CourseSchema,
             orderInCourse: () => lesson.orderInCourse,
             addedOn: () => lesson.addedOn.toISOString(),
             vocabsByLevel: () => lesson.vocabsByLevel,

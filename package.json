@@ -15,7 +15,7 @@
     "migrate": "mikro-orm migration:up",
     "fresh": "mikro-orm migration:fresh --seed",
     "dev": "env-cmd -f ./env/dev.env tsx --watch ./src/main.ts",
-    "generate-schema": "npx openapi-typescript specs/dzelda-api.json --output specs/schema.ts"
+    "generate-schema": "npx swagger-typescript-api -p ./specs/dzelda-api.json -o ./specs -n schema.ts --type-suffix Schema"
   },
   "author": "squivix <devintheamateurdevin@gmail.com> (https://github.com/squivix)",
   "license": "MIT",
@@ -26,6 +26,7 @@
     "@mikro-orm/core": "^5.6.7",
     "@mikro-orm/postgresql": "^5.6.7",
     "dotenv": "^16.0.3",
+    "dzelda-types": "git+https://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:x-oauth-basic@github.com/squivix/dzelda-types.git#main",
     "env-cmd": "^10.1.0",
     "fastify": "^4.9.2",
     "fastify-formidable": "^3.0.2",
@@ -51,7 +52,6 @@
     "eslint-import-resolver-typescript": "^3.5.2",
     "eslint-plugin-import": "^2.26.0",
     "form-data": "^4.0.0",
-    "openapi-typescript": "^6.1.0",
     "tsx": "^3.12.7",
     "typescript": "^4.8.4",
     "vite": "^3.2.5",
