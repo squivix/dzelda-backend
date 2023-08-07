@@ -14,8 +14,7 @@
     "premigrate": "npm run clean",
     "migrate": "mikro-orm migration:up",
     "fresh": "mikro-orm migration:fresh --seed",
-    "dev": "env-cmd -f ./env/dev.env tsx --watch ./src/main.ts",
-    "generate-schema": "npx swagger-typescript-api -p ./specs/dzelda-api.json -o ./specs -n schema.ts --type-suffix Schema"
+    "dev": "env-cmd -f ./env/dev.env tsx --watch ./src/main.ts"
   },
   "author": "squivix <devintheamateurdevin@gmail.com> (https://github.com/squivix)",
   "license": "MIT",
