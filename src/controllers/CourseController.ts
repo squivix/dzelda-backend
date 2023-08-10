@@ -20,7 +20,7 @@ class CourseController {
         const queryParamsValidator = z.object({
             languageCode: languageCodeValidator.optional(),
             addedBy: usernameValidator.or(z.literal("me")).optional(),
-            searchQuery: z.string().min(1).max(256).optional(),
+            searchQuery: z.string().max(256).optional(),
             sortBy: z.union([z.literal("title"), z.literal("createdDate"), z.literal("learnersCount")]).optional().default("title"),
             sortOrder: z.union([z.literal("asc"), z.literal("desc")]).optional().default("asc"),
             page: z.coerce.number().int().min(1).optional().default(1),
@@ -144,7 +144,7 @@ class CourseController {
         const queryParamsValidator = z.object({
             languageCode: languageCodeValidator.optional(),
             addedBy: usernameValidator.or(z.literal("me")).optional(),
-            searchQuery: z.string().min(1).max(256).optional(),
+            searchQuery: z.string().max(256).optional(),
             level: z.nativeEnum(LanguageLevel).optional(),
             sortBy: z.union([z.literal("title"), z.literal("createdDate"), z.literal("learnersCount")]).optional().default("title"),
             sortOrder: z.union([z.literal("asc"), z.literal("desc")]).optional().default("asc"),

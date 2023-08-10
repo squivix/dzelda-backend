@@ -37,7 +37,7 @@ export class CourseService {
             dbFilters.$and!.push({language: {code: filters.languageCode}});
         if (filters.addedBy !== undefined)
             dbFilters.$and!.push({addedBy: {user: {username: filters.addedBy}}});
-        if (filters.searchQuery !== undefined)
+        if (filters.searchQuery !== undefined && filters.searchQuery !== "")
             dbFilters.$and!.push({$or: [{title: {$ilike: `%${filters.searchQuery}%`}}, {description: {$ilike: `%${filters.searchQuery}%`}}]});
 
         const dbOrderBy: QueryOrderMap<Course>[] = [];

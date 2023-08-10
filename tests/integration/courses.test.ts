@@ -1,13 +1,6 @@
 import {beforeEach, describe, expect, test, TestContext, vi} from "vitest";
 import {orm} from "@/src/server.js";
-import {
-    buildQueryString,
-    createComparator,
-    fetchRequest,
-    fetchWithFiles,
-    mockValidateFileFields,
-    readSampleFile
-} from "@/tests/integration/utils.js";
+import {buildQueryString, createComparator, fetchRequest, fetchWithFiles, mockValidateFileFields, readSampleFile} from "@/tests/integration/utils.js";
 import {UserFactory} from "@/src/seeders/factories/UserFactory.js";
 import {SessionFactory} from "@/src/seeders/factories/SessionFactory.js";
 import {ProfileFactory} from "@/src/seeders/factories/ProfileFactory.js";
@@ -23,12 +16,9 @@ import fs from "fs-extra";
 import {LessonFactory} from "@/src/seeders/factories/LessonFactory.js";
 import {LessonRepo} from "@/src/models/repos/LessonRepo.js";
 import {Lesson} from "@/src/models/entities/Lesson.js";
-import {MapLearnerLesson} from "@/src/models/entities/MapLearnerLesson.js";
 import {courseSerializer} from "@/src/presentation/response/serializers/entities/CourseSerializer";
-import {LessonSchema} from "@/src/presentation/response/interfaces/entities/LessonSchema";
-import {CourseSchema} from "@/src/presentation/response/interfaces/entities/CourseSchema.js";
+import {CourseSchema, LessonSchema} from "dzelda-types";
 import * as fileValidatorExports from "@/src/validators/fileValidator.js";
-import {User} from "@/src/models/entities/auth/User.js";
 import * as constantExports from "@/src/constants.js";
 import {TEMP_ROOT_FILE_UPLOAD_DIR} from "@/tests/testConstants.js";
 import {escapeRegExp} from "@/src/utils/utils.js";

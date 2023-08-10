@@ -28,7 +28,7 @@ export class VocabService {
 
         if (filters.languageCode !== undefined)
             dbFilters.$and!.push({language: {code: filters.languageCode}});
-        if (filters.searchQuery !== undefined)
+        if (filters.searchQuery !== undefined && filters.searchQuery !== "")
             dbFilters.$and!.push({text: {$ilike: `%${filters.searchQuery}%`}});
         const dbOrderBy: QueryOrderMap<Vocab>[] = [];
         if (sort.sortBy == "text")
@@ -82,7 +82,7 @@ export class VocabService {
             dbFilters.$and!.push({vocab: {language: {code: filters.languageCode}}});
         if (filters.level !== undefined)
             dbFilters.$and!.push({level: filters.level});
-        if (filters.searchQuery !== undefined)
+        if (filters.searchQuery !== undefined && filters.searchQuery !== "")
             dbFilters.$and!.push({vocab: {text: {$ilike: `%${filters.searchQuery}%`}}});
         const dbOrderBy: QueryOrderMap<MapLearnerVocab>[] = [];
         if (sort.sortBy == "text")

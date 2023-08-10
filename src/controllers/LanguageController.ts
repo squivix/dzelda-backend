@@ -93,6 +93,7 @@ class LanguageController {
         const languageService = new LanguageService(request.em);
         const languageMapping = await languageService.getUserLanguage(pathParams.languageCode, request.user as User);
         if (!languageMapping)
+            // TODO improve 404 messages. Right now {code: 404, status: "Not Found", message: "Language not found",…} which is confusing because language is found, it's just user is not learning it
             throw new NotFoundAPIError("Language");
         const updatedLanguageMapping = await languageService.updateUserLanguage(languageMapping);
         reply.status(200).send(learnerLanguageSerializer.serialize(updatedLanguageMapping));

@@ -63,7 +63,3 @@ export function shuffleArray<T>(array: T[]) {
 
     return array;
 }
-
-export function areSetsEqual(set1: Set<any>, set2: Set<any>) {
-    return set1.size === set2.size && [...set1].every((x) => set2.has(x));
-}

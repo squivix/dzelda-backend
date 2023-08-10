@@ -24,7 +24,7 @@ class LessonController {
         const queryParamsValidator = z.object({
             languageCode: languageCodeValidator.optional(),
             addedBy: usernameValidator.or(z.literal("me")).optional(),
-            searchQuery: z.string().min(1).max(256).optional(),
+            searchQuery: z.string().max(256).optional(),
             level: lessonLevelsFilterValidator.default([]),
             hasAudio: booleanStringValidator.optional(),
             sortBy: z.union([z.literal("title"), z.literal("createdDate"), z.literal("learnersCount")]).optional().default("title"),
@@ -157,7 +157,7 @@ class LessonController {
         const queryParamsValidator = z.object({
             languageCode: languageCodeValidator.optional(),
             addedBy: usernameValidator.or(z.literal("me")).optional(),
-            searchQuery: z.string().min(1).max(256).optional(),
+            searchQuery: z.string().max(256).optional(),
             level: lessonLevelsFilterValidator.default([]),
             hasAudio: booleanStringValidator.optional(),
             sortBy: z.union([z.literal("title"), z.literal("createdDate"), z.literal("learnersCount")]).optional().default("title"),

@@ -48,7 +48,7 @@ export class LessonService {
             dbFilters.$and!.push({course: {language: {code: filters.languageCode}}});
         if (filters.addedBy !== undefined)
             dbFilters.$and!.push({course: {addedBy: {user: {username: filters.addedBy}}}});
-        if (filters.searchQuery !== undefined)
+        if (filters.searchQuery !== undefined && filters.searchQuery !== "")
             dbFilters.$and!.push({title: {$ilike: `%${filters.searchQuery}%`}});
         if (filters.hasAudio !== undefined)
             dbFilters.$and!.push({audio: {[filters.hasAudio ? "$ne" : "$eq"]: ""}});

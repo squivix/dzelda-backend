@@ -13,7 +13,7 @@ export class LessonFactory extends CustomFactory<Lesson> {
             title: faker.random.words(faker.datatype.number({min: 4, max: 10})),
             text: faker.random.words(faker.datatype.number({min: 50, max: 100})),
             image: faker.image.imageUrl(100, 100),
-            level: randomEnum(LanguageLevel),
+            level: LanguageLevel.ADVANCED_1,
             addedOn: new Date(Math.round(Date.now() / 1000) * 1000), // now rounded to nearest second because db column is timestampz(0)
             audio: "https://upload.wikimedia.org/wikipedia/commons/d/de/Lorem_ipsum.ogg",
             learnersCount: 0
