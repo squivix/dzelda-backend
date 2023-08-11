@@ -7,6 +7,7 @@ import {defaultVocabsByLevel} from "@/src/models/enums/VocabLevel.js";
 import {Lesson} from "@/src/models/entities/Lesson.js";
 import {LessonRepo} from "@/src/models/repos/LessonRepo.js";
 import {QueryOrderMap} from "@mikro-orm/core/enums.js";
+import {EntityField} from "@mikro-orm/core/drivers/IDatabaseDriver.js";
 
 export class CourseService {
     em: EntityManager;
@@ -80,8 +81,10 @@ export class CourseService {
         let course = await this.courseRepo.findOne({id: courseId}, {populate: ["language", "addedBy", "addedBy.user"]});
         if (course) {
             await this.em.populate(course, ["lessons"], {orderBy: {lessons: {orderInCourse: "asc"}}, refresh: true});
-            if (user && !(user instanceof AnonymousUser))
+            if (user && !(user instanceof AnonymousUser)) {
                 await this.courseRepo.annotateVocabsByLevel([course], user.id);
+                await this.lessonRepo.annotateVocabsByLevel(course.lessons.getItems(), user.id);
+            }
         }
         return course;
     }
@@ -109,12 +112,11 @@ export class CourseService {
         this.lessonRepo.persist(courseLessons);
         await this.courseRepo.flush();
 
-        await this.courseRepo.findOne({id: course.id}, {populate: ["language", "addedBy", "addedBy.user", "addedBy.languagesLearning"]});
-        await this.em.populate(course, ["lessons"], {orderBy: {lessons: {orderInCourse: "asc"}}, refresh: true});
-        if (user && !(user instanceof AnonymousUser))
-            await this.courseRepo.annotateVocabsByLevel([course], user.id);
-        return course;
+        return (await this.getCourse(course.id, user))!
     }
 
+    async findCourse(where: FilterQuery<Course>, fields: EntityField<Course>[] = ["id", "isPublic", "addedBy"]) {
+        return await this.courseRepo.findOne(where, {fields});
+    }
 
 }

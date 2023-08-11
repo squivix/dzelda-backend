@@ -106,7 +106,7 @@ class CourseController {
         const body = bodyValidator.parse(request.body);
 
         const courseService = new CourseService(request.em);
-        const course = await courseService.getCourse(pathParams.courseId, request.user);
+        const course = await courseService.findCourse(pathParams.courseId, ["id", "isPublic", "addedBy", "lessons"]);
 
         if (!course)
             throw new NotFoundAPIError("Course");

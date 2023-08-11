@@ -805,7 +805,7 @@ describe("GET courses/:courseId/", function () {
     const makeRequest = async (courseId: number | string, authToken?: string) => {
         const options: InjectOptions = {
             method: "GET",
-            url: `courses/${courseId}`,
+            url: `courses/${courseId}/`,
         };
         return await fetchRequest(options, authToken);
     };
@@ -865,13 +865,15 @@ describe("GET courses/:courseId/", function () {
         const course = await context.courseFactory.createOne({
             isPublic: false,
             addedBy: author.profile,
-            language: await context.languageFactory.createOne()
+            language: await context.languageFactory.createOne(),
+            lessons: context.lessonFactory.makeDefinitions(3)
         });
+        await context.courseRepo.annotateVocabsByLevel([course], author.id);
+        await context.lessonRepo.annotateVocabsByLevel(course.lessons.getItems(), author.id);
         const session = await context.sessionFactory.createOne({user: author});
 
         const response = await makeRequest(course.id, session.token);
 
-        await context.courseRepo.annotateVocabsByLevel([course], author.id);
         expect(response.statusCode).to.equal(200);
         expect(response.json()).toEqual(courseSerializer.serialize(course));
     });
@@ -894,7 +896,7 @@ describe("PUT courses/:courseId/", function () {
         return await fetchWithFiles({
             options: {
                 method: "PUT",
-                url: `courses/${courseId}`,
+                url: `courses/${courseId}/`,
                 body: {
                     data: data,
                     files: files
@@ -931,6 +933,7 @@ describe("PUT courses/:courseId/", function () {
             course = await context.courseRepo.findOneOrFail({id: course.id}, {populate: ["language", "addedBy", "addedBy.user", "addedBy.languagesLearning"]});
             await context.em.populate(course, ["lessons"], {orderBy: {lessons: {orderInCourse: "asc"}}});
             await context.courseRepo.annotateVocabsByLevel([course], author.id);
+            await context.lessonRepo.annotateVocabsByLevel(course.lessons.getItems(), author.id);
 
             expect(response.statusCode).to.equal(200);
             expect(response.json()).toEqual(courseSerializer.serialize(course));
@@ -966,6 +969,7 @@ describe("PUT courses/:courseId/", function () {
             course = await context.courseRepo.findOneOrFail({id: course.id}, {populate: ["language", "addedBy", "addedBy.user", "addedBy.languagesLearning"]});
             await context.em.populate(course, ["lessons"], {orderBy: {lessons: {orderInCourse: "asc"}}});
             await context.courseRepo.annotateVocabsByLevel([course], author.id);
+            await context.lessonRepo.annotateVocabsByLevel(course.lessons.getItems(), author.id);
 
             expect(response.statusCode).to.equal(200);
             expect(response.json()).toEqual(courseSerializer.serialize(course));
@@ -1002,6 +1006,7 @@ describe("PUT courses/:courseId/", function () {
             course = await context.courseRepo.findOneOrFail({id: course.id}, {populate: ["language", "addedBy", "addedBy.user", "addedBy.languagesLearning"]});
             await context.em.populate(course, ["lessons"], {orderBy: {lessons: {orderInCourse: "asc"}}});
             await context.courseRepo.annotateVocabsByLevel([course], author.id);
+            await context.lessonRepo.annotateVocabsByLevel(course.lessons.getItems(), author.id);
 
             expect(response.statusCode).to.equal(200);
             expect(response.json()).toEqual(courseSerializer.serialize(course));

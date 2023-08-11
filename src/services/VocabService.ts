@@ -146,7 +146,7 @@ export class VocabService {
         const existingMappings = await this.em.find(MapLearnerVocab, {
             vocab: {lessonsAppearingIn: lesson},
             learner: user.profile
-        }, {populate: ["vocab.language", "vocab.meanings"],});
+        }, {populate: ["vocab.language", "vocab.meanings.addedBy.user"],});
         await this.em.populate(existingMappings, ["vocab.learnerMeanings", "vocab.learnerMeanings.addedBy.user"], {
             where: {vocab: {learnerMeanings: {learners: user.profile}}}
         });
@@ -155,7 +155,7 @@ export class VocabService {
             lessonsAppearingIn: lesson,
             // TODO find cleaner null-safe option: some collection $notcontains which resolves to null-safe != aka IS DISTINCT FROM
             $or: [{$not: {learners: user.profile}}, {learners: {$exists: false}}]
-        }, {populate: ["language", "meanings"]});
+        }, {populate: ["language", "meanings", "meanings.addedBy.user"]});
 
         return [...existingMappings, ...newVocabs];
     }

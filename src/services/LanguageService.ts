@@ -9,7 +9,6 @@ import {MapLearnerVocab} from "@/src/models/entities/MapLearnerVocab.js";
 import {MapLearnerMeaning} from "@/src/models/entities/MapLearnerMeaning.js";
 import {EntityField} from "@mikro-orm/core/drivers/IDatabaseDriver.js";
 import {QueryOrderMap} from "@mikro-orm/core/enums.js";
-import {Lesson} from "@/src/models/entities/Lesson.js";
 
 export class LanguageService {
     em: EntityManager;
@@ -89,8 +88,6 @@ export class LanguageService {
     }
 
     async findLanguage(where: FilterQuery<Language>, fields: EntityField<Language>[] = ["id", "code", "isSupported"]) {
-        const language = await this.languageRepo.findOne(where, {fields});
-        await this.em.flush();
-        return language;
+        return await this.languageRepo.findOne(where, {fields});
     }
 }

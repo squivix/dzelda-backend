@@ -13,9 +13,9 @@ export const coursesRouter: FastifyPluginCallback = function (fastify, options, 
         onResponse: deleteFileOnFail
     });
 
-    fastify.get(`/courses/:courseId`, CourseController.getCourse);
+    fastify.get(`/courses/:courseId/`, CourseController.getCourse);
 
-    fastify.put(`/courses/:courseId`, {
+    fastify.put(`/courses/:courseId/`, {
         preHandler: [requiresAuth,
             fileUploadMiddleware({"image": {path: "courses/images", validate: courseImageValidator}})],
         handler: CourseController.updateCourse,
