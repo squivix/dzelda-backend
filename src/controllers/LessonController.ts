@@ -111,6 +111,7 @@ class LessonController {
                 courseId: z.number().min(0),
                 title: lessonTitleValidator,
                 text: lessonTextValidator,
+                level: lessonLevelValidator.optional(),
             }),
             image: z.string().optional(),
             audio: z.string().optional()
@@ -137,6 +138,7 @@ class LessonController {
             course: newCourse,
             title: body.data.title,
             text: body.data.text,
+            level: body.data.level,
             image: body.image,
             audio: body.audio
         }, request.user as User);

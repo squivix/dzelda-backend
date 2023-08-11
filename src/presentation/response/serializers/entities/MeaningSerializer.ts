@@ -10,6 +10,7 @@ class MeaningSerializer extends CustomEntitySerializer<Meaning, MeaningSchema> {
         return {
             id: () => meaning.id,
             text: () => meaning.text,
+            // @ts-ignore
             vocab: () => vocabSerializer.serialize(meaning.vocab, {ignore: ["meanings"]}) as Omit<VocabSchema, "meanings">,
             learnersCount: () => Number(meaning?.learnersCount),
             addedBy: () => meaning.addedBy == null ? "anonymous" : meaning.addedBy.user.username,

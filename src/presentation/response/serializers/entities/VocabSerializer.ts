@@ -10,6 +10,7 @@ class VocabSerializer extends CustomEntitySerializer<Vocab, VocabSchema> {
             text: () => vocab.text,
             isPhrase: () => vocab.isPhrase,
             language: () => vocab.language.code,
+            // @ts-ignore
             meanings: () => meaningSerializer.serializeList(vocab.meanings.getItems(), {ignore: ["vocab"]}) as Omit<MeaningSchema, "vocab">[],
             learnersCount: () => Number(vocab.learnersCount!),
             lessonsCount: () => Number(vocab.lessonsCount!)

@@ -21,7 +21,6 @@ import * as parserExports from "@/src/utils/parsers/parsers.js";
 import {MeaningFactory} from "@/src/seeders/factories/MeaningFactory.js";
 import {MapLearnerMeaning} from "@/src/models/entities/MapLearnerMeaning.js";
 import {Meaning} from "@/src/models/entities/Meaning.js";
-import {LanguageLevel} from "@/src/models/enums/LanguageLevel.js";
 
 interface LocalTestContext extends TestContext {
     languageFactory: LanguageFactory;

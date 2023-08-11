@@ -6,7 +6,6 @@ import {languageCodeValidator} from "@/src/validators/languageValidators.js";
 import {usernameValidator} from "@/src/validators/userValidator.js";
 import {UnauthenticatedAPIError} from "@/src/utils/errors/UnauthenticatedAPIError.js";
 import {courseDescriptionValidator, courseTitleValidator} from "@/src/validators/courseValidator.js";
-import {LanguageLevel} from "@/src/models/enums/LanguageLevel.js";
 import {NotFoundAPIError} from "@/src/utils/errors/NotFoundAPIError.js";
 import {ForbiddenAPIError} from "@/src/utils/errors/ForbiddenAPIError.js";
 import {ValidationAPIError} from "@/src/utils/errors/ValidationAPIError.js";
@@ -56,7 +55,6 @@ class CourseController {
                 title: courseTitleValidator,
                 description: courseDescriptionValidator.optional(),
                 isPublic: z.boolean().optional(),
-                level: z.nativeEnum(LanguageLevel).optional(),
             }),
             image: z.string().optional(),
         });
@@ -76,7 +74,6 @@ class CourseController {
             description: body.data.description,
             isPublic: body.data.isPublic,
             image: body.image,
-            level: body.data.level
         }, request.user as User);
         reply.status(201).send(courseSerializer.serialize(course));
     }
@@ -145,7 +142,6 @@ class CourseController {
             languageCode: languageCodeValidator.optional(),
             addedBy: usernameValidator.or(z.literal("me")).optional(),
             searchQuery: z.string().max(256).optional(),
-            level: z.nativeEnum(LanguageLevel).optional(),
             sortBy: z.union([z.literal("title"), z.literal("createdDate"), z.literal("learnersCount")]).optional().default("title"),
             sortOrder: z.union([z.literal("asc"), z.literal("desc")]).optional().default("asc"),
             page: z.coerce.number().int().min(1).optional().default(1),
@@ -160,7 +156,6 @@ class CourseController {
             languageCode: queryParams.languageCode,
             addedBy: queryParams.addedBy,
             searchQuery: queryParams.searchQuery,
-            level: queryParams.level,
             isLearning: true
         };
         const sort = {sortBy: queryParams.sortBy, sortOrder: queryParams.sortOrder};

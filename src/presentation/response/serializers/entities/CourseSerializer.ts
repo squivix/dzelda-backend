@@ -14,6 +14,7 @@ export class CourseSerializer extends CustomEntitySerializer<Course, CourseSchem
             image: () => course.image,
             isPublic: () => course.isPublic,
             language: () => course.language.code,
+            // @ts-ignore
             lessons: () => lessonSerializer.serializeList(course.lessons.getItems(), {ignore: ["course"]}) as Omit<LessonSchema, "course">[],
             addedOn: () => course.addedOn.toISOString(),
             addedBy: () => course.addedBy.user.username,

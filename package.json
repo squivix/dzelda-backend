@@ -13,6 +13,7 @@
     "make-migrations": "mikro-orm migration:create",
     "premigrate": "npm run clean",
     "migrate": "mikro-orm migration:up",
+    "prefresh": "npm run clean",
     "fresh": "mikro-orm migration:fresh --seed",
     "dev": "env-cmd -f ./env/dev.env tsx --watch ./src/main.ts"
   },

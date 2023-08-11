@@ -12,6 +12,7 @@ export class LessonSerializer extends CustomEntitySerializer<Lesson, LessonSchem
             text: () => lesson.text,
             audio: () => lesson.audio,
             image: () => lesson.image,
+            // @ts-ignore
             course: () => courseSerializer.serialize(lesson.course, {ignore: ["lessons"]}) as Omit<CourseSchema, "lessons">,
             level: () => lesson.level as `${typeof lesson.level}`,
             orderInCourse: () => lesson.orderInCourse,

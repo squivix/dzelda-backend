@@ -4,7 +4,6 @@ import {CourseRepo} from "@/src/models/repos/CourseRepo.js";
 import {AnonymousUser, User} from "@/src/models/entities/auth/User.js";
 import {Language} from "@/src/models/entities/Language.js";
 import {defaultVocabsByLevel} from "@/src/models/enums/VocabLevel.js";
-import {LanguageLevel} from "@/src/models/enums/LanguageLevel.js";
 import {Lesson} from "@/src/models/entities/Lesson.js";
 import {LessonRepo} from "@/src/models/repos/LessonRepo.js";
 import {QueryOrderMap} from "@mikro-orm/core/enums.js";
@@ -62,7 +61,7 @@ export class CourseService {
     }
 
     async createCourse(fields: {
-        language: Language, title: string, description?: string, isPublic?: boolean, image?: string, level?: LanguageLevel
+        language: Language, title: string, description?: string, isPublic?: boolean, image?: string
     }, user: User) {
         const newCourse = this.courseRepo.create({
             title: fields.title,

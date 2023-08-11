@@ -742,22 +742,6 @@ describe("POST courses/", function () {
             }, session.token);
             expect(response.statusCode).to.equal(400);
         });
-        test<LocalTestContext>("If level is invalid return 400", async (context) => {
-            const user = await context.userFactory.createOne();
-            const session = await context.sessionFactory.createOne({user: user});
-            const language = await context.languageFactory.createOne();
-            const newCourse = context.courseFactory.makeOne({language: language});
-
-            const response = await makeRequest({
-                data: {
-                    title: newCourse.title,
-                    languageCode: language.code,
-                    level: "high"
-                }
-            }, session.token);
-
-            expect(response.statusCode).to.equal(400);
-        });
         describe("If image is invalid return 4xx", () => {
             test<LocalTestContext>("If image is not a jpeg or png return 415", async (context) => {
                 const user = await context.userFactory.createOne();

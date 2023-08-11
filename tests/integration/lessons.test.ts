@@ -1144,7 +1144,7 @@ describe("PUT lessons/:lessonId/", () => {
     const audioPathRegex = new RegExp(`^${escapeRegExp(`${TEMP_ROOT_FILE_UPLOAD_DIR}/lessons/audios/`)}.*-.*\.(mp3|wav)$`);
 
     describe("If the lesson exists, user is logged in as author and all fields are valid, update lesson and return 200", async () => {
-        test<LocalTestContext>("If image and audio are not provided, keep old image and audio", async (context) => {
+        test<LocalTestContext>("If optional field are not provided, keep old values", async (context) => {
             const author = await context.userFactory.createOne();
             const session = await context.sessionFactory.createOne({user: author});
             const language = await context.languageFactory.createOne();
@@ -1155,13 +1155,13 @@ describe("PUT lessons/:lessonId/", () => {
 
             const oldLessonImage = lesson.image;
             const oldLessonAudio = lesson.audio;
-            const updatedLesson = context.lessonFactory.makeOne({course: newCourse});
+            const updatedLesson = context.lessonFactory.makeOne({course: newCourse, level: lesson.level});
 
             const response = await makeRequest(lesson.id, {
                 data: {
                     courseId: updatedLesson.course.id,
                     title: updatedLesson.title,
-                    text: updatedLesson.text,
+                    text: updatedLesson.text
                 }
             }, session.token);
 
@@ -1185,91 +1185,94 @@ describe("PUT lessons/:lessonId/", () => {
             expect(lessonVocabs.map(v => v.text)).toEqual(expect.arrayContaining(lessonWordsText));
             expect(lessonVocabMappings.length).toEqual(lessonWordsText.length);
         });
-        test<LocalTestContext>("If new image and audio are blank clear lesson image and audio", async (context) => {
-            const author = await context.userFactory.createOne();
-            const session = await context.sessionFactory.createOne({user: author});
-            const language = await context.languageFactory.createOne();
-            vi.spyOn(parserExports, "getParser").mockImplementation((_) => parserExports.parsers["en"]);
-            const course = await context.courseFactory.createOne({addedBy: author.profile, language: language, lessons: []});
-            const newCourse = await context.courseFactory.createOne({addedBy: author.profile, language: language});
-            const lesson = await context.lessonFactory.createOne({course: course});
-            const updatedLesson = context.lessonFactory.makeOne({course: newCourse, image: "", audio: ""});
+        describe("If optional fields are provided, update their values", async () => {
+            test<LocalTestContext>("If new image, audio, and level are provided, update them", async (context) => {
+                const author = await context.userFactory.createOne();
+                const session = await context.sessionFactory.createOne({user: author});
+                const language = await context.languageFactory.createOne();
+                vi.spyOn(parserExports, "getParser").mockImplementation((_) => parserExports.parsers["en"]);
+                const course = await context.courseFactory.createOne({addedBy: author.profile, language: language, lessons: []});
+                const newCourse = await context.courseFactory.createOne({addedBy: author.profile, language: language});
+                let lesson = await context.lessonFactory.createOne({course: course});
+                const oldLessonImage = lesson.image;
+                const oldLessonAudio = lesson.audio;
+                const updatedLesson = context.lessonFactory.makeOne({course: newCourse, level: randomEnum(LanguageLevel, [lesson.level])});
 
-            const response = await makeRequest(lesson.id, {
-                data: {
-                    courseId: newCourse.id,
-                    title: updatedLesson.title,
-                    text: updatedLesson.text,
-                },
-                files: {image: {value: ""}, audio: {value: ""}}
-            }, session.token);
+                const response = await makeRequest(lesson.id, {
+                    data: {
+                        courseId: newCourse.id,
+                        title: updatedLesson.title,
+                        text: updatedLesson.text,
+                        level: updatedLesson.level
+                    },
+                    files: {
+                        image: readSampleFile("images/lorem-ipsum-69_8KB-1_1ratio.png"),
+                        audio: readSampleFile("audio/piano-97_9KB.wav")
+                    }
+                }, session.token);
 
-            const dbRecord = await context.lessonRepo.findOneOrFail({id: lesson.id}, {populate: ["course", "course.language", "course.addedBy.user"]});
-            await context.em.populate(dbRecord, ["course"]);
-            await context.lessonRepo.annotateVocabsByLevel([dbRecord], author.id);
-            await context.courseRepo.annotateVocabsByLevel([dbRecord.course], author.id);
-            await context.courseRepo.annotateVocabsByLevel([updatedLesson.course], author.id);
+                const dbRecord = await context.lessonRepo.findOneOrFail({id: lesson.id}, {populate: ["course", "course.language", "course.addedBy.user"]});
+                await context.em.populate(dbRecord, ["course"]);
+                await context.lessonRepo.annotateVocabsByLevel([dbRecord], author.id);
+                await context.courseRepo.annotateVocabsByLevel([updatedLesson.course], author.id);
+                await context.courseRepo.annotateVocabsByLevel([dbRecord.course], author.id);
 
-            expect(response.statusCode).to.equal(200);
-            expect(response.json()).toMatchObject(lessonSerializer.serialize(updatedLesson, {ignore: ["addedOn"]}));
-            expect(lessonSerializer.serialize(dbRecord)).toMatchObject(lessonSerializer.serialize(updatedLesson, {ignore: ["addedOn"]}));
-            expect(dbRecord.orderInCourse).toEqual(await newCourse.lessons.loadCount() - 1);
+                expect(response.statusCode).to.equal(200);
+                expect(response.json()).toMatchObject(lessonSerializer.serialize(updatedLesson, {ignore: ["addedOn", "audio", "image"]}));
+                expect(lessonSerializer.serialize(dbRecord)).toMatchObject(lessonSerializer.serialize(updatedLesson, {ignore: ["addedOn", "audio", "image"]}));
+                expect(fs.existsSync(dbRecord.image)).toBeTruthy();
+                expect(dbRecord.image).not.toEqual(oldLessonImage);
+                expect(dbRecord.audio).not.toEqual(oldLessonAudio);
+                expect(dbRecord.image).toEqual(expect.stringMatching(imagePathRegex));
+                expect(dbRecord.audio).toEqual(expect.stringMatching(audioPathRegex));
+                expect(dbRecord.orderInCourse).toEqual(await newCourse.lessons.loadCount() - 1);
 
-            const lessonWordsText = parsers["en"].parseText(`${updatedLesson.title} ${updatedLesson.text}`);
-            const lessonVocabs = await context.vocabRepo.find({text: lessonWordsText, language: course.language});
-            const lessonVocabMappings = await context.em.find(MapLessonVocab, {vocab: lessonVocabs, lesson: dbRecord});
+                const lessonWordsText = parsers["en"].parseText(`${updatedLesson.title} ${updatedLesson.text}`);
+                const lessonVocabs = await context.vocabRepo.find({text: lessonWordsText, language: course.language});
+                const lessonVocabMappings = await context.em.find(MapLessonVocab, {vocab: lessonVocabs, lesson: dbRecord});
 
-            expect(lessonVocabs.length).toEqual(lessonWordsText.length);
-            expect(lessonVocabs.map(v => v.text)).toEqual(expect.arrayContaining(lessonWordsText));
-            expect(lessonVocabMappings.length).toEqual(lessonWordsText.length);
-        });
-        test<LocalTestContext>("If new image and audio is provided, update lesson image and audio", async (context) => {
-            const author = await context.userFactory.createOne();
-            const session = await context.sessionFactory.createOne({user: author});
-            const language = await context.languageFactory.createOne();
-            vi.spyOn(parserExports, "getParser").mockImplementation((_) => parserExports.parsers["en"]);
-            const course = await context.courseFactory.createOne({addedBy: author.profile, language: language, lessons: []});
-            const newCourse = await context.courseFactory.createOne({addedBy: author.profile, language: language});
-            let lesson = await context.lessonFactory.createOne({course: course});
-            const oldLessonImage = lesson.image;
-            const oldLessonAudio = lesson.audio;
-            const updatedLesson = context.lessonFactory.makeOne({course: newCourse});
+                expect(lessonVocabs.length).toEqual(lessonWordsText.length);
+                expect(lessonVocabMappings.length).toEqual(lessonWordsText.length);
+            });
+            test<LocalTestContext>("If new image and audio are blank clear lesson image and audio", async (context) => {
+                const author = await context.userFactory.createOne();
+                const session = await context.sessionFactory.createOne({user: author});
+                const language = await context.languageFactory.createOne();
+                vi.spyOn(parserExports, "getParser").mockImplementation((_) => parserExports.parsers["en"]);
+                const course = await context.courseFactory.createOne({addedBy: author.profile, language: language, lessons: []});
+                const newCourse = await context.courseFactory.createOne({addedBy: author.profile, language: language});
+                const lesson = await context.lessonFactory.createOne({course: course});
+                const updatedLesson = context.lessonFactory.makeOne({course: newCourse, image: "", audio: ""});
 
-            const response = await makeRequest(lesson.id, {
-                data: {
-                    courseId: newCourse.id,
-                    title: updatedLesson.title,
-                    text: updatedLesson.text,
-                },
-                files: {
-                    image: readSampleFile("images/lorem-ipsum-69_8KB-1_1ratio.png"),
-                    audio: readSampleFile("audio/piano-97_9KB.wav")
-                }
-            }, session.token);
+                const response = await makeRequest(lesson.id, {
+                    data: {
+                        courseId: newCourse.id,
+                        title: updatedLesson.title,
+                        text: updatedLesson.text,
+                    },
+                    files: {image: {value: ""}, audio: {value: ""}}
+                }, session.token);
 
-            const dbRecord = await context.lessonRepo.findOneOrFail({id: lesson.id}, {populate: ["course", "course.language", "course.addedBy.user"]});
-            await context.em.populate(dbRecord, ["course"]);
-            await context.lessonRepo.annotateVocabsByLevel([dbRecord], author.id);
-            await context.courseRepo.annotateVocabsByLevel([updatedLesson.course], author.id);
-            await context.courseRepo.annotateVocabsByLevel([dbRecord.course], author.id);
+                const dbRecord = await context.lessonRepo.findOneOrFail({id: lesson.id}, {populate: ["course", "course.language", "course.addedBy.user"]});
+                await context.em.populate(dbRecord, ["course"]);
+                await context.lessonRepo.annotateVocabsByLevel([dbRecord], author.id);
+                await context.courseRepo.annotateVocabsByLevel([dbRecord.course], author.id);
+                await context.courseRepo.annotateVocabsByLevel([updatedLesson.course], author.id);
 
-            expect(response.statusCode).to.equal(200);
-            expect(response.json()).toMatchObject(lessonSerializer.serialize(updatedLesson, {ignore: ["addedOn", "audio", "image"]}));
-            expect(lessonSerializer.serialize(dbRecord)).toMatchObject(lessonSerializer.serialize(updatedLesson, {ignore: ["addedOn", "audio", "image"]}));
-            expect(fs.existsSync(dbRecord.image)).toBeTruthy();
-            expect(dbRecord.image).not.toEqual(oldLessonImage);
-            expect(dbRecord.audio).not.toEqual(oldLessonAudio);
-            expect(dbRecord.image).toEqual(expect.stringMatching(imagePathRegex));
-            expect(dbRecord.audio).toEqual(expect.stringMatching(audioPathRegex));
-            expect(dbRecord.orderInCourse).toEqual(await newCourse.lessons.loadCount() - 1);
+                expect(response.statusCode).to.equal(200);
+                expect(response.json()).toMatchObject(lessonSerializer.serialize(updatedLesson, {ignore: ["addedOn"]}));
+                expect(lessonSerializer.serialize(dbRecord)).toMatchObject(lessonSerializer.serialize(updatedLesson, {ignore: ["addedOn"]}));
+                expect(dbRecord.orderInCourse).toEqual(await newCourse.lessons.loadCount() - 1);
 
-            const lessonWordsText = parsers["en"].parseText(`${updatedLesson.title} ${updatedLesson.text}`);
-            const lessonVocabs = await context.vocabRepo.find({text: lessonWordsText, language: course.language});
-            const lessonVocabMappings = await context.em.find(MapLessonVocab, {vocab: lessonVocabs, lesson: dbRecord});
+                const lessonWordsText = parsers["en"].parseText(`${updatedLesson.title} ${updatedLesson.text}`);
+                const lessonVocabs = await context.vocabRepo.find({text: lessonWordsText, language: course.language});
+                const lessonVocabMappings = await context.em.find(MapLessonVocab, {vocab: lessonVocabs, lesson: dbRecord});
 
-            expect(lessonVocabs.length).toEqual(lessonWordsText.length);
-            expect(lessonVocabMappings.length).toEqual(lessonWordsText.length);
-        });
+                expect(lessonVocabs.length).toEqual(lessonWordsText.length);
+                expect(lessonVocabs.map(v => v.text)).toEqual(expect.arrayContaining(lessonWordsText));
+                expect(lessonVocabMappings.length).toEqual(lessonWordsText.length);
+            });
+        })
     });
     test<LocalTestContext>("If user not logged in return 401", async (context) => {
         const author = await context.userFactory.createOne();
