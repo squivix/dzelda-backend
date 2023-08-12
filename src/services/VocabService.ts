@@ -48,7 +48,7 @@ export class VocabService {
     }
 
     async createVocab(vocabData: { text: string; language: Language; isPhrase: boolean }) {
-        const newVocab = await this.vocabRepo.create({
+        const newVocab = this.vocabRepo.create({
             text: vocabData.text,
             language: vocabData.language,
             isPhrase: vocabData.isPhrase,
@@ -106,7 +106,7 @@ export class VocabService {
     }
 
     async addVocabToUserLearning(vocab: Vocab, user: User) {
-        const mapping = this.em.create(MapLearnerVocab, {
+        this.em.create(MapLearnerVocab, {
             learner: user.profile,
             vocab: vocab
         });
@@ -115,7 +115,10 @@ export class VocabService {
     }
 
     async getUserVocab(vocabId: number, learner: Profile) {
-        const mapping = await this.em.findOne(MapLearnerVocab, {vocab: vocabId, learner}, {populate: ["vocab.meanings.learnersCount"]});
+        const mapping = await this.em.findOne(MapLearnerVocab, {
+            vocab: vocabId,
+            learner
+        }, {populate: ["vocab.meanings.learnersCount", "vocab.meanings.addedBy.user"]});
         if (mapping) {
             await this.em.populate(mapping, ["vocab.learnerMeanings", "vocab.learnerMeanings.addedBy.user"], {where: {vocab: {learnerMeanings: {learners: learner}}}});
         }
@@ -153,8 +156,7 @@ export class VocabService {
 
         const newVocabs = await this.em.find(Vocab, {
             lessonsAppearingIn: lesson,
-            // TODO find cleaner null-safe option: some collection $notcontains which resolves to null-safe != aka IS DISTINCT FROM
-            $or: [{$not: {learners: user.profile}}, {learners: {$exists: false}}]
+            $nin: existingMappings.map(m => m.vocab)
         }, {populate: ["language", "meanings", "meanings.addedBy.user"]});
 
         return [...existingMappings, ...newVocabs];
