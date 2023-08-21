@@ -4,11 +4,6 @@ import {Seeder} from "@mikro-orm/seeder";
 import fs from "fs-extra";
 import {DictionaryFactory} from "@/src/seeders/factories/DictionaryFactory.js";
 import {batchSeed, syncIdSequence} from "@/src/seeders/utils.js";
-import {User} from "@/src/models/entities/auth/User.js";
-import {UserFactory} from "@/src/seeders/factories/UserFactory.js";
-import {countFileLines} from "@/src/utils/utils.js";
-import * as cliProgress from "cli-progress";
-import {open} from "node:fs/promises";
 
 export class DictionarySeeder extends Seeder {
     static readonly FILE_NAME = "dictionaries.jsonl";

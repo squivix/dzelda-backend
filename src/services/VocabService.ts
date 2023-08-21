@@ -58,7 +58,7 @@ export class VocabService {
             lessonsCount: 0
         });
         await this.em.flush();
-
+        //TODO move vocab in lesson regex somewhere centralized and test the heck out of it
         const lessonsWithVocab = await this.em.find(Lesson, {text: new RegExp(`(\\s|^)${escapeRegExp(newVocab.text)}(\\s|$)`)});
         if (lessonsWithVocab.length > 0)
             await this.em.insertMany(MapLessonVocab, lessonsWithVocab.map(lesson => ({lesson, vocab: newVocab})));

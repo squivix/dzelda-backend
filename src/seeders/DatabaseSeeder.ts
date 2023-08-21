@@ -13,7 +13,7 @@ import {DictionarySeeder} from "@/src/seeders/DictionarySeeder.js";
 
 export class DatabaseSeeder extends Seeder {
     static readonly DATA_DIR = "data";
-    static readonly DEFAULT_BATCH_SIZE = 10000;
+    static readonly DEFAULT_BATCH_SIZE = 10_000;
 
     async run(em: EntityManager): Promise<void> {
         console.log("Seeding");
@@ -61,3 +61,4 @@ export class DatabaseSeeder extends Seeder {
             });
     }
 }
+

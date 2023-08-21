@@ -1,4 +1,4 @@
-import {Dictionary, EntityData, EntityManager, Loaded} from "@mikro-orm/core";
+import {Dictionary, EntityData, EntityManager} from "@mikro-orm/core";
 import {Seeder} from "@mikro-orm/seeder";
 import fs from "fs-extra";
 import {User} from "@/src/models/entities/auth/User.js";
@@ -21,7 +21,9 @@ export class UserSeeder extends Seeder {
         await batchSeed({
             filePath: usersFilePath,
             batchSize: context.batchSize,
-            insertBatch: (batch) => this.insertBatch(em, batch),
+            insertBatch: (batch) => this.insertBatch(em, batch as (EntityData<User> & {
+                profile: EntityData<Profile> & { languagesLearning: number[] }
+            })[]),
             postSeed: async () => {
                 await syncIdSequence(em, "user");
                 await syncIdSequence(em, "profile");

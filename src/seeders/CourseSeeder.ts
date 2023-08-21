@@ -1,7 +1,6 @@
 import {Dictionary, EntityData, EntityManager} from "@mikro-orm/core";
 import fs from "fs-extra";
 import {Course} from "@/src/models/entities/Course.js";
-import {CourseFactory} from "@/src/seeders/factories/CourseFactory.js";
 import {batchSeed, syncIdSequence} from "@/src/seeders/utils.js";
 import {Seeder} from "@mikro-orm/seeder";
 
@@ -26,8 +25,7 @@ export class CourseSeeder extends Seeder {
     }
 
     private async insertBatch(em: EntityManager, batch: EntityData<Course>[]) {
-        const courseFactory = new CourseFactory(em);
-        const entities = batch.map(courseData => courseFactory.makeEntity({
+        await em.insertMany(batch.map(courseData => ({
             id: courseData.id,
             title: courseData.title,
             isPublic: courseData.isPublic,
@@ -35,8 +33,6 @@ export class CourseSeeder extends Seeder {
             language: courseData.language,
             addedBy: courseData.addedBy,
             image: courseData.image,
-            lessons: []
-        }));
-        await em.persistAndFlush(entities);
+        })));
     }
 }

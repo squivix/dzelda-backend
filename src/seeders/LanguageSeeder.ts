@@ -37,3 +37,4 @@ export class LanguageSeeder extends Seeder {
         })))
     }
 }
+
