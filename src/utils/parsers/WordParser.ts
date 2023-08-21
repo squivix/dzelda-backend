@@ -5,7 +5,7 @@ export abstract class WordParser {
      * @param keepDuplicates{boolean}
      * @return {string[]} A list of the words in `text`
      * */
-    abstract parseText(text: string, keepDuplicates?: boolean): string[]
+    abstract parseText(text: string, keepDuplicates?: boolean): [string, string[]]
 
-    abstract combine(words: string[]): string
+    abstract combineTokens(words: string[]): string
 }

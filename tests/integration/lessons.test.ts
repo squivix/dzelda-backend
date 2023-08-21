@@ -711,7 +711,7 @@ describe("POST lessons/", () => {
             expect(response.json()).toMatchObject(lessonSerializer.serialize(newLesson, {ignore: ["addedOn"]}));
             expect(lessonSerializer.serialize(dbRecord)).toMatchObject(lessonSerializer.serialize(newLesson, {ignore: ["addedOn"]}));
 
-            const lessonWordsText = parsers["en"].parseText(`${newLesson.title} ${newLesson.text}`);
+            const [_, lessonWordsText] = parsers["en"].parseText(`${newLesson.title} ${newLesson.text}`);
             const lessonVocabs = await context.vocabRepo.find({text: lessonWordsText, language: course.language});
             const lessonVocabMappings = await context.em.find(MapLessonVocab, {vocab: lessonVocabs, lesson: dbRecord});
 
@@ -749,7 +749,7 @@ describe("POST lessons/", () => {
             expect(dbRecord.image).toEqual(expect.stringMatching(imagePathRegex));
             expect(dbRecord.audio).toEqual(expect.stringMatching(audioPathRegex));
 
-            const lessonWordsText = parsers["en"].parseText(`${newLesson.title} ${newLesson.text}`);
+            const [_, lessonWordsText] = parsers["en"].parseText(`${newLesson.title} ${newLesson.text}`);
             const lessonVocabs = await context.vocabRepo.find({text: lessonWordsText, language: course.language});
             const lessonVocabMappings = await context.em.find(MapLessonVocab, {vocab: lessonVocabs, lesson: dbRecord});
 
@@ -1177,7 +1177,7 @@ describe("PUT lessons/:lessonId/", () => {
             expect(dbRecord.audio).toEqual(oldLessonAudio);
             expect(dbRecord.orderInCourse).toEqual(await newCourse.lessons.loadCount() - 1);
 
-            const lessonWordsText = parsers["en"].parseText(`${updatedLesson.title} ${updatedLesson.text}`);
+            const [_, lessonWordsText] = parsers["en"].parseText(`${updatedLesson.title} ${updatedLesson.text}`);
             const lessonVocabs = await context.vocabRepo.find({text: lessonWordsText, language: course.language});
             const lessonVocabMappings = await context.em.find(MapLessonVocab, {vocab: lessonVocabs, lesson: dbRecord});
 
@@ -1227,7 +1227,7 @@ describe("PUT lessons/:lessonId/", () => {
                 expect(dbRecord.audio).toEqual(expect.stringMatching(audioPathRegex));
                 expect(dbRecord.orderInCourse).toEqual(await newCourse.lessons.loadCount() - 1);
 
-                const lessonWordsText = parsers["en"].parseText(`${updatedLesson.title} ${updatedLesson.text}`);
+                const [_, lessonWordsText] = parsers["en"].parseText(`${updatedLesson.title} ${updatedLesson.text}`);
                 const lessonVocabs = await context.vocabRepo.find({text: lessonWordsText, language: course.language});
                 const lessonVocabMappings = await context.em.find(MapLessonVocab, {vocab: lessonVocabs, lesson: dbRecord});
 
@@ -1264,7 +1264,7 @@ describe("PUT lessons/:lessonId/", () => {
                 expect(lessonSerializer.serialize(dbRecord)).toMatchObject(lessonSerializer.serialize(updatedLesson, {ignore: ["addedOn"]}));
                 expect(dbRecord.orderInCourse).toEqual(await newCourse.lessons.loadCount() - 1);
 
-                const lessonWordsText = parsers["en"].parseText(`${updatedLesson.title} ${updatedLesson.text}`);
+                const [_, lessonWordsText] = parsers["en"].parseText(`${updatedLesson.title} ${updatedLesson.text}`);
                 const lessonVocabs = await context.vocabRepo.find({text: lessonWordsText, language: course.language});
                 const lessonVocabMappings = await context.em.find(MapLessonVocab, {vocab: lessonVocabs, lesson: dbRecord});
 

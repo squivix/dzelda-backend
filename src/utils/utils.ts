@@ -1,3 +1,5 @@
+import {open} from "node:fs/promises";
+
 export function toCapitalizedCase(string: string) {
     return string.charAt(0).toUpperCase() + string.slice(1);
 }
@@ -21,3 +23,13 @@ export function numericEnumValues<E extends Enum<E>>(inputEnum: E): number[] {
     return Object.values(inputEnum).filter((v) => !isNaN(Number(v))).map(v => Number(v));
 }
 
+
+export async function countFileLines(filePath: string): Promise<number> {
+    const fileHandle = await open(filePath)
+    let count = 0;
+
+    for await (const _ of fileHandle.readLines())
+        count++;
+
+    return count;
+}

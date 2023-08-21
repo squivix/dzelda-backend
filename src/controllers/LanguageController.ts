@@ -10,6 +10,8 @@ import {languageCodeValidator} from "@/src/validators/languageValidators.js";
 import {User} from "@/src/models/entities/auth/User.js";
 import {languageSerializer} from "@/src/presentation/response/serializers/entities/LanguageSerializer.js";
 import {learnerLanguageSerializer} from "@/src/presentation/response/serializers/mappings/LearnerLanguageSerializer.js";
+import {APIError} from "@/src/utils/errors/APIError.js";
+import {StatusCodes} from "http-status-codes";
 
 class LanguageController {
     async getLanguages(request: FastifyRequest, reply: FastifyReply) {
@@ -93,8 +95,7 @@ class LanguageController {
         const languageService = new LanguageService(request.em);
         const languageMapping = await languageService.getUserLanguage(pathParams.languageCode, request.user as User);
         if (!languageMapping)
-            // TODO improve 404 messages. Right now {code: 404, status: "Not Found", message: "Language not found",…} which is confusing because language is found, it's just user is not learning it
-            throw new NotFoundAPIError("Language");
+            throw new APIError(StatusCodes.NOT_FOUND, "User is not learning language", "The user is not learning this language.");
         const updatedLanguageMapping = await languageService.updateUserLanguage(languageMapping);
         reply.status(200).send(learnerLanguageSerializer.serialize(updatedLanguageMapping));
     }

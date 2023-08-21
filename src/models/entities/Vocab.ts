@@ -1,5 +1,5 @@
 import {Lesson} from "@/src/models/entities/Lesson.js";
-import {Collection, Entity, Formula, Index, ManyToMany, ManyToOne, OneToMany, Property, types, Unique} from "@mikro-orm/core";
+import {Collection, Entity, Formula, Index, ManyToMany, ManyToOne, OneToMany, OptionalProps, Property, types, Unique} from "@mikro-orm/core";
 import {MapLessonVocab} from "@/src/models/entities/MapLessonVocab.js";
 import {CustomBaseEntity} from "@/src/models/entities/CustomBaseEntity.js";
 import {Language} from "@/src/models/entities/Language.js";
@@ -47,6 +47,8 @@ export class Vocab extends CustomBaseEntity {
         inverseJoinColumn: "learner_id",
     })
     learners: Collection<Profile> = new Collection<Profile>(this);
+
+    [OptionalProps]?: "isPhrase"
 
     @Formula((alias: string) => `(SELECT COUNT(DISTINCT map_learner_vocab.learner_id) FROM map_learner_vocab WHERE "vocab_id" = ${alias}.id AND "level" != ${VocabLevel.IGNORED})`, {
         type: "number"

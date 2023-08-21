@@ -3,31 +3,44 @@ import {Dictionary} from "@/src/models/entities/Dictionary.js";
 import {Seeder} from "@mikro-orm/seeder";
 import fs from "fs-extra";
 import {DictionaryFactory} from "@/src/seeders/factories/DictionaryFactory.js";
-import {syncIdSequence} from "@/src/seeders/utils.js";
+import {batchSeed, syncIdSequence} from "@/src/seeders/utils.js";
+import {User} from "@/src/models/entities/auth/User.js";
+import {UserFactory} from "@/src/seeders/factories/UserFactory.js";
+import {countFileLines} from "@/src/utils/utils.js";
+import * as cliProgress from "cli-progress";
+import {open} from "node:fs/promises";
 
 export class DictionarySeeder extends Seeder {
-    static readonly FILE_NAME = "dictionaries.json";
+    static readonly FILE_NAME = "dictionaries.jsonl";
 
     async run(em: EntityManager, context: MikroORMDictionary): Promise<void> {
-        if (!await fs.exists(`data/${DictionarySeeder.FILE_NAME}`))
-            return;
-        const dictionaries = await fs.readJSON(`data/${DictionarySeeder.FILE_NAME}`)
-        const dictionaryFactory = new DictionaryFactory(em)
+        const dictionariesFilePath = `${context.datasetPath}/${DictionarySeeder.FILE_NAME}`;
 
-        process.stdout.write("seeding dictionaries...");
-        dictionaries.forEach((dictionaryData: EntityData<Dictionary>) => {
-            em.persist(dictionaryFactory.makeEntity({
-                id: dictionaryData.id,
-                language: dictionaryData.language,
-                name: dictionaryData.name,
-                lookupLink: dictionaryData.lookupLink,
-                dictionaryLink: dictionaryData.dictionaryLink,
-                isDefault: dictionaryData.isDefault,
-                learners: dictionaryData.learners
-            }))
-        })
-        await em.flush();
-        await syncIdSequence(em, "dictionary")
-        console.log("done");
+        if (!await fs.exists(dictionariesFilePath)) {
+            console.log(`${dictionariesFilePath} not found`);
+            return;
+        }
+
+        await batchSeed({
+            filePath: dictionariesFilePath,
+            batchSize: context.batchSize,
+            insertBatch: (batch) => this.insertBatch(em, batch),
+            postSeed: async () => await syncIdSequence(em, "dictionary"),
+            resourceName: "dictionary",
+        });
+    }
+
+    private async insertBatch(em: EntityManager, batch: EntityData<Dictionary>[]) {
+        const dictionaryFactory = new DictionaryFactory(em);
+        const entities = batch.map(dictionaryData => dictionaryFactory.makeEntity({
+            id: dictionaryData.id,
+            language: dictionaryData.language,
+            name: dictionaryData.name,
+            lookupLink: dictionaryData.lookupLink,
+            dictionaryLink: dictionaryData.dictionaryLink,
+            isDefault: dictionaryData.isDefault,
+            learners: dictionaryData.learners
+        }));
+        await em.persistAndFlush(entities);
     }
 }

@@ -11,7 +11,6 @@ import {buildQueryString, createComparator, fetchRequest} from "@/tests/integrat
 import {faker} from "@faker-js/faker";
 import {dictionarySerializer} from "@/src/presentation/response/serializers/entities/DictionarySerializer.js";
 import {LanguageFactory} from "@/src/seeders/factories/LanguageFactory.js";
-import {Meaning} from "@/src/models/entities/Meaning.js";
 
 interface LocalTestContext extends TestContext {
     dictionaryRepo: EntityRepository<Dictionary>;

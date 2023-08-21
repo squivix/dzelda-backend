@@ -15,7 +15,7 @@ export class SpaceBasedWordParser extends WordParser {
         this.ignoreCase = ignoreCase;
     }
 
-    parseText(text: string, keepDuplicates = false): string[] {
+    parseText(text: string, keepDuplicates = false):[string, string[]] {
         //TODO investigate why - is being added as a vocab with sample data
         let parsedText = text;
 
@@ -33,12 +33,12 @@ export class SpaceBasedWordParser extends WordParser {
             parsedText = parsedText.toLowerCase();
         const wordArray = parsedText.split(" ").filter(w => w !== "");
         if (keepDuplicates)
-            return wordArray;
+            return [parsedText, wordArray];
         else
-            return Array.from(new Set(wordArray));
+            return [parsedText, Array.from(new Set(wordArray))];
     }
 
-    combine(words: string[]): string {
+    combineTokens(words: string[]): string {
         return words.join(" ");
     }
 }

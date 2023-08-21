@@ -10,6 +10,8 @@ import {QueryOrderMap} from "@mikro-orm/core/enums.js";
 import {MapLearnerMeaning} from "@/src/models/entities/MapLearnerMeaning.js";
 import {EntityField} from "@mikro-orm/core/drivers/IDatabaseDriver.js";
 import {Profile} from "@/src/models/entities/Profile.js";
+import {MapLessonVocab} from "@/src/models/entities/MapLessonVocab.js";
+import {escapeRegExp} from "@/src/utils/utils.js";
 
 export class VocabService {
     em: EntityManager;
@@ -56,6 +58,10 @@ export class VocabService {
             lessonsCount: 0
         });
         await this.em.flush();
+
+        const lessonsWithVocab = await this.em.find(Lesson, {text: new RegExp(`(\\s|^)${escapeRegExp(newVocab.text)}(\\s|$)`)});
+        if (lessonsWithVocab.length > 0)
+            await this.em.insertMany(MapLessonVocab, lessonsWithVocab.map(lesson => ({lesson, vocab: newVocab})));
         return newVocab;
     }
 

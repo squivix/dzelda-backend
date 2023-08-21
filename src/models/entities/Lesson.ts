@@ -64,4 +64,5 @@ export class Lesson extends CustomBaseEntity {
         type: "number"
     })
     learnersCount!: number;
+    //TODO add field for keeping track of which parser last parsed lesson (to reparse on demand if parser was updated)
 }

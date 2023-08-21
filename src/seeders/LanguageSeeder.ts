@@ -1,35 +1,39 @@
 import {Dictionary, EntityData, EntityManager} from "@mikro-orm/core";
 import {Seeder} from "@mikro-orm/seeder";
 import fs from "fs-extra";
-import {LanguageFactory} from "@/src/seeders/factories/LanguageFactory.js";
 import {Language} from "@/src/models/entities/Language.js";
-import {syncIdSequence} from "@/src/seeders/utils.js";
+import {batchSeed, syncIdSequence} from "@/src/seeders/utils.js";
 
 export class LanguageSeeder extends Seeder {
-    static readonly FILE_NAME = "languages.json";
+    static readonly FILE_NAME = "languages.jsonl";
 
     async run(em: EntityManager, context: Dictionary): Promise<void> {
-        if (!await fs.exists(`data/${LanguageSeeder.FILE_NAME}`))
-            return;
-        const languages = await fs.readJSON(`data/${LanguageSeeder.FILE_NAME}`)
-        const languageFactory = new LanguageFactory(em)
+        const languagesFilePath = `${context.datasetPath}/${LanguageSeeder.FILE_NAME}`;
 
-        process.stdout.write("seeding languages...");
-        languages.forEach((languageData: EntityData<Language>) => {
-            em.persist(languageFactory.makeEntity({
-                id: languageData.id,
-                name: languageData.name,
-                greeting: languageData.greeting,
-                code: languageData.code,
-                flagCircular: languageData.flagCircular,
-                flag: languageData.flag,
-                flagEmoji: languageData.flagEmoji,
-                isSupported: languageData.isSupported,
-                learners: languageData.learners
-            }))
-        })
-        await em.flush();
-        await syncIdSequence(em, "language")
-        console.log("done");
+        if (!await fs.exists(languagesFilePath)) {
+            console.log(`${languagesFilePath} not found`);
+            return;
+        }
+
+        await batchSeed({
+            filePath: languagesFilePath,
+            batchSize: context.batchSize,
+            insertBatch: (batch) => this.insertBatch(em, batch),
+            postSeed: async () => await syncIdSequence(em, "language"),
+            resourceName: "language",
+        });
+    }
+
+    private async insertBatch(em: EntityManager, batch: EntityData<Language>[]) {
+        await em.insertMany(Language, batch.map(languageData => ({
+            id: languageData.id,
+            name: languageData.name,
+            greeting: languageData.greeting,
+            code: languageData.code,
+            flagCircular: languageData.flagCircular,
+            flag: languageData.flag,
+            flagEmoji: languageData.flagEmoji,
+            isSupported: languageData.isSupported
+        })))
     }
 }

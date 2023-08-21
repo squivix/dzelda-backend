@@ -19,6 +19,7 @@ export const errorHandler = (error: Error, request: FastifyRequest, reply: Fasti
         apiError = error;
     else if (error instanceof ZodError) {
         const fields: FieldsObject = {};
+        //TODO find specific error field for nested objects (don't just use root field invalid)
         for (const issue of error.issues)
             fields[issue.path[0] ?? "root"] = {message: issue.message};
 

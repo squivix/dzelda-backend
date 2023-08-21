@@ -59,14 +59,14 @@ class VocabController {
             throw new ValidationAPIError({language: {message: "not supported"}});
 
         const parser = getParser(language.code);
-        const words = parser.parseText(body.text, true);
+        const [_, words] = parser.parseText(body.text, true);
 
         if (words.length == 0)
             throw new ValidationAPIError({text: {message: "vocab is invalid for this language"}});
         if (words.length > 1 && !body.isPhrase)
             throw new ValidationAPIError({text: {message: "more than 1 word, but isPhrase is false"}});
 
-        const vocabText = parser.combine(words);
+        const vocabText = parser.combineTokens(words);
         const vocabService = new VocabService(request.em);
         const existingVocab = await vocabService.getVocabByText({language: language, text: vocabText,});
         if (existingVocab) {
