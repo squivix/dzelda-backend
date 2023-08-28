@@ -1,8 +1,8 @@
 import nodemailer from "nodemailer";
 
 export const emailTransporter = nodemailer.createTransport({
-    host: "localhost",
-    port: 1025,
+    host: process.env.EMAIL_SERVER_HOST,
+    port: process.env.EMAIL_SERVER_PORT,
     // secure: true,
     // security: {
     //     user: "REPLACE-WITH-YOUR-ALIAS@YOURDOMAIN.COM",
