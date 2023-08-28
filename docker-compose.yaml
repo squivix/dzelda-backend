@@ -26,5 +26,10 @@ services:
       - "postgres-data:/var/lib/postgresql/data"
     ports:
       - "54320:5432"
+  email-server:
+    image: mailhog/mailhog
+    ports:
+      - "8025:8025"  # Web interface for viewing emails
+      - "1025:1025"  # SMTP server for receiving emails
 volumes:
   postgres-data: null

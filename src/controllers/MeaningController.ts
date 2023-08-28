@@ -13,7 +13,6 @@ import {NotFoundAPIError} from "@/src/utils/errors/NotFoundAPIError.js";
 import {ForbiddenAPIError} from "@/src/utils/errors/ForbiddenAPIError.js";
 import {numericStringValidator} from "@/src/validators/utilValidators.js";
 import {meaningSerializer} from "@/src/presentation/response/serializers/entities/MeaningSerializer.js";
-import {learnerVocabSerializer} from "@/src/presentation/response/serializers/mappings/LearnerVocabSerializer.js";
 
 class MeaningController {
     async createMeaning(request: FastifyRequest, reply: FastifyReply) {
@@ -128,7 +127,7 @@ class MeaningController {
             throw new NotFoundAPIError("Meaning");
 
         await meaningService.removeMeaningFromUser(meaningMapping);
-        reply.status(204);
+        reply.status(204).send();
     }
 }
 

@@ -1,6 +1,7 @@
 import {beforeEach, describe, expect, test, TestContext} from "vitest";
 import {faker} from "@faker-js/faker";
-import {orm, passwordHasher} from "@/src/server.js";
+import {orm} from "@/src/server.js";
+import {passwordHasher} from "@/src/utils/security/PasswordHasher.js";
 import {UserFactory} from "@/src/seeders/factories/UserFactory.js";
 import {Session} from "@/src/models/entities/auth/Session.js";
 import {fetchRequest} from "@/tests/integration/utils.js";
@@ -45,25 +46,6 @@ describe("POST sessions/", () => {
         if (session != null)
             expect(response.json()).toEqual({authToken: session.token});
     });
-    test<LocalTestContext>("If session already exists update token", async (context) => {
-        const password = faker.random.alphaNumeric(20);
-        const user = await context.userFactory.createOne({password: await passwordHasher.hash(password)});
-        const oldSession = await context.sessionFactory.createOne({user});
-        const oldToken = oldSession.token;
-
-        const response = await makeRequest({
-            username: user.username,
-            password: password,
-        });
-
-        expect(response.statusCode).to.equal(201);
-        const session = await context.sessionRepo.findOne({user: user});
-        expect(session).not.toBeNull();
-        if (session != null) {
-            expect(response.json()).toEqual({authToken: session.token});
-            expect(session.token).not.toEqual(oldToken);
-        }
-    });
     describe("If fields is incorrect return 401", async () => {
         test<LocalTestContext>("If username is incorrect return 401", async (context) => {
             const password = faker.random.alphaNumeric(20);
@@ -88,7 +70,6 @@ describe("POST sessions/", () => {
             expect(response.statusCode).to.equal(401);
         });
     });
-
 });
 
 
@@ -119,4 +100,4 @@ describe("DELETE sessions/", () => {
         const response = await makeRequest();
         expect(response.statusCode).to.equal(401);
     });
-})
+});

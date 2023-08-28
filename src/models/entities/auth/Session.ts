@@ -1,4 +1,4 @@
-import {Entity, OneToOne, Property, types, Unique} from "@mikro-orm/core";
+import {Entity, Formula, ManyToOne, OptionalProps, Property, types} from "@mikro-orm/core";
 import {CustomBaseEntity} from "@/src/models/entities/CustomBaseEntity.js";
 import {User} from "@/src/models/entities/auth/User.js";
 
@@ -13,10 +13,20 @@ export class Session extends CustomBaseEntity {
     @Property({type: types.string, length: 255})
     token!: string;
 
-    @OneToOne({entity: () => User, inversedBy: (user: User) => user.session, owner: true})
+    @ManyToOne({entity: () => User})
     user!: User;
 
     @Property({type: types.datetime, defaultRaw: "now()"})
     createdAt!: Date;
 
+    @Property({type: types.datetime, defaultRaw: "now() + interval '1 month'"})
+    expiresOn!: Date;
+
+    @Formula((alias: string) => `${alias}.expires_on < now()`, {
+        type: types.boolean,
+        lazy: false
+    })
+    isExpired!: boolean;
+
+    [OptionalProps]?: "expiresOn" | "isExpired";
 }

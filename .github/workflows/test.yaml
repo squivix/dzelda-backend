@@ -9,6 +9,8 @@ jobs:
         NODE_ENV: test
         PORT: 3000
         MIKRO_ORM_CLIENT_URL: "postgresql://devin:123456789@test-db:5432/dzelda-db-test"
+        EMAIL_SERVER_HOST: "email-server"
+        EMAIL_SERVER_PORT: 1025
     services:
       test-db:
         image: "postgres:15.3"
@@ -18,6 +20,8 @@ jobs:
           POSTGRES_DB: "dzelda-db-test"
           PGDATA: "/var/lib/postgresql/data"
           POSTGRES_INITDB_ARGS: "--lc-collate=C"
+      email-server:
+        image: mailhog/mailhog
     steps:
       - name: "Checkout code"
         uses: actions/checkout@v3

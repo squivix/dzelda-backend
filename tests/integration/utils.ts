@@ -38,6 +38,10 @@ export function buildQueryString(data: object) {
         return queryString;
 }
 
+export function parseUrlQueryString(url: string) {
+    return Object.fromEntries(new URL(url).searchParams.entries());
+}
+
 export function readSampleFile(filePath: string, fileName?: string, mimeType?: string): { value: ""; } | {
     value: Buffer;
     fileName?: string,

@@ -1,4 +1,4 @@
-import {beforeEach, describe, expect, test, TestContext} from "vitest";
+import {beforeEach, describe, expect, test, TestContext, vi} from "vitest";
 import {faker} from "@faker-js/faker";
 import {User} from "@/src/models/entities/auth/User.js";
 import {UserFactory} from "@/src/seeders/factories/UserFactory.js";
@@ -6,12 +6,19 @@ import {Profile} from "@/src/models/entities/Profile.js";
 import {LanguageFactory} from "@/src/seeders/factories/LanguageFactory.js";
 import {Language} from "@/src/models/entities/Language.js";
 import {orm} from "@/src/server.js";
-import {fetchRequest} from "@/tests/integration/utils.js";
+import {fetchRequest, parseUrlQueryString} from "@/tests/integration/utils.js";
 import {EntityRepository} from "@mikro-orm/core";
 import {InjectOptions} from "light-my-request";
 import {userSerializer} from "@/src/presentation/response/serializers/entities/UserSerializer.js";
 import {SessionFactory} from "@/src/seeders/factories/SessionFactory.js";
 import {BANNED_LITERAL_USERNAMES} from "@/src/validators/userValidator.js";
+import {PasswordResetToken} from "@/src/models/entities/auth/PasswordResetToken.js";
+import {emailTransporter} from "@/src/nodemailer.config.js";
+import crypto from "crypto";
+import {DOMAIN_NAME, PASSWORD_RESET_TOKEN_LENGTH} from "@/src/constants.js";
+import {expiringTokenHasher} from "@/src/utils/security/ExpiringTokenHasher.js";
+import {passwordHasher} from "@/src/utils/security/PasswordHasher.js";
+import {Session} from "@/src/models/entities/auth/Session.js";
 
 interface LocalTestContext extends TestContext {
     languageRepo: EntityRepository<Language>;
@@ -207,6 +214,15 @@ describe("GET users/:username/", function () {
         const response = await makeRequest("me");
         expect(response.statusCode).to.equal(401);
     });
+    test<LocalTestContext>("If username is me login session expired, delete session and return 401", async (context) => {
+        const user = await context.userFactory.createOne({profile: {isPublic: true}});
+        const session = await context.sessionFactory.createOne({user: user, expiresOn: "2020-08-28T16:29:58.311Z"});
+
+        const response = await makeRequest("me", session.token);
+
+        expect(response.statusCode).to.equal(401);
+        expect(await context.em.findOne(Session, {id: session.id}, {refresh: true})).toBeNull();
+    });
     test<LocalTestContext>("If username is me and authenticated return user with email", async (context) => {
         const user = await context.userFactory.createOne();
         const session = await context.sessionFactory.createOne({user: user});
@@ -263,3 +279,231 @@ describe("GET users/:username/", function () {
         expect(response.statusCode).to.equal(404);
     });
 });
+
+/**{@link UserController#createPasswordResetToken}*/
+describe("POST password-reset-tokens/", function () {
+    const makeRequest = async (body: object) => {
+        return await fetchRequest({
+            method: "POST",
+            url: `password-reset-tokens/`,
+            payload: body
+        });
+    };
+
+    const resetUrlRegex = new RegExp(`https://${DOMAIN_NAME}/reset-password\\?token=.*`);
+    test<LocalTestContext>("If username and email exist and match, create a token, store its hash in the db and send an email with the token, return 204", async (context) => {
+        const user = await context.userFactory.createOne();
+
+        const sendMailSpy = vi.spyOn(emailTransporter, "sendMail");
+        const response = await makeRequest({
+            username: user.username,
+            email: user.email
+        });
+
+        const newlyCreatedToken = await context.em.findOne(PasswordResetToken, {user});
+        expect(response.statusCode).to.equal(204);
+
+        expect(newlyCreatedToken).not.toBeNull();
+        expect(sendMailSpy).toHaveBeenCalledOnce();
+        expect(sendMailSpy).toHaveBeenCalledWith(expect.objectContaining({
+            text: expect.stringMatching(resetUrlRegex),
+            to: user.email
+        }));
+
+        const emailText = sendMailSpy.mock.calls[0][0].text as string;
+        const resetUrl = emailText.substring(emailText.search(resetUrlRegex));
+        expect(sendMailSpy.mock.calls[0][0].html).toMatch(resetUrl);
+        const sentToken = parseUrlQueryString(resetUrl)["token"];
+        expect(sentToken).toBeDefined();
+        expect(await expiringTokenHasher.hash(sentToken)).toEqual(newlyCreatedToken!.token);
+    });
+    test<LocalTestContext>("If token already exists delete it, create a new  token, store its hash in the db and send an email with the token, return 204", async (context) => {
+        const user = await context.userFactory.createOne();
+        const oldToken = context.em.create(PasswordResetToken, {
+            user: user,
+            token: await expiringTokenHasher.hash(crypto.randomBytes(PASSWORD_RESET_TOKEN_LENGTH))
+        });
+        await context.em.flush();
+
+        const sendMailSpy = vi.spyOn(emailTransporter, "sendMail");
+        const response = await makeRequest({
+            username: user.username,
+            email: user.email
+        });
+
+        const userTokens = await context.em.find(PasswordResetToken, {user});
+        expect(response.statusCode).to.equal(204);
+        expect(userTokens).toHaveLength(1);
+        const newlyCreatedToken = userTokens[0];
+        expect(await context.em.findOne(PasswordResetToken, {token: oldToken.token})).toBeNull();
+        expect(sendMailSpy).toHaveBeenCalledOnce();
+        expect(sendMailSpy).toHaveBeenCalledWith(expect.objectContaining({
+            text: expect.stringMatching(resetUrlRegex),
+            to: user.email
+        }));
+
+        const emailText = sendMailSpy.mock.calls[0][0].text as string;
+        const resetUrl = emailText.substring(emailText.search(resetUrlRegex));
+        expect(sendMailSpy.mock.calls[0][0].html).toMatch(resetUrl);
+        const sentToken = parseUrlQueryString(resetUrl)["token"];
+        expect(sentToken).toBeDefined();
+        expect(await expiringTokenHasher.hash(sentToken)).toEqual(newlyCreatedToken!.token);
+    });
+    test<LocalTestContext>("If username and email exist do not exist, do not send an email, return 204", async (context) => {
+        const fakeUser = context.userFactory.makeOne();
+
+        const sendMailSpy = vi.spyOn(emailTransporter, "sendMail");
+        const response = await makeRequest({
+            username: fakeUser.username,
+            email: fakeUser.email
+        });
+
+        expect(response.statusCode).to.equal(204);
+        expect(sendMailSpy).not.toHaveBeenCalled();
+    });
+    test<LocalTestContext>("If username and email, do not match, do not create a token or send an email, return 204", async (context) => {
+        const user = await context.userFactory.createOne();
+        const otherUser = await context.userFactory.createOne();
+
+        const sendMailSpy = vi.spyOn(emailTransporter, "sendMail");
+        const response = await makeRequest({
+            username: user.username,
+            email: otherUser.email
+        });
+
+        expect(response.statusCode).to.equal(204);
+        expect(await context.em.findOne(PasswordResetToken, {user})).toBeNull();
+        expect(await context.em.findOne(PasswordResetToken, {user: otherUser})).toBeNull();
+        expect(sendMailSpy).not.toHaveBeenCalled();
+    });
+});
+
+
+/**{@link UserController#validatePasswordResetToken}*/
+describe("POST password-reset-tokens/validate/", function () {
+    const makeRequest = async (body: object) => {
+        return await fetchRequest({
+            method: "POST",
+            url: `password-reset-tokens/validate/`,
+            payload: body
+        });
+    };
+    test<LocalTestContext>("If token is valid return 204", async (context) => {
+        const user = await context.userFactory.createOne();
+        const token = crypto.randomBytes(PASSWORD_RESET_TOKEN_LENGTH).toString("hex");
+        context.em.create(PasswordResetToken, {
+            user: user,
+            token: await expiringTokenHasher.hash(token)
+        });
+        await context.em.flush();
+
+        const response = await makeRequest({token: token});
+        expect(response.statusCode).to.equal(204);
+
+    });
+    test<LocalTestContext>("If token does not exist return 401", async (context) => {
+        const response = await makeRequest({token: crypto.randomBytes(PASSWORD_RESET_TOKEN_LENGTH).toString("hex")});
+
+        expect(response.statusCode).to.equal(401);
+    });
+    test<LocalTestContext>("If token is expired, delete it and return 401", async (context) => {
+        const user = await context.userFactory.createOne();
+        const token = crypto.randomBytes(PASSWORD_RESET_TOKEN_LENGTH).toString("hex");
+        const resetToken = context.em.create(PasswordResetToken, {
+            user: user,
+            token: await expiringTokenHasher.hash(token),
+            expiresOn: new Date("2020-08-27T07:47:21.575Z")
+        });
+        await context.em.flush();
+
+        const response = await makeRequest({token: token});
+
+        expect(response.statusCode).to.equal(401);
+        expect(await context.em.findOne(PasswordResetToken, {token: resetToken.token}, {refresh: true})).toBeNull();
+    });
+
+});
+
+/**{@link UserController#resetPassword}*/
+describe("POST users/me/passwords/", function () {
+    const makeRequest = async (body: object) => {
+        return await fetchRequest({
+            method: "POST",
+            url: `users/me/passwords/`,
+            payload: body
+        });
+    };
+    test<LocalTestContext>("If token is valid and not expired, and password is valid change password, send email, and return 204", async (context) => {
+        const user = await context.userFactory.createOne();
+        const token = crypto.randomBytes(PASSWORD_RESET_TOKEN_LENGTH).toString("hex");
+        context.em.create(PasswordResetToken, {
+            user: user,
+            token: await expiringTokenHasher.hash(token)
+        });
+        await context.em.flush();
+        const newPassword = faker.random.alphaNumeric(8);
+        const sendMailSpy = vi.spyOn(emailTransporter, "sendMail");
+
+        const response = await makeRequest({token: token, newPassword: newPassword});
+        await context.em.refresh(user);
+
+        expect(response.statusCode).to.equal(204);
+        expect(sendMailSpy).toHaveBeenCalledOnce();
+        expect(await passwordHasher.validate(newPassword, user.password));
+    });
+    test<LocalTestContext>("If token does not exist, return 401", async (context) => {
+        const token = crypto.randomBytes(PASSWORD_RESET_TOKEN_LENGTH).toString("hex");
+
+        const newPassword = faker.random.alphaNumeric(8);
+        const sendMailSpy = vi.spyOn(emailTransporter, "sendMail");
+
+        const response = await makeRequest({token: await expiringTokenHasher.hash(token), newPassword: newPassword});
+
+        expect(response.statusCode).to.equal(401);
+        expect(sendMailSpy).not.toHaveBeenCalled();
+    });
+
+    test<LocalTestContext>("If token is expired, delete it and return 401", async (context) => {
+        const user = await context.userFactory.createOne();
+        const oldPassword = user.password;
+        const token = crypto.randomBytes(PASSWORD_RESET_TOKEN_LENGTH).toString("hex");
+        const resetToken = context.em.create(PasswordResetToken, {
+            user: user,
+            token: await expiringTokenHasher.hash(token),
+            expiresOn: new Date("2020-08-27T07:47:21.575Z")
+        });
+        await context.em.flush();
+        const newPassword = faker.random.alphaNumeric(8);
+        const sendMailSpy = vi.spyOn(emailTransporter, "sendMail");
+
+        const response = await makeRequest({token: token, newPassword: newPassword});
+        await context.em.refresh(user);
+
+        expect(response.statusCode).to.equal(401);
+        expect(sendMailSpy).not.toHaveBeenCalled();
+        expect(user.password).toEqual(oldPassword);
+        expect(!await passwordHasher.validate(newPassword, user.password));
+        expect(await context.em.findOne(PasswordResetToken, {token: resetToken.token}, {refresh: true})).toBeNull();
+    });
+    test<LocalTestContext>("If password is invalid return 400", async (context) => {
+        const user = await context.userFactory.createOne();
+        const oldPassword = user.password;
+        const token = crypto.randomBytes(PASSWORD_RESET_TOKEN_LENGTH).toString("hex");
+        context.em.create(PasswordResetToken, {
+            user: user,
+            token: await expiringTokenHasher.hash(token)
+        });
+        await context.em.flush();
+        const newPassword = faker.random.alphaNumeric(7);
+        const sendMailSpy = vi.spyOn(emailTransporter, "sendMail");
+
+        const response = await makeRequest({token: token, newPassword: newPassword});
+        await context.em.refresh(user);
+
+        expect(response.statusCode).to.equal(400);
+        expect(sendMailSpy).not.toHaveBeenCalled();
+        expect(user.password).toEqual(oldPassword);
+        expect(!await passwordHasher.validate(newPassword, user.password));
+    });
+});
+

@@ -389,20 +389,22 @@
           "length": 6,
           "default": "now()",
           "mappedType": "datetime"
+        },
+        "expires_on": {
+          "name": "expires_on",
+          "type": "timestamptz(0)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "length": 6,
+          "default": "now() + interval '1 month'",
+          "mappedType": "datetime"
         }
       },
       "name": "session",
       "schema": "public",
       "indexes": [
-        {
-          "columnNames": [
-            "user_id"
-          ],
-          "composite": false,
-          "keyName": "session_user_id_unique",
-          "primary": false,
-          "unique": true
-        },
         {
           "keyName": "session_pkey",
           "columnNames": [
@@ -1114,6 +1116,86 @@
           "nullable": false,
           "mappedType": "integer"
         },
+        "token": {
+          "name": "token",
+          "type": "varchar(255)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "length": 255,
+          "mappedType": "string"
+        },
+        "expires_on": {
+          "name": "expires_on",
+          "type": "timestamptz(0)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "length": 6,
+          "default": "now() + interval '1 hour'",
+          "mappedType": "datetime"
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "int",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "mappedType": "integer"
+        }
+      },
+      "name": "password_reset_token",
+      "schema": "public",
+      "indexes": [
+        {
+          "columnNames": [
+            "user_id"
+          ],
+          "composite": false,
+          "keyName": "password_reset_token_user_id_unique",
+          "primary": false,
+          "unique": true
+        },
+        {
+          "keyName": "password_reset_token_pkey",
+          "columnNames": [
+            "id"
+          ],
+          "composite": false,
+          "primary": true,
+          "unique": true
+        }
+      ],
+      "checks": [],
+      "foreignKeys": {
+        "password_reset_token_user_id_foreign": {
+          "constraintName": "password_reset_token_user_id_foreign",
+          "columnNames": [
+            "user_id"
+          ],
+          "localTableName": "public.password_reset_token",
+          "referencedColumnNames": [
+            "id"
+          ],
+          "referencedTableName": "public.user",
+          "updateRule": "cascade"
+        }
+      }
+    },
+    {
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "int",
+          "unsigned": true,
+          "autoincrement": true,
+          "primary": true,
+          "nullable": false,
+          "mappedType": "integer"
+        },
         "text": {
           "name": "text",
           "type": "varchar(255)",
@@ -1327,6 +1409,7 @@
             "id"
           ],
           "referencedTableName": "public.profile",
+          "deleteRule": "set null",
           "updateRule": "cascade"
         },
         "meaning_language_id_foreign": {

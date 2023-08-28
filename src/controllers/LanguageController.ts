@@ -116,7 +116,7 @@ class LanguageController {
         if (!languageMapping)
             throw new NotFoundAPIError("Language");
         await languageService.removeLanguageFromUser(languageMapping);
-        reply.status(204);
+        reply.status(204).send();
     }
 }
 
