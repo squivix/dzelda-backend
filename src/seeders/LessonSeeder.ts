@@ -16,7 +16,7 @@ export class LessonSeeder extends Seeder {
         const mapLessonVocabsFilePath = `${context.datasetPath}/${LessonSeeder.MAP_LESSON_VOCABS_FILE_NAME}`;
 
         if (!await fs.exists(lessonsFilePath)) {
-            console.log(`${lessonsFilePath} not found`);
+            console.error(`${lessonsFilePath} not found`);
             return;
         }
 

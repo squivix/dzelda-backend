@@ -22,7 +22,7 @@ export class DatabaseSeeder extends Seeder {
             .filter(dirent => dirent.isDirectory())
             .map(dirent => dirent.name);
         if (datasets.length == 0) {
-            console.log("No datasets found.");
+            console.error("No datasets found.");
             return;
         }
         const questions=[];

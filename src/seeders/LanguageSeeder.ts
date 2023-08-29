@@ -11,7 +11,7 @@ export class LanguageSeeder extends Seeder {
         const languagesFilePath = `${context.datasetPath}/${LanguageSeeder.FILE_NAME}`;
 
         if (!await fs.exists(languagesFilePath)) {
-            console.log(`${languagesFilePath} not found`);
+            console.error(`${languagesFilePath} not found`);
             return;
         }
 

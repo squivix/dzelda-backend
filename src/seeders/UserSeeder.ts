@@ -14,7 +14,7 @@ export class UserSeeder extends Seeder {
         const usersFilePath = `${context.datasetPath}/${UserSeeder.FILE_NAME}`;
 
         if (!await fs.exists(usersFilePath)) {
-            console.log(`${usersFilePath} not found`);
+            console.error(`${usersFilePath} not found`);
             return;
         }
 

@@ -14,11 +14,11 @@ export class VocabSeeder extends Seeder {
         const mapLearnerVocabsFilePath = `${context.datasetPath}/${VocabSeeder.MAP_LEARNER_VOCABS_FILE_NAME}`;
 
         if (!await fs.exists(vocabsFilePath)) {
-            console.log(`${vocabsFilePath} not found`);
+            console.error(`${vocabsFilePath} not found`);
             return;
         }
         if (!await fs.exists(mapLearnerVocabsFilePath)) {
-            console.log(`${mapLearnerVocabsFilePath} not found`);
+            console.error(`${mapLearnerVocabsFilePath} not found`);
             return;
         }
 

@@ -12,7 +12,7 @@ export class DictionarySeeder extends Seeder {
         const dictionariesFilePath = `${context.datasetPath}/${DictionarySeeder.FILE_NAME}`;
 
         if (!await fs.exists(dictionariesFilePath)) {
-            console.log(`${dictionariesFilePath} not found`);
+            console.error(`${dictionariesFilePath} not found`);
             return;
         }
 

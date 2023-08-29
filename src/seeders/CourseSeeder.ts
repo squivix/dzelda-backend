@@ -11,7 +11,7 @@ export class CourseSeeder extends Seeder {
         const coursesFilePath = `${context.datasetPath}/${CourseSeeder.FILE_NAME}`;
 
         if (!await fs.exists(coursesFilePath)) {
-            console.log(`${coursesFilePath} not found`);
+            console.error(`${coursesFilePath} not found`);
             return;
         }
 
@@ -25,7 +25,7 @@ export class CourseSeeder extends Seeder {
     }
 
     private async insertBatch(em: EntityManager, batch: EntityData<Course>[]) {
-        await em.insertMany(batch.map(courseData => ({
+        await em.insertMany(Course, batch.map(courseData => ({
             id: courseData.id,
             title: courseData.title,
             isPublic: courseData.isPublic,
