@@ -23,7 +23,3 @@ export const authMiddleware: preParsingAsyncHookHandler = async (request) => {
     }
 };
 
-export const requiresAuth: preHandlerAsyncHookHandler = async (request) => {
-    if (!request.user || request.user instanceof AnonymousUser)
-        throw new UnauthenticatedAPIError(request.user);
-}

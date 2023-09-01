@@ -65,7 +65,7 @@ export class LanguageService {
 
 
     async addLanguageToUser(user: User, language: Language) {
-        const mapping = this.em.create(MapLearnerLanguage, {learner: user.profile, language: language});
+        const mapping = this.em.create(MapLearnerLanguage, {learner: user.profile!, language: language});
         await this.em.flush();
         await this.em.refresh(mapping.language);
         return mapping;

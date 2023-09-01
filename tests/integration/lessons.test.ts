@@ -27,7 +27,6 @@ import * as fileValidatorExports from "@/src/validators/fileValidator.js";
 import * as constantExports from "@/src/constants.js";
 import {TEMP_ROOT_FILE_UPLOAD_DIR} from "@/tests/testConstants.js";
 import {escapeRegExp} from "@/src/utils/utils.js";
-import {VocabLevel} from "@/src/models/enums/VocabLevel.js";
 
 interface LocalTestContext extends TestContext {
     languageFactory: LanguageFactory;
@@ -167,7 +166,7 @@ describe("GET lessons/", () => {
                 })
             });
             await context.lessonFactory.create(3, {course: await context.courseFactory.createOne({language: language})});
-            await context.lessonRepo.annotateVocabsByLevel(expectedLessons, user.profile.id);
+            await context.lessonRepo.annotateVocabsByLevel(expectedLessons, user.profile!.id);
             expectedLessons.sort(defaultSortComparator);
             const recordsCount = expectedLessons.length;
 
@@ -389,8 +388,8 @@ describe("GET lessons/", () => {
                 const course = await context.courseFactory.createOne({language});
                 const expectedLessons = [
                     await context.lessonFactory.createOne({course, learners: []}),
-                    await context.lessonFactory.createOne({course, learners: [user1.profile]}),
-                    await context.lessonFactory.createOne({course, learners: [user1.profile, user2.profile]}),
+                    await context.lessonFactory.createOne({course, learners: [user1.profile!]}),
+                    await context.lessonFactory.createOne({course, learners: [user1.profile!, user2.profile!]}),
                 ];
                 const recordsCount = expectedLessons.length;
 
@@ -619,7 +618,7 @@ describe("GET lessons/", () => {
                 isPublic: true
             })
         });
-        context.lessonRepo.annotateVocabsByLevel(expectedLessons, user.profile.id);
+        context.lessonRepo.annotateVocabsByLevel(expectedLessons, user.profile!.id);
         await context.lessonFactory.create(3, {course: await context.courseFactory.createOne({language: language, isPublic: false})});
         expectedLessons.sort(defaultSortComparator);
         const recordsCount = expectedLessons.length;
@@ -648,7 +647,7 @@ describe("GET lessons/", () => {
                 })
             }),
         ];
-        context.lessonRepo.annotateVocabsByLevel(expectedLessons, user.profile.id);
+        context.lessonRepo.annotateVocabsByLevel(expectedLessons, user.profile!.id);
         await context.lessonFactory.create(3, {course: await context.courseFactory.createOne({language: language, isPublic: false})});
         expectedLessons.sort(defaultSortComparator);
         const recordsCount = expectedLessons.length;
@@ -758,7 +757,7 @@ describe("POST lessons/", () => {
             expect(lessonVocabMappings.length).toEqual(lessonWordsText.length);
         });
     });
-    test<LocalTestContext>("If user not logged in return 401", async (context) => {
+    test<LocalTestContext>("If user is not logged in return 401", async (context) => {
         const course = await context.courseFactory.createOne({language: await context.languageFactory.createOne()});
         const newLesson = context.lessonFactory.makeOne({course: course});
 
@@ -771,6 +770,38 @@ describe("POST lessons/", () => {
         });
 
         expect(response.statusCode).to.equal(401);
+    });
+    test<LocalTestContext>("If user email is not confirmed return 403", async (context) => {
+        const user = await context.userFactory.createOne({isEmailConfirmed: false, profile: null});
+        const session = await context.sessionFactory.createOne({user})
+        const course = await context.courseFactory.createOne({language: await context.languageFactory.createOne()});
+        const newLesson = context.lessonFactory.makeOne({course: course});
+
+        const response = await makeRequest({
+            data: {
+                title: newLesson.title,
+                text: newLesson.text,
+                courseId: course.id,
+            }
+        }, session.token);
+
+        expect(response.statusCode).to.equal(403);
+    });
+    test<LocalTestContext>("If user has no profile return 403", async (context) => {
+        const user = await context.userFactory.createOne({profile: null});
+        const session = await context.sessionFactory.createOne({user})
+        const course = await context.courseFactory.createOne({language: await context.languageFactory.createOne()});
+        const newLesson = context.lessonFactory.makeOne({course: course});
+
+        const response = await makeRequest({
+            data: {
+                title: newLesson.title,
+                text: newLesson.text,
+                courseId: course.id,
+            }
+        }, session.token);
+
+        expect(response.statusCode).to.equal(403);
     });
     describe("If required fields are missing return 400", async () => {
         test<LocalTestContext>("If title is missing return 400", async (context) => {
@@ -1274,13 +1305,13 @@ describe("PUT lessons/:lessonId/", () => {
             });
         })
     });
-    test<LocalTestContext>("If user not logged in return 401", async (context) => {
+    test<LocalTestContext>("If user is not logged in return 401", async (context) => {
         const author = await context.userFactory.createOne();
         const language = await context.languageFactory.createOne();
         const course = await context.courseFactory.createOne({addedBy: author.profile, language: language, lessons: []});
         const newCourse = await context.courseFactory.createOne({addedBy: author.profile, language: language});
         const lesson = await context.lessonFactory.createOne({course: course});
-        const updatedLesson = await context.lessonFactory.makeOne({course: course});
+        const updatedLesson = context.lessonFactory.makeOne({course: course});
 
         const response = await makeRequest(lesson.id, {
             data: {
@@ -1291,6 +1322,46 @@ describe("PUT lessons/:lessonId/", () => {
         });
 
         expect(response.statusCode).to.equal(401);
+    });
+    test<LocalTestContext>("If user email is not confirmed return 403", async (context) => {
+        const user = await context.userFactory.createOne({isEmailConfirmed: false, profile: null});
+        const session = await context.sessionFactory.createOne({user})
+        const author = await context.userFactory.createOne();
+        const language = await context.languageFactory.createOne();
+        const course = await context.courseFactory.createOne({addedBy: author.profile, language: language, lessons: []});
+        const newCourse = await context.courseFactory.createOne({addedBy: author.profile, language: language});
+        const lesson = await context.lessonFactory.createOne({course: course});
+        const updatedLesson = context.lessonFactory.makeOne({course: course});
+
+        const response = await makeRequest(lesson.id, {
+            data: {
+                courseId: newCourse.id,
+                title: updatedLesson.title,
+                text: updatedLesson.text,
+            }
+        }, session.token);
+
+        expect(response.statusCode).to.equal(403);
+    });
+    test<LocalTestContext>("If user has no profile return 403", async (context) => {
+        const user = await context.userFactory.createOne({profile: null});
+        const session = await context.sessionFactory.createOne({user})
+        const author = await context.userFactory.createOne();
+        const language = await context.languageFactory.createOne();
+        const course = await context.courseFactory.createOne({addedBy: author.profile, language: language, lessons: []});
+        const newCourse = await context.courseFactory.createOne({addedBy: author.profile, language: language});
+        const lesson = await context.lessonFactory.createOne({course: course});
+        const updatedLesson = context.lessonFactory.makeOne({course: course});
+
+        const response = await makeRequest(lesson.id, {
+            data: {
+                courseId: newCourse.id,
+                title: updatedLesson.title,
+                text: updatedLesson.text,
+            }
+        }, session.token);
+
+        expect(response.statusCode).to.equal(403);
     });
     test<LocalTestContext>("If lesson does not exist return 404", async (context) => {
         const author = await context.userFactory.createOne();
@@ -1690,9 +1761,9 @@ describe("GET users/:username/lessons/", () => {
             const session = await context.sessionFactory.createOne({user: user});
             const language = await context.languageFactory.createOne();
             const course = await context.courseFactory.createOne({language: language, isPublic: true});
-            const expectedLessons = await context.lessonFactory.create(3, {course, learners: [user.profile]});
+            const expectedLessons = await context.lessonFactory.create(3, {course, learners: [user.profile!]});
             await context.lessonFactory.create(3, {course});
-            context.lessonRepo.annotateVocabsByLevel(expectedLessons, user.profile.id);
+            context.lessonRepo.annotateVocabsByLevel(expectedLessons, user.profile!.id);
             expectedLessons.sort(defaultSortComparator);
             const recordsCount = expectedLessons.length;
 
@@ -1711,9 +1782,9 @@ describe("GET users/:username/lessons/", () => {
             const session = await context.sessionFactory.createOne({user: user});
             const language = await context.languageFactory.createOne();
             const course = await context.courseFactory.createOne({language: language, isPublic: true});
-            const expectedLessons = await context.lessonFactory.create(3, {course, learners: [user.profile]});
+            const expectedLessons = await context.lessonFactory.create(3, {course, learners: [user.profile!]});
             await context.lessonFactory.create(3, {course});
-            context.lessonRepo.annotateVocabsByLevel(expectedLessons, user.profile.id);
+            context.lessonRepo.annotateVocabsByLevel(expectedLessons, user.profile!.id);
             expectedLessons.sort(defaultSortComparator);
             const recordsCount = expectedLessons.length;
 
@@ -1736,8 +1807,8 @@ describe("GET users/:username/lessons/", () => {
             const language2 = await context.languageFactory.createOne();
             const course1 = await context.courseFactory.createOne({language: language1, isPublic: true});
             const course2 = await context.courseFactory.createOne({language: language2, isPublic: true});
-            const expectedLessons = await context.lessonFactory.create(3, {course: course1, learners: [user.profile]});
-            await context.lessonFactory.create(3, {course: course2, learners: [user.profile]});
+            const expectedLessons = await context.lessonFactory.create(3, {course: course1, learners: [user.profile!]});
+            await context.lessonFactory.create(3, {course: course2, learners: [user.profile!]});
             await context.lessonFactory.create(3, {course: course1});
             expectedLessons.sort(defaultSortComparator);
             await context.lessonRepo.annotateVocabsByLevel(expectedLessons, user.id);
@@ -1761,7 +1832,7 @@ describe("GET users/:username/lessons/", () => {
                     language: await context.languageFactory.createOne(),
                     isPublic: true
                 }),
-                learners: [user.profile]
+                learners: [user.profile!]
             });
             const response = await makeRequest("me", {languageCode: faker.random.alpha({count: 4})}, session.token);
 
@@ -1790,9 +1861,9 @@ describe("GET users/:username/lessons/", () => {
             const course1 = await context.courseFactory.createOne({language, addedBy: user1.profile, isPublic: true});
             const course2 = await context.courseFactory.createOne({language, addedBy: user2.profile, isPublic: true});
             const privateCourse1 = await context.courseFactory.createOne({language, addedBy: user1.profile, isPublic: false});
-            const expectedLessons = await context.lessonFactory.create(3, {course: course1, learners: [user.profile]});
-            await context.lessonFactory.create(3, {course: course2, learners: [user.profile]});
-            await context.lessonFactory.create(3, {course: privateCourse1, learners: [user.profile]});
+            const expectedLessons = await context.lessonFactory.create(3, {course: course1, learners: [user.profile!]});
+            await context.lessonFactory.create(3, {course: course2, learners: [user.profile!]});
+            await context.lessonFactory.create(3, {course: privateCourse1, learners: [user.profile!]});
             await context.lessonFactory.create(3, {course: course1});
             expectedLessons.sort(defaultSortComparator);
             await context.lessonRepo.annotateVocabsByLevel(expectedLessons, user.id);
@@ -1815,8 +1886,8 @@ describe("GET users/:username/lessons/", () => {
             const language = await context.languageFactory.createOne();
             const course1 = await context.courseFactory.createOne({language, addedBy: user.profile, isPublic: false});
             const course2 = await context.courseFactory.createOne({language, addedBy: otherUser.profile, isPublic: true});
-            const expectedLessons = await context.lessonFactory.create(3, {course: course1, learners: [user.profile]});
-            await context.lessonFactory.create(3, {course: course2, learners: [user.profile]});
+            const expectedLessons = await context.lessonFactory.create(3, {course: course1, learners: [user.profile!]});
+            await context.lessonFactory.create(3, {course: course2, learners: [user.profile!]});
             await context.lessonFactory.create(3, {course: course1});
             expectedLessons.sort(defaultSortComparator);
             await context.lessonRepo.annotateVocabsByLevel(expectedLessons, user.id);
@@ -1840,7 +1911,7 @@ describe("GET users/:username/lessons/", () => {
                     language: await context.languageFactory.createOne(),
                     isPublic: true
                 }),
-                learners: [user.profile]
+                learners: [user.profile!]
             });
 
             const response = await makeRequest("me", {addedBy: faker.random.alpha({count: 20})}, session.token);
@@ -1869,18 +1940,18 @@ describe("GET users/:username/lessons/", () => {
             const course = await context.courseFactory.createOne({language: language, isPublic: true});
             const expectedLessons = [
                 await context.lessonFactory.createOne({
-                    course, learners: [user.profile], title: `${randomCase(searchQuery)}-${faker.random.alpha(10)}`
+                    course, learners: [user.profile!], title: `${randomCase(searchQuery)}-${faker.random.alpha(10)}`
                 }),
                 await context.lessonFactory.createOne({
-                    course, learners: [user.profile], title: `${randomCase(searchQuery)}-${faker.random.alpha(10)}`
+                    course, learners: [user.profile!], title: `${randomCase(searchQuery)}-${faker.random.alpha(10)}`
                 }),
                 await context.lessonFactory.createOne({
-                    course, learners: [user.profile], title: `${randomCase(searchQuery)}-${faker.random.alpha(10)}`
+                    course, learners: [user.profile!], title: `${randomCase(searchQuery)}-${faker.random.alpha(10)}`
                 })
             ];
             expectedLessons.sort(defaultSortComparator);
             await context.lessonRepo.annotateVocabsByLevel(expectedLessons, user.id);
-            await context.lessonFactory.create(3, {course, learners: [user.profile]});
+            await context.lessonFactory.create(3, {course, learners: [user.profile!]});
             await context.lessonFactory.create(3, {course});
             const recordsCount = expectedLessons.length;
 
@@ -1906,7 +1977,7 @@ describe("GET users/:username/lessons/", () => {
             const session = await context.sessionFactory.createOne({user: user});
             const language = await context.languageFactory.createOne();
             const course = await context.courseFactory.createOne({language: language, isPublic: true});
-            await context.lessonFactory.create(3, {course, learners: [user.profile]});
+            await context.lessonFactory.create(3, {course, learners: [user.profile!]});
             await context.lessonFactory.create(3, {course});
 
 
@@ -1928,8 +1999,8 @@ describe("GET users/:username/lessons/", () => {
             const language = await context.languageFactory.createOne();
             const course = await context.courseFactory.createOne({language, isPublic: true});
             const level = randomEnum(LanguageLevel);
-            const expectedLessons = await context.lessonFactory.create(3, {course, learners: [user.profile], level});
-            await context.lessonFactory.create(3, {course, learners: [user.profile], level: randomEnum(LanguageLevel, [level])});
+            const expectedLessons = await context.lessonFactory.create(3, {course, learners: [user.profile!], level});
+            await context.lessonFactory.create(3, {course, learners: [user.profile!], level: randomEnum(LanguageLevel, [level])});
             await context.lessonFactory.create(3, {course, level});
             expectedLessons.sort(defaultSortComparator);
             await context.lessonRepo.annotateVocabsByLevel(expectedLessons, user.id);
@@ -1954,9 +2025,9 @@ describe("GET users/:username/lessons/", () => {
             const expectedLessons = (await Promise.all(levels.map(level => context.lessonFactory.create(3, {
                 course,
                 level,
-                learners: [user.profile],
+                learners: [user.profile!],
             })))).flat();
-            await context.lessonFactory.create(3, {course, learners: [user.profile], level: randomEnum(LanguageLevel, levels)});
+            await context.lessonFactory.create(3, {course, learners: [user.profile!], level: randomEnum(LanguageLevel, levels)});
             await Promise.all(levels.map(level => context.lessonFactory.create(3, {course, level})));
             expectedLessons.sort(defaultSortComparator);
             await context.lessonRepo.annotateVocabsByLevel(expectedLessons, user.id);
@@ -1987,8 +2058,8 @@ describe("GET users/:username/lessons/", () => {
             const language = await context.languageFactory.createOne();
             const course = await context.courseFactory.createOne({language, isPublic: true});
             const audio = "https://upload.wikimedia.org/wikipedia/commons/d/de/Lorem_ipsum.ogg";
-            const expectedLessons = await context.lessonFactory.create(3, {course, learners: [user.profile], audio});
-            await context.lessonFactory.create(3, {course, learners: [user.profile], audio: ""});
+            const expectedLessons = await context.lessonFactory.create(3, {course, learners: [user.profile!], audio});
+            await context.lessonFactory.create(3, {course, learners: [user.profile!], audio: ""});
             await context.lessonFactory.create(3, {course, audio});
             expectedLessons.sort(defaultSortComparator);
             await context.lessonRepo.annotateVocabsByLevel(expectedLessons, user.id);
@@ -2010,8 +2081,8 @@ describe("GET users/:username/lessons/", () => {
             const language = await context.languageFactory.createOne();
             const course = await context.courseFactory.createOne({language, isPublic: true});
             const audio = "https://upload.wikimedia.org/wikipedia/commons/d/de/Lorem_ipsum.ogg";
-            const expectedLessons = await context.lessonFactory.create(3, {course, learners: [user.profile], audio: ""});
-            await context.lessonFactory.create(3, {course, learners: [user.profile], audio});
+            const expectedLessons = await context.lessonFactory.create(3, {course, learners: [user.profile!], audio: ""});
+            await context.lessonFactory.create(3, {course, learners: [user.profile!], audio});
             await context.lessonFactory.create(3, {course, audio});
             expectedLessons.sort(defaultSortComparator);
             await context.lessonRepo.annotateVocabsByLevel(expectedLessons, user.id);
@@ -2042,8 +2113,8 @@ describe("GET users/:username/lessons/", () => {
                 const language = await context.languageFactory.createOne();
                 const course = await context.courseFactory.createOne({language: language, isPublic: true});
                 const expectedLessons = [
-                    await context.lessonFactory.createOne({course, learners: [user.profile], title: "abc"}),
-                    await context.lessonFactory.createOne({course, learners: [user.profile], title: "def"})
+                    await context.lessonFactory.createOne({course, learners: [user.profile!], title: "abc"}),
+                    await context.lessonFactory.createOne({course, learners: [user.profile!], title: "def"})
                 ];
                 await context.lessonRepo.annotateVocabsByLevel(expectedLessons, user.id);
                 const recordsCount = expectedLessons.length;
@@ -2067,12 +2138,12 @@ describe("GET users/:username/lessons/", () => {
                 const expectedLessons = [
                     await context.lessonFactory.createOne({
                         course,
-                        learners: [user.profile],
+                        learners: [user.profile!],
                         addedOn: new Date("2018-07-22T10:30:45.000Z")
                     }),
                     await context.lessonFactory.createOne({
                         course,
-                        learners: [user.profile],
+                        learners: [user.profile!],
                         addedOn: new Date("2023-03-15T20:29:42.000Z")
                     }),
                 ];
@@ -2098,9 +2169,9 @@ describe("GET users/:username/lessons/", () => {
                 const course = await context.courseFactory.createOne({language: language, isPublic: true});
                 const otherUser = await context.userFactory.createOne();
                 const expectedLessons = [
-                    await context.lessonFactory.createOne({course, learners: [user.profile]}),
-                    await context.lessonFactory.createOne({course, learners: [user.profile, user1.profile]}),
-                    await context.lessonFactory.createOne({course, learners: [user.profile, user1.profile, user2.profile]})
+                    await context.lessonFactory.createOne({course, learners: [user.profile!]}),
+                    await context.lessonFactory.createOne({course, learners: [user.profile!, user1.profile!]}),
+                    await context.lessonFactory.createOne({course, learners: [user.profile!, user1.profile!, user2.profile!]})
                 ];
                 await context.lessonFactory.createOne({course});
                 await context.lessonRepo.annotateVocabsByLevel(expectedLessons, user.id);
@@ -2131,8 +2202,8 @@ describe("GET users/:username/lessons/", () => {
                 const language = await context.languageFactory.createOne();
                 const course = await context.courseFactory.createOne({language: language, isPublic: true});
                 const expectedLessons = [
-                    await context.lessonFactory.createOne({course, learners: [user.profile], title: "abc"}),
-                    await context.lessonFactory.createOne({course, learners: [user.profile], title: "def"})
+                    await context.lessonFactory.createOne({course, learners: [user.profile!], title: "abc"}),
+                    await context.lessonFactory.createOne({course, learners: [user.profile!], title: "def"})
                 ];
                 await context.lessonRepo.annotateVocabsByLevel(expectedLessons, user.id);
                 const recordsCount = expectedLessons.length;
@@ -2153,8 +2224,8 @@ describe("GET users/:username/lessons/", () => {
                 const language = await context.languageFactory.createOne();
                 const course = await context.courseFactory.createOne({language: language, isPublic: true});
                 const expectedLessons = [
-                    await context.lessonFactory.createOne({course, learners: [user.profile], title: "def"}),
-                    await context.lessonFactory.createOne({course, learners: [user.profile], title: "abc"}),
+                    await context.lessonFactory.createOne({course, learners: [user.profile!], title: "def"}),
+                    await context.lessonFactory.createOne({course, learners: [user.profile!], title: "abc"}),
                 ];
                 await context.lessonRepo.annotateVocabsByLevel(expectedLessons, user.id);
                 const recordsCount = expectedLessons.length;
@@ -2185,7 +2256,7 @@ describe("GET users/:username/lessons/", () => {
                 const session = await context.sessionFactory.createOne({user: user});
                 const language = await context.languageFactory.createOne();
                 const course = await context.courseFactory.createOne({language: language, isPublic: true});
-                const allLessons = await context.lessonFactory.create(10, {course, learners: [user.profile]});
+                const allLessons = await context.lessonFactory.create(10, {course, learners: [user.profile!]});
                 await context.lessonFactory.create(3, {course});
                 allLessons.sort(defaultSortComparator);
                 const recordsCount = allLessons.length;
@@ -2208,7 +2279,7 @@ describe("GET users/:username/lessons/", () => {
                 const session = await context.sessionFactory.createOne({user: user});
                 const language = await context.languageFactory.createOne();
                 const course = await context.courseFactory.createOne({language: language, isPublic: true});
-                const allLessons = await context.lessonFactory.create(10, {course, learners: [user.profile]});
+                const allLessons = await context.lessonFactory.create(10, {course, learners: [user.profile!]});
                 await context.lessonFactory.create(3, {course});
                 allLessons.sort(defaultSortComparator);
                 const recordsCount = allLessons.length;
@@ -2231,7 +2302,7 @@ describe("GET users/:username/lessons/", () => {
                 const session = await context.sessionFactory.createOne({user: user});
                 const language = await context.languageFactory.createOne();
                 const course = await context.courseFactory.createOne({language: language, isPublic: true});
-                const allLessons = await context.lessonFactory.create(10, {course, learners: [user.profile]});
+                const allLessons = await context.lessonFactory.create(10, {course, learners: [user.profile!]});
                 await context.lessonFactory.create(3, {course});
                 allLessons.sort(defaultSortComparator);
                 const recordsCount = allLessons.length;
@@ -2255,7 +2326,7 @@ describe("GET users/:username/lessons/", () => {
                 const session = await context.sessionFactory.createOne({user: user});
                 const language = await context.languageFactory.createOne();
                 const course = await context.courseFactory.createOne({language: language, isPublic: true});
-                const allLessons = await context.lessonFactory.create(10, {course, learners: [user.profile]});
+                const allLessons = await context.lessonFactory.create(10, {course, learners: [user.profile!]});
                 await context.lessonFactory.create(3, {course});
                 allLessons.sort(defaultSortComparator);
                 const recordsCount = allLessons.length;
@@ -2305,7 +2376,7 @@ describe("GET users/:username/lessons/", () => {
                 const session = await context.sessionFactory.createOne({user: user});
                 const language = await context.languageFactory.createOne();
                 const course = await context.courseFactory.createOne({language: language, isPublic: true});
-                const allLessons = await context.lessonFactory.create(50, {course, learners: [user.profile]});
+                const allLessons = await context.lessonFactory.create(50, {course, learners: [user.profile!]});
                 allLessons.sort(defaultSortComparator);
                 const recordsCount = allLessons.length;
                 const page = 1, pageSize = 20;
@@ -2351,6 +2422,18 @@ describe("GET users/:username/lessons/", () => {
     test<LocalTestContext>("If user is not logged in return 401", async () => {
         const response = await makeRequest("me");
         expect(response.statusCode).to.equal(401);
+    });
+    test<LocalTestContext>("If user email is not confirmed return 403", async (context) => {
+        const user = await context.userFactory.createOne({isEmailConfirmed: false, profile: null});
+        const session = await context.sessionFactory.createOne({user})
+        const response = await makeRequest("me", {}, session.token);
+        expect(response.statusCode).to.equal(403);
+    });
+    test<LocalTestContext>("If user has no profile return 403", async (context) => {
+        const user = await context.userFactory.createOne({profile: null});
+        const session = await context.sessionFactory.createOne({user})
+        const response = await makeRequest("me", {}, session.token);
+        expect(response.statusCode).to.equal(403);
     });
     test<LocalTestContext>("If username does not exist return 404", async (context) => {
         const user = await context.userFactory.createOne();
@@ -2504,6 +2587,26 @@ describe("POST users/:username/lessons/", () => {
     test<LocalTestContext>("If user is not logged in return 401", async () => {
         const response = await makeRequest("me", {});
         expect(response.statusCode).to.equal(401);
+    });
+    test<LocalTestContext>("If user email is not confirmed return 403", async (context) => {
+        const user = await context.userFactory.createOne({isEmailConfirmed: false, profile: null});
+        const session = await context.sessionFactory.createOne({user})
+        const language = await context.languageFactory.createOne();
+        const course = await context.courseFactory.createOne({language, isPublic: true});
+        const lesson = await context.lessonFactory.createOne({course});
+
+        const response = await makeRequest("me", {lessonId: lesson.id}, session.token);
+        expect(response.statusCode).to.equal(403);
+    });
+    test<LocalTestContext>("If user has no profile return 403", async (context) => {
+        const user = await context.userFactory.createOne({profile: null});
+        const session = await context.sessionFactory.createOne({user})
+        const language = await context.languageFactory.createOne();
+        const course = await context.courseFactory.createOne({language, isPublic: true});
+        const lesson = await context.lessonFactory.createOne({course});
+
+        const response = await makeRequest("me", {lessonId: lesson.id}, session.token);
+        expect(response.statusCode).to.equal(403);
     });
     test<LocalTestContext>("If username does not exist return 404", async (context) => {
         const user = await context.userFactory.createOne();

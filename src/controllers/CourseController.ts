@@ -79,8 +79,8 @@ class CourseController {
     }
 
     async getCourse(request: FastifyRequest, reply: FastifyReply) {
-        const validator = z.object({courseId: numericStringValidator});
-        const pathParams = validator.parse(request.params);
+        const pathParamsValidator = z.object({courseId: numericStringValidator});
+        const pathParams = pathParamsValidator.parse(request.params);
 
         const courseService = new CourseService(request.em);
         const course = await courseService.getCourse(pathParams.courseId, request.user);
@@ -133,7 +133,7 @@ class CourseController {
         const pathParams = pathParamsValidator.parse(request.params);
         const userService = new UserService(request.em);
         const user = await userService.getUser(pathParams.username, request.user);
-        if (!user || (!user.profile.isPublic && user !== request.user))
+        if (!user || (!user.profile!.isPublic && user !== request.user))
             throw new NotFoundAPIError("User");
         if (user !== request.user)
             throw new ForbiddenAPIError();

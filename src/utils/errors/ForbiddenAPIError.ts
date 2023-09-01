@@ -2,9 +2,9 @@ import {APIError} from "@/src/utils/errors/APIError.js";
 import {StatusCodes} from "http-status-codes";
 
 export class ForbiddenAPIError extends APIError {
-    constructor() {
+    constructor(message?: string, details?: string) {
         super(StatusCodes.FORBIDDEN,
-            `Your are not allowed to perform this operation`,
-            `You do not have access to this resource`);
+            message ?? `Your are not allowed to perform this operation`,
+            details ?? `You do not have access to this resource`);
     }
 }

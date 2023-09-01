@@ -49,7 +49,7 @@ describe("POST sessions/", () => {
     describe("If fields is incorrect return 401", async () => {
         test<LocalTestContext>("If username is incorrect return 401", async (context) => {
             const password = faker.random.alphaNumeric(20);
-            const user = await context.userFactory.createOne({password: await passwordHasher.hash(password)});
+            await context.userFactory.createOne({password: await passwordHasher.hash(password)});
 
             const response = await makeRequest({
                 username: faker.random.alphaNumeric(20),
@@ -57,7 +57,6 @@ describe("POST sessions/", () => {
             });
             expect(response.statusCode).to.equal(401);
         });
-
         test<LocalTestContext>("If password is incorrect return 401", async (context) => {
             const password = faker.random.alphaNumeric(20);
             const user = await context.userFactory.createOne({password: await passwordHasher.hash(password)});

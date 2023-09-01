@@ -262,6 +262,16 @@
           "length": 255,
           "mappedType": "string"
         },
+        "is_email_confirmed": {
+          "name": "is_email_confirmed",
+          "type": "boolean",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "default": "false",
+          "mappedType": "boolean"
+        },
         "password": {
           "name": "password",
           "type": "varchar(255)",
@@ -1177,6 +1187,86 @@
             "user_id"
           ],
           "localTableName": "public.password_reset_token",
+          "referencedColumnNames": [
+            "id"
+          ],
+          "referencedTableName": "public.user",
+          "updateRule": "cascade"
+        }
+      }
+    },
+    {
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "int",
+          "unsigned": true,
+          "autoincrement": true,
+          "primary": true,
+          "nullable": false,
+          "mappedType": "integer"
+        },
+        "token": {
+          "name": "token",
+          "type": "varchar(255)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "length": 255,
+          "mappedType": "string"
+        },
+        "expires_on": {
+          "name": "expires_on",
+          "type": "timestamptz(0)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "length": 6,
+          "default": "now() + interval '1 hour'",
+          "mappedType": "datetime"
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "int",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "mappedType": "integer"
+        }
+      },
+      "name": "email_confirmation_token",
+      "schema": "public",
+      "indexes": [
+        {
+          "columnNames": [
+            "user_id"
+          ],
+          "composite": false,
+          "keyName": "email_confirmation_token_user_id_unique",
+          "primary": false,
+          "unique": true
+        },
+        {
+          "keyName": "email_confirmation_token_pkey",
+          "columnNames": [
+            "id"
+          ],
+          "composite": false,
+          "primary": true,
+          "unique": true
+        }
+      ],
+      "checks": [],
+      "foreignKeys": {
+        "email_confirmation_token_user_id_foreign": {
+          "constraintName": "email_confirmation_token_user_id_foreign",
+          "columnNames": [
+            "user_id"
+          ],
+          "localTableName": "public.email_confirmation_token",
           "referencedColumnNames": [
             "id"
           ],

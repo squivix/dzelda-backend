@@ -8,10 +8,11 @@ import {StatusCodes} from "http-status-codes";
 import {APIError} from "@/src/utils/errors/APIError.js";
 import {EntityManager, EntityRepository, FilterQuery} from "@mikro-orm/core";
 import {UnauthenticatedAPIError} from "@/src/utils/errors/UnauthenticatedAPIError.js";
-import {AUTH_TOKEN_LENGTH, PASSWORD_RESET_TOKEN_LENGTH} from "@/src/constants.js";
+import {AUTH_TOKEN_LENGTH, EMAIL_CONFIRM_TOKEN_LENGTH, PASSWORD_RESET_TOKEN_LENGTH} from "@/src/constants.js";
 import {EntityField} from "@mikro-orm/core/drivers/IDatabaseDriver.js";
 import {PasswordResetToken} from "@/src/models/entities/auth/PasswordResetToken.js";
 import {expiringTokenHasher} from "@/src/utils/security/ExpiringTokenHasher.js";
+import {EmailConfirmationToken} from "@/src/models/entities/auth/EmailConfirmationToken.js";
 
 
 export class UserService {
@@ -27,17 +28,39 @@ export class UserService {
         this.languageRepo = this.em.getRepository(Language);
     }
 
-    async createUser(username: string, email: string, password: string, initialLanguageCode?: string) {
-        const newUser = new User(username, email, await passwordHasher.hash(password));
-        const newProfile = new Profile(newUser);
-        this.em.persist(newUser);
-        this.em.persist(newProfile);
-        if (initialLanguageCode) {
-            const initialLanguage = await this.languageRepo.findOneOrFail({code: initialLanguageCode});
-            newProfile.languagesLearning.add(initialLanguage);
-        }
+    async createUser(username: string, email: string, password: string) {
+        const newUser = this.em.create(User, {
+            username: username,
+            email: email,
+            password: await passwordHasher.hash(password)
+        });
         await this.em.flush();
+
         return newUser;
+    }
+
+    async confirmUserEmail(token: string) {
+        const tokenHash = await expiringTokenHasher.hash(token);
+        const tokenRecord = await this.em.findOne(EmailConfirmationToken, {
+            token: tokenHash
+        }, {populate: ["isExpired"]});
+
+        if (tokenRecord == null)
+            return null;
+        if (tokenRecord.isExpired) {
+            await this.em.nativeDelete(EmailConfirmationToken, {id: tokenRecord.id});
+            return null;
+        }
+        await this.em.nativeUpdate(User, {emailConfirmToken: tokenRecord}, {isEmailConfirmed: true});
+        await this.em.nativeDelete(EmailConfirmationToken, {id: tokenRecord.id});
+        return tokenRecord;
+    }
+
+    async createUserProfile(user: User, languageLearning: Language) {
+        const newProfile = this.em.create(Profile, {user: user, languagesLearning: [languageLearning]})
+        await this.em.flush();
+
+        return await this.em.refresh(newProfile, {populate: ["languagesLearning"]}) as Profile;
     }
 
     async authenticateUser(username: string, password: string) {
@@ -96,6 +119,16 @@ export class UserService {
             token: await expiringTokenHasher.hash(token)
         });
         return token;
+    }
+
+    async generateEmailConfirmToken(user: User) {
+        const emailConfirmToken = crypto.randomBytes(EMAIL_CONFIRM_TOKEN_LENGTH).toString("hex");
+        await this.em.nativeDelete(EmailConfirmationToken, {user});
+        await this.em.insert(EmailConfirmationToken, {
+            user: user,
+            token: await expiringTokenHasher.hash(emailConfirmToken)
+        });
+        return emailConfirmToken;
     }
 
     async verifyPasswordResetToken(token: string) {

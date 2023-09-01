@@ -91,8 +91,8 @@ class LessonController {
     }
 
     async getLesson(request: FastifyRequest, reply: FastifyReply) {
-        const validator = z.object({lessonId: numericStringValidator});
-        const pathParams = validator.parse(request.params);
+        const pathParamsValidator = z.object({lessonId: numericStringValidator});
+        const pathParams = pathParamsValidator.parse(request.params);
 
         const lessonService = new LessonService(request.em);
         const lesson = await lessonService.getLesson(pathParams.lessonId, request.user);
@@ -151,7 +151,7 @@ class LessonController {
         const pathParams = pathParamsValidator.parse(request.params);
         const userService = new UserService(request.em);
         const user = await userService.getUser(pathParams.username, request.user);
-        if (!user || (!user.profile.isPublic && user !== request.user))
+        if (!user || (!user.profile!.isPublic && user !== request.user))
             throw new NotFoundAPIError("User");
         if (user !== request.user)
             throw new ForbiddenAPIError();
@@ -197,7 +197,7 @@ class LessonController {
         const pathParams = pathParamsValidator.parse(request.params);
         const userService = new UserService(request.em);
         const user = await userService.getUser(pathParams.username, request.user);
-        if (!user || (!user.profile.isPublic && user !== request.user))
+        if (!user || (!user.profile!.isPublic && user !== request.user))
             throw new NotFoundAPIError("User");
         if (user !== request.user)
             throw new ForbiddenAPIError();
@@ -210,7 +210,7 @@ class LessonController {
         if (!lesson || (!lesson.course.isPublic && request?.user?.profile !== lesson.course.addedBy))
             throw new ValidationAPIError({lesson: {message: "Not found"}});
         // TODO: explicitly fetch request.user.profile.languagesLearning instead of populating in middleware
-        if (!(request.user as User).profile.languagesLearning.contains(lesson.course.language))
+        if (!(request.user as User).profile!.languagesLearning.contains(lesson.course.language))
             throw new ValidationAPIError({lesson: {message: "not in a language the user is learning"}});
 
         const existingLessonMapping = await lessonService.getUserLessonLearning(lesson, user);

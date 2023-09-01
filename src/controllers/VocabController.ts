@@ -86,7 +86,7 @@ class VocabController {
         const pathParams = pathParamsValidator.parse(request.params);
         const userService = new UserService(request.em);
         const user = await userService.getUser(pathParams.username, request.user);
-        if (!user || (!user.profile.isPublic && user !== request.user))
+        if (!user || (!user.profile!.isPublic && user !== request.user))
             throw new NotFoundAPIError("User");
         if (user !== request.user)
             throw new ForbiddenAPIError();
@@ -120,7 +120,7 @@ class VocabController {
         const pathParams = pathParamsValidator.parse(request.params);
         const userService = new UserService(request.em);
         const user = await userService.getUser(pathParams.username, request.user);
-        if (!user || (!user.profile.isPublic && user !== request.user))
+        if (!user || (!user.profile!.isPublic && user !== request.user))
             throw new NotFoundAPIError("User");
         if (user !== request.user)
             throw new ForbiddenAPIError();
@@ -132,10 +132,10 @@ class VocabController {
         const vocab = await vocabService.findVocab({id: body.vocabId});
         if (!vocab)
             throw new ValidationAPIError({vocab: {message: "Not found"}});
-        if (!(request.user as User).profile.languagesLearning.contains(vocab.language))
+        if (!(request.user as User).profile!.languagesLearning.contains(vocab.language))
             throw new ValidationAPIError({vocab: {message: "not in a language the user is learning"}});
 
-        const existingVocabMapping = await vocabService.getUserVocab(vocab.id, user.profile);
+        const existingVocabMapping = await vocabService.getUserVocab(vocab.id, user.profile!);
         if (existingVocabMapping)
             reply.status(200).send(learnerVocabSerializer.serialize(existingVocabMapping));
 
@@ -151,13 +151,13 @@ class VocabController {
         const pathParams = pathParamsValidator.parse(request.params);
         const userService = new UserService(request.em);
         const user = await userService.getUser(pathParams.username, request.user);
-        if (!user || (!user.profile.isPublic && user !== request.user))
+        if (!user || (!user.profile!.isPublic && user !== request.user))
             throw new NotFoundAPIError("User");
         if (user !== request.user)
             throw new ForbiddenAPIError();
 
         const vocabService = new VocabService(request.em);
-        const mapping = await vocabService.getUserVocab(pathParams.vocabId, user.profile);
+        const mapping = await vocabService.getUserVocab(pathParams.vocabId, user.profile!);
         if (!mapping)
             throw new NotFoundAPIError("Vocab");
         reply.send(learnerVocabSerializer.serialize(mapping));
@@ -171,7 +171,7 @@ class VocabController {
         const pathParams = pathParamsValidator.parse(request.params);
         const userService = new UserService(request.em);
         const user = await userService.getUser(pathParams.username, request.user);
-        if (!user || (!user.profile.isPublic && user !== request.user))
+        if (!user || (!user.profile!.isPublic && user !== request.user))
             throw new NotFoundAPIError("User");
         if (user !== request.user)
             throw new ForbiddenAPIError();

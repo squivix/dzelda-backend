@@ -66,7 +66,7 @@ export class CourseService {
     }, user: User) {
         const newCourse = this.courseRepo.create({
             title: fields.title,
-            addedBy: user.profile,
+            addedBy: user.profile!,
             language: fields.language,
             description: fields.description,
             image: fields.image,

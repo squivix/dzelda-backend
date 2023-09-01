@@ -1,7 +1,8 @@
-import {Entity, OneToOne, Property, types, Unique} from "@mikro-orm/core";
+import {Entity, OneToOne, OptionalProps, Property, types, Unique} from "@mikro-orm/core";
 import {CustomBaseEntity} from "@/src/models/entities/CustomBaseEntity.js";
 import {Profile} from "@/src/models/entities/Profile.js";
 import {PasswordResetToken} from "@/src/models/entities/auth/PasswordResetToken.js";
+import {EmailConfirmationToken} from "@/src/models/entities/auth/EmailConfirmationToken.js";
 
 
 @Entity()
@@ -21,11 +22,14 @@ export class User extends CustomBaseEntity {
     @Unique()
     email!: string;
 
+    @Property({type: types.boolean, default: false})
+    isEmailConfirmed!: boolean;
+
     @Property({type: types.string, length: 255, hidden: true})
     password!: string;
 
     @OneToOne({entity: () => Profile, mappedBy: (profile: Profile) => profile.user})
-    profile!: Profile;
+    profile!: Profile | null;
 
     @Property({type: types.boolean, hidden: true, default: false})
     isStaff: boolean = false;
@@ -42,9 +46,20 @@ export class User extends CustomBaseEntity {
     @OneToOne({
         entity: () => PasswordResetToken,
         mappedBy: (passwordResetToken: PasswordResetToken) => passwordResetToken.user,
-        hidden: true
+        hidden: true,
+        lazy: true
     })
-    passwordResetToken!: PasswordResetToken;
+    passwordResetToken?: PasswordResetToken | null;
+
+    @OneToOne({
+        entity: () => EmailConfirmationToken,
+        mappedBy: (emailConfirmationToken: EmailConfirmationToken) => emailConfirmationToken.user,
+        hidden: true,
+        lazy: true
+    })
+    emailConfirmToken?: EmailConfirmationToken | null;
+
+    [OptionalProps]?: "isEmailConfirmed" | "isStaff" | "isAdmin" | "accountCreatedAt" | "lastLogin";
 }
 
 

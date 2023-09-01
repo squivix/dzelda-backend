@@ -1,4 +1,4 @@
-import {Collection, Entity, ManyToMany, OneToMany, OneToOne, Property, types} from "@mikro-orm/core";
+import {Collection, Entity, ManyToMany, OneToMany, OneToOne, OptionalProps, Property, types} from "@mikro-orm/core";
 import {User} from "@/src/models/entities/auth/User.js";
 import {CustomBaseEntity} from "@/src/models/entities/CustomBaseEntity.js";
 import {Course} from "@/src/models/entities/Course.js";
@@ -78,4 +78,5 @@ export class Profile extends CustomBaseEntity {
     @OneToMany({entity: () => Meaning, mappedBy: (meaning: Meaning) => meaning.addedBy, hidden: true})
     meaningsAdded: Collection<Meaning> = new Collection<Meaning>(this);
 
+    [OptionalProps]?: "profilePicture" | "bio" | "isPublic";
 }
