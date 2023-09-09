@@ -32,7 +32,9 @@ export class UserSeeder extends Seeder {
         });
     }
 
-    private async insertBatch(em: EntityManager, batch: (EntityData<User> & { profile: EntityData<Profile> & { languagesLearning: number[] } })[]) {
+    private async insertBatch(em: EntityManager, batch: (EntityData<User> & {
+        profile: EntityData<Profile> & { languagesLearning: number[] }
+    })[]) {
         const userFactory = new UserFactory(em);
         const users = batch.map(userData => {
             const user = userFactory.makeEntity({
@@ -40,7 +42,7 @@ export class UserSeeder extends Seeder {
                 username: userData.username,
                 email: userData.email,
                 password: userData.password,
-                profile: {
+                profile: userData.profile == null ? null : {
                     id: userData.profile.id,
                     profilePicture: userData.profile.profilePicture,
                     bio: userData.profile.bio,
@@ -50,8 +52,13 @@ export class UserSeeder extends Seeder {
                 isAdmin: userData.isAdmin,
                 accountCreatedAt: userData.accountCreatedAt,
                 lastLogin: userData.lastLogin
-            })
-            userData.profile.languagesLearning!.forEach(language => em.create(MapLearnerLanguage, {learner: user.profile.id, language: language}))
+            });
+            if (userData.profile !== null) {
+                userData.profile.languagesLearning!.forEach(language => em.create(MapLearnerLanguage, {
+                    learner: user.profile!.id,
+                    language: language
+                }));
+            }
             return user;
         });
         await em.persistAndFlush(users);
