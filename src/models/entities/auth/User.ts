@@ -28,7 +28,7 @@ export class User extends CustomBaseEntity {
     @Property({type: types.string, length: 255, hidden: true})
     password!: string;
 
-    @OneToOne({entity: () => Profile, mappedBy: (profile: Profile) => profile.user})
+    @OneToOne({entity: () => Profile, mappedBy: (profile: Profile) => profile.user, nullable: true})
     profile!: Profile | null;
 
     @Property({type: types.boolean, hidden: true, default: false})

@@ -2,7 +2,7 @@ import {z} from "zod";
 import {UserService} from "@/src/services/UserService.js";
 import {FastifyReply, FastifyRequest} from "fastify";
 import {NotFoundAPIError} from "@/src/utils/errors/NotFoundAPIError.js";
-import {passwordValidator, usernameValidator} from "@/src/validators/userValidator.js";
+import {emailValidator, passwordValidator, usernameValidator} from "@/src/validators/userValidator.js";
 import {userSerializer} from "@/src/presentation/response/serializers/entities/UserSerializer.js";
 import {emailTransporter} from "@/src/nodemailer.config.js";
 import {DOMAIN_NAME} from "@/src/constants.js";
@@ -12,12 +12,13 @@ import {languageCodeValidator} from "@/src/validators/languageValidators.js";
 import {profileSerializer} from "@/src/presentation/response/serializers/entities/ProfileSerializer.js";
 import {LanguageService} from "@/src/services/LanguageService.js";
 import {User} from "@/src/models/entities/auth/User.js";
+import {Session} from "@/src/models/entities/auth/Session.js";
 
 class UserController {
 
     async signUp(request: FastifyRequest, reply: FastifyReply) {
         const bodyValidator = z.object({
-            email: z.string().max(256).email(),
+            email: emailValidator,
             username: usernameValidator,
             password: passwordValidator
         }).strict();
@@ -58,7 +59,7 @@ class UserController {
         const userService = new UserService(request.em);
         const user = request.user as User;
         if (user.isEmailConfirmed)
-            throw new APIError(StatusCodes.BAD_REQUEST, "Email is already confirmed")
+            throw new APIError(StatusCodes.BAD_REQUEST, "Email is already confirmed");
 
         const token = await userService.generateEmailConfirmToken(user);
         await emailTransporter.sendMail({
@@ -92,7 +93,7 @@ class UserController {
 
         if (user.profile) {
             reply.status(200).send(profileSerializer.serialize(user.profile));  //profile already exists
-            return
+            return;
         }
 
         const languageService = new LanguageService(request.em);
@@ -111,7 +112,7 @@ class UserController {
         // private user don't exist to the outside
         if (!user || (!user.profile?.isPublic && user !== request.user))
             throw new NotFoundAPIError("User");
-        reply.status(200).send(userSerializer.serialize(user, {ignore: request.user !== user ? ["email"] : []}));
+        reply.status(200).send(userSerializer.serialize(user, {ignore: request.user !== user ? ["email", "isEmailConfirmed"] : []}));
     }
 
     async createPasswordResetToken(request: FastifyRequest, reply: FastifyReply) {
@@ -167,8 +168,46 @@ class UserController {
         reply.status(204).send();
     }
 
-    // async updatePassword(request: FastifyRequest, reply: FastifyReply) {
-    // }
+    async changeUserEmail(request: FastifyRequest, reply: FastifyReply) {
+        const bodyValidator = z.object({
+            newEmail: emailValidator,
+        });
+        const body = bodyValidator.parse(request.body);
+        const userService = new UserService(request.em);
+        const user = request.user as User;
+
+        await userService.changeUserEmail(user, body.newEmail);
+        const token = await userService.generateEmailConfirmToken(user);
+        await emailTransporter.sendMail({
+            from: `Dzelda <security@${DOMAIN_NAME}>`,
+            to: user.email,
+            subject: "Confirm Email",
+            text: `Confirm Email Here: https://${DOMAIN_NAME}/confirm-email?token=${token}`,
+            html: `<b>Confirm Email Here: https://${DOMAIN_NAME}/confirm-email?token=${token}</b>`,
+        });
+        reply.status(204).send();
+    }
+
+    async changeUserPassword(request: FastifyRequest, reply: FastifyReply) {
+        const bodyValidator = z.object({
+            oldPassword: z.string(),
+            newPassword: passwordValidator
+        });
+        const body = bodyValidator.parse(request.body);
+        const userService = new UserService(request.em);
+        const session = request.session as Session;
+        const user = request.user as User;
+
+        await userService.changeUserPassword(user, session, body.oldPassword, body.newPassword);
+        await emailTransporter.sendMail({
+            from: `Dzelda <security@${DOMAIN_NAME}>`,
+            to: user.email,
+            subject: "Your password was changed",
+            text: `Your password was recently changed. If this wasn't you please reset it here: https://${DOMAIN_NAME}/forgot-password/`,
+            html: `<b>Your password was recently changed. If this wasn't you please reset it here: https://${DOMAIN_NAME}/forgot-password/</b>`,
+        });
+        reply.status(204).send();
+    }
 
 }
 

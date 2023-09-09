@@ -53,7 +53,7 @@ describe("POST users/", function () {
     };
     const confirmUrlRegex = new RegExp(`https://${DOMAIN_NAME}/confirm-email\\?token=.*`);
     test<LocalTestContext>("If all fields are valid a new user should be registered without profile, and a confirmation link should be sent to their email and return 201", async (context) => {
-        const newUserData = context.userFactory.makeOne();
+        const newUserData = context.userFactory.makeOne({isEmailConfirmed: false});
         const sendMailSpy = vi.spyOn(emailTransporter, "sendMail");
 
         const response = await makeRequest({
@@ -67,7 +67,7 @@ describe("POST users/", function () {
         const newUser = await context.em.findOne(User, {username: newUserData.username});
         expect(newUser).not.toBeNull();
         expect(newUser!.profile).toBeNull();
-        expect(newUser!.isEmailConfirmed).to.equal(false)
+        expect(newUser!.isEmailConfirmed).to.equal(false);
         const emailConfirmToken = await context.em.findOne(EmailConfirmationToken, {user: newUser});
         expect(emailConfirmToken).not.toBeNull();
         expect(sendMailSpy).toHaveBeenCalledOnce();
@@ -261,7 +261,7 @@ describe("GET users/:username/", function () {
 
             const response = await makeRequest(user.username);
             expect(response.statusCode).to.equal(200);
-            expect(response.json()).toEqual(userSerializer.serialize(user, {ignore: ["email"]}));
+            expect(response.json()).toEqual(userSerializer.serialize(user, {ignore: ["email", "isEmailConfirmed"]}));
         });
         test<LocalTestContext>("If authenticated as other user return user without email", async (context) => {
             const user = await context.userFactory.createOne({profile: {isPublic: true}});
@@ -270,7 +270,7 @@ describe("GET users/:username/", function () {
 
             const response = await makeRequest(user.username, session.token);
             expect(response.statusCode).to.equal(200);
-            expect(response.json()).toEqual(userSerializer.serialize(user, {ignore: ["email"]}));
+            expect(response.json()).toEqual(userSerializer.serialize(user, {ignore: ["email", "isEmailConfirmed"]}));
         });
     });
 
@@ -341,27 +341,27 @@ describe("POST users/me/profiles/", function () {
     };
     test<LocalTestContext>("If user is logged in, email is confirmed, and profile does not exist create new profile, add language to it and return 201", async (context) => {
         const user = await context.userFactory.createOne({profile: null});
-        const session = await context.sessionFactory.createOne({user})
+        const session = await context.sessionFactory.createOne({user});
         const language = await context.languageFactory.createOne();
 
         const response = await makeRequest({languageLearning: language.code}, session.token);
-        const newProfile = await context.em.findOne(Profile, {user}, {populate: ["languagesLearning"], refresh: true})
+        const newProfile = await context.em.findOne(Profile, {user}, {populate: ["languagesLearning"], refresh: true});
 
         expect(response.statusCode).to.equal(201);
-        expect(response.json()).toEqual(profileSerializer.serialize(newProfile!))
+        expect(response.json()).toEqual(profileSerializer.serialize(newProfile!));
         expect(newProfile).not.toBeNull();
-        expect(newProfile!.languagesLearning.getItems()).toEqual([language])
+        expect(newProfile!.languagesLearning.getItems()).toEqual([language]);
     });
     test<LocalTestContext>("If profile already exists return 200", async (context) => {
         const user = await context.userFactory.createOne();
-        const session = await context.sessionFactory.createOne({user})
+        const session = await context.sessionFactory.createOne({user});
         const language = await context.languageFactory.createOne();
 
         const response = await makeRequest({languageLearning: language.code}, session.token);
-        const profile = await context.em.findOne(Profile, {user}, {populate: ["languagesLearning"], refresh: true})
+        const profile = await context.em.findOne(Profile, {user}, {populate: ["languagesLearning"], refresh: true});
 
         expect(response.statusCode).to.equal(200);
-        expect(response.json()).toEqual(profileSerializer.serialize(profile!))
+        expect(response.json()).toEqual(profileSerializer.serialize(profile!));
     });
     test<LocalTestContext>("If user is not logged in return 401", async (context) => {
         const user = await context.userFactory.createOne({profile: null});
@@ -373,11 +373,11 @@ describe("POST users/me/profiles/", function () {
     });
     test<LocalTestContext>("If user email is not confirmed return 403", async (context) => {
         const user = await context.userFactory.createOne({isEmailConfirmed: false, profile: null});
-        const session = await context.sessionFactory.createOne({user})
+        const session = await context.sessionFactory.createOne({user});
         const language = await context.languageFactory.createOne();
 
         const response = await makeRequest({languageLearning: language.code}, session.token);
-        const newProfile = await context.em.findOne(Profile, {user}, {populate: ["languagesLearning"], refresh: true})
+        const newProfile = await context.em.findOne(Profile, {user}, {populate: ["languagesLearning"], refresh: true});
 
         expect(response.statusCode).to.equal(403);
         expect(newProfile).toBeNull();
@@ -395,7 +395,7 @@ describe("POST email-confirm-tokens/", function () {
     const confirmUrlRegex = new RegExp(`https://${DOMAIN_NAME}/confirm-email\\?token=.*`);
     test<LocalTestContext>("If user is logged in, email is not confirmed, create a token, store its hash in the db and send an email with the token, return 204", async (context) => {
         const user = await context.userFactory.createOne({isEmailConfirmed: false, profile: null});
-        const session = await context.sessionFactory.createOne({user})
+        const session = await context.sessionFactory.createOne({user});
 
         const sendMailSpy = vi.spyOn(emailTransporter, "sendMail");
         const response = await makeRequest(session.token);
@@ -419,7 +419,7 @@ describe("POST email-confirm-tokens/", function () {
     });
     test<LocalTestContext>("If token already exists delete it, create a new  token, store its hash in the db and send an email with the token, return 204", async (context) => {
         const user = await context.userFactory.createOne({isEmailConfirmed: false, profile: null});
-        const session = await context.sessionFactory.createOne({user})
+        const session = await context.sessionFactory.createOne({user});
         const oldToken = context.em.create(EmailConfirmationToken, {
             user: user,
             token: await expiringTokenHasher.hash(crypto.randomBytes(PASSWORD_RESET_TOKEN_LENGTH))
@@ -448,7 +448,7 @@ describe("POST email-confirm-tokens/", function () {
     });
     test<LocalTestContext>("If email is already confirmed, do not create a token, do not send an email, return 400", async (context) => {
         const user = await context.userFactory.createOne({isEmailConfirmed: true, profile: null});
-        const session = await context.sessionFactory.createOne({user})
+        const session = await context.sessionFactory.createOne({user});
 
         const sendMailSpy = vi.spyOn(emailTransporter, "sendMail");
         const response = await makeRequest(session.token);
@@ -609,11 +609,11 @@ describe("POST password-reset-tokens/verify/", function () {
 });
 
 /**{@link UserController#resetPassword}*/
-describe("POST users/me/passwords/", function () {
+describe("POST users/me/password/reset/", function () {
     const makeRequest = async (body: object) => {
         return await fetchRequest({
             method: "POST",
-            url: `users/me/password/`,
+            url: `users/me/password/reset/`,
             payload: body
         });
     };
@@ -632,8 +632,9 @@ describe("POST users/me/passwords/", function () {
         await context.em.refresh(user);
 
         expect(response.statusCode).to.equal(204);
+        expect(await passwordHasher.validate(newPassword, user.password)).toBeTruthy();
         expect(sendMailSpy).toHaveBeenCalledOnce();
-        expect(await passwordHasher.validate(newPassword, user.password));
+        expect(sendMailSpy).toHaveBeenCalledWith(expect.objectContaining({to: user.email}));
     });
     test<LocalTestContext>("If token does not exist, return 401", async (context) => {
         const token = crypto.randomBytes(PASSWORD_RESET_TOKEN_LENGTH).toString("hex");
@@ -665,7 +666,7 @@ describe("POST users/me/passwords/", function () {
         expect(response.statusCode).to.equal(401);
         expect(sendMailSpy).not.toHaveBeenCalled();
         expect(user.password).toEqual(oldPassword);
-        expect(!await passwordHasher.validate(newPassword, user.password));
+        expect(await passwordHasher.validate(newPassword, user.password)).not.toBeTruthy();
         expect(await context.em.findOne(PasswordResetToken, {token: resetToken.token}, {refresh: true})).toBeNull();
     });
     test<LocalTestContext>("If password is invalid return 400", async (context) => {
@@ -686,7 +687,127 @@ describe("POST users/me/passwords/", function () {
         expect(response.statusCode).to.equal(400);
         expect(sendMailSpy).not.toHaveBeenCalled();
         expect(user.password).toEqual(oldPassword);
-        expect(!await passwordHasher.validate(newPassword, user.password));
+        expect(await passwordHasher.validate(newPassword, user.password)).not.toBeTruthy();
     });
 });
 
+/**{@link UserController#changeUserEmail}*/
+describe("PUT users/me/email/", function () {
+    const makeRequest = async (body: object, authToken?: string) => {
+        return await fetchRequest({
+            method: "PUT",
+            url: `users/me/email/`,
+            payload: body
+        }, authToken);
+    };
+
+    const confirmUrlRegex = new RegExp(`https://${DOMAIN_NAME}/confirm-email\\?token=.*`);
+    test<LocalTestContext>("If user is logged in and new email is valid change email, set to unconfirmed, generate token and send confirmation to new email, return 204", async (context) => {
+        const user = await context.userFactory.createOne();
+        const session = await context.sessionFactory.createOne({user});
+        const newEmail = context.userFactory.makeOne().email;
+        const sendMailSpy = vi.spyOn(emailTransporter, "sendMail");
+
+        const response = await makeRequest({newEmail: newEmail}, session.token);
+
+        await context.em.refresh(user);
+        expect(response.statusCode).to.equal(204);
+        expect(user.email).to.equal(newEmail);
+        expect(user.isEmailConfirmed).to.equal(false);
+        const emailConfirmToken = await context.em.findOne(EmailConfirmationToken, {user});
+        expect(emailConfirmToken).not.toBeNull();
+        expect(sendMailSpy).toHaveBeenCalledOnce();
+        expect(sendMailSpy).toHaveBeenCalledWith(expect.objectContaining({text: expect.stringMatching(confirmUrlRegex), to: newEmail}));
+        const emailText = sendMailSpy.mock.calls[0][0].text as string;
+        const confirmUrl = emailText.substring(emailText.search(confirmUrlRegex));
+        expect(sendMailSpy.mock.calls[0][0].html).toMatch(confirmUrl);
+        const sentToken = parseUrlQueryString(confirmUrl)["token"];
+        expect(sentToken).toBeDefined();
+        expect(await expiringTokenHasher.hash(sentToken)).toEqual(emailConfirmToken!.token);
+    });
+    test<LocalTestContext>("If user is not logged in return 401", async (context) => {
+        const newEmail = context.userFactory.makeOne().email;
+
+        const response = await makeRequest({newEmail: newEmail});
+
+        expect(response.statusCode).to.equal(401);
+    });
+    test<LocalTestContext>("If new email is invalid return 400", async (context) => {
+        const user = await context.userFactory.createOne();
+        const session = await context.sessionFactory.createOne({user});
+        const oldEmail = user.email;
+        const sendMailSpy = vi.spyOn(emailTransporter, "sendMail");
+
+        const response = await makeRequest({newEmail: faker.random.alpha(8)}, session.token);
+
+        await context.em.refresh(user);
+        expect(response.statusCode).to.equal(400);
+        expect(user.email).to.equal(oldEmail);
+        expect(await context.em.findOne(EmailConfirmationToken, {user})).toBeNull();
+        expect(sendMailSpy).not.toHaveBeenCalled();
+    });
+});
+/**{@link UserController#changeUserPassword}*/
+describe("PUT users/me/password/", function () {
+    const makeRequest = async (body: object, authToken?: string) => {
+        return await fetchRequest({
+            method: "PUT",
+            url: `users/me/password/`,
+            payload: body
+        }, authToken);
+    };
+
+    test<LocalTestContext>("If user is logged in, old password matches and new password is valid change password, delete all other sessions, send notification email, return 204", async (context) => {
+        const oldPassword = faker.random.alphaNumeric(10);
+        const user = await context.userFactory.createOne({password: await passwordHasher.hash(oldPassword)});
+        const session = await context.sessionFactory.createOne({user});
+        const otherSessions = await context.sessionFactory.create(2, {user});
+        const sendMailSpy = vi.spyOn(emailTransporter, "sendMail");
+        const newPassword = faker.random.alphaNumeric(10);
+
+        const response = await makeRequest({oldPassword: oldPassword, newPassword: newPassword}, session.token);
+        await context.em.refresh(user);
+        expect(response.statusCode).to.equal(204);
+        expect(await passwordHasher.validate(newPassword, user.password)).toBeTruthy();
+        expect(await context.em.find(Session, {id: {$in: otherSessions.map(s => s.id)}}, {refresh: true})).toHaveLength(0);
+        expect(sendMailSpy).toHaveBeenCalledOnce();
+        expect(sendMailSpy).toHaveBeenCalledWith(expect.objectContaining({to: user.email}));
+    });
+    test<LocalTestContext>("If old password does not match return 401", async (context) => {
+        const user = await context.userFactory.createOne();
+        const session = await context.sessionFactory.createOne({user});
+        const sendMailSpy = vi.spyOn(emailTransporter, "sendMail");
+        const newPassword = faker.random.alphaNumeric(10);
+
+        const response = await makeRequest({oldPassword: faker.random.alphaNumeric(10), newPassword: newPassword}, session.token);
+        await context.em.refresh(user);
+        expect(response.statusCode).to.equal(401);
+        expect(await passwordHasher.validate(newPassword, user.password)).toBeFalsy();
+        expect(sendMailSpy).not.toHaveBeenCalled();
+    });
+    test<LocalTestContext>("If new password is invalid return 400", async (context) => {
+        const oldPassword = faker.random.alphaNumeric(10);
+        const user = await context.userFactory.createOne({password: await passwordHasher.hash(oldPassword)});
+        const session = await context.sessionFactory.createOne({user});
+        const sendMailSpy = vi.spyOn(emailTransporter, "sendMail");
+        const newPassword = faker.random.alphaNumeric(7);
+
+        const response = await makeRequest({oldPassword: oldPassword, newPassword: newPassword}, session.token);
+        await context.em.refresh(user);
+        expect(response.statusCode).to.equal(400);
+        expect(await passwordHasher.validate(newPassword, user.password)).toBeFalsy();
+        expect(sendMailSpy).not.toHaveBeenCalled();
+    });
+    test<LocalTestContext>("If user is not logged in return 401", async (context) => {
+        const oldPassword = faker.random.alphaNumeric(10);
+        const user = await context.userFactory.createOne({password: await passwordHasher.hash(oldPassword)});
+        const sendMailSpy = vi.spyOn(emailTransporter, "sendMail");
+        const newPassword = faker.random.alphaNumeric(10);
+
+        const response = await makeRequest({oldPassword: oldPassword, newPassword: newPassword});
+        await context.em.refresh(user);
+        expect(response.statusCode).to.equal(401);
+        expect(await passwordHasher.validate(newPassword, user.password)).toBeFalsy();
+        expect(sendMailSpy).not.toHaveBeenCalled();
+    });
+});

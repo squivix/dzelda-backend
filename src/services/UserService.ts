@@ -56,8 +56,14 @@ export class UserService {
         return tokenRecord;
     }
 
+    async changeUserEmail(user: User, newEmail: string) {
+        user.email = newEmail;
+        user.isEmailConfirmed = false;
+        await this.em.flush();
+    }
+
     async createUserProfile(user: User, languageLearning: Language) {
-        const newProfile = this.em.create(Profile, {user: user, languagesLearning: [languageLearning]})
+        const newProfile = this.em.create(Profile, {user: user, languagesLearning: [languageLearning]});
         await this.em.flush();
 
         return await this.em.refresh(newProfile, {populate: ["languagesLearning"]}) as Profile;
@@ -159,5 +165,19 @@ export class UserService {
         this.em.remove(tokenRecord);
         await this.em.flush();
         return user;
+    }
+
+    async changeUserPassword(user: User, session: Session, oldPassword: string, newPassword: string) {
+        if (await passwordHasher.validate(oldPassword, user.password)) {
+            user.password = await passwordHasher.hash(newPassword);
+            await this.em.flush();
+            await this.em.nativeDelete(Session, {user: user, id: {$ne: session.id}});
+        } else {
+            throw new APIError(
+                StatusCodes.UNAUTHORIZED,
+                "Password is incorrect",
+                "The password you entered is incorrect"
+            );
+        }
     }
 }
