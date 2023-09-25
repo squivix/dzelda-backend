@@ -13,6 +13,7 @@ import {profileSerializer} from "@/src/presentation/response/serializers/entitie
 import {LanguageService} from "@/src/services/LanguageService.js";
 import {User} from "@/src/models/entities/auth/User.js";
 import {Session} from "@/src/models/entities/auth/Session.js";
+import {ValidationAPIError} from "@/src/utils/errors/ValidationAPIError.js";
 
 class UserController {
 
@@ -25,7 +26,7 @@ class UserController {
         const body = bodyValidator.parse(request.body);
         const userService = new UserService(request.em);
         const newUser = await userService.createUser(body.username, body.email, body.password);
-        const token = await userService.generateEmailConfirmToken(newUser);
+        const token = await userService.generateEmailConfirmToken({user: newUser, email: newUser.email});
         await emailTransporter.sendMail({
             from: `Dzelda <security@${DOMAIN_NAME}>`,
             to: newUser.email,
@@ -50,24 +51,59 @@ class UserController {
 
     async logout(request: FastifyRequest, reply: FastifyReply) {
         const userService = new UserService(request.em);
-        await userService.deleteSession(request.session!);
+        await userService.deleteLoginSession(request.session!);
 
         reply.status(204).send();
     }
 
-    async createEmailConfirmToken(request: FastifyRequest, reply: FastifyReply) {
+    async requestEmailConfirmation(request: FastifyRequest, reply: FastifyReply) {
+        const bodyValidator = z.object({
+            email: emailValidator.optional(),
+        }).default({email: undefined});
+        const body = bodyValidator.parse(request.body);
+
         const userService = new UserService(request.em);
         const user = request.user as User;
+
         if (user.isEmailConfirmed)
             throw new APIError(StatusCodes.BAD_REQUEST, "Email is already confirmed");
 
-        const token = await userService.generateEmailConfirmToken(user);
+        const token = await userService.generateEmailConfirmToken({
+            user: user,
+            email: body.email ?? user.email
+        });
         await emailTransporter.sendMail({
             from: `Dzelda <security@${DOMAIN_NAME}>`,
             to: user.email,
             subject: "Confirm Email",
             text: `Confirm Email Here: https://${DOMAIN_NAME}/confirm-email?token=${token}`,
             html: `<b>Confirm Email Here: https://${DOMAIN_NAME}/confirm-email?token=${token}</b>`,
+        });
+        reply.status(204).send();
+    }
+
+    async changeUserEmail(request: FastifyRequest, reply: FastifyReply) {
+        const bodyValidator = z.object({
+            newEmail: emailValidator,
+        });
+        const body = bodyValidator.parse(request.body);
+
+        const userService = new UserService(request.em);
+        const user = request.user as User;
+
+        if (user.email == body.newEmail)
+            throw new ValidationAPIError({email: {message: "same as existing email address"}});
+
+        const token = await userService.generateEmailConfirmToken({
+            user: user,
+            email: body.newEmail
+        });
+        await emailTransporter.sendMail({
+            from: `Dzelda <security@${DOMAIN_NAME}>`,
+            to: body.newEmail,
+            subject: "Confirm New Email",
+            text: `Confirm New Email Here: https://${DOMAIN_NAME}/confirm-email?token=${token}`,
+            html: `<b>Confirm New Email Here: https://${DOMAIN_NAME}/confirm-email?token=${token}</b>`,
         });
         reply.status(204).send();
     }
@@ -115,14 +151,14 @@ class UserController {
         reply.status(200).send(userSerializer.serialize(user, {ignore: request.user !== user ? ["email", "isEmailConfirmed"] : []}));
     }
 
-    async createPasswordResetToken(request: FastifyRequest, reply: FastifyReply) {
+    async requestPasswordReset(request: FastifyRequest, reply: FastifyReply) {
         const bodyValidator = z.object({
             username: z.string(),
             email: z.string().max(256).email(),
         });
         const body = bodyValidator.parse(request.body);
         const userService = new UserService(request.em);
-        const user = await userService.findUser({username: body.username, email: body.email});
+        const user = await userService.findUser({username: body.username, email: body.email, isEmailConfirmed: true});
         if (user != null) {
             const token = await userService.generatePasswordResetToken(user);
             await emailTransporter.sendMail({
@@ -168,26 +204,6 @@ class UserController {
         reply.status(204).send();
     }
 
-    async changeUserEmail(request: FastifyRequest, reply: FastifyReply) {
-        const bodyValidator = z.object({
-            newEmail: emailValidator,
-        });
-        const body = bodyValidator.parse(request.body);
-        const userService = new UserService(request.em);
-        const user = request.user as User;
-
-        await userService.changeUserEmail(user, body.newEmail);
-        const token = await userService.generateEmailConfirmToken(user);
-        await emailTransporter.sendMail({
-            from: `Dzelda <security@${DOMAIN_NAME}>`,
-            to: user.email,
-            subject: "Confirm Email",
-            text: `Confirm Email Here: https://${DOMAIN_NAME}/confirm-email?token=${token}`,
-            html: `<b>Confirm Email Here: https://${DOMAIN_NAME}/confirm-email?token=${token}</b>`,
-        });
-        reply.status(204).send();
-    }
-
     async changeUserPassword(request: FastifyRequest, reply: FastifyReply) {
         const bodyValidator = z.object({
             oldPassword: z.string(),
@@ -208,7 +224,6 @@ class UserController {
         });
         reply.status(204).send();
     }
-
 }
 
 export const userController = new UserController();

@@ -40,8 +40,8 @@ export class User extends CustomBaseEntity {
     @Property({type: types.datetime, hidden: true, defaultRaw: "now()"})
     accountCreatedAt!: Date;
 
-    @Property({type: types.datetime, hidden: true, defaultRaw: "now()"})
-    lastLogin!: Date;
+    @Property({type: types.datetime, hidden: true, nullable: true, default: null})
+    lastLogin?: Date;
 
     @OneToOne({
         entity: () => PasswordResetToken,

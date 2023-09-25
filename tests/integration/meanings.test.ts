@@ -66,9 +66,7 @@ describe("POST meanings/", () => {
         expect(response.json()).toMatchObject(meaningSerializer.serialize(newMeaning, {ignore: ["addedOn"]}));
         const dbRecord = await context.meaningRepo.findOne({text: newMeaning.text, language, vocab});
         expect(dbRecord).not.toBeNull();
-        if (dbRecord != null) {
-            expect(meaningSerializer.serialize(dbRecord)).toMatchObject(meaningSerializer.serialize(newMeaning, {ignore: ["addedOn"]}));
-        }
+        expect(meaningSerializer.serialize(dbRecord!)).toMatchObject(meaningSerializer.serialize(newMeaning, {ignore: ["addedOn"]}));
     });
     test<LocalTestContext>("If meaning with same text and language for same vocab already exists return 200", async (context) => {
         const user = await context.userFactory.createOne();
@@ -106,7 +104,7 @@ describe("POST meanings/", () => {
     });
     test<LocalTestContext>("If user email is not confirmed return 403", async (context) => {
         const user = await context.userFactory.createOne({isEmailConfirmed: false, profile: null});
-        const session = await context.sessionFactory.createOne({user})
+        const session = await context.sessionFactory.createOne({user});
         const language = await context.languageFactory.createOne();
         const vocab = await context.vocabFactory.createOne({language: language});
         const newMeaning = context.meaningFactory.makeOne({language: language, vocab: vocab, addedBy: user.profile});
@@ -120,7 +118,7 @@ describe("POST meanings/", () => {
     });
     test<LocalTestContext>("If user has no profile return 403", async (context) => {
         const user = await context.userFactory.createOne({profile: null});
-        const session = await context.sessionFactory.createOne({user})
+        const session = await context.sessionFactory.createOne({user});
         const language = await context.languageFactory.createOne();
         const vocab = await context.vocabFactory.createOne({language: language});
         const newMeaning = context.meaningFactory.makeOne({language: language, vocab: vocab, addedBy: user.profile});
@@ -293,7 +291,12 @@ describe("GET users/:username/meanings/", () => {
             const session = await context.sessionFactory.createOne({user: user});
             const language = await context.languageFactory.createOne();
             const vocab = await context.vocabFactory.createOne({language});
-            const expectedMeanings = await context.meaningFactory.create(5, {vocab, language, addedBy: otherUser.profile, learners: user.profile});
+            const expectedMeanings = await context.meaningFactory.create(5, {
+                vocab,
+                language,
+                addedBy: otherUser.profile,
+                learners: user.profile
+            });
             await context.meaningFactory.create(5, {vocab, language, addedBy: otherUser.profile});
             expectedMeanings.sort(defaultSortComparator);
             const recordsCount = expectedMeanings.length;
@@ -637,13 +640,13 @@ describe("GET users/:username/meanings/", () => {
     });
     test<LocalTestContext>("If user email is not confirmed return 403", async (context) => {
         const user = await context.userFactory.createOne({isEmailConfirmed: false, profile: null});
-        const session = await context.sessionFactory.createOne({user})
+        const session = await context.sessionFactory.createOne({user});
         const response = await makeRequest("me", {}, session.token);
         expect(response.statusCode).toEqual(403);
     });
     test<LocalTestContext>("If user has no profile return 403", async (context) => {
         const user = await context.userFactory.createOne({profile: null});
-        const session = await context.sessionFactory.createOne({user})
+        const session = await context.sessionFactory.createOne({user});
         const response = await makeRequest("me", {}, session.token);
         expect(response.statusCode).toEqual(403);
     });
@@ -772,13 +775,13 @@ describe("POST users/:username/meanings/", () => {
     });
     test<LocalTestContext>("If user email is not confirmed return 403", async (context) => {
         const user = await context.userFactory.createOne({isEmailConfirmed: false, profile: null});
-        const session = await context.sessionFactory.createOne({user})
+        const session = await context.sessionFactory.createOne({user});
         const response = await makeRequest("me", {}, session.token);
         expect(response.statusCode).to.equal(403);
     });
     test<LocalTestContext>("If user has no profile return 403", async (context) => {
         const user = await context.userFactory.createOne({profile: null});
-        const session = await context.sessionFactory.createOne({user})
+        const session = await context.sessionFactory.createOne({user});
         const response = await makeRequest("me", {}, session.token);
         expect(response.statusCode).to.equal(403);
     });

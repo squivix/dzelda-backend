@@ -184,6 +184,16 @@ describe("POST users/", function () {
                 });
                 expect(response.statusCode).to.equal(400);
             });
+            test<LocalTestContext>("If email is not unique return 400", async (context) => {
+                const otherUser = await context.userFactory.createOne();
+                const newUser = context.userFactory.makeOne({email: otherUser.email});
+                const response = await makeRequest({
+                    username: newUser.username,
+                    password: newUser.password,
+                    email: newUser.email
+                });
+                expect(response.statusCode).to.equal(400);
+            });
         });
         describe("If password is invalid return 400", async () => {
             test<LocalTestContext>("If password is shorter than 8 characters return 400", async (context) => {
@@ -273,7 +283,6 @@ describe("GET users/:username/", function () {
             expect(response.json()).toEqual(userSerializer.serialize(user, {ignore: ["email", "isEmailConfirmed"]}));
         });
     });
-
     test<LocalTestContext>("If username does not exist return 404", async (context) => {
         const response = await makeRequest(faker.random.alpha({count: 20}));
         expect(response.statusCode).to.equal(404);
@@ -281,7 +290,7 @@ describe("GET users/:username/", function () {
 });
 
 /**{@link UserController#confirmEmail}*/
-describe("POST users/me/emails/confirm", function () {
+describe("POST users/me/email/confirm", function () {
     const makeRequest = async (body: object) => {
         return await fetchRequest({
             method: "POST",
@@ -289,21 +298,42 @@ describe("POST users/me/emails/confirm", function () {
             payload: body
         });
     };
-    test<LocalTestContext>("If token is valid and not expired, set isEmailConfirmed to true, delete token and return 204", async (context) => {
-        const user = await context.userFactory.createOne({isEmailConfirmed: false});
-        const token = crypto.randomBytes(EMAIL_CONFIRM_TOKEN_LENGTH).toString("hex");
-        context.em.create(EmailConfirmationToken, {
-            user: user,
-            token: await expiringTokenHasher.hash(token)
+    describe("If token is valid and not expired, use it to confirm user email", async (context) => {
+        test<LocalTestContext>("If token is from first time sign up set isEmailConfirmed to true, delete token and return 204", async (context) => {
+            const user = await context.userFactory.createOne({isEmailConfirmed: false});
+            const token = crypto.randomBytes(EMAIL_CONFIRM_TOKEN_LENGTH).toString("hex");
+            context.em.create(EmailConfirmationToken, {
+                user: user,
+                token: await expiringTokenHasher.hash(token),
+                email: user.email
+            });
+            await context.em.flush();
+
+            const response = await makeRequest({token: token});
+            await context.em.refresh(user);
+
+            expect(response.statusCode).to.equal(204);
+            expect(user.isEmailConfirmed).to.equal(true);
+            expect(await context.em.findOne(EmailConfirmationToken, {token: token}, {refresh: true})).toBeNull();
         });
-        await context.em.flush();
+        test<LocalTestContext>("If token is from email change, update user email to new confirmed email from token, delete token and return 204", async (context) => {
+            const user = await context.userFactory.createOne({isEmailConfirmed: true});
+            const newEmail = context.userFactory.makeDefinition().email!;
+            const token = crypto.randomBytes(EMAIL_CONFIRM_TOKEN_LENGTH).toString("hex");
+            context.em.create(EmailConfirmationToken, {
+                user: user,
+                token: await expiringTokenHasher.hash(token),
+                email: newEmail
+            });
+            await context.em.flush();
 
-        const response = await makeRequest({token: token});
-        await context.em.refresh(user);
+            const response = await makeRequest({token: token});
+            await context.em.refresh(user);
 
-        expect(response.statusCode).to.equal(204);
-        expect(user.isEmailConfirmed).to.equal(true);
-        expect(await context.em.findOne(EmailConfirmationToken, {token: token}, {refresh: true})).toBeNull();
+            expect(response.statusCode).to.equal(204);
+            expect(user.email).toEqual(newEmail);
+            expect(await context.em.findOne(EmailConfirmationToken, {token: token}, {refresh: true})).toBeNull();
+        });
     });
     test<LocalTestContext>("If token does not exist, return 401", async (context) => {
         const token = crypto.randomBytes(EMAIL_CONFIRM_TOKEN_LENGTH).toString("hex");
@@ -317,7 +347,8 @@ describe("POST users/me/emails/confirm", function () {
         context.em.create(EmailConfirmationToken, {
             user: user,
             token: await expiringTokenHasher.hash(token),
-            expiresOn: new Date("2020-08-27T07:47:21.575Z")
+            expiresOn: new Date("2020-08-27T07:47:21.575Z"),
+            email: user.email
         });
         await context.em.flush();
 
@@ -384,7 +415,7 @@ describe("POST users/me/profiles/", function () {
     });
 });
 
-/**{@link UserController#createEmailConfirmToken}*/
+/**{@link UserController#requestEmailConfirmation}*/
 describe("POST email-confirm-tokens/", function () {
     const makeRequest = async (authToken?: string) => {
         return await fetchRequest({
@@ -402,7 +433,6 @@ describe("POST email-confirm-tokens/", function () {
 
         const newlyCreatedToken = await context.em.findOne(EmailConfirmationToken, {user});
         expect(response.statusCode).to.equal(204);
-
         expect(newlyCreatedToken).not.toBeNull();
         expect(sendMailSpy).toHaveBeenCalledOnce();
         expect(sendMailSpy).toHaveBeenCalledWith(expect.objectContaining({
@@ -422,7 +452,8 @@ describe("POST email-confirm-tokens/", function () {
         const session = await context.sessionFactory.createOne({user});
         const oldToken = context.em.create(EmailConfirmationToken, {
             user: user,
-            token: await expiringTokenHasher.hash(crypto.randomBytes(PASSWORD_RESET_TOKEN_LENGTH))
+            token: await expiringTokenHasher.hash(crypto.randomBytes(PASSWORD_RESET_TOKEN_LENGTH)),
+            email: user.email
         });
         await context.em.flush();
 
@@ -465,7 +496,7 @@ describe("POST email-confirm-tokens/", function () {
 
 });
 
-/**{@link UserController#createPasswordResetToken}*/
+/**{@link UserController#requestPasswordReset}*/
 describe("POST password-reset-tokens/", function () {
     const makeRequest = async (body: object) => {
         return await fetchRequest({
@@ -702,7 +733,7 @@ describe("PUT users/me/email/", function () {
     };
 
     const confirmUrlRegex = new RegExp(`https://${DOMAIN_NAME}/confirm-email\\?token=.*`);
-    test<LocalTestContext>("If user is logged in and new email is valid change email, set to unconfirmed, generate token and send confirmation to new email, return 204", async (context) => {
+    test<LocalTestContext>("If user is logged in and new email is valid generate confirmation token with new email and send confirmation to new email, return 204", async (context) => {
         const user = await context.userFactory.createOne();
         const session = await context.sessionFactory.createOne({user});
         const newEmail = context.userFactory.makeOne().email;
@@ -712,10 +743,9 @@ describe("PUT users/me/email/", function () {
 
         await context.em.refresh(user);
         expect(response.statusCode).to.equal(204);
-        expect(user.email).to.equal(newEmail);
-        expect(user.isEmailConfirmed).to.equal(false);
         const emailConfirmToken = await context.em.findOne(EmailConfirmationToken, {user});
         expect(emailConfirmToken).not.toBeNull();
+        expect(emailConfirmToken!.email).toEqual(newEmail);
         expect(sendMailSpy).toHaveBeenCalledOnce();
         expect(sendMailSpy).toHaveBeenCalledWith(expect.objectContaining({text: expect.stringMatching(confirmUrlRegex), to: newEmail}));
         const emailText = sendMailSpy.mock.calls[0][0].text as string;
@@ -731,6 +761,15 @@ describe("PUT users/me/email/", function () {
         const response = await makeRequest({newEmail: newEmail});
 
         expect(response.statusCode).to.equal(401);
+    });
+    test<LocalTestContext>("If user email is not confirmed return 403", async (context) => {
+        const user = await context.userFactory.createOne({isEmailConfirmed: false, profile: null});
+        const session = await context.sessionFactory.createOne({user});
+        const newEmail = context.userFactory.makeOne().email;
+
+        const response = await makeRequest({newEmail: newEmail}, session.token);
+
+        expect(response.statusCode).to.equal(403);
     });
     test<LocalTestContext>("If new email is invalid return 400", async (context) => {
         const user = await context.userFactory.createOne();

@@ -1209,9 +1209,7 @@ describe("POST users/:username/vocabs/", () => {
             expect(response.json()).toEqual(learnerVocabSerializer.serialize(expectedMapping));
             const dbRecord = await context.em.findOne(MapLearnerVocab, {learner: user.profile, vocab});
             expect(dbRecord).not.toBeNull();
-            if (dbRecord != null) {
-                expect(learnerVocabSerializer.serialize(dbRecord)).toEqual(learnerVocabSerializer.serialize(expectedMapping));
-            }
+            expect(learnerVocabSerializer.serialize(dbRecord!)).toEqual(learnerVocabSerializer.serialize(expectedMapping));
         });
         test<LocalTestContext>("If username is belongs to the current user", async (context) => {
             const user = await context.userFactory.createOne();
@@ -1226,9 +1224,7 @@ describe("POST users/:username/vocabs/", () => {
             expect(response.json()).toEqual(learnerVocabSerializer.serialize(expectedMapping));
             const dbRecord = await context.em.findOne(MapLearnerVocab, {learner: user.profile, vocab});
             expect(dbRecord).not.toBeNull();
-            if (dbRecord != null) {
-                expect(learnerVocabSerializer.serialize(dbRecord)).toEqual(learnerVocabSerializer.serialize(expectedMapping));
-            }
+            expect(learnerVocabSerializer.serialize(dbRecord!)).toEqual(learnerVocabSerializer.serialize(expectedMapping));
         });
     });
     test<LocalTestContext>("If user is already learning vocab return 200", async (context) => {

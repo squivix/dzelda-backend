@@ -7,14 +7,14 @@ export const userRouter: FastifyPluginCallback = function (fastify, options, don
     fastify.post(`/users/`, userController.signUp);
     fastify.get(`/users/:username/`, userController.getUser);
     fastify.post(`/users/me/email/confirm/`, userController.confirmEmail);
-    fastify.put(`/users/me/email/`, {preHandler: [requiresAuth], handler: userController.changeUserEmail});
     fastify.post(`/users/me/profile/`, {preHandler: [requiresAuth, requiresEmailConfirmed], handler: userController.createProfile});
     fastify.post(`/users/me/password/reset/`, userController.resetPassword);
-    fastify.put(`/users/me/password/`, {preHandler: [requiresAuth], handler: userController.changeUserPassword});
+    fastify.put(`/users/me/password/`, {preHandler: [requiresAuth, requiresEmailConfirmed], handler: userController.changeUserPassword});
     fastify.post(`/sessions/`, userController.login);
     fastify.delete(`/sessions/`, {preHandler: requiresAuth, handler: userController.logout});
-    fastify.post(`/email-confirm-tokens/`, {preHandler: requiresAuth, handler: userController.createEmailConfirmToken});
-    fastify.post(`/password-reset-tokens/`, userController.createPasswordResetToken);
+    fastify.put(`/users/me/email/`, {preHandler: [requiresAuth, requiresEmailConfirmed], handler: userController.changeUserEmail});
+    fastify.post(`/email-confirm-tokens/`, {preHandler: requiresAuth, handler: userController.requestEmailConfirmation});
+    fastify.post(`/password-reset-tokens/`, userController.requestPasswordReset);
     fastify.post(`/password-reset-tokens/verify/`, userController.verifyPasswordResetToken);
 
     done();

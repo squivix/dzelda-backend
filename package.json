@@ -26,9 +26,7 @@
     "@mikro-orm/core": "^5.6.7",
     "@mikro-orm/postgresql": "^5.6.7",
     "bcrypt": "^5.1.1",
-    "dotenv": "^16.0.3",
     "dzelda-types": "git+https://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:x-oauth-basic@github.com/squivix/dzelda-types.git#main",
-    "env-cmd": "^10.1.0",
     "fastify": "^4.9.2",
     "fastify-formidable": "^3.0.2",
     "file-type": "^18.2.0",
@@ -36,8 +34,6 @@
     "http-status-codes": "^2.2.0",
     "image-size": "^1.0.2",
     "nodemailer": "^6.9.4",
-    "p-limit": "^4.0.0",
-    "vavite": "^1.5.2",
     "zod": "^3.19.1"
   },
   "devDependencies": {
@@ -64,7 +60,8 @@
     "tsx": "^3.12.7",
     "typescript": "^4.8.4",
     "vite": "^3.2.5",
-    "vitest": "^0.33.0"
+    "vitest": "^0.33.0",
+    "env-cmd": "^10.1.0"
   },
   "mikro-orm": {
     "configPaths": [

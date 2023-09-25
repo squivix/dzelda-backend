@@ -69,7 +69,7 @@ describe("GET languages/", function () {
 
     test<LocalTestContext>("If there are no filters return all languages", async (context) => {
         const expectedLanguages = await context.languageFactory.create(10);
-        expectedLanguages.sort(defaultSortComparator)
+        expectedLanguages.sort(defaultSortComparator);
 
         const response = await makeRequest();
 
@@ -81,7 +81,7 @@ describe("GET languages/", function () {
             test<LocalTestContext>("If isSupported filter is true return only supported languages", async (context) => {
                 const expectedLanguages = await context.languageFactory.create(5, {isSupported: true});
                 await context.languageFactory.create(5, {isSupported: false});
-                expectedLanguages.sort(defaultSortComparator)
+                expectedLanguages.sort(defaultSortComparator);
 
                 const response = await makeRequest({isSupported: true});
 
@@ -91,7 +91,7 @@ describe("GET languages/", function () {
             test<LocalTestContext>("If isSupported filter is false return only unsupported languages", async (context) => {
                 const expectedLanguages = await context.languageFactory.create(5, {isSupported: false});
                 await context.languageFactory.create(5, {isSupported: true});
-                expectedLanguages.sort(defaultSortComparator)
+                expectedLanguages.sort(defaultSortComparator);
 
                 const response = await makeRequest({isSupported: false});
 
@@ -138,7 +138,7 @@ describe("GET languages/", function () {
                 const response = await makeRequest({sortBy: "flag"});
                 expect(response.statusCode).to.equal(400);
             });
-        })
+        });
         describe("test sortOrder", () => {
             test<LocalTestContext>("If sortOrder is asc return the languages in ascending order", async (context) => {
                 const expectedLanguages = [
@@ -166,8 +166,8 @@ describe("GET languages/", function () {
                 const response = await makeRequest({sortOrder: "rising"});
                 expect(response.statusCode).to.equal(400);
             });
-        })
-    })
+        });
+    });
 });
 
 /**{@link LanguageController#getUserLanguages}*/
@@ -187,10 +187,10 @@ describe("GET users/:username/languages/", function () {
     test<LocalTestContext>(`If username exists and is public return languages user is learning`, async (context) => {
         const user = await context.userFactory.createOne({profile: {isPublic: true}});
         const expectedLanguages = await context.languageFactory.create(10);
-        expectedLanguages.sort(defaultSortComparator)
+        expectedLanguages.sort(defaultSortComparator);
         const expectedMappings = expectedLanguages.map(language => {
             language.learnersCount++;
-            return context.em.create(MapLearnerLanguage, {language, learner: user.profile!})
+            return context.em.create(MapLearnerLanguage, {language, learner: user.profile!});
         });
         await context.em.flush();
 
@@ -216,10 +216,10 @@ describe("GET users/:username/languages/", function () {
         const user = await context.userFactory.createOne({profile: {isPublic: false}});
         const session = await context.sessionFactory.createOne({user: user});
         const expectedLanguages = await context.languageFactory.create(10);
-        expectedLanguages.sort(defaultSortComparator)
+        expectedLanguages.sort(defaultSortComparator);
         const expectedMappings = expectedLanguages.map(language => {
             language.learnersCount++;
-            return context.em.create(MapLearnerLanguage, {language, learner: user.profile!})
+            return context.em.create(MapLearnerLanguage, {language, learner: user.profile!});
         });
         await context.em.flush();
 
@@ -239,10 +239,10 @@ describe("GET users/:username/languages/", function () {
         const user = await context.userFactory.createOne({profile: {isPublic: false}});
         const session = await context.sessionFactory.createOne({user: user});
         const expectedLanguages = await context.languageFactory.create(10);
-        expectedLanguages.sort(defaultSortComparator)
+        expectedLanguages.sort(defaultSortComparator);
         const expectedMappings = expectedLanguages.map(language => {
             language.learnersCount++;
-            return context.em.create(MapLearnerLanguage, {language, learner: user.profile!})
+            return context.em.create(MapLearnerLanguage, {language, learner: user.profile!});
         });
         await context.em.flush();
 
@@ -262,7 +262,7 @@ describe("GET users/:username/languages/", function () {
                 ];
                 const expectedMappings = expectedLanguages.map(language => {
                     language.learnersCount++;
-                    return context.em.create(MapLearnerLanguage, {language, learner: user.profile!})
+                    return context.em.create(MapLearnerLanguage, {language, learner: user.profile!});
                 });
                 await context.em.flush();
 
@@ -282,7 +282,7 @@ describe("GET users/:username/languages/", function () {
                 ];
                 const expectedMappings = expectedLanguages.map(language => {
                     language.learnersCount++;
-                    return context.em.create(MapLearnerLanguage, {language, learner: user.profile!})
+                    return context.em.create(MapLearnerLanguage, {language, learner: user.profile!});
                 });
                 await context.em.flush();
 
@@ -302,7 +302,7 @@ describe("GET users/:username/languages/", function () {
                         language: context.languageFactory.makeDefinition({learnersCount: 1}), learner: user.profile!,
                         lastOpened: new Date("2023-03-15T20:29:42.000Z")
                     }),
-                ]
+                ];
                 await context.em.flush();
 
                 const response = await makeRequest(user.username, {sortBy: "lastOpened"});
@@ -317,7 +317,7 @@ describe("GET users/:username/languages/", function () {
 
                 expect(response.statusCode).to.equal(400);
             });
-        })
+        });
         describe("test sortOrder", () => {
             test<LocalTestContext>("If sortOrder is asc return the languages in ascending order", async (context) => {
                 const user = await context.userFactory.createOne({profile: {isPublic: true}});
@@ -327,7 +327,7 @@ describe("GET users/:username/languages/", function () {
                 ];
                 const expectedMappings = expectedLanguages.map(language => {
                     language.learnersCount++;
-                    return context.em.create(MapLearnerLanguage, {language, learner: user.profile!})
+                    return context.em.create(MapLearnerLanguage, {language, learner: user.profile!});
                 });
                 await context.em.flush();
 
@@ -344,7 +344,7 @@ describe("GET users/:username/languages/", function () {
                 ];
                 const expectedMappings = expectedLanguages.map(language => {
                     language.learnersCount++;
-                    return context.em.create(MapLearnerLanguage, {language, learner: user.profile!})
+                    return context.em.create(MapLearnerLanguage, {language, learner: user.profile!});
                 });
                 await context.em.flush();
 
@@ -360,8 +360,8 @@ describe("GET users/:username/languages/", function () {
 
                 expect(response.statusCode).to.equal(400);
             });
-        })
-    })
+        });
+    });
 });
 
 /**{@link LanguageController#addLanguageToUser}*/
@@ -389,9 +389,7 @@ describe("POST users/:username/languages/", function () {
             expect(responseBody).toMatchObject(learnerLanguageSerializer.serialize(expectedMapping, {ignore: ["addedOn", "lastOpened"]}));
             const dbRecord = await context.em.findOne(MapLearnerLanguage, {language, learner: user.profile});
             expect(dbRecord).not.toBeNull();
-            if (dbRecord != null) {
-                expect(learnerLanguageSerializer.serialize(dbRecord)).toMatchObject(learnerLanguageSerializer.serialize(expectedMapping, {ignore: ["addedOn", "lastOpened"]}));
-            }
+            expect(learnerLanguageSerializer.serialize(dbRecord!)).toMatchObject(learnerLanguageSerializer.serialize(expectedMapping, {ignore: ["addedOn", "lastOpened"]}));
         });
         test<LocalTestContext>("If username is not me and authenticated as user with username return 201", async (context) => {
             const user = await context.userFactory.createOne();
@@ -407,9 +405,7 @@ describe("POST users/:username/languages/", function () {
 
             const dbRecord = await context.em.findOne(MapLearnerLanguage, {language, learner: user.profile});
             expect(dbRecord).not.toBeNull();
-            if (dbRecord != null) {
-                expect(learnerLanguageSerializer.serialize(dbRecord)).toMatchObject(learnerLanguageSerializer.serialize(expectedMapping, {ignore: ["addedOn", "lastOpened"]}));
-            }
+            expect(learnerLanguageSerializer.serialize(dbRecord!)).toMatchObject(learnerLanguageSerializer.serialize(expectedMapping, {ignore: ["addedOn", "lastOpened"]}));
         });
     });
     test<LocalTestContext>("If user is already learning language return 200", async (context) => {
@@ -432,7 +428,7 @@ describe("POST users/:username/languages/", function () {
     });
     test<LocalTestContext>("If user email is not confirmed return 403", async (context) => {
         const user = await context.userFactory.createOne({isEmailConfirmed: false, profile: null});
-        const session = await context.sessionFactory.createOne({user})
+        const session = await context.sessionFactory.createOne({user});
         const language = await context.languageFactory.createOne();
 
         const response = await makeRequest("me", {languageCode: language.code}, session.token);
@@ -440,7 +436,7 @@ describe("POST users/:username/languages/", function () {
     });
     test<LocalTestContext>("If user has no profile return 403", async (context) => {
         const user = await context.userFactory.createOne({profile: null});
-        const session = await context.sessionFactory.createOne({user})
+        const session = await context.sessionFactory.createOne({user});
         const language = await context.languageFactory.createOne();
 
         const response = await makeRequest("me", {languageCode: language.code}, session.token);
@@ -567,7 +563,7 @@ describe("PATCH users/:username/languages/:languageCode/", () => {
     });
     test<LocalTestContext>("If user email is not confirmed return 403", async (context) => {
         const user = await context.userFactory.createOne({isEmailConfirmed: false, profile: null});
-        const session = await context.sessionFactory.createOne({user})
+        const session = await context.sessionFactory.createOne({user});
         const language = await context.languageFactory.createOne();
 
         const response = await makeRequest("me", language.code, {lastOpened: "now"}, session.token);
@@ -576,7 +572,7 @@ describe("PATCH users/:username/languages/:languageCode/", () => {
     });
     test<LocalTestContext>("If user has no profile return 403", async (context) => {
         const user = await context.userFactory.createOne({profile: null});
-        const session = await context.sessionFactory.createOne({user})
+        const session = await context.sessionFactory.createOne({user});
         const language = await context.languageFactory.createOne();
 
         const response = await makeRequest("me", language.code, {lastOpened: "now"}, session.token);
@@ -710,7 +706,7 @@ describe("DELETE users/:username/languages/:languageCode/", () => {
     });
     test<LocalTestContext>("If user email is not confirmed return 403", async (context) => {
         const user = await context.userFactory.createOne({isEmailConfirmed: false, profile: null});
-        const session = await context.sessionFactory.createOne({user})
+        const session = await context.sessionFactory.createOne({user});
         const language = await context.languageFactory.createOne({learners: user.profile});
 
         const response = await makeRequest("me", language.code, session.token);
@@ -719,7 +715,7 @@ describe("DELETE users/:username/languages/:languageCode/", () => {
     });
     test<LocalTestContext>("If user has no profile return 403", async (context) => {
         const user = await context.userFactory.createOne({profile: null});
-        const session = await context.sessionFactory.createOne({user})
+        const session = await context.sessionFactory.createOne({user});
         const language = await context.languageFactory.createOne({learners: user.profile});
 
         const response = await makeRequest("me", language.code, session.token);

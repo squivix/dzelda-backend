@@ -6,13 +6,14 @@ import {Language} from "@/src/models/entities/Language.js";
 import {Session} from "@/src/models/entities/auth/Session.js";
 import {StatusCodes} from "http-status-codes";
 import {APIError} from "@/src/utils/errors/APIError.js";
-import {EntityManager, EntityRepository, FilterQuery} from "@mikro-orm/core";
+import {EntityManager, EntityRepository, FilterQuery, UniqueConstraintViolationException} from "@mikro-orm/core";
 import {UnauthenticatedAPIError} from "@/src/utils/errors/UnauthenticatedAPIError.js";
 import {AUTH_TOKEN_LENGTH, EMAIL_CONFIRM_TOKEN_LENGTH, PASSWORD_RESET_TOKEN_LENGTH} from "@/src/constants.js";
 import {EntityField} from "@mikro-orm/core/drivers/IDatabaseDriver.js";
 import {PasswordResetToken} from "@/src/models/entities/auth/PasswordResetToken.js";
 import {expiringTokenHasher} from "@/src/utils/security/ExpiringTokenHasher.js";
 import {EmailConfirmationToken} from "@/src/models/entities/auth/EmailConfirmationToken.js";
+import {ValidationAPIError} from "@/src/utils/errors/ValidationAPIError.js";
 
 
 export class UserService {
@@ -39,29 +40,6 @@ export class UserService {
         return newUser;
     }
 
-    async confirmUserEmail(token: string) {
-        const tokenHash = await expiringTokenHasher.hash(token);
-        const tokenRecord = await this.em.findOne(EmailConfirmationToken, {
-            token: tokenHash
-        }, {populate: ["isExpired"]});
-
-        if (tokenRecord == null)
-            return null;
-        if (tokenRecord.isExpired) {
-            await this.em.nativeDelete(EmailConfirmationToken, {id: tokenRecord.id});
-            return null;
-        }
-        await this.em.nativeUpdate(User, {emailConfirmToken: tokenRecord}, {isEmailConfirmed: true});
-        await this.em.nativeDelete(EmailConfirmationToken, {id: tokenRecord.id});
-        return tokenRecord;
-    }
-
-    async changeUserEmail(user: User, newEmail: string) {
-        user.email = newEmail;
-        user.isEmailConfirmed = false;
-        await this.em.flush();
-    }
-
     async createUserProfile(user: User, languageLearning: Language) {
         const newProfile = this.em.create(Profile, {user: user, languagesLearning: [languageLearning]});
         await this.em.flush();
@@ -75,6 +53,8 @@ export class UserService {
         if (user && await passwordHasher.validate(password, user.password)) {
             const token = crypto.randomBytes(AUTH_TOKEN_LENGTH).toString("hex");
             await this.em.insert(Session, {user: user, token: token});
+            await this.em.nativeUpdate(User, {id: user.id}, {lastLogin: "now()"});
+
             return token;
         } else {
             throw new APIError(
@@ -102,18 +82,50 @@ export class UserService {
         if (session === null)
             return null;
         if (session.isExpired) {
-            await this.deleteSession(session);
+            await this.deleteLoginSession(session);
             return null;
         }
         return session;
     }
 
-    async deleteSession(session: Session) {
+    async deleteLoginSession(session: Session) {
         await this.em.nativeDelete(Session, {id: session.id});
     }
 
     async findUser(where: FilterQuery<User>, fields: EntityField<User>[] = ["id", "email", "username"]) {
         return await this.userRepo.findOne(where, {fields});
+    }
+
+    async generateEmailConfirmToken(tokenData: { user: User, email: string }) {
+        const emailConfirmToken = crypto.randomBytes(EMAIL_CONFIRM_TOKEN_LENGTH).toString("hex");
+
+        if (await this.em.count(User, {id: {$ne: tokenData.user.id}, email: tokenData.email}) > 0)
+            throw new ValidationAPIError({email: {message: "not unique"}});
+        await this.em.nativeDelete(EmailConfirmationToken, {user: tokenData.user});
+        await this.em.insert(EmailConfirmationToken, {
+            user: tokenData.user,
+            email: tokenData.email,
+            token: await expiringTokenHasher.hash(emailConfirmToken)
+        });
+        return emailConfirmToken;
+    }
+
+    async confirmUserEmail(token: string) {
+        const tokenHash = await expiringTokenHasher.hash(token);
+        const tokenRecord = await this.em.findOne(EmailConfirmationToken, {
+            token: tokenHash
+        }, {populate: ["isExpired"]});
+
+        if (tokenRecord == null)
+            return null;
+        if (tokenRecord.isExpired) {
+            await this.em.nativeDelete(EmailConfirmationToken, {id: tokenRecord.id});
+            return null;
+        }
+        await this.em.nativeUpdate(User, {emailConfirmToken: tokenRecord}, {isEmailConfirmed: true, email: tokenRecord.email});
+        await this.em.nativeDelete(EmailConfirmationToken, {id: tokenRecord.id});
+
+        return tokenRecord;
     }
 
     async generatePasswordResetToken(user: User) {
@@ -125,16 +137,6 @@ export class UserService {
             token: await expiringTokenHasher.hash(token)
         });
         return token;
-    }
-
-    async generateEmailConfirmToken(user: User) {
-        const emailConfirmToken = crypto.randomBytes(EMAIL_CONFIRM_TOKEN_LENGTH).toString("hex");
-        await this.em.nativeDelete(EmailConfirmationToken, {user});
-        await this.em.insert(EmailConfirmationToken, {
-            user: user,
-            token: await expiringTokenHasher.hash(emailConfirmToken)
-        });
-        return emailConfirmToken;
     }
 
     async verifyPasswordResetToken(token: string) {

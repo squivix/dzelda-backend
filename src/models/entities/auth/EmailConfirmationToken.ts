@@ -14,6 +14,9 @@ export class EmailConfirmationToken extends CustomBaseEntity {
     @OneToOne({entity: () => User, owner: true, nullable: false})
     user!: User;
 
+    @Property({type: types.string, length: 255})
+    email!: string;
+
     @Formula((alias: string) => `${alias}.expires_on < now()`, {
         type: types.boolean,
         lazy: false

@@ -11,7 +11,14 @@ import {orm} from "@/src/server.js";
 import {Lesson} from "@/src/models/entities/Lesson.js";
 import {Course} from "@/src/models/entities/Course.js";
 import {InjectOptions} from "light-my-request";
-import {buildQueryString, createComparator, fetchRequest, fetchWithFiles, mockValidateFileFields, readSampleFile} from "@/tests/integration/utils.js";
+import {
+    buildQueryString,
+    createComparator,
+    fetchRequest,
+    fetchWithFiles,
+    mockValidateFileFields,
+    readSampleFile
+} from "@/tests/integration/utils.js";
 import {lessonSerializer} from "@/src/presentation/response/serializers/entities/LessonSerializer.js";
 import {faker} from "@faker-js/faker";
 import {randomCase, randomEnum, randomEnums} from "@/tests/utils.js";
@@ -773,7 +780,7 @@ describe("POST lessons/", () => {
     });
     test<LocalTestContext>("If user email is not confirmed return 403", async (context) => {
         const user = await context.userFactory.createOne({isEmailConfirmed: false, profile: null});
-        const session = await context.sessionFactory.createOne({user})
+        const session = await context.sessionFactory.createOne({user});
         const course = await context.courseFactory.createOne({language: await context.languageFactory.createOne()});
         const newLesson = context.lessonFactory.makeOne({course: course});
 
@@ -789,7 +796,7 @@ describe("POST lessons/", () => {
     });
     test<LocalTestContext>("If user has no profile return 403", async (context) => {
         const user = await context.userFactory.createOne({profile: null});
-        const session = await context.sessionFactory.createOne({user})
+        const session = await context.sessionFactory.createOne({user});
         const course = await context.courseFactory.createOne({language: await context.languageFactory.createOne()});
         const newLesson = context.lessonFactory.makeOne({course: course});
 
@@ -1303,7 +1310,7 @@ describe("PUT lessons/:lessonId/", () => {
                 expect(lessonVocabs.map(v => v.text)).toEqual(expect.arrayContaining(lessonWordsText));
                 expect(lessonVocabMappings.length).toEqual(lessonWordsText.length);
             });
-        })
+        });
     });
     test<LocalTestContext>("If user is not logged in return 401", async (context) => {
         const author = await context.userFactory.createOne();
@@ -1325,7 +1332,7 @@ describe("PUT lessons/:lessonId/", () => {
     });
     test<LocalTestContext>("If user email is not confirmed return 403", async (context) => {
         const user = await context.userFactory.createOne({isEmailConfirmed: false, profile: null});
-        const session = await context.sessionFactory.createOne({user})
+        const session = await context.sessionFactory.createOne({user});
         const author = await context.userFactory.createOne();
         const language = await context.languageFactory.createOne();
         const course = await context.courseFactory.createOne({addedBy: author.profile, language: language, lessons: []});
@@ -1345,7 +1352,7 @@ describe("PUT lessons/:lessonId/", () => {
     });
     test<LocalTestContext>("If user has no profile return 403", async (context) => {
         const user = await context.userFactory.createOne({profile: null});
-        const session = await context.sessionFactory.createOne({user})
+        const session = await context.sessionFactory.createOne({user});
         const author = await context.userFactory.createOne();
         const language = await context.languageFactory.createOne();
         const course = await context.courseFactory.createOne({addedBy: author.profile, language: language, lessons: []});
@@ -2425,13 +2432,13 @@ describe("GET users/:username/lessons/", () => {
     });
     test<LocalTestContext>("If user email is not confirmed return 403", async (context) => {
         const user = await context.userFactory.createOne({isEmailConfirmed: false, profile: null});
-        const session = await context.sessionFactory.createOne({user})
+        const session = await context.sessionFactory.createOne({user});
         const response = await makeRequest("me", {}, session.token);
         expect(response.statusCode).to.equal(403);
     });
     test<LocalTestContext>("If user has no profile return 403", async (context) => {
         const user = await context.userFactory.createOne({profile: null});
-        const session = await context.sessionFactory.createOne({user})
+        const session = await context.sessionFactory.createOne({user});
         const response = await makeRequest("me", {}, session.token);
         expect(response.statusCode).to.equal(403);
     });
@@ -2489,8 +2496,7 @@ describe("POST users/:username/lessons/", () => {
                 learner: user.profile, lesson: expectedLesson
             }, {populate: ["lesson"]});
             expect(dbRecord).not.toBeNull();
-            if (dbRecord != null)
-                expect(lessonSerializer.serialize(dbRecord.lesson)).toEqual(lessonSerializer.serialize(expectedLesson));
+            expect(lessonSerializer.serialize(dbRecord!.lesson)).toEqual(lessonSerializer.serialize(expectedLesson));
         });
         test<LocalTestContext>("If username is belongs to the current user", async (context) => {
             const user = await context.userFactory.createOne();
@@ -2510,8 +2516,7 @@ describe("POST users/:username/lessons/", () => {
                 learner: user.profile, lesson: expectedLesson
             }, {populate: ["lesson"]});
             expect(dbRecord).not.toBeNull();
-            if (dbRecord != null)
-                expect(lessonSerializer.serialize(dbRecord.lesson)).toEqual(lessonSerializer.serialize(expectedLesson));
+            expect(lessonSerializer.serialize(dbRecord!.lesson)).toEqual(lessonSerializer.serialize(expectedLesson));
         });
     });
     test<LocalTestContext>("If user is already learning lesson return 200", async (context) => {
@@ -2531,8 +2536,7 @@ describe("POST users/:username/lessons/", () => {
             learner: user.profile, lesson: expectedLesson
         }, {populate: ["lesson"], refresh: true});
         expect(dbRecord).not.toBeNull();
-        if (dbRecord != null)
-            expect(lessonSerializer.serialize(dbRecord.lesson)).toEqual(lessonSerializer.serialize(expectedLesson));
+        expect(lessonSerializer.serialize(dbRecord!.lesson)).toEqual(lessonSerializer.serialize(expectedLesson));
     });
     describe("If required fields are missing return 400", function () {
         test<LocalTestContext>("If the lessonId is missing return 400", async (context) => {
@@ -2590,7 +2594,7 @@ describe("POST users/:username/lessons/", () => {
     });
     test<LocalTestContext>("If user email is not confirmed return 403", async (context) => {
         const user = await context.userFactory.createOne({isEmailConfirmed: false, profile: null});
-        const session = await context.sessionFactory.createOne({user})
+        const session = await context.sessionFactory.createOne({user});
         const language = await context.languageFactory.createOne();
         const course = await context.courseFactory.createOne({language, isPublic: true});
         const lesson = await context.lessonFactory.createOne({course});
@@ -2600,7 +2604,7 @@ describe("POST users/:username/lessons/", () => {
     });
     test<LocalTestContext>("If user has no profile return 403", async (context) => {
         const user = await context.userFactory.createOne({profile: null});
-        const session = await context.sessionFactory.createOne({user})
+        const session = await context.sessionFactory.createOne({user});
         const language = await context.languageFactory.createOne();
         const course = await context.courseFactory.createOne({language, isPublic: true});
         const lesson = await context.lessonFactory.createOne({course});

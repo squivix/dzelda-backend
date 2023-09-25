@@ -28,5 +28,5 @@ export class Session extends CustomBaseEntity {
     })
     isExpired!: boolean;
 
-    [OptionalProps]?: "expiresOn" | "isExpired";
+    [OptionalProps]?: "createdAt" | "expiresOn" | "isExpired";
 }

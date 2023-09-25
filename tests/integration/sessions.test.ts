@@ -31,7 +31,7 @@ describe("POST sessions/", () => {
             payload: body
         });
     };
-    test<LocalTestContext>("If all fields are valid a new session should be created return token", async (context) => {
+    test<LocalTestContext>("If all fields are valid a new session should be created, user last login updated, return token", async (context) => {
         const password = faker.random.alphaNumeric(20);
         const user = await context.userFactory.createOne({password: await passwordHasher.hash(password)});
 
@@ -39,12 +39,14 @@ describe("POST sessions/", () => {
             username: user.username,
             password: password,
         });
+        await context.em.refresh(user);
 
         expect(response.statusCode).to.equal(201);
         const session = await context.sessionRepo.findOne({user: user});
         expect(session).not.toBeNull();
-        if (session != null)
-            expect(response.json()).toEqual({authToken: session.token});
+        expect(response.json()).toEqual({authToken: session!.token});
+        expect(user.lastLogin).not.toBeNull();
+        expect(Math.abs(new Date().getTime() - user.lastLogin!.getTime())).toBeLessThan(3000);
     });
     describe("If fields is incorrect return 401", async () => {
         test<LocalTestContext>("If username is incorrect return 401", async (context) => {
