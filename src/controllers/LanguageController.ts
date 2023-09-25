@@ -34,7 +34,7 @@ class LanguageController {
         const pathParams = pathParamsValidator.parse(request.params);
         const userService = new UserService(request.em);
         const user = await userService.getUser(pathParams.username, request.user);
-        if (!user || (!user.profile?.isPublic && user !== request.user))
+        if (!user || (!user.profile.isPublic && user !== request.user))
             throw new NotFoundAPIError("User");
         const queryParamsValidator = z.object({
             sortBy: z.union([z.literal("name"), z.literal("learnersCount"), z.literal("lastOpened")]).optional().default("name"),

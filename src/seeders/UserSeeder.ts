@@ -53,12 +53,10 @@ export class UserSeeder extends Seeder {
                 accountCreatedAt: userData.accountCreatedAt,
                 lastLogin: userData.lastLogin
             });
-            if (userData.profile !== null) {
-                userData.profile.languagesLearning!.forEach(language => em.create(MapLearnerLanguage, {
-                    learner: user.profile!.id,
-                    language: language
-                }));
-            }
+            userData.profile.languagesLearning!.forEach(language => em.create(MapLearnerLanguage, {
+                learner: user.profile.id,
+                language: language
+            }));
             return user;
         });
         await em.persistAndFlush(users);

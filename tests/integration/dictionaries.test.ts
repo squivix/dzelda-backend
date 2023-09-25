@@ -165,13 +165,7 @@ describe("GET users/:username/dictionaries/", function () {
         expect(response.statusCode).to.equal(401);
     });
     test<LocalTestContext>("If user email is not confirmed return 403", async (context) => {
-        const user = await context.userFactory.createOne({isEmailConfirmed: false, profile: null});
-        const session = await context.sessionFactory.createOne({user})
-        const response = await makeRequest("me", {}, session.token);
-        expect(response.statusCode).to.equal(403);
-    });
-    test<LocalTestContext>("If user has no profile return 403", async (context) => {
-        const user = await context.userFactory.createOne({profile: null});
+        const user = await context.userFactory.createOne({isEmailConfirmed: false});
         const session = await context.sessionFactory.createOne({user})
         const response = await makeRequest("me", {}, session.token);
         expect(response.statusCode).to.equal(403);

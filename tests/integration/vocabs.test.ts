@@ -186,8 +186,8 @@ describe("GET vocabs/", () => {
                 const learner2 = await context.userFactory.createOne();
                 const language = await context.languageFactory.createOne();
                 const expectedVocabs = [
-                    await context.vocabFactory.createOne({language, learners: [learner1.profile!]}),
-                    await context.vocabFactory.createOne({language, learners: [learner1.profile!, learner2.profile!]})
+                    await context.vocabFactory.createOne({language, learners: [learner1.profile]}),
+                    await context.vocabFactory.createOne({language, learners: [learner1.profile, learner2.profile]})
                 ];
 
                 const response = await makeRequest({sortBy: "learnersCount"});
@@ -442,20 +442,7 @@ describe("POST vocabs/", () => {
         expect(response.statusCode).toEqual(401);
     });
     test<LocalTestContext>("If user email is not confirmed return 403", async (context) => {
-        const user = await context.userFactory.createOne({isEmailConfirmed: false, profile: null});
-        const session = await context.sessionFactory.createOne({user: user});
-        const language = await context.languageFactory.createOne();
-        const newVocab = context.vocabFactory.makeOne({language: language});
-        const response = await makeRequest({
-            languageCode: language.code,
-            text: newVocab.text,
-            isPhrase: newVocab.isPhrase
-        }, session.token);
-
-        expect(response.statusCode).toEqual(403);
-    });
-    test<LocalTestContext>("If user has no profile return 403", async (context) => {
-        const user = await context.userFactory.createOne({profile: null});
+        const user = await context.userFactory.createOne({isEmailConfirmed: false});
         const session = await context.sessionFactory.createOne({user: user});
         const language = await context.languageFactory.createOne();
         const newVocab = context.vocabFactory.makeOne({language: language});
@@ -645,7 +632,7 @@ describe("GET users/:username/vocabs/", () => {
             expectedVocabs.sort(defaultSortComparator);
             const expectedMappings = [];
             for (let vocab of expectedVocabs)
-                expectedMappings.push(context.em.create(MapLearnerVocab, {learner: user.profile!, vocab}));
+                expectedMappings.push(context.em.create(MapLearnerVocab, {learner: user.profile, vocab}));
             await context.em.flush();
             const recordsCount = expectedMappings.length;
 
@@ -669,7 +656,7 @@ describe("GET users/:username/vocabs/", () => {
             expectedVocabs.sort(defaultSortComparator);
             const expectedMappings = [];
             for (let vocab of expectedVocabs)
-                expectedMappings.push(context.em.create(MapLearnerVocab, {learner: user.profile!, vocab}));
+                expectedMappings.push(context.em.create(MapLearnerVocab, {learner: user.profile, vocab}));
             await context.em.flush();
             const recordsCount = expectedMappings.length;
 
@@ -697,7 +684,7 @@ describe("GET users/:username/vocabs/", () => {
             expectedVocabs.sort(defaultSortComparator);
             const expectedMappings = [];
             for (let vocab of expectedVocabs)
-                expectedMappings.push(context.em.create(MapLearnerVocab, {learner: user.profile!, vocab}));
+                expectedMappings.push(context.em.create(MapLearnerVocab, {learner: user.profile, vocab}));
             await context.em.flush();
             const recordsCount = expectedMappings.length;
 
@@ -743,11 +730,11 @@ describe("GET users/:username/vocabs/", () => {
             const level = randomEnum(VocabLevel);
             const expectedVocabs = await context.vocabFactory.create(5, {language});
             for (let vocab of await context.vocabFactory.create(5, {language}))
-                context.em.create(MapLearnerVocab, {learner: user.profile!, vocab, level: randomEnum(VocabLevel, [level])});
+                context.em.create(MapLearnerVocab, {learner: user.profile, vocab, level: randomEnum(VocabLevel, [level])});
             expectedVocabs.sort(defaultSortComparator);
             const expectedMappings = [];
             for (let vocab of expectedVocabs)
-                expectedMappings.push(context.em.create(MapLearnerVocab, {learner: user.profile!, vocab, level}));
+                expectedMappings.push(context.em.create(MapLearnerVocab, {learner: user.profile, vocab, level}));
             await context.em.flush();
             const recordsCount = expectedMappings.length;
             const response = await makeRequest("me", {level: level}, session.token);
@@ -767,11 +754,11 @@ describe("GET users/:username/vocabs/", () => {
             const levels = randomEnums(2, VocabLevel);
             const expectedVocabs = await context.vocabFactory.create(1, {language});
             for (let vocab of await context.vocabFactory.create(5, {language}))
-                context.em.create(MapLearnerVocab, {learner: user.profile!, vocab, level: randomEnum(VocabLevel, levels)});
+                context.em.create(MapLearnerVocab, {learner: user.profile, vocab, level: randomEnum(VocabLevel, levels)});
             expectedVocabs.sort(defaultSortComparator);
             const expectedMappings: MapLearnerVocab[] = [];
             expectedVocabs.forEach(vocab => expectedMappings.push(context.em.create(MapLearnerVocab,
-                {learner: user.profile!, vocab, level: faker.helpers.arrayElement(levels)}
+                {learner: user.profile, vocab, level: faker.helpers.arrayElement(levels)}
             )));
 
             await context.em.flush();
@@ -806,7 +793,7 @@ describe("GET users/:username/vocabs/", () => {
             expectedVocabs.sort(defaultSortComparator);
             const expectedMappings = [];
             for (let vocab of expectedVocabs)
-                expectedMappings.push(context.em.create(MapLearnerVocab, {learner: user.profile!, vocab}));
+                expectedMappings.push(context.em.create(MapLearnerVocab, {learner: user.profile, vocab}));
             await context.em.flush();
             const recordsCount = expectedMappings.length;
 
@@ -857,7 +844,7 @@ describe("GET users/:username/vocabs/", () => {
                 await context.vocabFactory.createOne({language});
                 const expectedMappings = [];
                 for (let vocab of expectedVocabs)
-                    expectedMappings.push(context.em.create(MapLearnerVocab, {learner: user.profile!, vocab}));
+                    expectedMappings.push(context.em.create(MapLearnerVocab, {learner: user.profile, vocab}));
                 await context.em.flush();
                 const recordsCount = expectedMappings.length;
 
@@ -879,13 +866,13 @@ describe("GET users/:username/vocabs/", () => {
                 const session = await context.sessionFactory.createOne({user: user});
                 const language = await context.languageFactory.createOne();
                 const expectedVocabs = [
-                    await context.vocabFactory.createOne({language, learners: [user1.profile!]}),
-                    await context.vocabFactory.createOne({language, learners: [user1.profile!, user2.profile!]})
+                    await context.vocabFactory.createOne({language, learners: [user1.profile]}),
+                    await context.vocabFactory.createOne({language, learners: [user1.profile, user2.profile]})
                 ];
                 await context.vocabFactory.createOne({language});
                 const expectedMappings = [];
                 for (let vocab of expectedVocabs)
-                    expectedMappings.push(context.em.create(MapLearnerVocab, {learner: user.profile!, vocab}));
+                    expectedMappings.push(context.em.create(MapLearnerVocab, {learner: user.profile, vocab}));
                 await context.em.flush();
                 const recordsCount = expectedMappings.length;
 
@@ -915,7 +902,7 @@ describe("GET users/:username/vocabs/", () => {
                 await context.vocabFactory.createOne({language});
                 const expectedMappings = [];
                 for (let vocab of expectedVocabs)
-                    expectedMappings.push(context.em.create(MapLearnerVocab, {learner: user.profile!, vocab}));
+                    expectedMappings.push(context.em.create(MapLearnerVocab, {learner: user.profile, vocab}));
                 await context.em.flush();
                 const recordsCount = expectedMappings.length;
 
@@ -948,7 +935,7 @@ describe("GET users/:username/vocabs/", () => {
                 await context.vocabFactory.createOne({language});
                 const expectedMappings = [];
                 for (let vocab of expectedVocabs)
-                    expectedMappings.push(context.em.create(MapLearnerVocab, {learner: user.profile!, vocab}));
+                    expectedMappings.push(context.em.create(MapLearnerVocab, {learner: user.profile, vocab}));
                 await context.em.flush();
                 const recordsCount = expectedMappings.length;
 
@@ -973,7 +960,7 @@ describe("GET users/:username/vocabs/", () => {
                 await context.vocabFactory.createOne({language});
                 const expectedMappings = [];
                 for (let vocab of expectedVocabs)
-                    expectedMappings.push(context.em.create(MapLearnerVocab, {learner: user.profile!, vocab}));
+                    expectedMappings.push(context.em.create(MapLearnerVocab, {learner: user.profile, vocab}));
                 await context.em.flush();
                 const recordsCount = expectedMappings.length;
 
@@ -1006,7 +993,7 @@ describe("GET users/:username/vocabs/", () => {
                 expectedVocabs.sort(defaultSortComparator);
                 const allMappings = [];
                 for (let vocab of expectedVocabs)
-                    allMappings.push(context.em.create(MapLearnerVocab, {learner: user.profile!, vocab}));
+                    allMappings.push(context.em.create(MapLearnerVocab, {learner: user.profile, vocab}));
                 await context.em.flush();
                 const recordsCount = allMappings.length;
                 const page = 1, pageSize = 3;
@@ -1030,7 +1017,7 @@ describe("GET users/:username/vocabs/", () => {
                 expectedVocabs.sort(defaultSortComparator);
                 const allMappings = [];
                 for (let vocab of expectedVocabs)
-                    allMappings.push(context.em.create(MapLearnerVocab, {learner: user.profile!, vocab}));
+                    allMappings.push(context.em.create(MapLearnerVocab, {learner: user.profile, vocab}));
                 await context.em.flush();
                 const recordsCount = allMappings.length;
                 await context.vocabFactory.create(10, {language});
@@ -1056,7 +1043,7 @@ describe("GET users/:username/vocabs/", () => {
                 expectedVocabs.sort(defaultSortComparator);
                 const allMappings = [];
                 for (let vocab of expectedVocabs)
-                    allMappings.push(context.em.create(MapLearnerVocab, {learner: user.profile!, vocab}));
+                    allMappings.push(context.em.create(MapLearnerVocab, {learner: user.profile, vocab}));
                 await context.em.flush();
                 const recordsCount = allMappings.length;
                 const pageSize = 3;
@@ -1082,7 +1069,7 @@ describe("GET users/:username/vocabs/", () => {
                 expectedVocabs.sort(defaultSortComparator);
                 const expectedMappings = [];
                 for (let vocab of expectedVocabs)
-                    expectedMappings.push(context.em.create(MapLearnerVocab, {learner: user.profile!, vocab}));
+                    expectedMappings.push(context.em.create(MapLearnerVocab, {learner: user.profile, vocab}));
                 await context.em.flush();
                 const recordsCount = expectedMappings.length;
                 const pageSize = 3;
@@ -1125,7 +1112,7 @@ describe("GET users/:username/vocabs/", () => {
                 expectedVocabs.sort(defaultSortComparator);
                 const allMappings = [];
                 for (let vocab of expectedVocabs)
-                    allMappings.push(context.em.create(MapLearnerVocab, {learner: user.profile!, vocab}));
+                    allMappings.push(context.em.create(MapLearnerVocab, {learner: user.profile, vocab}));
                 await context.em.flush();
                 const recordsCount = allMappings.length;
                 const page = 1, pageSize = 10;
@@ -1171,13 +1158,7 @@ describe("GET users/:username/vocabs/", () => {
         expect(response.statusCode).to.equal(401);
     });
     test<LocalTestContext>("If user email is not confirmed return 403", async (context) => {
-        const user = await context.userFactory.createOne({isEmailConfirmed: false, profile: null});
-        const session = await context.sessionFactory.createOne({user: user});
-        const response = await makeRequest("me", {}, session.token);
-        expect(response.statusCode).to.equal(403);
-    });
-    test<LocalTestContext>("If user has no profile return 403", async (context) => {
-        const user = await context.userFactory.createOne({profile: null});
+        const user = await context.userFactory.createOne({isEmailConfirmed: false});
         const session = await context.sessionFactory.createOne({user: user});
         const response = await makeRequest("me", {}, session.token);
         expect(response.statusCode).to.equal(403);
@@ -1201,7 +1182,7 @@ describe("POST users/:username/vocabs/", () => {
             const session = await context.sessionFactory.createOne({user});
             const language = await context.languageFactory.createOne({learners: user.profile});
             const vocab = await context.vocabFactory.createOne({language});
-            const expectedMapping = context.em.create(MapLearnerVocab, {learner: user.profile!, vocab}, {persist: false});
+            const expectedMapping = context.em.create(MapLearnerVocab, {learner: user.profile, vocab}, {persist: false});
 
             const response = await makeRequest("me", {vocabId: vocab.id}, session.token);
 
@@ -1216,7 +1197,7 @@ describe("POST users/:username/vocabs/", () => {
             const session = await context.sessionFactory.createOne({user});
             const language = await context.languageFactory.createOne({learners: user.profile});
             const vocab = await context.vocabFactory.createOne({language});
-            const expectedMapping = context.em.create(MapLearnerVocab, {learner: user.profile!, vocab}, {persist: false});
+            const expectedMapping = context.em.create(MapLearnerVocab, {learner: user.profile, vocab}, {persist: false});
 
             const response = await makeRequest(user.username, {vocabId: vocab.id}, session.token);
 
@@ -1232,7 +1213,7 @@ describe("POST users/:username/vocabs/", () => {
         const session = await context.sessionFactory.createOne({user});
         const language = await context.languageFactory.createOne({learners: user.profile});
         const vocab = await context.vocabFactory.createOne({language});
-        const mapping = context.em.create(MapLearnerVocab, {learner: user.profile!, vocab});
+        const mapping = context.em.create(MapLearnerVocab, {learner: user.profile, vocab});
         await context.em.flush();
 
         const response = await makeRequest("me", {vocabId: vocab.id}, session.token);
@@ -1286,16 +1267,7 @@ describe("POST users/:username/vocabs/", () => {
         expect(response.statusCode).to.equal(401);
     });
     test<LocalTestContext>("If user email is not confirmed return 403", async (context) => {
-        const user = await context.userFactory.createOne({isEmailConfirmed: false, profile: null});
-        const session = await context.sessionFactory.createOne({user: user});
-        const language = await context.languageFactory.createOne({learners: user.profile});
-        const vocab = await context.vocabFactory.createOne({language});
-
-        const response = await makeRequest("me", {vocabId: vocab.id}, session.token);
-        expect(response.statusCode).to.equal(403);
-    });
-    test<LocalTestContext>("If user has no profile return 403", async (context) => {
-        const user = await context.userFactory.createOne({profile: null});
+        const user = await context.userFactory.createOne({isEmailConfirmed: false});
         const session = await context.sessionFactory.createOne({user: user});
         const language = await context.languageFactory.createOne({learners: user.profile});
         const vocab = await context.vocabFactory.createOne({language});
@@ -1351,7 +1323,7 @@ describe("GET users/:username/vocabs/:vocabId/", () => {
             const session = await context.sessionFactory.createOne({user});
             const language = await context.languageFactory.createOne({learners: user.profile});
             const vocab = await context.vocabFactory.createOne({language});
-            const expectedMapping = context.em.create(MapLearnerVocab, {vocab, learner: user.profile!});
+            const expectedMapping = context.em.create(MapLearnerVocab, {vocab, learner: user.profile});
             await context.em.flush();
 
             const response = await makeRequest("me", vocab.id, session.token);
@@ -1364,7 +1336,7 @@ describe("GET users/:username/vocabs/:vocabId/", () => {
             const session = await context.sessionFactory.createOne({user});
             const language = await context.languageFactory.createOne({learners: user.profile});
             const vocab = await context.vocabFactory.createOne({language});
-            const expectedMapping = context.em.create(MapLearnerVocab, {vocab, learner: user.profile!});
+            const expectedMapping = context.em.create(MapLearnerVocab, {vocab, learner: user.profile});
             await context.em.flush();
 
             const response = await makeRequest(user.username, vocab.id, session.token);
@@ -1401,17 +1373,7 @@ describe("GET users/:username/vocabs/:vocabId/", () => {
         expect(response.statusCode).to.equal(401);
     });
     test<LocalTestContext>("If user email is not confirmed return 403", async (context) => {
-        const user = await context.userFactory.createOne({isEmailConfirmed: false, profile: null});
-        const session = await context.sessionFactory.createOne({user: user});
-        const language = await context.languageFactory.createOne({learners: user.profile});
-        const vocab = await context.vocabFactory.createOne({language, learners: user.profile});
-
-        const response = await makeRequest("me", vocab.id, session.token);
-
-        expect(response.statusCode).to.equal(403);
-    });
-    test<LocalTestContext>("If user has no profile return 403", async (context) => {
-        const user = await context.userFactory.createOne({profile: null});
+        const user = await context.userFactory.createOne({isEmailConfirmed: false});
         const session = await context.sessionFactory.createOne({user: user});
         const language = await context.languageFactory.createOne({learners: user.profile});
         const vocab = await context.vocabFactory.createOne({language, learners: user.profile});
@@ -1474,7 +1436,7 @@ describe("PATCH users/:username/vocabs/:vocabId/", () => {
             const language = await context.languageFactory.createOne({learners: user.profile});
             const vocab = await context.vocabFactory.createOne({language, learners: user.profile});
             const updatedMapping = context.em.create(MapLearnerVocab,
-                {learner: user.profile!, vocab, level: VocabLevel.LEVEL_3, notes: "Vocab note"}, {persist: false});
+                {learner: user.profile, vocab, level: VocabLevel.LEVEL_3, notes: "Vocab note"}, {persist: false});
 
             const response = await makeRequest("me", vocab.id, {
                 level: updatedMapping.level,
@@ -1492,7 +1454,7 @@ describe("PATCH users/:username/vocabs/:vocabId/", () => {
             const language = await context.languageFactory.createOne({learners: user.profile});
             const vocab = await context.vocabFactory.createOne({language, learners: user.profile});
             const updatedMapping = context.em.create(MapLearnerVocab,
-                {learner: user.profile!, vocab, level: VocabLevel.LEVEL_3, notes: "Vocab note"}, {persist: false});
+                {learner: user.profile, vocab, level: VocabLevel.LEVEL_3, notes: "Vocab note"}, {persist: false});
 
             const response = await makeRequest(user.username, vocab.id, {
                 level: updatedMapping.level,
@@ -1511,14 +1473,14 @@ describe("PATCH users/:username/vocabs/:vocabId/", () => {
             const vocab = await context.vocabFactory.createOne({
                 language, learners: user.profile,
                 meanings: context.meaningFactory.makeDefinitions(3, {
-                    learners: [user.profile!],
+                    learners: [user.profile],
                     addedBy: user.profile,
                     language
                 }).sort(meaningSortComparator)
             });
 
             const updatedMapping = context.em.create(MapLearnerVocab,
-                {learner: user.profile!, vocab, level: VocabLevel.IGNORED, notes: ""}, {persist: false});
+                {learner: user.profile, vocab, level: VocabLevel.IGNORED, notes: ""}, {persist: false});
             updatedMapping.vocab.meanings.getItems().forEach(m => {
                 m.learners.set([]);
                 m.learnersCount = 0;
@@ -1589,17 +1551,7 @@ describe("PATCH users/:username/vocabs/:vocabId/", () => {
         expect(response.statusCode).to.equal(401);
     });
     test<LocalTestContext>("If user email is not confirmed return 403", async (context) => {
-        const user = await context.userFactory.createOne({isEmailConfirmed: false, profile: null});
-        const session = await context.sessionFactory.createOne({user: user});
-        const language = await context.languageFactory.createOne({learners: user.profile});
-        const vocab = await context.vocabFactory.createOne({language, learners: user.profile});
-
-        const response = await makeRequest("me", vocab.id, {level: VocabLevel.LEVEL_3}, session.token);
-
-        expect(response.statusCode).to.equal(403);
-    });
-    test<LocalTestContext>("If user has no profile return 403", async (context) => {
-        const user = await context.userFactory.createOne({profile: null});
+        const user = await context.userFactory.createOne({isEmailConfirmed: false});
         const session = await context.sessionFactory.createOne({user: user});
         const language = await context.languageFactory.createOne({learners: user.profile});
         const vocab = await context.vocabFactory.createOne({language, learners: user.profile});
@@ -1667,7 +1619,7 @@ describe("GET lessons/:lessonId/vocabs/", () => {
         const expectedExistingVocabs = await context.vocabFactory.create(3, {language, lessonsAppearingIn: lesson});
         const expectedExistingMappings = [];
         for (let vocab of expectedExistingVocabs)
-            expectedExistingMappings.push(context.em.create(MapLearnerVocab, {learner: user.profile!, vocab}));
+            expectedExistingMappings.push(context.em.create(MapLearnerVocab, {learner: user.profile, vocab}));
         await context.em.flush();
         const expectedLessonVocabs = [...expectedExistingMappings, ...expectedNewVocabs];
         await context.vocabFactory.create(10, {language});
@@ -1692,18 +1644,7 @@ describe("GET lessons/:lessonId/vocabs/", () => {
         expect(response.statusCode).to.equal(401);
     });
     test<LocalTestContext>("If user email is not confirmed return 403", async (context) => {
-        const user = await context.userFactory.createOne({isEmailConfirmed: false, profile: null});
-        const session = await context.sessionFactory.createOne({user: user});
-        const language = await context.languageFactory.createOne({learners: user.profile});
-        const course = await context.courseFactory.createOne({language});
-        const lesson = await context.lessonFactory.createOne({course});
-
-        const response = await makeRequest(lesson.id, session.token);
-
-        expect(response.statusCode).to.equal(403);
-    });
-    test<LocalTestContext>("If user has no profile return 403", async (context) => {
-        const user = await context.userFactory.createOne({profile: null});
+        const user = await context.userFactory.createOne({isEmailConfirmed: false});
         const session = await context.sessionFactory.createOne({user: user});
         const language = await context.languageFactory.createOne({learners: user.profile});
         const course = await context.courseFactory.createOne({language});
@@ -1742,7 +1683,7 @@ describe("GET lessons/:lessonId/vocabs/", () => {
         const expectedExistingVocabs = await context.vocabFactory.create(3, {language, lessonsAppearingIn: lesson});
         const expectedExistingMappings = [];
         for (let vocab of expectedExistingVocabs)
-            expectedExistingMappings.push(context.em.create(MapLearnerVocab, {learner: user.profile!, vocab}));
+            expectedExistingMappings.push(context.em.create(MapLearnerVocab, {learner: user.profile, vocab}));
         await context.em.flush();
         const expectedLessonVocabs = [...expectedExistingMappings, ...expectedNewVocabs];
         await context.vocabFactory.create(10, {language});

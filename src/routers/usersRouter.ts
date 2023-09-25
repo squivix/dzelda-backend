@@ -7,7 +7,6 @@ export const userRouter: FastifyPluginCallback = function (fastify, options, don
     fastify.post(`/users/`, userController.signUp);
     fastify.get(`/users/:username/`, userController.getUser);
     fastify.post(`/users/me/email/confirm/`, userController.confirmEmail);
-    fastify.post(`/users/me/profile/`, {preHandler: [requiresAuth, requiresEmailConfirmed], handler: userController.createProfile});
     fastify.post(`/users/me/password/reset/`, userController.resetPassword);
     fastify.put(`/users/me/password/`, {preHandler: [requiresAuth, requiresEmailConfirmed], handler: userController.changeUserPassword});
     fastify.post(`/sessions/`, userController.login);

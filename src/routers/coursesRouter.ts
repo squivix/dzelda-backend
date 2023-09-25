@@ -4,12 +4,11 @@ import {deleteFileOnFail, fileUploadMiddleware} from "@/src/middlewares/fileUplo
 import {courseImageValidator} from "@/src/validators/courseValidator.js";
 import {requiresAuth} from "@/src/middlewares/requiresAuth.js";
 import {requiresEmailConfirmed} from "@/src/middlewares/requiresEmailConfirmed.js";
-import {requiresProfile} from "@/src/middlewares/requiresProfile.js";
 
 export const coursesRouter: FastifyPluginCallback = function (fastify, options, done) {
     fastify.get(`/courses/`, CourseController.getCourses);
     fastify.post(`/courses/`, {
-        preHandler: [requiresAuth, requiresEmailConfirmed, requiresProfile,
+        preHandler: [requiresAuth, requiresEmailConfirmed,
             fileUploadMiddleware({"image": {path: "courses/images", validate: courseImageValidator}})],
         handler: CourseController.createCourse,
         onResponse: deleteFileOnFail
@@ -18,12 +17,12 @@ export const coursesRouter: FastifyPluginCallback = function (fastify, options, 
     fastify.get(`/courses/:courseId/`, CourseController.getCourse);
 
     fastify.put(`/courses/:courseId/`, {
-        preHandler: [requiresAuth, requiresEmailConfirmed, requiresProfile,
+        preHandler: [requiresAuth, requiresEmailConfirmed,
             fileUploadMiddleware({"image": {path: "courses/images", validate: courseImageValidator}})],
         handler: CourseController.updateCourse,
         onResponse: deleteFileOnFail
     });
 
-    fastify.get(`/users/:username/courses/`, {preHandler: [requiresAuth, requiresEmailConfirmed, requiresProfile], handler: CourseController.getUserCoursesLearning});
+    fastify.get(`/users/:username/courses/`, {preHandler: [requiresAuth, requiresEmailConfirmed], handler: CourseController.getUserCoursesLearning});
     done();
 };

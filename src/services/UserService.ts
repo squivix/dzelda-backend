@@ -30,21 +30,13 @@ export class UserService {
     }
 
     async createUser(username: string, email: string, password: string) {
-        const newUser = this.em.create(User, {
-            username: username,
-            email: email,
-            password: await passwordHasher.hash(password)
-        });
+        const newUser = new User(username, email, await passwordHasher.hash(password));
+        const newProfile = new Profile(newUser);
+        this.em.persist(newUser);
+        this.em.persist(newProfile);
         await this.em.flush();
 
         return newUser;
-    }
-
-    async createUserProfile(user: User, languageLearning: Language) {
-        const newProfile = this.em.create(Profile, {user: user, languagesLearning: [languageLearning]});
-        await this.em.flush();
-
-        return await this.em.refresh(newProfile, {populate: ["languagesLearning"]}) as Profile;
     }
 
     async authenticateUser(username: string, password: string) {

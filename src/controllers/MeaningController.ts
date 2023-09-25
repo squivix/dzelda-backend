@@ -52,7 +52,7 @@ class MeaningController {
         const pathParams = pathParamsValidator.parse(request.params);
         const userService = new UserService(request.em);
         const user = await userService.getUser(pathParams.username, request.user);
-        if (!user || (!user.profile!.isPublic && user !== request.user))
+        if (!user || (!user.profile.isPublic && user !== request.user))
             throw new NotFoundAPIError("User");
         if (user !== request.user)
             throw new ForbiddenAPIError();
@@ -85,7 +85,7 @@ class MeaningController {
         const pathParams = pathParamsValidator.parse(request.params);
         const userService = new UserService(request.em);
         const user = await userService.getUser(pathParams.username, request.user);
-        if (!user || (!user.profile!.isPublic && user !== request.user))
+        if (!user || (!user.profile.isPublic && user !== request.user))
             throw new NotFoundAPIError("User");
         if (user !== request.user)
             throw new ForbiddenAPIError();
@@ -97,7 +97,7 @@ class MeaningController {
         const meaning = await meaningService.getMeaning(body.meaningId);
         if (!meaning)
             throw new ValidationAPIError({meaning: {message: "Not found"}});
-        if (!(request.user as User).profile!.languagesLearning.contains(meaning.vocab.language))
+        if (!(request.user as User).profile.languagesLearning.contains(meaning.vocab.language))
             throw new ValidationAPIError({meaning: {message: "not in a language the user is learning"}});
 
         const existingMeaningMapping = await meaningService.getUserMeaning(meaning.id, user);
@@ -116,7 +116,7 @@ class MeaningController {
         const pathParams = pathParamsValidator.parse(request.params);
         const userService = new UserService(request.em);
         const user = await userService.getUser(pathParams.username, request.user);
-        if (!user || (!user.profile!.isPublic && user !== request.user))
+        if (!user || (!user.profile.isPublic && user !== request.user))
             throw new NotFoundAPIError("User");
         if (user !== request.user)
             throw new ForbiddenAPIError();

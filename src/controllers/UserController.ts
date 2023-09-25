@@ -119,34 +119,13 @@ class UserController {
         reply.status(204);
     }
 
-    async createProfile(request: FastifyRequest, reply: FastifyReply) {
-        const bodyValidator = z.object({
-            languageLearning: languageCodeValidator,
-        }).strict();
-        const body = bodyValidator.parse(request.body);
-        const userService = new UserService(request.em);
-        const user = request.user as User;
-
-        if (user.profile) {
-            reply.status(200).send(profileSerializer.serialize(user.profile));  //profile already exists
-            return;
-        }
-
-        const languageService = new LanguageService(request.em);
-        const language = await languageService.findLanguage({code: body.languageLearning});
-        if (!language)
-            throw new NotFoundAPIError("Language");
-        const newProfile = await userService.createUserProfile(user, language);
-        reply.status(201).send(profileSerializer.serialize(newProfile));
-    }
-
     async getUser(request: FastifyRequest, reply: FastifyReply) {
         const pathParamsValidator = z.object({username: usernameValidator.or(z.literal("me")),});
         const pathParams = pathParamsValidator.parse(request.params);
         const userService = new UserService(request.em);
         const user = await userService.getUser(pathParams.username, request.user);
         // private user don't exist to the outside
-        if (!user || (!user.profile?.isPublic && user !== request.user))
+        if (!user || (!user.profile.isPublic && user !== request.user))
             throw new NotFoundAPIError("User");
         reply.status(200).send(userSerializer.serialize(user, {ignore: request.user !== user ? ["email", "isEmailConfirmed"] : []}));
     }

@@ -133,7 +133,7 @@ class CourseController {
         const pathParams = pathParamsValidator.parse(request.params);
         const userService = new UserService(request.em);
         const user = await userService.getUser(pathParams.username, request.user);
-        if (!user || (!user.profile!.isPublic && user !== request.user))
+        if (!user || (!user.profile.isPublic && user !== request.user))
             throw new NotFoundAPIError("User");
         if (user !== request.user)
             throw new ForbiddenAPIError();

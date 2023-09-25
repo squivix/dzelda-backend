@@ -20,7 +20,6 @@ import {expiringTokenHasher} from "@/src/utils/security/ExpiringTokenHasher.js";
 import {passwordHasher} from "@/src/utils/security/PasswordHasher.js";
 import {Session} from "@/src/models/entities/auth/Session.js";
 import {EmailConfirmationToken} from "@/src/models/entities/auth/EmailConfirmationToken.js";
-import {profileSerializer} from "@/src/presentation/response/serializers/entities/ProfileSerializer.js";
 
 interface LocalTestContext extends TestContext {
     languageRepo: EntityRepository<Language>;
@@ -52,7 +51,7 @@ describe("POST users/", function () {
         });
     };
     const confirmUrlRegex = new RegExp(`https://${DOMAIN_NAME}/confirm-email\\?token=.*`);
-    test<LocalTestContext>("If all fields are valid a new user should be registered without profile, and a confirmation link should be sent to their email and return 201", async (context) => {
+    test<LocalTestContext>("If all fields are valid a new user should be registered with profile, and a confirmation link should be sent to their email and return 201", async (context) => {
         const newUserData = context.userFactory.makeOne({isEmailConfirmed: false});
         const sendMailSpy = vi.spyOn(emailTransporter, "sendMail");
 
@@ -64,9 +63,9 @@ describe("POST users/", function () {
         expect(response.statusCode).to.equal(201);
         expect(response.json()).toEqual(userSerializer.serialize(newUserData, {ignore: ["profile"]}));
 
-        const newUser = await context.em.findOne(User, {username: newUserData.username});
+        const newUser = await context.em.findOne(User, {username: newUserData.username}, {populate: ["profile"]});
         expect(newUser).not.toBeNull();
-        expect(newUser!.profile).toBeNull();
+        expect(newUser!.profile).not.toBeNull();
         expect(newUser!.isEmailConfirmed).to.equal(false);
         const emailConfirmToken = await context.em.findOne(EmailConfirmationToken, {user: newUser});
         expect(emailConfirmToken).not.toBeNull();
@@ -361,60 +360,6 @@ describe("POST users/me/email/confirm", function () {
     });
 });
 
-/**{@link UserController#createProfile}*/
-describe("POST users/me/profiles/", function () {
-    const makeRequest = async (body: object, authToken?: string) => {
-        return await fetchRequest({
-            method: "POST",
-            url: `users/me/profile/`,
-            payload: body
-        }, authToken);
-    };
-    test<LocalTestContext>("If user is logged in, email is confirmed, and profile does not exist create new profile, add language to it and return 201", async (context) => {
-        const user = await context.userFactory.createOne({profile: null});
-        const session = await context.sessionFactory.createOne({user});
-        const language = await context.languageFactory.createOne();
-
-        const response = await makeRequest({languageLearning: language.code}, session.token);
-        const newProfile = await context.em.findOne(Profile, {user}, {populate: ["languagesLearning"], refresh: true});
-
-        expect(response.statusCode).to.equal(201);
-        expect(response.json()).toEqual(profileSerializer.serialize(newProfile!));
-        expect(newProfile).not.toBeNull();
-        expect(newProfile!.languagesLearning.getItems()).toEqual([language]);
-    });
-    test<LocalTestContext>("If profile already exists return 200", async (context) => {
-        const user = await context.userFactory.createOne();
-        const session = await context.sessionFactory.createOne({user});
-        const language = await context.languageFactory.createOne();
-
-        const response = await makeRequest({languageLearning: language.code}, session.token);
-        const profile = await context.em.findOne(Profile, {user}, {populate: ["languagesLearning"], refresh: true});
-
-        expect(response.statusCode).to.equal(200);
-        expect(response.json()).toEqual(profileSerializer.serialize(profile!));
-    });
-    test<LocalTestContext>("If user is not logged in return 401", async (context) => {
-        const user = await context.userFactory.createOne({profile: null});
-        const language = await context.languageFactory.createOne();
-
-        const response = await makeRequest({languageLearning: language.code});
-
-        expect(response.statusCode).to.equal(401);
-    });
-    test<LocalTestContext>("If user email is not confirmed return 403", async (context) => {
-        const user = await context.userFactory.createOne({isEmailConfirmed: false, profile: null});
-        const session = await context.sessionFactory.createOne({user});
-        const language = await context.languageFactory.createOne();
-
-        const response = await makeRequest({languageLearning: language.code}, session.token);
-        const newProfile = await context.em.findOne(Profile, {user}, {populate: ["languagesLearning"], refresh: true});
-
-        expect(response.statusCode).to.equal(403);
-        expect(newProfile).toBeNull();
-    });
-});
-
 /**{@link UserController#requestEmailConfirmation}*/
 describe("POST email-confirm-tokens/", function () {
     const makeRequest = async (authToken?: string) => {
@@ -425,7 +370,7 @@ describe("POST email-confirm-tokens/", function () {
     };
     const confirmUrlRegex = new RegExp(`https://${DOMAIN_NAME}/confirm-email\\?token=.*`);
     test<LocalTestContext>("If user is logged in, email is not confirmed, create a token, store its hash in the db and send an email with the token, return 204", async (context) => {
-        const user = await context.userFactory.createOne({isEmailConfirmed: false, profile: null});
+        const user = await context.userFactory.createOne({isEmailConfirmed: false});
         const session = await context.sessionFactory.createOne({user});
 
         const sendMailSpy = vi.spyOn(emailTransporter, "sendMail");
@@ -448,7 +393,7 @@ describe("POST email-confirm-tokens/", function () {
         expect(await expiringTokenHasher.hash(sentToken)).toEqual(newlyCreatedToken!.token);
     });
     test<LocalTestContext>("If token already exists delete it, create a new  token, store its hash in the db and send an email with the token, return 204", async (context) => {
-        const user = await context.userFactory.createOne({isEmailConfirmed: false, profile: null});
+        const user = await context.userFactory.createOne({isEmailConfirmed: false});
         const session = await context.sessionFactory.createOne({user});
         const oldToken = context.em.create(EmailConfirmationToken, {
             user: user,
@@ -478,7 +423,7 @@ describe("POST email-confirm-tokens/", function () {
         expect(await expiringTokenHasher.hash(sentToken)).toEqual(newlyCreatedToken!.token);
     });
     test<LocalTestContext>("If email is already confirmed, do not create a token, do not send an email, return 400", async (context) => {
-        const user = await context.userFactory.createOne({isEmailConfirmed: true, profile: null});
+        const user = await context.userFactory.createOne({isEmailConfirmed: true});
         const session = await context.sessionFactory.createOne({user});
 
         const sendMailSpy = vi.spyOn(emailTransporter, "sendMail");
@@ -763,7 +708,7 @@ describe("PUT users/me/email/", function () {
         expect(response.statusCode).to.equal(401);
     });
     test<LocalTestContext>("If user email is not confirmed return 403", async (context) => {
-        const user = await context.userFactory.createOne({isEmailConfirmed: false, profile: null});
+        const user = await context.userFactory.createOne({isEmailConfirmed: false});
         const session = await context.sessionFactory.createOne({user});
         const newEmail = context.userFactory.makeOne().email;
 
