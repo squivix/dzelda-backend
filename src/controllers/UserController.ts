@@ -68,13 +68,15 @@ class UserController {
         if (user.isEmailConfirmed)
             throw new APIError(StatusCodes.BAD_REQUEST, "Email is already confirmed");
 
+        const email = body.email ?? user.email;
+        await userService.changeUserEmail(user, email);
         const token = await userService.generateEmailConfirmToken({
             user: user,
-            email: body.email ?? user.email
+            email: email
         });
         await emailTransporter.sendMail({
             from: `Dzelda <security@${DOMAIN_NAME}>`,
-            to: user.email,
+            to: email,
             subject: "Confirm Email",
             text: `Confirm Email Here: https://${DOMAIN_NAME}/confirm-email?token=${token}`,
             html: `<b>Confirm Email Here: https://${DOMAIN_NAME}/confirm-email?token=${token}</b>`,

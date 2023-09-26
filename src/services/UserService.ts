@@ -174,4 +174,12 @@ export class UserService {
             );
         }
     }
+
+    async changeUserEmail(user: User, newEmail: string) {
+        if (user.email == newEmail)
+            return;
+        user.email = newEmail;
+        user.isEmailConfirmed = false;
+        await this.em.flush();
+    }
 }

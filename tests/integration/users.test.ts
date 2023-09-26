@@ -362,35 +362,66 @@ describe("POST users/me/email/confirm", function () {
 
 /**{@link UserController#requestEmailConfirmation}*/
 describe("POST email-confirm-tokens/", function () {
-    const makeRequest = async (authToken?: string) => {
+    const makeRequest = async (body: object, authToken?: string) => {
         return await fetchRequest({
             method: "POST",
             url: `email-confirm-tokens/`,
+            payload: body
         }, authToken);
     };
     const confirmUrlRegex = new RegExp(`https://${DOMAIN_NAME}/confirm-email\\?token=.*`);
-    test<LocalTestContext>("If user is logged in, email is not confirmed, create a token, store its hash in the db and send an email with the token, return 204", async (context) => {
-        const user = await context.userFactory.createOne({isEmailConfirmed: false});
-        const session = await context.sessionFactory.createOne({user});
 
-        const sendMailSpy = vi.spyOn(emailTransporter, "sendMail");
-        const response = await makeRequest(session.token);
+    describe("If user is logged in, email is not confirmed, create a token, store its hash in the db and send an email with the token, return 204", async () => {
+        test<LocalTestContext>("If new email is not provided, use current unconfirmed user email", async (context) => {
+            const user = await context.userFactory.createOne({isEmailConfirmed: false});
+            const session = await context.sessionFactory.createOne({user});
 
-        const newlyCreatedToken = await context.em.findOne(EmailConfirmationToken, {user});
-        expect(response.statusCode).to.equal(204);
-        expect(newlyCreatedToken).not.toBeNull();
-        expect(sendMailSpy).toHaveBeenCalledOnce();
-        expect(sendMailSpy).toHaveBeenCalledWith(expect.objectContaining({
-            text: expect.stringMatching(confirmUrlRegex),
-            to: user.email
-        }));
+            const sendMailSpy = vi.spyOn(emailTransporter, "sendMail");
+            const response = await makeRequest({}, session.token);
 
-        const emailText = sendMailSpy.mock.calls[0][0].text as string;
-        const confirmUrl = emailText.substring(emailText.search(confirmUrlRegex));
-        expect(sendMailSpy.mock.calls[0][0].html).toMatch(confirmUrl);
-        const sentToken = parseUrlQueryString(confirmUrl)["token"];
-        expect(sentToken).toBeDefined();
-        expect(await expiringTokenHasher.hash(sentToken)).toEqual(newlyCreatedToken!.token);
+            const newlyCreatedToken = await context.em.findOne(EmailConfirmationToken, {user});
+            expect(response.statusCode).to.equal(204);
+            expect(newlyCreatedToken).not.toBeNull();
+            expect(sendMailSpy).toHaveBeenCalledOnce();
+            expect(sendMailSpy).toHaveBeenCalledWith(expect.objectContaining({
+                text: expect.stringMatching(confirmUrlRegex),
+                to: user.email
+            }));
+
+            const emailText = sendMailSpy.mock.calls[0][0].text as string;
+            const confirmUrl = emailText.substring(emailText.search(confirmUrlRegex));
+            expect(sendMailSpy.mock.calls[0][0].html).toMatch(confirmUrl);
+            const sentToken = parseUrlQueryString(confirmUrl)["token"];
+            expect(sentToken).toBeDefined();
+            expect(await expiringTokenHasher.hash(sentToken)).toEqual(newlyCreatedToken!.token);
+        });
+        test<LocalTestContext>("If new email is provided, use new email, update unconfirmed user email to new email", async (context) => {
+            const user = await context.userFactory.createOne({isEmailConfirmed: false});
+            const newEmail = context.userFactory.makeDefinition().email;
+            const session = await context.sessionFactory.createOne({user});
+
+            const sendMailSpy = vi.spyOn(emailTransporter, "sendMail");
+            const response = await makeRequest({email: newEmail}, session.token);
+            await context.em.refresh(user);
+
+            const newlyCreatedToken = await context.em.findOne(EmailConfirmationToken, {user});
+            expect(response.statusCode).to.equal(204);
+            expect(user.email).toEqual(newEmail);
+            expect(user.isEmailConfirmed).toEqual(false);
+            expect(newlyCreatedToken).not.toBeNull();
+            expect(sendMailSpy).toHaveBeenCalledOnce();
+            expect(sendMailSpy).toHaveBeenCalledWith(expect.objectContaining({
+                text: expect.stringMatching(confirmUrlRegex),
+                to: user.email
+            }));
+
+            const emailText = sendMailSpy.mock.calls[0][0].text as string;
+            const confirmUrl = emailText.substring(emailText.search(confirmUrlRegex));
+            expect(sendMailSpy.mock.calls[0][0].html).toMatch(confirmUrl);
+            const sentToken = parseUrlQueryString(confirmUrl)["token"];
+            expect(sentToken).toBeDefined();
+            expect(await expiringTokenHasher.hash(sentToken)).toEqual(newlyCreatedToken!.token);
+        });
     });
     test<LocalTestContext>("If token already exists delete it, create a new  token, store its hash in the db and send an email with the token, return 204", async (context) => {
         const user = await context.userFactory.createOne({isEmailConfirmed: false});
@@ -403,7 +434,7 @@ describe("POST email-confirm-tokens/", function () {
         await context.em.flush();
 
         const sendMailSpy = vi.spyOn(emailTransporter, "sendMail");
-        const response = await makeRequest(session.token);
+        const response = await makeRequest({}, session.token);
 
         const newlyCreatedToken = await context.em.findOne(EmailConfirmationToken, {user});
         expect(response.statusCode).to.equal(204);
@@ -427,14 +458,51 @@ describe("POST email-confirm-tokens/", function () {
         const session = await context.sessionFactory.createOne({user});
 
         const sendMailSpy = vi.spyOn(emailTransporter, "sendMail");
-        const response = await makeRequest(session.token);
+        const response = await makeRequest({}, session.token);
 
         expect(response.statusCode).to.equal(400);
         expect(await context.em.findOne(EmailConfirmationToken, {user})).toBeNull();
         expect(sendMailSpy).not.toHaveBeenCalled();
     });
+    describe("If new email is invalid return 400", async (context) => {
+        test<LocalTestContext>("If email is not a valid email return 400", async (context) => {
+            const user = await context.userFactory.createOne({isEmailConfirmed: false});
+            const session = await context.sessionFactory.createOne({user});
+
+            const sendMailSpy = vi.spyOn(emailTransporter, "sendMail");
+            const response = await makeRequest({email: faker.random.alpha(8)}, session.token);
+
+            expect(response.statusCode).to.equal(400);
+            expect(await context.em.findOne(EmailConfirmationToken, {user})).toBeNull();
+            expect(sendMailSpy).not.toHaveBeenCalled();
+        });
+        test<LocalTestContext>("If email is longer than 255 characters return 400", async (context) => {
+            const user = await context.userFactory.createOne({isEmailConfirmed: false});
+            const session = await context.sessionFactory.createOne({user});
+
+            const sendMailSpy = vi.spyOn(emailTransporter, "sendMail");
+            const response = await makeRequest({email: faker.internet.email(faker.random.alpha(257))}, session.token);
+
+            expect(response.statusCode).to.equal(400);
+            expect(await context.em.findOne(EmailConfirmationToken, {user})).toBeNull();
+            expect(sendMailSpy).not.toHaveBeenCalled();
+        });
+        test<LocalTestContext>("If email is not unique return 400", async (context) => {
+            const user = await context.userFactory.createOne({isEmailConfirmed: false});
+            const otherUser = await context.userFactory.createOne();
+            const session = await context.sessionFactory.createOne({user});
+
+            const sendMailSpy = vi.spyOn(emailTransporter, "sendMail");
+            const response = await makeRequest({email: otherUser.email}, session.token);
+
+            expect(response.statusCode).to.equal(400);
+            expect(await context.em.findOne(EmailConfirmationToken, {user})).toBeNull();
+            expect(sendMailSpy).not.toHaveBeenCalled();
+        });
+    });
+
     test<LocalTestContext>("If user is not logged in return 401", async (context) => {
-        const response = await makeRequest();
+        const response = await makeRequest({});
 
         expect(response.statusCode).to.equal(401);
     });
@@ -716,21 +784,53 @@ describe("PUT users/me/email/", function () {
 
         expect(response.statusCode).to.equal(403);
     });
-    test<LocalTestContext>("If new email is invalid return 400", async (context) => {
-        const user = await context.userFactory.createOne();
-        const session = await context.sessionFactory.createOne({user});
-        const oldEmail = user.email;
-        const sendMailSpy = vi.spyOn(emailTransporter, "sendMail");
+    describe("If new email is invalid return 400", async (context) => {
+        test<LocalTestContext>("If email is not a valid email return 400", async (context) => {
+            const user = await context.userFactory.createOne();
+            const session = await context.sessionFactory.createOne({user});
+            const oldEmail = user.email;
+            const sendMailSpy = vi.spyOn(emailTransporter, "sendMail");
 
-        const response = await makeRequest({newEmail: faker.random.alpha(8)}, session.token);
+            const response = await makeRequest({newEmail: faker.random.alpha(8)}, session.token);
 
-        await context.em.refresh(user);
-        expect(response.statusCode).to.equal(400);
-        expect(user.email).to.equal(oldEmail);
-        expect(await context.em.findOne(EmailConfirmationToken, {user})).toBeNull();
-        expect(sendMailSpy).not.toHaveBeenCalled();
+            await context.em.refresh(user);
+            expect(response.statusCode).to.equal(400);
+            expect(user.email).to.equal(oldEmail);
+            expect(await context.em.findOne(EmailConfirmationToken, {user})).toBeNull();
+            expect(sendMailSpy).not.toHaveBeenCalled();
+        });
+        test<LocalTestContext>("If email is longer than 255 characters return 400", async (context) => {
+            const user = await context.userFactory.createOne();
+            const session = await context.sessionFactory.createOne({user});
+            const oldEmail = user.email;
+            const sendMailSpy = vi.spyOn(emailTransporter, "sendMail");
+
+            const response = await makeRequest({newEmail: faker.internet.email(faker.random.alpha(257))}, session.token);
+
+            await context.em.refresh(user);
+            expect(response.statusCode).to.equal(400);
+            expect(user.email).to.equal(oldEmail);
+            expect(await context.em.findOne(EmailConfirmationToken, {user})).toBeNull();
+            expect(sendMailSpy).not.toHaveBeenCalled();
+        });
+        test<LocalTestContext>("If email is not unique return 400", async (context) => {
+            const user = await context.userFactory.createOne();
+            const otherUser = await context.userFactory.createOne();
+            const session = await context.sessionFactory.createOne({user});
+            const oldEmail = user.email;
+            const sendMailSpy = vi.spyOn(emailTransporter, "sendMail");
+
+            const response = await makeRequest({newEmail: otherUser.email}, session.token);
+
+            await context.em.refresh(user);
+            expect(response.statusCode).to.equal(400);
+            expect(user.email).to.equal(oldEmail);
+            expect(await context.em.findOne(EmailConfirmationToken, {user})).toBeNull();
+            expect(sendMailSpy).not.toHaveBeenCalled();
+        });
     });
 });
+
 /**{@link UserController#changeUserPassword}*/
 describe("PUT users/me/password/", function () {
     const makeRequest = async (body: object, authToken?: string) => {
