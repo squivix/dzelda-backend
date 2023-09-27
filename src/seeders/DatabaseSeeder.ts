@@ -59,7 +59,7 @@ export class DatabaseSeeder extends Seeder {
             {
                 datasetPath: response.dataset,
                 databaseDumpPath: `${response.dataset}/database`,
-                uploadsDumpPath: `${response.dataset}/database`,
+                uploadsDumpPath: `${response.dataset}/uploads`,
                 batchSize: response.batchSize || DatabaseSeeder.DEFAULT_BATCH_SIZE
             });
     }
