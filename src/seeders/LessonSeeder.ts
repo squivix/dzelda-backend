@@ -12,8 +12,8 @@ export class LessonSeeder extends Seeder {
 
 
     async run(em: EntityManager, context: Dictionary): Promise<void> {
-        const lessonsFilePath = `${context.datasetPath}/${LessonSeeder.LESSONS_FILE_NAME}`;
-        const mapLessonVocabsFilePath = `${context.datasetPath}/${LessonSeeder.MAP_LESSON_VOCABS_FILE_NAME}`;
+        const lessonsFilePath = `${context.databaseDumpPath}/${LessonSeeder.LESSONS_FILE_NAME}`;
+        const mapLessonVocabsFilePath = `${context.databaseDumpPath}/${LessonSeeder.MAP_LESSON_VOCABS_FILE_NAME}`;
 
         if (!await fs.exists(lessonsFilePath)) {
             console.error(`${lessonsFilePath} not found`);

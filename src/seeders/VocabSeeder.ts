@@ -10,8 +10,8 @@ export class VocabSeeder extends Seeder {
     static readonly MAP_LEARNER_VOCABS_FILE_NAME = "map_learner_vocabs.jsonl";
 
     async run(em: EntityManager, context: Dictionary): Promise<void> {
-        const vocabsFilePath = `${context.datasetPath}/${VocabSeeder.VOCABS_FILE_NAME}`;
-        const mapLearnerVocabsFilePath = `${context.datasetPath}/${VocabSeeder.MAP_LEARNER_VOCABS_FILE_NAME}`;
+        const vocabsFilePath = `${context.databaseDumpPath}/${VocabSeeder.VOCABS_FILE_NAME}`;
+        const mapLearnerVocabsFilePath = `${context.databaseDumpPath}/${VocabSeeder.MAP_LEARNER_VOCABS_FILE_NAME}`;
 
         if (!await fs.exists(vocabsFilePath)) {
             console.error(`${vocabsFilePath} not found`);

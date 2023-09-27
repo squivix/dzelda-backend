@@ -9,10 +9,10 @@ export class MeaningSeeder extends Seeder {
     static readonly FILE_NAME = "meanings.jsonl";
 
     async run(em: EntityManager, context: Dictionary): Promise<void> {
-        const meaningsFilePath = `${context.datasetPath}/${MeaningSeeder.FILE_NAME}`;
+        const meaningsFilePath = `${context.databaseDumpPath}/${MeaningSeeder.FILE_NAME}`;
 
         if (!await fs.exists(meaningsFilePath)) {
-            console.error(`${MeaningSeeder.FILE_NAME} not found`);
+            console.error(`${meaningsFilePath} not found`);
             return;
         }
 

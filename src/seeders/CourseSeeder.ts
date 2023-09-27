@@ -8,7 +8,7 @@ export class CourseSeeder extends Seeder {
     static readonly FILE_NAME = "courses.jsonl";
 
     async run(em: EntityManager, context: Dictionary): Promise<void> {
-        const coursesFilePath = `${context.datasetPath}/${CourseSeeder.FILE_NAME}`;
+        const coursesFilePath = `${context.databaseDumpPath}/${CourseSeeder.FILE_NAME}`;
 
         if (!await fs.exists(coursesFilePath)) {
             console.error(`${coursesFilePath} not found`);

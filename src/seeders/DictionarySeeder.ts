@@ -9,7 +9,7 @@ export class DictionarySeeder extends Seeder {
     static readonly FILE_NAME = "dictionaries.jsonl";
 
     async run(em: EntityManager, context: MikroORMDictionary): Promise<void> {
-        const dictionariesFilePath = `${context.datasetPath}/${DictionarySeeder.FILE_NAME}`;
+        const dictionariesFilePath = `${context.databaseDumpPath}/${DictionarySeeder.FILE_NAME}`;
 
         if (!await fs.exists(dictionariesFilePath)) {
             console.error(`${dictionariesFilePath} not found`);

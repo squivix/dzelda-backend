@@ -8,7 +8,7 @@ export class LanguageSeeder extends Seeder {
     static readonly FILE_NAME = "languages.jsonl";
 
     async run(em: EntityManager, context: Dictionary): Promise<void> {
-        const languagesFilePath = `${context.datasetPath}/${LanguageSeeder.FILE_NAME}`;
+        const languagesFilePath = `${context.databaseDumpPath}/${LanguageSeeder.FILE_NAME}`;
 
         if (!await fs.exists(languagesFilePath)) {
             console.error(`${languagesFilePath} not found`);

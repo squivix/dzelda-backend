@@ -9,6 +9,7 @@ import {LessonSeeder} from "@/src/seeders/LessonSeeder.js";
 import {VocabSeeder} from "@/src/seeders/VocabSeeder.js";
 import {MeaningSeeder} from "@/src/seeders/MeaningSeeder.js";
 import {DictionarySeeder} from "@/src/seeders/DictionarySeeder.js";
+import {FileUploadsSeeder} from "@/src/seeders/FileUploadsSeeder.js";
 
 
 export class DatabaseSeeder extends Seeder {
@@ -25,7 +26,6 @@ export class DatabaseSeeder extends Seeder {
             console.error("No datasets found.");
             return;
         }
-        const questions=[];
         const response = await prompts([
             {
                 type: "select",
@@ -54,9 +54,12 @@ export class DatabaseSeeder extends Seeder {
                 VocabSeeder,
                 LessonSeeder,
                 MeaningSeeder,
+                FileUploadsSeeder   //not db-related but still
             ],
             {
                 datasetPath: response.dataset,
+                databaseDumpPath: `${response.dataset}/database`,
+                uploadsDumpPath: `${response.dataset}/database`,
                 batchSize: response.batchSize || DatabaseSeeder.DEFAULT_BATCH_SIZE
             });
     }

@@ -11,7 +11,7 @@ export class UserSeeder extends Seeder {
     static readonly FILE_NAME = "users.jsonl";
 
     async run(em: EntityManager, context: Dictionary): Promise<void> {
-        const usersFilePath = `${context.datasetPath}/${UserSeeder.FILE_NAME}`;
+        const usersFilePath = `${context.databaseDumpPath}/${UserSeeder.FILE_NAME}`;
 
         if (!await fs.exists(usersFilePath)) {
             console.error(`${usersFilePath} not found`);
