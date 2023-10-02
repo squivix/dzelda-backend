@@ -6,6 +6,7 @@ import {requiresEmailConfirmed} from "@/src/middlewares/requiresEmailConfirmed.j
 export const userRouter: FastifyPluginCallback = function (fastify, options, done) {
     fastify.post(`/users/`, userController.signUp);
     fastify.get(`/users/:username/`, userController.getUser);
+    fastify.delete(`/users/me/`, {preHandler: [requiresAuth, requiresEmailConfirmed], handler: userController.deleteAccount});
     fastify.post(`/users/me/email/confirm/`, userController.confirmEmail);
     fastify.post(`/users/me/password/reset/`, userController.resetPassword);
     fastify.put(`/users/me/password/`, {preHandler: [requiresAuth, requiresEmailConfirmed], handler: userController.changeUserPassword});

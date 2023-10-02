@@ -13,7 +13,7 @@ export class Session extends CustomBaseEntity {
     @Property({type: types.string, length: 255})
     token!: string;
 
-    @ManyToOne({entity: () => User})
+    @ManyToOne({entity: () => User, onDelete: "cascade", onUpdateIntegrity: "cascade"})
     user!: User;
 
     @Property({type: types.datetime, defaultRaw: "now()"})

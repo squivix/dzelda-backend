@@ -20,7 +20,14 @@ export class Profile extends CustomBaseEntity {
         this.user = user;
     }
 
-    @OneToOne({entity: () => User, inversedBy: (user) => user.profile, owner: true, hidden: true})
+    @OneToOne({
+        entity: () => User,
+        inversedBy: (user) => user.profile,
+        owner: true,
+        hidden: true,
+        onDelete: "cascade",
+        onUpdateIntegrity: "cascade"
+    })
     user!: User;
 
     @Property({type: types.string, length: 500, default: ""})

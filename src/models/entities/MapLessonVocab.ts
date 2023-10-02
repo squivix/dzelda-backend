@@ -6,10 +6,10 @@ import {Vocab} from "@/src/models/entities/Vocab.js";
 @Entity()
 @Unique({properties: ["vocab", "lesson"]})
 export class MapLessonVocab extends CustomBaseEntity {
-    @ManyToOne({entity: () => Vocab})
+    @ManyToOne({entity: () => Vocab, onDelete: "cascade", onUpdateIntegrity: "cascade"})
     vocab!: Vocab;
 
-    @ManyToOne({entity: () => Lesson})
+    @ManyToOne({entity: () => Lesson, onDelete: "cascade", onUpdateIntegrity: "cascade"})
     lesson!: Lesson;
 
 }

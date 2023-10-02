@@ -1,5 +1,17 @@
 import {Lesson} from "@/src/models/entities/Lesson.js";
-import {Collection, Entity, Formula, Index, ManyToMany, ManyToOne, OneToMany, OptionalProps, Property, types, Unique} from "@mikro-orm/core";
+import {
+    Collection,
+    Entity,
+    Formula,
+    Index,
+    ManyToMany,
+    ManyToOne,
+    OneToMany,
+    OptionalProps,
+    Property,
+    types,
+    Unique
+} from "@mikro-orm/core";
 import {MapLessonVocab} from "@/src/models/entities/MapLessonVocab.js";
 import {CustomBaseEntity} from "@/src/models/entities/CustomBaseEntity.js";
 import {Language} from "@/src/models/entities/Language.js";
@@ -16,7 +28,12 @@ export class Vocab extends CustomBaseEntity {
     @Property({type: types.string, length: 255})
     text!: string;
 
-    @ManyToOne({entity: () => Language, inversedBy: (language: Language) => language.vocabs})
+    @ManyToOne({
+        entity: () => Language,
+        inversedBy: (language: Language) => language.vocabs,
+        onDelete: "cascade",
+        onUpdateIntegrity: "cascade"
+    })
     language!: Language;
 
     @Property({type: types.boolean, default: false})
@@ -48,7 +65,7 @@ export class Vocab extends CustomBaseEntity {
     })
     learners: Collection<Profile> = new Collection<Profile>(this);
 
-    [OptionalProps]?: "isPhrase"
+    [OptionalProps]?: "isPhrase";
 
     @Formula((alias: string) => `(SELECT COUNT(DISTINCT map_learner_vocab.learner_id) FROM map_learner_vocab WHERE "vocab_id" = ${alias}.id AND "level" != ${VocabLevel.IGNORED})`, {
         type: "number"

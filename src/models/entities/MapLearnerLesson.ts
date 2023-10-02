@@ -6,9 +6,9 @@ import {Profile} from "@/src/models/entities/Profile.js";
 @Entity()
 @Unique({properties: ["lesson", "learner"]})
 export class MapLearnerLesson extends CustomBaseEntity {
-    @ManyToOne({entity: () => Lesson})
+    @ManyToOne({entity: () => Lesson, onDelete: "cascade", onUpdateIntegrity: "cascade"})
     lesson!: Lesson;
 
-    @ManyToOne({entity: () => Profile})
+    @ManyToOne({entity: () => Profile, onDelete: "cascade", onUpdateIntegrity: "cascade"})
     learner!: Profile;
 }

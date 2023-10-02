@@ -182,4 +182,9 @@ export class UserService {
         user.isEmailConfirmed = false;
         await this.em.flush();
     }
+
+    async deleteUserAccount(user: User) {
+        this.em.remove(user);
+        await this.em.flush();
+    }
 }

@@ -16,7 +16,6 @@ import {Session} from "@/src/models/entities/auth/Session.js";
 import {ValidationAPIError} from "@/src/utils/errors/ValidationAPIError.js";
 
 class UserController {
-
     async signUp(request: FastifyRequest, reply: FastifyReply) {
         const bodyValidator = z.object({
             email: emailValidator,
@@ -203,6 +202,13 @@ class UserController {
             text: `Your password was recently changed. If this wasn't you please reset it here: https://${DOMAIN_NAME}/forgot-password/`,
             html: `<b>Your password was recently changed. If this wasn't you please reset it here: https://${DOMAIN_NAME}/forgot-password/</b>`,
         });
+        reply.status(204).send();
+    }
+
+    async deleteAccount(request: FastifyRequest, reply: FastifyReply) {
+        const userService = new UserService(request.em);
+        const user = request.user as User;
+        await userService.deleteUserAccount(user);
         reply.status(204).send();
     }
 }

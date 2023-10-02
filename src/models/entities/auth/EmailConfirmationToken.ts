@@ -8,10 +8,10 @@ export class EmailConfirmationToken extends CustomBaseEntity {
     @Property({type: types.string, length: 255})
     token!: string;
 
-    @Property({type: types.datetime, defaultRaw: "now() + interval '1 hour'"})
+    @Property({type: types.datetime, defaultRaw: "now() + interval '24 hours'"})
     expiresOn!: Date;
 
-    @OneToOne({entity: () => User, owner: true, nullable: false})
+    @OneToOne({entity: () => User, owner: true, nullable: false, onDelete: "cascade", onUpdateIntegrity: "cascade"})
     user!: User;
 
     @Property({type: types.string, length: 255})
@@ -22,7 +22,6 @@ export class EmailConfirmationToken extends CustomBaseEntity {
         lazy: false
     })
     isExpired!: boolean;
-
 
     [OptionalProps]?: "expiresOn" | "isExpired";
 }

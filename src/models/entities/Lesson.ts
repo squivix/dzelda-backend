@@ -26,7 +26,7 @@ export class Lesson extends CustomBaseEntity {
     @Property({type: types.string, length: 500, default: ""})
     image: string = "";
 
-    @ManyToOne({entity: () => Course, inversedBy: (course) => course.lessons})
+    @ManyToOne({entity: () => Course, inversedBy: (course) => course.lessons, onDelete: "cascade", onUpdateIntegrity: "cascade"})
     course!: Course;
 
     @Property({type: types.integer, default: 0})

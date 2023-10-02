@@ -25,7 +25,7 @@ export function fileUploadMiddleware(fields: {
 
         formidableInstance.addListener("fileBegin", (formName: string, file: File) => {
             if (fields[formName]) {
-                const fileName = `${crypto.randomBytes(8).toString("hex")}-${Date.now()}`;
+                const fileName = `${Date.now()}-${crypto.randomBytes(8).toString("hex")}`;
                 file.filepath = `${ROOT_UPLOAD_DIR}/${fields[formName].path}/${fileName}${path.extname(file.filepath)}`;
             }
         });

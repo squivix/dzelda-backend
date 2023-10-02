@@ -14,16 +14,22 @@ export class Meaning extends CustomBaseEntity {
     @Property({type: types.string, length: 1000})
     text!: string;
 
-    @ManyToOne({entity: () => Vocab, inversedBy: (vocab) => vocab.meanings})
+    @ManyToOne({entity: () => Vocab, inversedBy: (vocab) => vocab.meanings, onDelete: "cascade", onUpdateIntegrity: "cascade"})
     vocab!: Vocab;
 
-    @ManyToOne({entity: () => Profile, inversedBy: (profile) => profile.meaningsAdded, nullable: true})
+    @ManyToOne({
+        entity: () => Profile,
+        inversedBy: (profile) => profile.meaningsAdded,
+        nullable: true,
+        onDelete: "set null",
+        onUpdateIntegrity: "cascade"
+    })
     addedBy!: Profile | null;
 
     @Property({type: types.datetime, defaultRaw: "now()"})
     addedOn!: Date;
 
-    @ManyToOne({entity: () => Language, inversedBy: (language) => language.meaningsSavedIn})
+    @ManyToOne({entity: () => Language, inversedBy: (language) => language.meaningsSavedIn, onDelete: "cascade", onUpdateIntegrity: "cascade"})
     language!: Language;
 
     @ManyToMany({

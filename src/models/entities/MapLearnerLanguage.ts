@@ -12,10 +12,10 @@ export class MapLearnerLanguage extends CustomBaseEntity {
         this.language = language;
     }
 
-    @ManyToOne({entity: () => Language})
+    @ManyToOne({entity: () => Language, onDelete: "cascade", onUpdateIntegrity: "cascade"})
     language!: Language;
 
-    @ManyToOne({entity: () => Profile})
+    @ManyToOne({entity: () => Profile, onDelete: "cascade", onUpdateIntegrity: "cascade"})
     learner!: Profile;
 
     @Property({type: types.datetime, defaultRaw: "now()"})

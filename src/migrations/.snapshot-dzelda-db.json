@@ -227,6 +227,7 @@
             "id"
           ],
           "referencedTableName": "public.language",
+          "deleteRule": "cascade",
           "updateRule": "cascade"
         }
       }
@@ -437,6 +438,7 @@
             "id"
           ],
           "referencedTableName": "public.user",
+          "deleteRule": "cascade",
           "updateRule": "cascade"
         }
       }
@@ -528,6 +530,7 @@
             "id"
           ],
           "referencedTableName": "public.user",
+          "deleteRule": "cascade",
           "updateRule": "cascade"
         }
       }
@@ -619,6 +622,7 @@
             "id"
           ],
           "referencedTableName": "public.language",
+          "deleteRule": "cascade",
           "updateRule": "cascade"
         },
         "map_learner_language_learner_id_foreign": {
@@ -631,6 +635,7 @@
             "id"
           ],
           "referencedTableName": "public.profile",
+          "deleteRule": "cascade",
           "updateRule": "cascade"
         }
       }
@@ -700,6 +705,7 @@
             "id"
           ],
           "referencedTableName": "public.dictionary",
+          "deleteRule": "cascade",
           "updateRule": "cascade"
         },
         "map_learner_dictionary_learner_id_foreign": {
@@ -712,6 +718,7 @@
             "id"
           ],
           "referencedTableName": "public.profile",
+          "deleteRule": "cascade",
           "updateRule": "cascade"
         }
       }
@@ -860,6 +867,7 @@
             "id"
           ],
           "referencedTableName": "public.language",
+          "deleteRule": "cascade",
           "updateRule": "cascade"
         },
         "course_added_by_id_foreign": {
@@ -872,6 +880,7 @@
             "id"
           ],
           "referencedTableName": "public.profile",
+          "deleteRule": "cascade",
           "updateRule": "cascade"
         }
       }
@@ -1030,6 +1039,7 @@
             "id"
           ],
           "referencedTableName": "public.course",
+          "deleteRule": "cascade",
           "updateRule": "cascade"
         }
       }
@@ -1099,6 +1109,7 @@
             "id"
           ],
           "referencedTableName": "public.lesson",
+          "deleteRule": "cascade",
           "updateRule": "cascade"
         },
         "map_learner_lesson_learner_id_foreign": {
@@ -1111,6 +1122,7 @@
             "id"
           ],
           "referencedTableName": "public.profile",
+          "deleteRule": "cascade",
           "updateRule": "cascade"
         }
       }
@@ -1191,6 +1203,7 @@
             "id"
           ],
           "referencedTableName": "public.user",
+          "deleteRule": "cascade",
           "updateRule": "cascade"
         }
       }
@@ -1281,6 +1294,7 @@
             "id"
           ],
           "referencedTableName": "public.user",
+          "deleteRule": "cascade",
           "updateRule": "cascade"
         }
       }
@@ -1370,6 +1384,7 @@
             "id"
           ],
           "referencedTableName": "public.language",
+          "deleteRule": "cascade",
           "updateRule": "cascade"
         }
       }
@@ -1497,6 +1512,7 @@
             "id"
           ],
           "referencedTableName": "public.vocab",
+          "deleteRule": "cascade",
           "updateRule": "cascade"
         },
         "meaning_added_by_id_foreign": {
@@ -1522,6 +1538,7 @@
             "id"
           ],
           "referencedTableName": "public.language",
+          "deleteRule": "cascade",
           "updateRule": "cascade"
         }
       }
@@ -1591,6 +1608,7 @@
             "id"
           ],
           "referencedTableName": "public.meaning",
+          "deleteRule": "cascade",
           "updateRule": "cascade"
         },
         "map_learner_meaning_learner_id_foreign": {
@@ -1603,6 +1621,7 @@
             "id"
           ],
           "referencedTableName": "public.profile",
+          "deleteRule": "cascade",
           "updateRule": "cascade"
         }
       }
@@ -1672,6 +1691,7 @@
             "id"
           ],
           "referencedTableName": "public.vocab",
+          "deleteRule": "cascade",
           "updateRule": "cascade"
         },
         "map_lesson_vocab_lesson_id_foreign": {
@@ -1684,6 +1704,7 @@
             "id"
           ],
           "referencedTableName": "public.lesson",
+          "deleteRule": "cascade",
           "updateRule": "cascade"
         }
       }
@@ -1774,6 +1795,7 @@
             "id"
           ],
           "referencedTableName": "public.vocab",
+          "deleteRule": "cascade",
           "updateRule": "cascade"
         },
         "map_learner_vocab_learner_id_foreign": {
@@ -1786,6 +1808,7 @@
             "id"
           ],
           "referencedTableName": "public.profile",
+          "deleteRule": "cascade",
           "updateRule": "cascade"
         }
       }

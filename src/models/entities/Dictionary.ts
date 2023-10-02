@@ -8,7 +8,7 @@ import {MapLearnerDictionary} from "@/src/models/entities/MapLearnerDictionary.j
 @Index({properties: ["language"]})
 @Index({properties: ["name"]})
 export class Dictionary extends CustomBaseEntity {
-    @ManyToOne({entity: () => Language, inversedBy: (language) => language.dictionaries})
+    @ManyToOne({entity: () => Language, inversedBy: (language) => language.dictionaries, onDelete: "cascade", onUpdateIntegrity: "cascade"})
     language!: Language;
 
     @Property({type: types.string, length: 255})

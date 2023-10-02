@@ -19,7 +19,7 @@ export class Course extends CustomBaseEntity {
     @Property({type: types.string, length: 500, default: ""})
     description: string = "";
 
-    @ManyToOne({entity: () => Language, inversedBy: (language) => language.courses})
+    @ManyToOne({entity: () => Language, inversedBy: (language) => language.courses, onDelete: "cascade", onUpdateIntegrity: "cascade"})
     language!: Language;
 
     @Property({type: types.string, length: 500, default: ""})
@@ -28,7 +28,7 @@ export class Course extends CustomBaseEntity {
     @Property({type: types.boolean, default: true})
     isPublic: boolean = true;
 
-    @ManyToOne({entity: () => Profile, inversedBy: (profile) => profile.coursesAdded})
+    @ManyToOne({entity: () => Profile, inversedBy: (profile) => profile.coursesAdded, onDelete: "cascade", onUpdateIntegrity: "cascade"})
     addedBy!: Profile;
 
     @Property({type: types.datetime, defaultRaw: "now()"})

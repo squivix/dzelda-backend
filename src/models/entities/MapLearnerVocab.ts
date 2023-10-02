@@ -8,10 +8,10 @@ import {Meaning} from "@/src/models/entities/Meaning.js";
 @Entity()
 @Unique({properties: ["vocab", "learner"]})
 export class MapLearnerVocab extends CustomBaseEntity {
-    @ManyToOne({entity: () => Vocab})
+    @ManyToOne({entity: () => Vocab, onDelete: "cascade", onUpdateIntegrity: "cascade"})
     vocab!: Vocab;
 
-    @ManyToOne({entity: () => Profile})
+    @ManyToOne({entity: () => Profile, onDelete: "cascade", onUpdateIntegrity: "cascade"})
     learner!: Profile;
 
     @Enum({items: () => VocabLevel, type: types.enum, default: VocabLevel.LEVEL_1})

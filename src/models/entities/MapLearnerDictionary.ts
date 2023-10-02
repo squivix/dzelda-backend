@@ -6,9 +6,9 @@ import {Dictionary} from "@/src/models/entities/Dictionary.js";
 @Entity()
 @Unique({properties: ["dictionary", "learner"]})
 export class MapLearnerDictionary extends CustomBaseEntity {
-    @ManyToOne({entity: () => Dictionary})
+    @ManyToOne({entity: () => Dictionary, onDelete: "cascade", onUpdateIntegrity: "cascade"})
     dictionary!: Dictionary;
 
-    @ManyToOne({entity: () => Profile})
+    @ManyToOne({entity: () => Profile, onDelete: "cascade", onUpdateIntegrity: "cascade"})
     learner!: Profile;
 }
