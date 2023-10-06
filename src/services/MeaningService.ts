@@ -22,7 +22,7 @@ export class MeaningService {
             vocab: meaningData.vocab,
             text: meaningData.text,
             language: meaningData.language
-        }, {populate: []});
+        }, {populate: ["addedBy.user"]});
     }
 
     async createMeaning(meaningData: { vocab: Vocab; language: Language; text: string }, user: User) {
