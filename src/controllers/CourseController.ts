@@ -20,7 +20,7 @@ class CourseController {
             languageCode: languageCodeValidator.optional(),
             addedBy: usernameValidator.or(z.literal("me")).optional(),
             searchQuery: z.string().max(256).optional(),
-            sortBy: z.union([z.literal("title"), z.literal("createdDate"), z.literal("learnersCount")]).optional().default("title"),
+            sortBy: z.union([z.literal("title"), z.literal("createdDate"), z.literal("avgPastViewersCountPerLesson")]).optional().default("title"),
             sortOrder: z.union([z.literal("asc"), z.literal("desc")]).optional().default("asc"),
             page: z.coerce.number().int().min(1).optional().default(1),
             pageSize: z.coerce.number().int().min(1).max(100).optional().default(10),
@@ -128,47 +128,6 @@ class CourseController {
         reply.status(200).send(courseSerializer.serialize(updatedCourse));
     }
 
-    async getUserCoursesLearning(request: FastifyRequest, reply: FastifyReply) {
-        const pathParamsValidator = z.object({username: usernameValidator.or(z.literal("me"))});
-        const pathParams = pathParamsValidator.parse(request.params);
-        const userService = new UserService(request.em);
-        const user = await userService.getUser(pathParams.username, request.user);
-        if (!user || (!user.profile.isPublic && user !== request.user))
-            throw new NotFoundAPIError("User");
-        if (user !== request.user)
-            throw new ForbiddenAPIError();
-
-        const queryParamsValidator = z.object({
-            languageCode: languageCodeValidator.optional(),
-            addedBy: usernameValidator.or(z.literal("me")).optional(),
-            searchQuery: z.string().max(256).optional(),
-            sortBy: z.union([z.literal("title"), z.literal("createdDate"), z.literal("learnersCount")]).optional().default("title"),
-            sortOrder: z.union([z.literal("asc"), z.literal("desc")]).optional().default("asc"),
-            page: z.coerce.number().int().min(1).optional().default(1),
-            pageSize: z.coerce.number().int().min(1).max(100).optional().default(10),
-        });
-        const queryParams = queryParamsValidator.parse(request.query);
-
-        if (queryParams.addedBy == "me")
-            queryParams.addedBy = request.user?.username!;
-
-        const filters = {
-            languageCode: queryParams.languageCode,
-            addedBy: queryParams.addedBy,
-            searchQuery: queryParams.searchQuery,
-            isLearning: true
-        };
-        const sort = {sortBy: queryParams.sortBy, sortOrder: queryParams.sortOrder};
-        const pagination = {page: queryParams.page, pageSize: queryParams.pageSize};
-        const courseService = new CourseService(request.em);
-        const [courses, recordsCount] = await courseService.getPaginatedCourses(filters, sort, pagination, user);
-        reply.send({
-            page: pagination.page,
-            pageSize: pagination.pageSize,
-            pageCount: Math.ceil(recordsCount / pagination.pageSize),
-            data: courseSerializer.serializeList(courses)
-        });
-    }
 }
 
 export default new CourseController();

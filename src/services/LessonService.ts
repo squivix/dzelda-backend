@@ -9,10 +9,9 @@ import {getParser} from "@/src/utils/parsers/parsers.js";
 import {Vocab} from "@/src/models/entities/Vocab.js";
 import {MapLessonVocab} from "@/src/models/entities/MapLessonVocab.js";
 import {CourseRepo} from "@/src/models/repos/CourseRepo.js";
-import {MapLearnerLesson} from "@/src/models/entities/MapLearnerLesson.js";
+import {MapPastViewerLesson} from "@/src/models/entities/MapPastViewerLesson.js";
 import {QueryOrderMap} from "@mikro-orm/core/enums.js";
 import {EntityField} from "@mikro-orm/core/drivers/IDatabaseDriver.js";
-import {escapeRegExp} from "@/src/utils/utils.js";
 
 export class LessonService {
     em: SqlEntityManager;
@@ -32,16 +31,16 @@ export class LessonService {
                                   searchQuery?: string,
                                   level?: LanguageLevel[],
                                   hasAudio?: boolean;
-                                  isLearning?: boolean
+                                  isInHistory?: boolean
                               },
-                              sort: { sortBy: "title" | "createdDate" | "learnersCount", sortOrder: "asc" | "desc" },
+                              sort: { sortBy: "title" | "createdDate" | "pastViewersCount", sortOrder: "asc" | "desc" },
                               pagination: { page: number, pageSize: number },
                               user: User | AnonymousUser | null): Promise<[Lesson[], number]> {
         const dbFilters: FilterQuery<Lesson> = {$and: []};
         if (user && user instanceof User) {
             dbFilters.$and!.push({$or: [{course: {isPublic: true}}, {course: {addedBy: (user as User).profile}}]});
-            if (filters.isLearning)
-                dbFilters.$and!.push({learners: user.profile});
+            if (filters.isInHistory)
+                dbFilters.$and!.push({pastViewers: user.profile});
         } else
             dbFilters.$and!.push({course: {isPublic: true}});
 
@@ -61,8 +60,8 @@ export class LessonService {
             dbOrderBy.push({title: sort.sortOrder});
         else if (sort.sortBy == "createdDate")
             dbOrderBy.push({addedOn: sort.sortOrder});
-        else if (sort.sortBy == "learnersCount")
-            dbOrderBy.push({learnersCount: sort.sortOrder});
+        else if (sort.sortBy == "pastViewersCount")
+            dbOrderBy.push({pastViewersCount: sort.sortOrder});
         dbOrderBy.push({id: "asc"});
 
         let [lessons, totalCount] = await this.lessonRepo.findAndCount(dbFilters, {
@@ -93,7 +92,7 @@ export class LessonService {
             audio: fields.audio,
             course: fields.course,
             orderInCourse: fields.course.lessons.count(),
-            learnersCount: 0
+            pastViewersCount: 0
         });
         await this.em.flush();
 
@@ -171,12 +170,8 @@ export class LessonService {
         return lesson;
     }
 
-    async getUserLessonLearning(lesson: Lesson, user: User) {
-        return await this.em.findOne(MapLearnerLesson, {lesson: lesson, learner: user.profile});
-    }
-
-    async addLessonToUserLearning(lesson: Lesson, user: User) {
-        const mapping = this.em.create(MapLearnerLesson, {learner: user.profile, lesson: lesson});
+    async addLessonToUserHistory(lesson: Lesson, user: User) {
+        const mapping = this.em.create(MapPastViewerLesson, {pastViewer: user.profile, lesson: lesson});
         await this.em.flush();
         await this.em.refresh(mapping.lesson);
         return mapping;

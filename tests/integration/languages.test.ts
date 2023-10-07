@@ -13,7 +13,7 @@ import {ProfileFactory} from "@/src/seeders/factories/ProfileFactory.js";
 import {languageSerializer} from "@/src/presentation/response/serializers/entities/LanguageSerializer.js";
 import {LessonFactory} from "@/src/seeders/factories/LessonFactory.js";
 import {CourseFactory} from "@/src/seeders/factories/CourseFactory.js";
-import {MapLearnerLesson} from "@/src/models/entities/MapLearnerLesson.js";
+import {MapPastViewerLesson} from "@/src/models/entities/MapPastViewerLesson.js";
 import {MapLearnerDictionary} from "@/src/models/entities/MapLearnerDictionary.js";
 import {DictionaryFactory} from "@/src/seeders/factories/DictionaryFactory.js";
 import {VocabFactory} from "@/src/seeders/factories/VocabFactory.js";
@@ -626,7 +626,7 @@ describe("DELETE users/:username/languages/:languageCode/", () => {
 
             const courses = await context.courseFactory.create(3, {language});
             const lessons = [...await context.lessonFactory.create(3, {course: courses[0]}), ...await context.lessonFactory.create(3, {course: courses[1]}), ...await context.lessonFactory.create(3, {course: courses[2]})];
-            await context.em.insertMany(MapLearnerLesson, lessons.map(l => ({lesson: l, learner: user.profile})));
+            await context.em.insertMany(MapPastViewerLesson, lessons.map(l => ({lesson: l, pastViewer: user.profile})));
             const dictionaries = await context.dictionaryFactory.create(3, {language});
             await context.em.insertMany(MapLearnerDictionary, dictionaries.map(d => ({dictionary: d, learner: user.profile})));
             const vocabs = await context.vocabFactory.create(3, {language});
@@ -644,7 +644,6 @@ describe("DELETE users/:username/languages/:languageCode/", () => {
             expect(response.statusCode).to.equal(204);
 
             expect((await context.em.findOne(MapLearnerLanguage, {learner: user.profile, language}))?.toObject() ?? null).toBeNull();
-            expect(await context.em.find(MapLearnerLesson, {learner: user.profile, lesson: {course: {language}}})).toHaveLength(0);
             expect(await context.em.find(MapLearnerDictionary, {learner: user.profile, dictionary: {language}})).toHaveLength(0);
             expect(await context.em.find(MapLearnerVocab, {learner: user.profile, vocab: {language}})).toHaveLength(0);
             expect(await context.em.find(MapLearnerMeaning, {learner: user.profile, meaning: {vocab: {language}}})).toHaveLength(0);
@@ -656,7 +655,7 @@ describe("DELETE users/:username/languages/:languageCode/", () => {
 
             const courses = await context.courseFactory.create(3, {language});
             const lessons = [...await context.lessonFactory.create(3, {course: courses[0]}), ...await context.lessonFactory.create(3, {course: courses[1]}), ...await context.lessonFactory.create(3, {course: courses[2]})];
-            await context.em.insertMany(MapLearnerLesson, lessons.map(l => ({lesson: l, learner: user.profile})));
+            await context.em.insertMany(MapPastViewerLesson, lessons.map(l => ({lesson: l, pastViewer: user.profile})));
             const dictionaries = await context.dictionaryFactory.create(3, {language});
             await context.em.insertMany(MapLearnerDictionary, dictionaries.map(d => ({dictionary: d, learner: user.profile})));
             const vocabs = await context.vocabFactory.create(3, {language});
@@ -673,7 +672,6 @@ describe("DELETE users/:username/languages/:languageCode/", () => {
 
             expect(response.statusCode).to.equal(204);
             expect((await context.em.findOne(MapLearnerLanguage, {learner: user.profile, language}))?.toObject() ?? null).toBeNull();
-            expect(await context.em.find(MapLearnerLesson, {learner: user.profile, lesson: {course: {language}}})).toHaveLength(0);
             expect(await context.em.find(MapLearnerDictionary, {learner: user.profile, dictionary: {language}})).toHaveLength(0);
             expect(await context.em.find(MapLearnerVocab, {learner: user.profile, vocab: {language}})).toHaveLength(0);
             expect(await context.em.find(MapLearnerMeaning, {learner: user.profile, meaning: {vocab: {language}}})).toHaveLength(0);

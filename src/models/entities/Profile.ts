@@ -4,7 +4,7 @@ import {CustomBaseEntity} from "@/src/models/entities/CustomBaseEntity.js";
 import {Course} from "@/src/models/entities/Course.js";
 import {Meaning} from "@/src/models/entities/Meaning.js";
 import {Lesson} from "@/src/models/entities/Lesson.js";
-import {MapLearnerLesson} from "@/src/models/entities/MapLearnerLesson.js";
+import {MapPastViewerLesson} from "@/src/models/entities/MapPastViewerLesson.js";
 import {Vocab} from "@/src/models/entities/Vocab.js";
 import {MapLearnerVocab} from "@/src/models/entities/MapLearnerVocab.js";
 import {MapLearnerMeaning} from "@/src/models/entities/MapLearnerMeaning.js";
@@ -49,11 +49,11 @@ export class Profile extends CustomBaseEntity {
 
     @ManyToMany({
         entity: () => Lesson,
-        mappedBy: (lesson: Lesson) => lesson.learners,
-        pivotEntity: () => MapLearnerLesson,
+        mappedBy: (lesson: Lesson) => lesson.pastViewers,
+        pivotEntity: () => MapPastViewerLesson,
         hidden: true
     })
-    lessonsLearning: Collection<Lesson> = new Collection<Lesson>(this);
+    lessonHistory: Collection<Lesson> = new Collection<Lesson>(this);
 
     @ManyToMany({
         entity: () => Vocab,

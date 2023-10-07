@@ -4,7 +4,7 @@ import {Course} from "@/src/models/entities/Course.js";
 import {Vocab} from "@/src/models/entities/Vocab.js";
 import {MapLessonVocab} from "@/src/models/entities/MapLessonVocab.js";
 import {Profile} from "@/src/models/entities/Profile.js";
-import {MapLearnerLesson} from "@/src/models/entities/MapLearnerLesson.js";
+import {MapPastViewerLesson} from "@/src/models/entities/MapPastViewerLesson.js";
 import {LessonRepo} from "@/src/models/repos/LessonRepo.js";
 import {VocabLevel} from "@/src/models/enums/VocabLevel.js";
 import {LanguageLevel} from "@/src/models/enums/LanguageLevel.js";
@@ -47,22 +47,22 @@ export class Lesson extends CustomBaseEntity {
 
     @ManyToMany({
         entity: () => Profile,
-        inversedBy: (profile: Profile) => profile.lessonsLearning,
-        pivotEntity: () => MapLearnerLesson,
+        inversedBy: (profile: Profile) => profile.lessonHistory,
+        pivotEntity: () => MapPastViewerLesson,
         joinColumn: "lesson_id",
-        inverseJoinColumn: "learner_id",
+        inverseJoinColumn: "past_viewer_id",
     })
-    learners: Collection<Profile> = new Collection<Profile>(this);
+    pastViewers: Collection<Profile> = new Collection<Profile>(this);
 
-    [OptionalProps]?: "image" | "audio" | "level" | "addedOn" | "learnersCount";
+    [OptionalProps]?: "image" | "audio" | "level" | "addedOn" | "pastViewersCount";
 
     //annotated properties
     @Property({persist: false, type: types.json})
     vocabsByLevel?: Record<VocabLevel, number>;
 
-    @Formula((alias: string) => `(SELECT COUNT(DISTINCT map_learner_lesson.learner_id) FROM map_learner_lesson WHERE lesson_id = ${alias}.id)`, {
+    @Formula((alias: string) => `(SELECT COUNT(DISTINCT map_past_viewer_lesson.past_viewer_id) FROM map_past_viewer_lesson WHERE lesson_id = ${alias}.id)`, {
         type: "number"
     })
-    learnersCount!: number;
+    pastViewersCount!: number;
     //TODO add field for keeping track of which parser last parsed lesson (to reparse on demand if parser was updated)
 }

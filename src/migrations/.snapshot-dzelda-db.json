@@ -1064,31 +1064,42 @@
           "nullable": false,
           "mappedType": "integer"
         },
-        "learner_id": {
-          "name": "learner_id",
+        "past_viewer_id": {
+          "name": "past_viewer_id",
           "type": "int",
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
-          "nullable": false,
+          "nullable": true,
           "mappedType": "integer"
+        },
+        "time_viewed": {
+          "name": "time_viewed",
+          "type": "timestamptz(0)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "length": 6,
+          "default": "now()",
+          "mappedType": "datetime"
         }
       },
-      "name": "map_learner_lesson",
+      "name": "map_past_viewer_lesson",
       "schema": "public",
       "indexes": [
         {
-          "keyName": "map_learner_lesson_lesson_id_learner_id_unique",
+          "keyName": "map_past_viewer_lesson_lesson_id_past_viewer_id_index",
           "columnNames": [
             "lesson_id",
-            "learner_id"
+            "past_viewer_id"
           ],
           "composite": true,
           "primary": false,
-          "unique": true
+          "unique": false
         },
         {
-          "keyName": "map_learner_lesson_pkey",
+          "keyName": "map_past_viewer_lesson_pkey",
           "columnNames": [
             "id"
           ],
@@ -1099,12 +1110,12 @@
       ],
       "checks": [],
       "foreignKeys": {
-        "map_learner_lesson_lesson_id_foreign": {
-          "constraintName": "map_learner_lesson_lesson_id_foreign",
+        "map_past_viewer_lesson_lesson_id_foreign": {
+          "constraintName": "map_past_viewer_lesson_lesson_id_foreign",
           "columnNames": [
             "lesson_id"
           ],
-          "localTableName": "public.map_learner_lesson",
+          "localTableName": "public.map_past_viewer_lesson",
           "referencedColumnNames": [
             "id"
           ],
@@ -1112,17 +1123,17 @@
           "deleteRule": "cascade",
           "updateRule": "cascade"
         },
-        "map_learner_lesson_learner_id_foreign": {
-          "constraintName": "map_learner_lesson_learner_id_foreign",
+        "map_past_viewer_lesson_past_viewer_id_foreign": {
+          "constraintName": "map_past_viewer_lesson_past_viewer_id_foreign",
           "columnNames": [
-            "learner_id"
+            "past_viewer_id"
           ],
-          "localTableName": "public.map_learner_lesson",
+          "localTableName": "public.map_past_viewer_lesson",
           "referencedColumnNames": [
             "id"
           ],
           "referencedTableName": "public.profile",
-          "deleteRule": "cascade",
+          "deleteRule": "set null",
           "updateRule": "cascade"
         }
       }
@@ -1237,7 +1248,7 @@
           "primary": false,
           "nullable": false,
           "length": 6,
-          "default": "now() + interval '1 hour'",
+          "default": "now() + interval '24 hours'",
           "mappedType": "datetime"
         },
         "user_id": {

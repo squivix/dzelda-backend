@@ -20,17 +20,15 @@ export class CourseService {
         this.lessonRepo = this.em.getRepository(Lesson) as LessonRepo;
     }
 
-    async getPaginatedCourses(filters: { languageCode?: string, addedBy?: string, searchQuery?: string, isLearning?: boolean }, sort: {
-        sortBy: "title" | "createdDate" | "learnersCount",
+    async getPaginatedCourses(filters: { languageCode?: string, addedBy?: string, searchQuery?: string }, sort: {
+        sortBy: "title" | "createdDate" | "avgPastViewersCountPerLesson",
         sortOrder: "asc" | "desc"
     }, pagination: { page: number, pageSize: number }, user: User | AnonymousUser | null): Promise<[Course[], number]> {
         const dbFilters: FilterQuery<Course> = {$and: []};
 
-        if (user && user instanceof User) {
+        if (user && user instanceof User)
             dbFilters.$and!.push({$or: [{isPublic: true}, {addedBy: (user as User).profile}]});
-            if (filters.isLearning)
-                dbFilters.$and!.push({lessons: {learners: user.profile}});
-        } else
+        else
             dbFilters.$and!.push({isPublic: true});
 
         if (filters.languageCode !== undefined)
@@ -45,8 +43,8 @@ export class CourseService {
             dbOrderBy.push({title: sort.sortOrder});
         else if (sort.sortBy == "createdDate")
             dbOrderBy.push({addedOn: sort.sortOrder});
-        else if (sort.sortBy == "learnersCount")
-            dbOrderBy.push({learnersCount: sort.sortOrder});
+        else if (sort.sortBy == "avgPastViewersCountPerLesson")
+            dbOrderBy.push({avgPastViewersCountPerLesson: sort.sortOrder});
         dbOrderBy.push({id: "asc"});
 
         const [courses, totalCount] = await this.courseRepo.findAndCount(dbFilters, {

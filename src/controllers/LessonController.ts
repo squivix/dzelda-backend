@@ -27,7 +27,7 @@ class LessonController {
             searchQuery: z.string().max(256).optional(),
             level: lessonLevelsFilterValidator.default([]),
             hasAudio: booleanStringValidator.optional(),
-            sortBy: z.union([z.literal("title"), z.literal("createdDate"), z.literal("learnersCount")]).optional().default("title"),
+            sortBy: z.union([z.literal("title"), z.literal("createdDate"), z.literal("pastViewersCount")]).optional().default("title"),
             sortOrder: z.union([z.literal("asc"), z.literal("desc")]).optional().default("asc"),
             page: z.coerce.number().int().min(1).optional().default(1),
             pageSize: z.coerce.number().int().min(1).max(100).optional().default(10),
@@ -146,7 +146,7 @@ class LessonController {
 
     }
 
-    async getUserLessonsLearning(request: FastifyRequest, reply: FastifyReply) {
+    async getUserLessonsHistory(request: FastifyRequest, reply: FastifyReply) {
         const pathParamsValidator = z.object({username: usernameValidator.or(z.literal("me"))});
         const pathParams = pathParamsValidator.parse(request.params);
         const userService = new UserService(request.em);
@@ -162,7 +162,7 @@ class LessonController {
             searchQuery: z.string().max(256).optional(),
             level: lessonLevelsFilterValidator.default([]),
             hasAudio: booleanStringValidator.optional(),
-            sortBy: z.union([z.literal("title"), z.literal("createdDate"), z.literal("learnersCount")]).optional().default("title"),
+            sortBy: z.union([z.literal("title"), z.literal("createdDate"), z.literal("pastViewersCount")]).optional().default("title"),
             sortOrder: z.union([z.literal("asc"), z.literal("desc")]).optional().default("asc"),
             page: z.coerce.number().int().min(1).optional().default(1),
             pageSize: z.coerce.number().int().min(1).max(100).optional().default(10),
@@ -178,7 +178,7 @@ class LessonController {
             searchQuery: queryParams.searchQuery,
             level: queryParams.level,
             hasAudio: queryParams.hasAudio,
-            isLearning: true
+            isInHistory: true
         };
         const sort = {sortBy: queryParams.sortBy, sortOrder: queryParams.sortOrder};
         const pagination = {page: queryParams.page, pageSize: queryParams.pageSize};
@@ -192,7 +192,7 @@ class LessonController {
         });
     }
 
-    async addLessonToUserLearning(request: FastifyRequest, reply: FastifyReply) {
+    async addLessonToUserHistory(request: FastifyRequest, reply: FastifyReply) {
         const pathParamsValidator = z.object({username: usernameValidator.or(z.literal("me"))});
         const pathParams = pathParamsValidator.parse(request.params);
         const userService = new UserService(request.em);
@@ -213,11 +213,7 @@ class LessonController {
         if (!(request.user as User).profile.languagesLearning.contains(lesson.course.language))
             throw new ValidationAPIError({lesson: {message: "not in a language the user is learning"}});
 
-        const existingLessonMapping = await lessonService.getUserLessonLearning(lesson, user);
-        if (existingLessonMapping)
-            reply.status(200).send(lessonSerializer.serialize(existingLessonMapping.lesson));
-
-        const newLessonMapping = await lessonService.addLessonToUserLearning(lesson, request.user as User);
+        const newLessonMapping = await lessonService.addLessonToUserHistory(lesson, request.user as User);
         reply.status(201).send(lessonSerializer.serialize(newLessonMapping.lesson));
     }
 }

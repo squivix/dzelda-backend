@@ -1,5 +1,5 @@
 import {Lesson} from "@/src/models/entities/Lesson.js";
-import {CourseSchema, LessonSchema} from "dzelda-types";
+import {CourseSchema, LessonSchema, LanguageLevelSchema} from "dzelda-types";
 import {courseSerializer} from "@/src/presentation/response/serializers/entities/CourseSerializer.js";
 import {CustomCallbackObject, CustomEntitySerializer} from "@/src/presentation/response/serializers/CustomEntitySerializer.js";
 
@@ -14,11 +14,11 @@ export class LessonSerializer extends CustomEntitySerializer<Lesson, LessonSchem
             image: () => lesson.image,
             // @ts-ignore
             course: () => courseSerializer.serialize(lesson.course, {ignore: ["lessons"]}) as Omit<CourseSchema, "lessons">,
-            level: () => lesson.level as `${typeof lesson.level}`,
+            level: () => lesson.level,
             orderInCourse: () => lesson.orderInCourse,
             addedOn: () => lesson.addedOn.toISOString(),
             vocabsByLevel: () => lesson.vocabsByLevel,
-            learnersCount: () => Number(lesson.learnersCount)
+            pastViewersCount: () => Number(lesson.pastViewersCount)
         };
     }
 

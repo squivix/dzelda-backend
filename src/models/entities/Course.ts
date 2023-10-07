@@ -37,15 +37,15 @@ export class Course extends CustomBaseEntity {
     @OneToMany({entity: () => Lesson, mappedBy: (lesson) => lesson.course})
     lessons: Collection<Lesson> = new Collection<Lesson>(this);
 
-    [OptionalProps]?: "description" | "image" | "isPublic" | "addedOn" | "learnersCount";
+    [OptionalProps]?: "description" | "image" | "isPublic" | "addedOn" | "avgPastViewersCountPerLesson";
 
     //annotated properties
     @Property({persist: false, type: types.json})
     vocabsByLevel?: Record<VocabLevel, number>;
 
-    @Formula((alias: string) => `(SELECT COUNT(DISTINCT map_learner_lesson.learner_id) FROM map_learner_lesson JOIN lesson ON map_learner_lesson.lesson_id = lesson.id WHERE lesson.course_id = ${alias}.id)`, {
+    @Formula((alias: string) => `(SELECT COUNT(DISTINCT map_past_viewer_lesson.past_viewer_id)::float / GREATEST(COUNT(DISTINCT lesson.id), 1) FROM course LEFT JOIN lesson on course.id = lesson.course_id LEFT JOIN map_past_viewer_lesson on map_past_viewer_lesson.lesson_id = lesson.id WHERE course.id = ${alias}.id)`, {
         type: "number"
     })
-    learnersCount?: number;
+    avgPastViewersCountPerLesson?: number;
 
 }

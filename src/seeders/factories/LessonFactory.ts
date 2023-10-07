@@ -2,7 +2,6 @@ import {Faker} from "@mikro-orm/seeder";
 import {EntityData} from "@mikro-orm/core";
 import {CustomFactory} from "@/src/seeders/factories/CustomFactory.js";
 import {Lesson} from "@/src/models/entities/Lesson.js";
-import {randomEnum} from "@/tests/utils.js";
 import {LanguageLevel} from "@/src/models/enums/LanguageLevel.js";
 
 export class LessonFactory extends CustomFactory<Lesson> {
@@ -16,13 +15,13 @@ export class LessonFactory extends CustomFactory<Lesson> {
             level: LanguageLevel.ADVANCED_1,
             addedOn: new Date(Math.round(Date.now() / 1000) * 1000), // now rounded to nearest second because db column is timestampz(0)
             audio: "https://upload.wikimedia.org/wikipedia/commons/d/de/Lorem_ipsum.ogg",
-            learnersCount: 0
+            pastViewersCount: 0
         };
     }
 
     override makeDefinition(overrideParameters?: EntityData<Lesson>): EntityData<Lesson> {
-        if (overrideParameters?.learners !== undefined)
-            overrideParameters.learnersCount = Array.isArray(overrideParameters?.learners) ? overrideParameters.learners.length : 1;
+        if (overrideParameters?.pastViewers !== undefined)
+            overrideParameters.pastViewersCount = Array.isArray(overrideParameters?.pastViewers) ? overrideParameters.pastViewers.length : 1;
         return super.makeDefinition(overrideParameters);
     }
 }

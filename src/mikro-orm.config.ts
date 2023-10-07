@@ -6,7 +6,7 @@ import {CustomBaseEntity} from "@/src/models/entities/CustomBaseEntity.js";
 import {Meaning} from "@/src/models/entities/Meaning.js";
 import {Dictionary} from "@/src/models/entities/Dictionary.js";
 import {MapLessonVocab} from "@/src/models/entities/MapLessonVocab.js";
-import {MapLearnerLesson} from "@/src/models/entities/MapLearnerLesson.js";
+import {MapPastViewerLesson} from "@/src/models/entities/MapPastViewerLesson.js";
 import {MapLearnerMeaning} from "@/src/models/entities/MapLearnerMeaning.js";
 import {Language} from "@/src/models/entities/Language.js";
 import {MapLearnerDictionary} from "@/src/models/entities/MapLearnerDictionary.js";
@@ -22,7 +22,7 @@ import {EmailConfirmationToken} from "@/src/models/entities/auth/EmailConfirmati
 const devOptions: Options = {
     type: "postgresql",
     entities: [Course, CustomBaseEntity, Dictionary, Language, Lesson, MapLearnerDictionary,
-        MapLearnerLesson, MapLearnerMeaning, MapLearnerVocab, MapLessonVocab, MapLearnerLanguage, Meaning,
+        MapPastViewerLesson, MapLearnerMeaning, MapLearnerVocab, MapLessonVocab, MapLearnerLanguage, Meaning,
         Profile, Vocab, User, Session, PasswordResetToken, EmailConfirmationToken],
     loadStrategy: LoadStrategy.JOINED,
     debug: true,
