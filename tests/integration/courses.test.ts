@@ -1552,13 +1552,12 @@ describe("PUT courses/:courseId/", function () {
     });
 });
 
-
 /**{@link CourseController#getUserBookmarkedCourses}*/
-describe("GET user/me/courses/bookmarked/", function () {
+describe("GET users/me/courses/bookmarked/", function () {
     const makeRequest = async (queryParams: object = {}, authToken?: string) => {
         const options: InjectOptions = {
             method: "GET",
-            url: `user/me/courses/bookmarked/${buildQueryString(queryParams)}`,
+            url: `users/me/courses/bookmarked/${buildQueryString(queryParams)}`,
         };
         return await fetchRequest(options, authToken);
     };
