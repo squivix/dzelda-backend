@@ -128,6 +128,36 @@ class CourseController {
         reply.status(200).send(courseSerializer.serialize(updatedCourse));
     }
 
+    async getUserBookmarkedCourses(request: FastifyRequest, reply: FastifyReply) {
+        const queryParamsValidator = z.object({
+            languageCode: languageCodeValidator.optional(),
+            addedBy: usernameValidator.or(z.literal("me")).optional(),
+            searchQuery: z.string().max(256).optional(),
+            sortBy: z.union([z.literal("title"), z.literal("createdDate"), z.literal("avgPastViewersCountPerLesson")]).optional().default("title"),
+            sortOrder: z.union([z.literal("asc"), z.literal("desc")]).optional().default("asc"),
+            page: z.coerce.number().int().min(1).optional().default(1),
+            pageSize: z.coerce.number().int().min(1).max(100).optional().default(10),
+        });
+        const queryParams = queryParamsValidator.parse(request.query);
+        if (queryParams.addedBy == "me")
+            queryParams.addedBy = request.user!.username;
+        const filters = {
+            languageCode: queryParams.languageCode,
+            addedBy: queryParams.addedBy,
+            searchQuery: queryParams.searchQuery,
+            isBookmarked: true
+        };
+        const sort = {sortBy: queryParams.sortBy, sortOrder: queryParams.sortOrder};
+        const pagination = {page: queryParams.page, pageSize: queryParams.pageSize};
+        const courseService = new CourseService(request.em);
+        const [courses, recordsCount] = await courseService.getPaginatedCourses(filters, sort, pagination, request.user);
+        reply.send({
+            page: pagination.page,
+            pageSize: pagination.pageSize,
+            pageCount: Math.ceil(recordsCount / pagination.pageSize),
+            data: courseSerializer.serializeList(courses)
+        });
+    }
 }
 
 export default new CourseController();

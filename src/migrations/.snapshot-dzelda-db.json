@@ -896,6 +896,89 @@
           "nullable": false,
           "mappedType": "integer"
         },
+        "course_id": {
+          "name": "course_id",
+          "type": "int",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "mappedType": "integer"
+        },
+        "bookmarker_id": {
+          "name": "bookmarker_id",
+          "type": "int",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "mappedType": "integer"
+        }
+      },
+      "name": "map_bookmarker_course",
+      "schema": "public",
+      "indexes": [
+        {
+          "keyName": "map_bookmarker_course_course_id_bookmarker_id_unique",
+          "columnNames": [
+            "course_id",
+            "bookmarker_id"
+          ],
+          "composite": true,
+          "primary": false,
+          "unique": true
+        },
+        {
+          "keyName": "map_bookmarker_course_pkey",
+          "columnNames": [
+            "id"
+          ],
+          "composite": false,
+          "primary": true,
+          "unique": true
+        }
+      ],
+      "checks": [],
+      "foreignKeys": {
+        "map_bookmarker_course_course_id_foreign": {
+          "constraintName": "map_bookmarker_course_course_id_foreign",
+          "columnNames": [
+            "course_id"
+          ],
+          "localTableName": "public.map_bookmarker_course",
+          "referencedColumnNames": [
+            "id"
+          ],
+          "referencedTableName": "public.course",
+          "deleteRule": "cascade",
+          "updateRule": "cascade"
+        },
+        "map_bookmarker_course_bookmarker_id_foreign": {
+          "constraintName": "map_bookmarker_course_bookmarker_id_foreign",
+          "columnNames": [
+            "bookmarker_id"
+          ],
+          "localTableName": "public.map_bookmarker_course",
+          "referencedColumnNames": [
+            "id"
+          ],
+          "referencedTableName": "public.profile",
+          "deleteRule": "cascade",
+          "updateRule": "cascade"
+        }
+      }
+    },
+    {
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "int",
+          "unsigned": true,
+          "autoincrement": true,
+          "primary": true,
+          "nullable": false,
+          "mappedType": "integer"
+        },
         "title": {
           "name": "title",
           "type": "varchar(124)",

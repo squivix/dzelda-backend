@@ -23,5 +23,10 @@ export const coursesRouter: FastifyPluginCallback = function (fastify, options, 
         onResponse: deleteFileOnFail
     });
 
+    fastify.get(`/user/me/courses/bookmarked/`, {
+        preHandler: [requiresAuth, requiresEmailConfirmed],
+        handler: CourseController.getUserBookmarkedCourses,
+    });
+
     done();
 };

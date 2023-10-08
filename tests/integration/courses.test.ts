@@ -30,6 +30,7 @@ import * as constantExports from "@/src/constants.js";
 import {TEMP_ROOT_FILE_UPLOAD_DIR} from "@/tests/testConstants.js";
 import {escapeRegExp} from "@/src/utils/utils.js";
 import {Profile} from "@/src/models/entities/Profile.js";
+import {MapBookmarkerCourse} from "@/src/models/entities/MapBookmarkerCourse.js";
 
 interface LocalTestContext extends TestContext {
     courseRepo: CourseRepo;
@@ -1547,6 +1548,511 @@ describe("PUT courses/:courseId/", function () {
                 expect(response.statusCode).to.equal(400);
             });
             // test<LocalTestContext>("If image is corrupted return 415", async (context) => {});
+        });
+    });
+});
+
+
+/**{@link CourseController#getUserBookmarkedCourses}*/
+describe("GET user/me/courses/bookmarked/", function () {
+    const makeRequest = async (queryParams: object = {}, authToken?: string) => {
+        const options: InjectOptions = {
+            method: "GET",
+            url: `user/me/courses/bookmarked/${buildQueryString(queryParams)}`,
+        };
+        return await fetchRequest(options, authToken);
+    };
+    const queryDefaults = {pagination: {pageSize: 10, page: 1}};
+    const defaultSortComparator = createComparator(Course, [
+        {property: "title", order: "asc"},
+        {property: "id", order: "asc"}]
+    );
+    test<LocalTestContext>("If there are no filters return all courses user has bookmarked", async (context) => {
+        const user = await context.userFactory.createOne();
+        const session = await context.sessionFactory.createOne({user});
+
+        const language = await context.languageFactory.createOne();
+        const expectedCourses = await context.courseFactory.create(3, {language, bookmarkers: user.profile});
+        await context.courseFactory.create(3, {language});
+        await context.courseRepo.annotateVocabsByLevel(expectedCourses, user.profile.id)
+        expectedCourses.sort(defaultSortComparator);
+        const recordsCount = expectedCourses.length;
+
+        const response = await makeRequest({}, session.token);
+
+        expect(response.statusCode).to.equal(200);
+        expect(response.json()).toEqual({
+            page: queryDefaults.pagination.page,
+            pageSize: queryDefaults.pagination.pageSize,
+            pageCount: Math.ceil(recordsCount / queryDefaults.pagination.pageSize),
+            data: courseSerializer.serializeList(expectedCourses)
+        });
+    });
+    describe("test languageCode filter", () => {
+        test<LocalTestContext>("If language filter is valid and language exists only return courses in that language that user has bookmarked", async (context) => {
+            const user = await context.userFactory.createOne();
+            const session = await context.sessionFactory.createOne({user});
+
+            const language1 = await context.languageFactory.createOne();
+            const language2 = await context.languageFactory.createOne();
+            const expectedCourses = await context.courseFactory.create(3, {language: language1, bookmarkers: user.profile});
+            await context.courseFactory.create(3, {language: language2, bookmarkers: user.profile});
+            await context.courseFactory.create(3, {language: language1});
+            await context.courseRepo.annotateVocabsByLevel(expectedCourses, user.profile.id)
+            expectedCourses.sort(defaultSortComparator);
+            const recordsCount = expectedCourses.length;
+
+            const response = await makeRequest({languageCode: language1.code}, session.token);
+
+            expect(response.statusCode).to.equal(200);
+            expect(response.json()).toEqual({
+                page: queryDefaults.pagination.page,
+                pageSize: queryDefaults.pagination.pageSize,
+                pageCount: Math.ceil(recordsCount / queryDefaults.pagination.pageSize),
+                data: courseSerializer.serializeList(expectedCourses)
+            });
+        });
+        test<LocalTestContext>("If language does not exist return empty course list", async (context) => {
+            const user = await context.userFactory.createOne();
+            const session = await context.sessionFactory.createOne({user});
+            await context.courseFactory.create(3, {language: await context.languageFactory.createOne(), bookmarkers: user.profile});
+
+            const response = await makeRequest({languageCode: faker.random.alpha({count: 4})}, session.token);
+            expect(response.statusCode).to.equal(200);
+            expect(response.json()).toEqual({
+                page: queryDefaults.pagination.page,
+                pageSize: queryDefaults.pagination.pageSize,
+                pageCount: 0,
+                data: []
+            });
+        });
+        test<LocalTestContext>("If language filter is invalid return 400", async (context) => {
+            const user = await context.userFactory.createOne();
+            const session = await context.sessionFactory.createOne({user});
+            const response = await makeRequest({languageCode: 12345}, session.token);
+            expect(response.statusCode).to.equal(400);
+        });
+    });
+    describe("test addedBy filter", () => {
+        test<LocalTestContext>("If addedBy filter is valid and user exists only return courses added by that user that current user has bookmarked", async (context) => {
+            const user = await context.userFactory.createOne();
+            const session = await context.sessionFactory.createOne({user});
+            const language = await context.languageFactory.createOne();
+
+            const user1 = await context.userFactory.createOne();
+            const user2 = await context.userFactory.createOne();
+            const expectedCourses = await context.courseFactory.create(3, {language, addedBy: user1.profile, bookmarkers: user.profile});
+            await context.courseFactory.create(3, {language, addedBy: user2.profile, bookmarkers: user.profile});
+            await context.courseFactory.create(3, {language, addedBy: user1.profile});
+            await context.courseRepo.annotateVocabsByLevel(expectedCourses, user.profile.id)
+            expectedCourses.sort(defaultSortComparator);
+            const recordsCount = expectedCourses.length;
+
+            const response = await makeRequest({addedBy: user1.username}, session.token);
+
+            expect(response.statusCode).to.equal(200);
+            expect(response.json()).toEqual({
+                page: queryDefaults.pagination.page,
+                pageSize: queryDefaults.pagination.pageSize,
+                pageCount: Math.ceil(recordsCount / queryDefaults.pagination.pageSize),
+                data: courseSerializer.serializeList(expectedCourses)
+            });
+        });
+        test<LocalTestContext>("If addedBy is me and signed in return courses added by current user that they have bookmarked", async (context) => {
+            const user = await context.userFactory.createOne();
+            const session = await context.sessionFactory.createOne({user});
+            const language = await context.languageFactory.createOne();
+
+            const otherUser = await context.userFactory.createOne();
+            const expectedCourses = await context.courseFactory.create(3, {language, addedBy: user.profile, bookmarkers: user.profile});
+            await context.courseFactory.create(3, {language, addedBy: otherUser.profile, bookmarkers: user.profile});
+            await context.courseFactory.create(3, {language, addedBy: user.profile});
+            await context.courseRepo.annotateVocabsByLevel(expectedCourses, user.profile.id)
+            expectedCourses.sort(defaultSortComparator);
+            const recordsCount = expectedCourses.length;
+
+            const response = await makeRequest({addedBy: "me"}, session.token);
+
+            expect(response.statusCode).to.equal(200);
+            expect(response.json()).toEqual({
+                page: queryDefaults.pagination.page,
+                pageSize: queryDefaults.pagination.pageSize,
+                pageCount: Math.ceil(recordsCount / queryDefaults.pagination.pageSize),
+                data: courseSerializer.serializeList(expectedCourses)
+            });
+        });
+        test<LocalTestContext>("If user does not exist return empty course list", async (context) => {
+            const user = await context.userFactory.createOne();
+            const session = await context.sessionFactory.createOne({user});
+            await context.courseFactory.create(3, {language: await context.languageFactory.createOne(), bookmarkers: user.profile});
+
+            const response = await makeRequest({addedBy: faker.random.alpha({count: 20})}, session.token);
+            expect(response.statusCode).to.equal(200);
+            expect(response.json()).toEqual({
+                page: queryDefaults.pagination.page,
+                pageSize: queryDefaults.pagination.pageSize,
+                pageCount: 0,
+                data: []
+            });
+        });
+        test<LocalTestContext>("If addedBy filter is invalid return 400", async (context) => {
+            const user = await context.userFactory.createOne();
+            const session = await context.sessionFactory.createOne({user});
+
+            const response = await makeRequest({addedBy: "!@#%#%^#^!"}, session.token);
+            expect(response.statusCode).to.equal(400);
+        });
+    });
+    describe("test searchQuery filter", () => {
+        test<LocalTestContext>("If searchQuery is valid return courses with query in title or description", async (context) => {
+            const user = await context.userFactory.createOne();
+            const session = await context.sessionFactory.createOne({user});
+            const language = await context.languageFactory.createOne();
+            const searchQuery = "search query";
+            const expectedCourses = [
+                await context.courseFactory.createOne({
+                    language,
+                    bookmarkers: user.profile,
+                    title: `title ${randomCase(searchQuery)} ${faker.random.alphaNumeric(10)}`
+                }),
+                await context.courseFactory.createOne({
+                    language,
+                    bookmarkers: user.profile,
+                    description: `description ${randomCase(searchQuery)} ${faker.random.alphaNumeric(10)}`
+                })
+            ];
+            await context.courseFactory.create(3, {language: language, title: `title ${randomCase(searchQuery)} ${faker.random.alphaNumeric(10)}`});
+            await context.courseFactory.create(3, {
+                language: language,
+                description: `description ${randomCase(searchQuery)} ${faker.random.alphaNumeric(10)}`
+            });
+            await context.courseRepo.annotateVocabsByLevel(expectedCourses, user.profile.id)
+            expectedCourses.sort(defaultSortComparator);
+            const recordsCount = expectedCourses.length;
+
+            const response = await makeRequest({searchQuery: searchQuery}, session.token);
+            expect(response.statusCode).to.equal(200);
+
+            expect(response.json()).toEqual({
+                page: queryDefaults.pagination.page,
+                pageSize: queryDefaults.pagination.pageSize,
+                pageCount: Math.ceil(recordsCount / queryDefaults.pagination.pageSize),
+                data: courseSerializer.serializeList(expectedCourses)
+            });
+        });
+        test<LocalTestContext>("If searchQuery is invalid return 400", async (context) => {
+            const user = await context.userFactory.createOne();
+            const session = await context.sessionFactory.createOne({user});
+            const response = await makeRequest({searchQuery: faker.random.alpha({count: 300})}, session.token);
+
+            expect(response.statusCode).to.equal(400);
+        });
+        test<LocalTestContext>("If no courses match search query return empty list", async (context) => {
+            const user = await context.userFactory.createOne();
+            const session = await context.sessionFactory.createOne({user});
+            await context.courseFactory.create(3, {language: await context.languageFactory.createOne(), bookmarkers: user.profile});
+
+            const response = await makeRequest({searchQuery: faker.random.alpha({count: 200})}, session.token);
+
+            expect(response.statusCode).to.equal(200);
+            expect(response.json()).toEqual({
+                page: queryDefaults.pagination.page,
+                pageSize: queryDefaults.pagination.pageSize,
+                pageCount: 0,
+                data: []
+            });
+        });
+    });
+    describe("test sort", () => {
+        describe("test sortBy", () => {
+            test<LocalTestContext>("test sortBy title", async (context) => {
+                const user = await context.userFactory.createOne();
+                const session = await context.sessionFactory.createOne({user});
+                const language = await context.languageFactory.createOne();
+                const expectedCourses = [
+                    await context.courseFactory.createOne({title: "abc", bookmarkers: user.profile, language}),
+                    await context.courseFactory.createOne({title: "def", bookmarkers: user.profile, language})
+                ];
+                await context.courseRepo.annotateVocabsByLevel(expectedCourses, user.profile.id)
+                const recordsCount = expectedCourses.length;
+
+                const response = await makeRequest({sortBy: "title"}, session.token);
+
+                expect(response.statusCode).to.equal(200);
+                expect(response.json()).toEqual({
+                    page: queryDefaults.pagination.page,
+                    pageSize: queryDefaults.pagination.pageSize,
+                    pageCount: Math.ceil(recordsCount / queryDefaults.pagination.pageSize),
+                    data: courseSerializer.serializeList(expectedCourses)
+                });
+            });
+            test<LocalTestContext>("test sortBy createdDate", async (context) => {
+                const user = await context.userFactory.createOne();
+                const session = await context.sessionFactory.createOne({user});
+                const language = await context.languageFactory.createOne();
+                const expectedCourses = [
+                    await context.courseFactory.createOne({addedOn: new Date("2018-07-22T10:30:45.000Z"), bookmarkers: user.profile, language}),
+                    await context.courseFactory.createOne({addedOn: new Date("2023-03-15T20:29:42.000Z"), bookmarkers: user.profile, language}),
+                ];
+                await context.courseRepo.annotateVocabsByLevel(expectedCourses, user.profile.id)
+                const recordsCount = expectedCourses.length;
+
+                const response = await makeRequest({sortBy: "createdDate"}, session.token);
+
+                expect(response.statusCode).to.equal(200);
+                expect(response.json()).toEqual({
+                    page: queryDefaults.pagination.page,
+                    pageSize: queryDefaults.pagination.pageSize,
+                    pageCount: Math.ceil(recordsCount / queryDefaults.pagination.pageSize),
+                    data: courseSerializer.serializeList(expectedCourses)
+                });
+            });
+            test<LocalTestContext>("test sortBy avgPastViewersCountPerLesson", async (context) => {
+                const user = await context.userFactory.createOne();
+                const session = await context.sessionFactory.createOne({user});
+                const user1 = await context.userFactory.createOne();
+                const user2 = await context.userFactory.createOne();
+
+                const language = await context.languageFactory.createOne();
+                const expectedCourses = [
+                    await context.courseFactory.createOne({language, bookmarkers: user.profile, lessons: []}),
+                    await context.courseFactory.createOne({
+                        language,
+                        bookmarkers: user.profile,
+                        lessons: [context.lessonFactory.makeOne({pastViewers: []})]
+                    }),
+                    await context.courseFactory.createOne({
+                        language,
+                        bookmarkers: user.profile,
+                        lessons: [context.lessonFactory.makeOne({pastViewers: [user1.profile]})]
+                    }),
+                    await context.courseFactory.createOne({
+                        language,
+                        bookmarkers: user.profile,
+                        lessons: [context.lessonFactory.makeOne({pastViewers: [user1.profile, user2.profile]})]
+                    }),
+                ];
+                await context.courseRepo.annotateVocabsByLevel(expectedCourses, user.profile.id)
+                const recordsCount = expectedCourses.length;
+
+                const response = await makeRequest({sortBy: "avgPastViewersCountPerLesson"}, session.token);
+
+                expect(response.statusCode).to.equal(200);
+                expect(response.json()).toEqual({
+                    page: queryDefaults.pagination.page,
+                    pageSize: queryDefaults.pagination.pageSize,
+                    pageCount: Math.ceil(recordsCount / queryDefaults.pagination.pageSize),
+                    data: courseSerializer.serializeList(expectedCourses)
+                });
+            });
+            test<LocalTestContext>("if sortBy is invalid return 400", async (context) => {
+                const user = await context.userFactory.createOne();
+                const session = await context.sessionFactory.createOne({user});
+                const response = await makeRequest({sortBy: "lessons"}, session.token);
+                expect(response.statusCode).to.equal(400);
+            });
+        });
+        describe("test sortOrder", () => {
+            test<LocalTestContext>("test sortOrder ascending", async (context) => {
+                const user = await context.userFactory.createOne();
+                const session = await context.sessionFactory.createOne({user});
+                const language = await context.languageFactory.createOne();
+                const expectedCourses = [
+                    await context.courseFactory.createOne({title: "abc", bookmarkers: user.profile, language}),
+                    await context.courseFactory.createOne({title: "def", bookmarkers: user.profile, language})
+                ];
+                await context.courseRepo.annotateVocabsByLevel(expectedCourses, user.profile.id)
+                const recordsCount = expectedCourses.length;
+
+                const response = await makeRequest({sortOrder: "asc"}, session.token);
+
+                expect(response.statusCode).to.equal(200);
+                expect(response.json()).toEqual({
+                    page: queryDefaults.pagination.page,
+                    pageSize: queryDefaults.pagination.pageSize,
+                    pageCount: Math.ceil(recordsCount / queryDefaults.pagination.pageSize),
+                    data: courseSerializer.serializeList(expectedCourses)
+                });
+            });
+            test<LocalTestContext>("test sortOrder descending", async (context) => {
+                const user = await context.userFactory.createOne();
+                const session = await context.sessionFactory.createOne({user});
+                const language = await context.languageFactory.createOne();
+                const expectedCourses = [
+                    await context.courseFactory.createOne({title: "def", bookmarkers: user.profile, language}),
+                    await context.courseFactory.createOne({title: "abc", bookmarkers: user.profile, language}),
+                ];
+                await context.courseRepo.annotateVocabsByLevel(expectedCourses, user.profile.id)
+                const recordsCount = expectedCourses.length;
+
+                const response = await makeRequest({sortOrder: "desc"}, session.token);
+
+                expect(response.statusCode).to.equal(200);
+                expect(response.json()).toEqual({
+                    page: queryDefaults.pagination.page,
+                    pageSize: queryDefaults.pagination.pageSize,
+                    pageCount: Math.ceil(recordsCount / queryDefaults.pagination.pageSize),
+                    data: courseSerializer.serializeList(expectedCourses)
+                });
+            });
+            test<LocalTestContext>("if sortBy is invalid return 400", async (context) => {
+                const user = await context.userFactory.createOne();
+                const session = await context.sessionFactory.createOne({user});
+                const response = await makeRequest({sortOrder: "rising"}, session.token);
+                expect(response.statusCode).to.equal(400);
+            });
+        });
+    });
+    describe("test pagination", () => {
+        describe("test page", () => {
+            test<LocalTestContext>("If page is 1 return the first page of results", async (context) => {
+                const user = await context.userFactory.createOne();
+                const session = await context.sessionFactory.createOne({user});
+                const language = await context.languageFactory.createOne();
+                const allCourses = await context.courseFactory.create(10, {language, bookmarkers: user.profile});
+                allCourses.sort(defaultSortComparator);
+                const recordsCount = allCourses.length;
+                const page = 1, pageSize = 3;
+                const expectedCourses = allCourses.slice(pageSize * (page - 1), pageSize * (page - 1) + pageSize);
+                await context.courseRepo.annotateVocabsByLevel(expectedCourses, user.profile.id)
+
+                const response = await makeRequest({page, pageSize}, session.token);
+
+                expect(response.statusCode).to.equal(200);
+                expect(response.json()).toEqual({
+                    page: page,
+                    pageSize: pageSize,
+                    pageCount: Math.ceil(recordsCount / pageSize),
+                    data: courseSerializer.serializeList(expectedCourses)
+                });
+            });
+            test<LocalTestContext>("If page is 2 return the second page of results", async (context) => {
+                const user = await context.userFactory.createOne();
+                const session = await context.sessionFactory.createOne({user});
+                const language = await context.languageFactory.createOne();
+                const allCourses = await context.courseFactory.create(10, {language, bookmarkers: user.profile});
+                allCourses.sort(defaultSortComparator);
+                const recordsCount = allCourses.length;
+                const page = 2, pageSize = 3;
+                const expectedCourses = allCourses.slice(pageSize * (page - 1), pageSize * (page - 1) + pageSize);
+                await context.courseRepo.annotateVocabsByLevel(expectedCourses, user.profile.id)
+
+                const response = await makeRequest({page, pageSize}, session.token);
+
+                expect(response.statusCode).to.equal(200);
+                expect(response.json()).toEqual({
+                    page: page,
+                    pageSize: pageSize,
+                    pageCount: Math.ceil(recordsCount / pageSize),
+                    data: courseSerializer.serializeList(expectedCourses)
+                });
+            });
+            test<LocalTestContext>("If page is last return the last page of results", async (context) => {
+                const user = await context.userFactory.createOne();
+                const session = await context.sessionFactory.createOne({user});
+                const language = await context.languageFactory.createOne();
+                const allCourses = await context.courseFactory.create(10, {language, bookmarkers: user.profile});
+                allCourses.sort(defaultSortComparator);
+                const recordsCount = allCourses.length;
+                const pageSize = 3;
+                const page = Math.ceil(recordsCount / pageSize);
+                const expectedCourses = allCourses.slice(pageSize * (page - 1), pageSize * (page - 1) + pageSize);
+                await context.courseRepo.annotateVocabsByLevel(expectedCourses, user.profile.id)
+
+                const response = await makeRequest({page, pageSize}, session.token);
+
+                expect(response.statusCode).to.equal(200);
+                expect(response.json()).toEqual({
+                    page: page,
+                    pageSize: pageSize,
+                    pageCount: Math.ceil(recordsCount / pageSize),
+                    data: courseSerializer.serializeList(expectedCourses)
+                });
+            });
+            test<LocalTestContext>("If page is more than last return empty page", async (context) => {
+                const user = await context.userFactory.createOne();
+                const session = await context.sessionFactory.createOne({user});
+                const language = await context.languageFactory.createOne();
+                const allCourses = await context.courseFactory.create(10, {language, bookmarkers: user.profile});
+                const recordsCount = allCourses.length;
+                const pageSize = 3;
+                const page = Math.ceil(recordsCount / pageSize) + 1;
+                const expectedCourses = allCourses.slice(pageSize * (page - 1), pageSize * (page - 1) + pageSize);
+                await context.courseRepo.annotateVocabsByLevel(expectedCourses, user.profile.id)
+
+                const response = await makeRequest({page, pageSize}, session.token);
+
+                expect(response.statusCode).to.equal(200);
+                expect(response.json()).toEqual({
+                    page: page,
+                    pageSize: pageSize,
+                    pageCount: Math.ceil(recordsCount / pageSize),
+                    data: []
+                });
+            });
+            describe("If page is invalid return 400", () => {
+                test<LocalTestContext>("If page is less than 1 return 400", async (context) => {
+                    const user = await context.userFactory.createOne();
+                    const session = await context.sessionFactory.createOne({user});
+                    const response = await makeRequest({page: 0, pageSize: 3}, session.token);
+
+                    expect(response.statusCode).to.equal(400);
+                });
+                test<LocalTestContext>("If page is not a number return 400", async (context) => {
+                    const user = await context.userFactory.createOne();
+                    const session = await context.sessionFactory.createOne({user});
+                    const response = await makeRequest({page: "last", pageSize: 3}, session.token);
+
+                    expect(response.statusCode).to.equal(400);
+                });
+            });
+        });
+        describe("test pageSize", () => {
+            test<LocalTestContext>("If pageSize is 20 split the results into 20 sized pages", async (context) => {
+                const user = await context.userFactory.createOne();
+                const session = await context.sessionFactory.createOne({user});
+                const language = await context.languageFactory.createOne();
+                const allCourses = await context.courseFactory.create(50, {language, bookmarkers: user.profile});
+                allCourses.sort(defaultSortComparator);
+                const recordsCount = allCourses.length;
+                const page = 2, pageSize = 20;
+                const expectedCourses = allCourses.slice(pageSize * (page - 1), pageSize * (page - 1) + pageSize);
+                await context.courseRepo.annotateVocabsByLevel(expectedCourses, user.profile.id)
+
+                const response = await makeRequest({page, pageSize}, session.token);
+
+                expect(response.statusCode).to.equal(200);
+                expect(response.json()).toEqual({
+                    page: page,
+                    pageSize: pageSize,
+                    pageCount: Math.ceil(recordsCount / pageSize),
+                    data: courseSerializer.serializeList(expectedCourses)
+                });
+                expect(response.json().data.length).toBeLessThanOrEqual(pageSize);
+            });
+            describe("If pageSize is invalid return 400", () => {
+                test<LocalTestContext>("If pageSize is too big return 400", async (context) => {
+                    const user = await context.userFactory.createOne();
+                    const session = await context.sessionFactory.createOne({user});
+                    const response = await makeRequest({page: 1, pageSize: 250}, session.token);
+
+                    expect(response.statusCode).to.equal(400);
+                });
+                test<LocalTestContext>("If pageSize is negative return 400", async (context) => {
+                    const user = await context.userFactory.createOne();
+                    const session = await context.sessionFactory.createOne({user});
+                    const response = await makeRequest({page: 1, pageSize: -20}, session.token);
+
+                    expect(response.statusCode).to.equal(400);
+                });
+                test<LocalTestContext>("If pageSize is not a number return 400", async (context) => {
+                    const user = await context.userFactory.createOne();
+                    const session = await context.sessionFactory.createOne({user});
+                    const response = await makeRequest({page: 1, pageSize: "a lot"}, session.token);
+
+                    expect(response.statusCode).to.equal(400);
+                });
+            });
         });
     });
 });

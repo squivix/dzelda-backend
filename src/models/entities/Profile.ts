@@ -12,6 +12,7 @@ import {Dictionary} from "@/src/models/entities/Dictionary.js";
 import {MapLearnerDictionary} from "@/src/models/entities/MapLearnerDictionary.js";
 import {Language} from "@/src/models/entities/Language.js";
 import {MapLearnerLanguage} from "@/src/models/entities/MapLearnerLanguage.js";
+import {MapBookmarkerCourse} from "@/src/models/entities/MapBookmarkerCourse.js";
 
 @Entity()
 export class Profile extends CustomBaseEntity {
@@ -78,6 +79,14 @@ export class Profile extends CustomBaseEntity {
         hidden: true
     })
     dictionariesSaved: Collection<Dictionary> = new Collection<Dictionary>(this);
+
+    @ManyToMany({
+        entity: () => Course,
+        mappedBy: (course: Course) => course.bookmarkers,
+        pivotEntity: () => MapBookmarkerCourse,
+        hidden: true
+    })
+    coursesBookmarked: Collection<Course> = new Collection<Course>(this);
 
     @OneToMany({entity: () => Course, mappedBy: (course: Course) => course.addedBy, hidden: true})
     coursesAdded: Collection<Course> = new Collection<Course>(this);

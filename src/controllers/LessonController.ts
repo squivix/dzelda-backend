@@ -146,6 +146,7 @@ class LessonController {
 
     }
 
+    //TODO show deleted and privated lessons as deleted and privated lessons instead of hiding them. Do this with bookmarked courses as well
     async getUserLessonsHistory(request: FastifyRequest, reply: FastifyReply) {
         const pathParamsValidator = z.object({username: usernameValidator.or(z.literal("me"))});
         const pathParams = pathParamsValidator.parse(request.params);

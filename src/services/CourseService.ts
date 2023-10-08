@@ -20,15 +20,17 @@ export class CourseService {
         this.lessonRepo = this.em.getRepository(Lesson) as LessonRepo;
     }
 
-    async getPaginatedCourses(filters: { languageCode?: string, addedBy?: string, searchQuery?: string }, sort: {
+    async getPaginatedCourses(filters: { languageCode?: string, addedBy?: string, searchQuery?: string, isBookmarked?: boolean }, sort: {
         sortBy: "title" | "createdDate" | "avgPastViewersCountPerLesson",
         sortOrder: "asc" | "desc"
     }, pagination: { page: number, pageSize: number }, user: User | AnonymousUser | null): Promise<[Course[], number]> {
         const dbFilters: FilterQuery<Course> = {$and: []};
 
-        if (user && user instanceof User)
+        if (user && user instanceof User) {
             dbFilters.$and!.push({$or: [{isPublic: true}, {addedBy: (user as User).profile}]});
-        else
+            if (filters.isBookmarked)
+                dbFilters.$and!.push({bookmarkers: user.profile});
+        } else
             dbFilters.$and!.push({isPublic: true});
 
         if (filters.languageCode !== undefined)
@@ -106,8 +108,8 @@ export class CourseService {
         }), {});
         const courseLessons = course.lessons.getItems();
         courseLessons.forEach(l => l.orderInCourse = idToOrder[l.id]);
-        this.courseRepo.persist(course);
-        this.lessonRepo.persist(courseLessons);
+        this.em.persist(course);
+        this.em.persist(courseLessons);
         await this.courseRepo.flush();
 
         return (await this.getCourse(course.id, user))!

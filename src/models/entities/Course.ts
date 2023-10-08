@@ -1,10 +1,11 @@
-import {Collection, Entity, Formula, Index, ManyToOne, OneToMany, OptionalProps, Property, types} from "@mikro-orm/core";
+import {Collection, Entity, Formula, Index, ManyToMany, ManyToOne, OneToMany, OptionalProps, Property, types} from "@mikro-orm/core";
 import {CustomBaseEntity} from "@/src/models/entities/CustomBaseEntity.js";
 import {Language} from "@/src/models/entities/Language.js";
 import {Profile} from "@/src/models/entities/Profile.js";
 import {Lesson} from "@/src/models/entities/Lesson.js";
 import {VocabLevel} from "@/src/models/enums/VocabLevel.js";
 import {CourseRepo} from "@/src/models/repos/CourseRepo.js";
+import {MapBookmarkerCourse} from "@/src/models/entities/MapBookmarkerCourse.js";
 
 @Entity({customRepository: () => CourseRepo})
 @Index({properties: ["language"]})
@@ -37,7 +38,16 @@ export class Course extends CustomBaseEntity {
     @OneToMany({entity: () => Lesson, mappedBy: (lesson) => lesson.course})
     lessons: Collection<Lesson> = new Collection<Lesson>(this);
 
-    [OptionalProps]?: "description" | "image" | "isPublic" | "addedOn" | "avgPastViewersCountPerLesson";
+    @ManyToMany({
+        entity: () => Profile,
+        inversedBy: (user: Profile) => user.coursesBookmarked,
+        pivotEntity: () => MapBookmarkerCourse,
+        joinColumn: "course_id",
+        inverseJoinColumn: "bookmarker_id"
+    })
+    bookmarkers!: Profile;
+
+    [OptionalProps]?: "description" | "image" | "isPublic" | "addedOn" | "bookmarkers" | "avgPastViewersCountPerLesson";
 
     //annotated properties
     @Property({persist: false, type: types.json})
