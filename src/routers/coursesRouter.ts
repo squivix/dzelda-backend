@@ -28,5 +28,10 @@ export const coursesRouter: FastifyPluginCallback = function (fastify, options, 
         handler: CourseController.getUserBookmarkedCourses,
     });
 
+    fastify.post(`/users/me/courses/bookmarked/`, {
+        preHandler: [requiresAuth, requiresEmailConfirmed],
+        handler: CourseController.addCourseToUserBookmarks,
+    });
+
     done();
 };

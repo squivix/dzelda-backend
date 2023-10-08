@@ -2,10 +2,15 @@ import {EntityRepository} from "@mikro-orm/postgresql";
 import {Lesson} from "@/src/models/entities/Lesson.js";
 import {VocabLevel} from "@/src/models/enums/VocabLevel.js";
 import {numericEnumValues} from "@/src/utils/utils.js";
+import {Course} from "@/src/models/entities/Course.js";
+import {User} from "@/src/models/entities/auth/User.js";
 
 export class LessonRepo extends EntityRepository<Lesson> {
+    async annotateLessonsWithUserData(lessons: Lesson[], user: User) {
+        await this.annotateVocabsByLevel(lessons, user.profile.id);
+    }
 
-    async annotateVocabsByLevel(lessons: Lesson[], learnerId: number) {
+    private async annotateVocabsByLevel(lessons: Lesson[], learnerId: number) {
         if (lessons.length === 0)
             return lessons;
         const query = `SELECT json_object_agg(outq.id, outq.vocabLevels) AS vocab_levels_by_lesson

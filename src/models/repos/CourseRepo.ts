@@ -8,7 +8,7 @@ export class CourseRepo extends EntityRepository<Course> {
 
     async annotateCoursesWithUserData(courses: Course[], user: User) {
         await this.annotateVocabsByLevel(courses, user.profile.id);
-        return await this.annotateIsBookmarked(courses, user.profile.id);
+        await this.annotateIsBookmarked(courses, user.profile.id);
     }
 
     private async annotateVocabsByLevel(courses: Course[], learnerId: number) {
@@ -40,6 +40,7 @@ FROM (SELECT subq.course_id                          AS id,
         const query = `SELECT json_object_agg(course_id, true) AS course_id_to_is_bookmarked FROM map_bookmarker_course WHERE bookmarker_id = ${learnerId};`;
         const courseIdToIsBookmarked = (await this.em.execute(query))[0].course_id_to_is_bookmarked;
         courses.forEach(course => course.isBookmarked = courseIdToIsBookmarked?.[course.id] ?? false);
+        return courses;
     }
 
 }

@@ -166,7 +166,7 @@ describe("GET lessons/", () => {
                 })
             });
             await context.lessonFactory.create(3, {course: await context.courseFactory.createOne({language: language})});
-            await context.lessonRepo.annotateVocabsByLevel(expectedLessons, user.profile.id);
+            await context.lessonRepo.annotateLessonsWithUserData(expectedLessons, user);
             expectedLessons.sort(defaultSortComparator);
             const recordsCount = expectedLessons.length;
 
@@ -618,7 +618,7 @@ describe("GET lessons/", () => {
                 isPublic: true
             })
         });
-        context.lessonRepo.annotateVocabsByLevel(expectedLessons, user.profile.id);
+        context.lessonRepo.annotateLessonsWithUserData(expectedLessons, user);
         await context.lessonFactory.create(3, {course: await context.courseFactory.createOne({language: language, isPublic: false})});
         expectedLessons.sort(defaultSortComparator);
         const recordsCount = expectedLessons.length;
@@ -647,7 +647,7 @@ describe("GET lessons/", () => {
                 })
             }),
         ];
-        context.lessonRepo.annotateVocabsByLevel(expectedLessons, user.profile.id);
+        context.lessonRepo.annotateLessonsWithUserData(expectedLessons, user);
         await context.lessonFactory.create(3, {course: await context.courseFactory.createOne({language: language, isPublic: false})});
         expectedLessons.sort(defaultSortComparator);
         const recordsCount = expectedLessons.length;
@@ -705,7 +705,7 @@ describe("POST lessons/", () => {
             const dbRecord = await context.lessonRepo.findOne({course: course}, {populate: ["course", "course.language", "course.addedBy.user"]});
             expect(dbRecord).not.toBeNull();
             if (!dbRecord) return;
-            await context.lessonRepo.annotateVocabsByLevel([dbRecord], user.id);
+            await context.lessonRepo.annotateLessonsWithUserData([dbRecord], user);
             await context.courseRepo.annotateCoursesWithUserData([dbRecord.course], user);
             expect(response.json()).toMatchObject(lessonSerializer.serialize(newLesson, {ignore: ["addedOn"]}));
             expect(lessonSerializer.serialize(dbRecord)).toMatchObject(lessonSerializer.serialize(newLesson, {ignore: ["addedOn"]}));
@@ -741,7 +741,7 @@ describe("POST lessons/", () => {
             const dbRecord = await context.lessonRepo.findOne({course: course}, {populate: ["course", "course.language", "course.addedBy.user"]});
             expect(dbRecord).not.toBeNull();
             if (!dbRecord) return;
-            await context.lessonRepo.annotateVocabsByLevel([dbRecord], user.id);
+            await context.lessonRepo.annotateLessonsWithUserData([dbRecord], user);
             await context.courseRepo.annotateCoursesWithUserData([dbRecord.course], user);
             expect(response.json()).toMatchObject(lessonSerializer.serialize(newLesson, {ignore: ["addedOn", "image", "audio"]}));
             expect(lessonSerializer.serialize(dbRecord)).toMatchObject(lessonSerializer.serialize(newLesson, {ignore: ["addedOn", "image", "audio"]}));
@@ -1082,7 +1082,7 @@ describe("GET lessons/:lessonId/", () => {
                     isPublic: true
                 })
             });
-            await context.lessonRepo.annotateVocabsByLevel([expectedLesson], user.id);
+            await context.lessonRepo.annotateLessonsWithUserData([expectedLesson], user);
             await context.courseRepo.annotateCoursesWithUserData([expectedLesson.course], user);
 
             const response = await makeRequest(expectedLesson.id, session.token);
@@ -1130,7 +1130,7 @@ describe("GET lessons/:lessonId/", () => {
 
         const response = await makeRequest(lesson.id, session.token);
 
-        await context.lessonRepo.annotateVocabsByLevel([lesson], author.id);
+        await context.lessonRepo.annotateLessonsWithUserData([lesson], author);
         await context.courseRepo.annotateCoursesWithUserData([lesson.course], author);
 
         expect(response.statusCode).to.equal(200);
@@ -1181,7 +1181,7 @@ describe("PUT lessons/:lessonId/", () => {
             }, session.token);
 
             const dbRecord = await context.lessonRepo.findOneOrFail({id: lesson.id}, {populate: ["course", "course.language", "course.addedBy.user"]});
-            await context.lessonRepo.annotateVocabsByLevel([dbRecord], author.id);
+            await context.lessonRepo.annotateLessonsWithUserData([dbRecord], author);
             await context.courseRepo.annotateCoursesWithUserData([dbRecord.course], author);
             await context.courseRepo.annotateCoursesWithUserData([updatedLesson.course], author);
 
@@ -1228,7 +1228,7 @@ describe("PUT lessons/:lessonId/", () => {
 
                 const dbRecord = await context.lessonRepo.findOneOrFail({id: lesson.id}, {populate: ["course", "course.language", "course.addedBy.user"]});
                 await context.em.populate(dbRecord, ["course"]);
-                await context.lessonRepo.annotateVocabsByLevel([dbRecord], author.id);
+                await context.lessonRepo.annotateLessonsWithUserData([dbRecord], author);
                 await context.courseRepo.annotateCoursesWithUserData([updatedLesson.course], author);
                 await context.courseRepo.annotateCoursesWithUserData([dbRecord.course], author);
 
@@ -1270,7 +1270,7 @@ describe("PUT lessons/:lessonId/", () => {
 
                 const dbRecord = await context.lessonRepo.findOneOrFail({id: lesson.id}, {populate: ["course", "course.language", "course.addedBy.user"]});
                 await context.em.populate(dbRecord, ["course"]);
-                await context.lessonRepo.annotateVocabsByLevel([dbRecord], author.id);
+                await context.lessonRepo.annotateLessonsWithUserData([dbRecord], author);
                 await context.courseRepo.annotateCoursesWithUserData([dbRecord.course], author);
                 await context.courseRepo.annotateCoursesWithUserData([updatedLesson.course], author);
 
@@ -1727,7 +1727,7 @@ describe("GET users/:username/lessons/history/", () => {
             const course = await context.courseFactory.createOne({language: language, isPublic: true});
             const expectedLessons = await context.lessonFactory.create(3, {course, pastViewers: [user.profile]});
             await context.lessonFactory.create(3, {course});
-            context.lessonRepo.annotateVocabsByLevel(expectedLessons, user.profile.id);
+            context.lessonRepo.annotateLessonsWithUserData(expectedLessons, user);
             expectedLessons.sort(defaultSortComparator);
             const recordsCount = expectedLessons.length;
 
@@ -1748,7 +1748,7 @@ describe("GET users/:username/lessons/history/", () => {
             const course = await context.courseFactory.createOne({language: language, isPublic: true});
             const expectedLessons = await context.lessonFactory.create(3, {course, pastViewers: [user.profile]});
             await context.lessonFactory.create(3, {course});
-            context.lessonRepo.annotateVocabsByLevel(expectedLessons, user.profile.id);
+            context.lessonRepo.annotateLessonsWithUserData(expectedLessons, user);
             expectedLessons.sort(defaultSortComparator);
             const recordsCount = expectedLessons.length;
 
@@ -1775,7 +1775,7 @@ describe("GET users/:username/lessons/history/", () => {
             await context.lessonFactory.create(3, {course: course2, pastViewers: [user.profile]});
             await context.lessonFactory.create(3, {course: course1});
             expectedLessons.sort(defaultSortComparator);
-            await context.lessonRepo.annotateVocabsByLevel(expectedLessons, user.id);
+            await context.lessonRepo.annotateLessonsWithUserData(expectedLessons, user);
             const recordsCount = expectedLessons.length;
 
             const response = await makeRequest("me", {languageCode: language1.code}, session.token);
@@ -1830,7 +1830,7 @@ describe("GET users/:username/lessons/history/", () => {
             await context.lessonFactory.create(3, {course: privateCourse1, pastViewers: [user.profile]});
             await context.lessonFactory.create(3, {course: course1});
             expectedLessons.sort(defaultSortComparator);
-            await context.lessonRepo.annotateVocabsByLevel(expectedLessons, user.id);
+            await context.lessonRepo.annotateLessonsWithUserData(expectedLessons, user);
             const recordsCount = expectedLessons.length;
 
             const response = await makeRequest("me", {addedBy: user1.username}, session.token);
@@ -1854,7 +1854,7 @@ describe("GET users/:username/lessons/history/", () => {
             await context.lessonFactory.create(3, {course: course2, pastViewers: [user.profile]});
             await context.lessonFactory.create(3, {course: course1});
             expectedLessons.sort(defaultSortComparator);
-            await context.lessonRepo.annotateVocabsByLevel(expectedLessons, user.id);
+            await context.lessonRepo.annotateLessonsWithUserData(expectedLessons, user);
             const recordsCount = expectedLessons.length;
 
             const response = await makeRequest("me", {addedBy: "me"}, session.token);
@@ -1914,7 +1914,7 @@ describe("GET users/:username/lessons/history/", () => {
                 })
             ];
             expectedLessons.sort(defaultSortComparator);
-            await context.lessonRepo.annotateVocabsByLevel(expectedLessons, user.id);
+            await context.lessonRepo.annotateLessonsWithUserData(expectedLessons, user);
             await context.lessonFactory.create(3, {course, pastViewers: [user.profile]});
             await context.lessonFactory.create(3, {course});
             const recordsCount = expectedLessons.length;
@@ -1967,7 +1967,7 @@ describe("GET users/:username/lessons/history/", () => {
             await context.lessonFactory.create(3, {course, pastViewers: [user.profile], level: randomEnum(LanguageLevel, [level])});
             await context.lessonFactory.create(3, {course, level});
             expectedLessons.sort(defaultSortComparator);
-            await context.lessonRepo.annotateVocabsByLevel(expectedLessons, user.id);
+            await context.lessonRepo.annotateLessonsWithUserData(expectedLessons, user);
             const recordsCount = expectedLessons.length;
 
             const response = await makeRequest("me", {level: level}, session.token);
@@ -1994,7 +1994,7 @@ describe("GET users/:username/lessons/history/", () => {
             await context.lessonFactory.create(3, {course, pastViewers: [user.profile], level: randomEnum(LanguageLevel, levels)});
             await Promise.all(levels.map(level => context.lessonFactory.create(3, {course, level})));
             expectedLessons.sort(defaultSortComparator);
-            await context.lessonRepo.annotateVocabsByLevel(expectedLessons, user.id);
+            await context.lessonRepo.annotateLessonsWithUserData(expectedLessons, user);
             const recordsCount = expectedLessons.length;
 
             const response = await makeRequest("me", {level: levels}, session.token);
@@ -2026,7 +2026,7 @@ describe("GET users/:username/lessons/history/", () => {
             await context.lessonFactory.create(3, {course, pastViewers: [user.profile], audio: ""});
             await context.lessonFactory.create(3, {course, audio});
             expectedLessons.sort(defaultSortComparator);
-            await context.lessonRepo.annotateVocabsByLevel(expectedLessons, user.id);
+            await context.lessonRepo.annotateLessonsWithUserData(expectedLessons, user);
             const recordsCount = expectedLessons.length;
 
             const response = await makeRequest("me", {hasAudio: true}, session.token);
@@ -2049,7 +2049,7 @@ describe("GET users/:username/lessons/history/", () => {
             await context.lessonFactory.create(3, {course, pastViewers: [user.profile], audio});
             await context.lessonFactory.create(3, {course, audio});
             expectedLessons.sort(defaultSortComparator);
-            await context.lessonRepo.annotateVocabsByLevel(expectedLessons, user.id);
+            await context.lessonRepo.annotateLessonsWithUserData(expectedLessons, user);
             const recordsCount = expectedLessons.length;
 
             const response = await makeRequest("me", {hasAudio: false}, session.token);
@@ -2080,7 +2080,7 @@ describe("GET users/:username/lessons/history/", () => {
                     await context.lessonFactory.createOne({course, pastViewers: [user.profile], title: "abc"}),
                     await context.lessonFactory.createOne({course, pastViewers: [user.profile], title: "def"})
                 ];
-                await context.lessonRepo.annotateVocabsByLevel(expectedLessons, user.id);
+                await context.lessonRepo.annotateLessonsWithUserData(expectedLessons, user);
                 const recordsCount = expectedLessons.length;
 
                 const response = await makeRequest("me", {sortBy: "title"}, session.token);
@@ -2111,7 +2111,7 @@ describe("GET users/:username/lessons/history/", () => {
                         addedOn: new Date("2023-03-15T20:29:42.000Z")
                     }),
                 ];
-                await context.lessonRepo.annotateVocabsByLevel(expectedLessons, user.id);
+                await context.lessonRepo.annotateLessonsWithUserData(expectedLessons, user);
                 const recordsCount = expectedLessons.length;
 
                 const response = await makeRequest("me", {sortBy: "createdDate"}, session.token);
@@ -2138,7 +2138,7 @@ describe("GET users/:username/lessons/history/", () => {
                     await context.lessonFactory.createOne({course, pastViewers: [user.profile, user1.profile, user2.profile]})
                 ];
                 await context.lessonFactory.createOne({course});
-                await context.lessonRepo.annotateVocabsByLevel(expectedLessons, user.id);
+                await context.lessonRepo.annotateLessonsWithUserData(expectedLessons, user);
                 const recordsCount = expectedLessons.length;
 
                 const response = await makeRequest("me", {sortBy: "pastViewersCount"}, session.token);
@@ -2169,7 +2169,7 @@ describe("GET users/:username/lessons/history/", () => {
                     await context.lessonFactory.createOne({course, pastViewers: [user.profile], title: "abc"}),
                     await context.lessonFactory.createOne({course, pastViewers: [user.profile], title: "def"})
                 ];
-                await context.lessonRepo.annotateVocabsByLevel(expectedLessons, user.id);
+                await context.lessonRepo.annotateLessonsWithUserData(expectedLessons, user);
                 const recordsCount = expectedLessons.length;
 
                 const response = await makeRequest("me", {sortOrder: "asc"}, session.token);
@@ -2191,7 +2191,7 @@ describe("GET users/:username/lessons/history/", () => {
                     await context.lessonFactory.createOne({course, pastViewers: [user.profile], title: "def"}),
                     await context.lessonFactory.createOne({course, pastViewers: [user.profile], title: "abc"}),
                 ];
-                await context.lessonRepo.annotateVocabsByLevel(expectedLessons, user.id);
+                await context.lessonRepo.annotateLessonsWithUserData(expectedLessons, user);
                 const recordsCount = expectedLessons.length;
 
                 const response = await makeRequest("me", {sortOrder: "desc"}, session.token);
@@ -2226,7 +2226,7 @@ describe("GET users/:username/lessons/history/", () => {
                 const recordsCount = allLessons.length;
                 const page = 1, pageSize = 3;
                 const expectedLessons = allLessons.slice(pageSize * (page - 1), pageSize * (page - 1) + pageSize);
-                await context.lessonRepo.annotateVocabsByLevel(expectedLessons, user.id);
+                await context.lessonRepo.annotateLessonsWithUserData(expectedLessons, user);
 
                 const response = await makeRequest("me", {page, pageSize}, session.token);
 
@@ -2249,7 +2249,7 @@ describe("GET users/:username/lessons/history/", () => {
                 const recordsCount = allLessons.length;
                 const page = 2, pageSize = 3;
                 const expectedLessons = allLessons.slice(pageSize * (page - 1), pageSize * (page - 1) + pageSize);
-                await context.lessonRepo.annotateVocabsByLevel(expectedLessons, user.id);
+                await context.lessonRepo.annotateLessonsWithUserData(expectedLessons, user);
 
                 const response = await makeRequest("me", {page, pageSize}, session.token);
 
@@ -2273,7 +2273,7 @@ describe("GET users/:username/lessons/history/", () => {
                 const pageSize = 3;
                 const page = Math.ceil(recordsCount / pageSize);
                 const expectedLessons = allLessons.slice(pageSize * (page - 1), pageSize * (page - 1) + pageSize);
-                await context.lessonRepo.annotateVocabsByLevel(expectedLessons, user.id);
+                await context.lessonRepo.annotateLessonsWithUserData(expectedLessons, user);
 
                 const response = await makeRequest("me", {page, pageSize}, session.token);
 
@@ -2297,7 +2297,7 @@ describe("GET users/:username/lessons/history/", () => {
                 const pageSize = 3;
                 const page = Math.ceil(recordsCount / pageSize) + 1;
                 const expectedLessons = allLessons.slice(pageSize * (page - 1), pageSize * (page - 1) + pageSize);
-                await context.lessonRepo.annotateVocabsByLevel(expectedLessons, user.id);
+                await context.lessonRepo.annotateLessonsWithUserData(expectedLessons, user);
 
                 const response = await makeRequest("me", {page, pageSize}, session.token);
 
@@ -2345,7 +2345,7 @@ describe("GET users/:username/lessons/history/", () => {
                 const recordsCount = allLessons.length;
                 const page = 1, pageSize = 20;
                 const expectedLessons = allLessons.slice(pageSize * (page - 1), pageSize * (page - 1) + pageSize);
-                await context.lessonRepo.annotateVocabsByLevel(expectedLessons, user.id);
+                await context.lessonRepo.annotateLessonsWithUserData(expectedLessons, user);
 
                 const response = await makeRequest("me", {page, pageSize}, session.token);
 
@@ -2435,7 +2435,7 @@ describe("POST users/:username/lessons/history/", () => {
             const language = await context.languageFactory.createOne({learners: user.profile});
             const course = await context.courseFactory.createOne({language, isPublic: true});
             const expectedLesson = await context.lessonFactory.createOne({course});
-            await context.lessonRepo.annotateVocabsByLevel([expectedLesson], user.id);
+            await context.lessonRepo.annotateLessonsWithUserData([expectedLesson], user);
             await context.courseRepo.annotateCoursesWithUserData([expectedLesson.course], user);
 
             const response = await makeRequest("me", {lessonId: expectedLesson.id}, session.token);
@@ -2455,7 +2455,7 @@ describe("POST users/:username/lessons/history/", () => {
             const language = await context.languageFactory.createOne({learners: user.profile});
             const course = await context.courseFactory.createOne({language, isPublic: true});
             const expectedLesson = await context.lessonFactory.createOne({course});
-            await context.lessonRepo.annotateVocabsByLevel([expectedLesson], user.id);
+            await context.lessonRepo.annotateLessonsWithUserData([expectedLesson], user);
             await context.courseRepo.annotateCoursesWithUserData([expectedLesson.course], user);
 
             const response = await makeRequest(user.username, {lessonId: expectedLesson.id}, session.token);
@@ -2476,7 +2476,7 @@ describe("POST users/:username/lessons/history/", () => {
         const language = await context.languageFactory.createOne({learners: user.profile});
         const course = await context.courseFactory.createOne({language, isPublic: true});
         const expectedLesson = await context.lessonFactory.createOne({course, pastViewers: user.profile});
-        await context.lessonRepo.annotateVocabsByLevel([expectedLesson], user.id);
+        await context.lessonRepo.annotateLessonsWithUserData([expectedLesson], user);
         await context.courseRepo.annotateCoursesWithUserData([expectedLesson.course], user);
 
         const response = await makeRequest("me", {lessonId: expectedLesson.id}, session.token);

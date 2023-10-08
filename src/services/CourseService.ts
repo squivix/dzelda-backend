@@ -8,6 +8,8 @@ import {Lesson} from "@/src/models/entities/Lesson.js";
 import {LessonRepo} from "@/src/models/repos/LessonRepo.js";
 import {QueryOrderMap} from "@mikro-orm/core/enums.js";
 import {EntityField} from "@mikro-orm/core/drivers/IDatabaseDriver.js";
+import {MapBookmarkerCourse} from "@/src/models/entities/MapBookmarkerCourse.js";
+import {MapPastViewerLesson} from "@/src/models/entities/MapPastViewerLesson.js";
 
 export class CourseService {
     em: EntityManager;
@@ -83,7 +85,7 @@ export class CourseService {
             await this.em.populate(course, ["lessons"], {orderBy: {lessons: {orderInCourse: "asc"}}, refresh: true});
             if (user && !(user instanceof AnonymousUser)) {
                 await this.courseRepo.annotateCoursesWithUserData([course], user);
-                await this.lessonRepo.annotateVocabsByLevel(course.lessons.getItems(), user.profile.id);
+                await this.lessonRepo.annotateLessonsWithUserData(course.lessons.getItems(), user);
             }
         }
         return course;
@@ -117,6 +119,17 @@ export class CourseService {
 
     async findCourse(where: FilterQuery<Course>, fields: EntityField<Course>[] = ["id", "isPublic", "addedBy"]) {
         return await this.courseRepo.findOne(where, {fields});
+    }
+
+    async findBookMarkerCourseMapping(where: FilterQuery<MapBookmarkerCourse>, fields: EntityField<MapBookmarkerCourse>[] = ["course"]) {
+        return await this.em.findOne(MapBookmarkerCourse, where, {fields});
+    }
+
+    async addCourseToUserBookmarks(course: Course, user: User) {
+        const mapping = this.em.create(MapBookmarkerCourse, {bookmarker: user.profile, course: course});
+        await this.em.flush();
+        await this.courseRepo.annotateCoursesWithUserData([course], user);
+        return mapping;
     }
 
 }

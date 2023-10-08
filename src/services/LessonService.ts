@@ -72,7 +72,7 @@ export class LessonService {
         });
 
         if (user && !(user instanceof AnonymousUser))
-            lessons = await this.lessonRepo.annotateVocabsByLevel(lessons, user.id);
+            await this.lessonRepo.annotateLessonsWithUserData(lessons, user);
         return [lessons, totalCount];
     }
 
@@ -105,7 +105,7 @@ export class LessonService {
 
         await this.em.insertMany(MapLessonVocab, lessonVocabs.map(vocab => ({lesson: newLesson.id, vocab: vocab.id})));
 
-        await this.lessonRepo.annotateVocabsByLevel([newLesson], user.id);
+        await this.lessonRepo.annotateLessonsWithUserData([newLesson], user);
         await this.courseRepo.annotateCoursesWithUserData([newLesson.course], user);
         return newLesson;
     }
@@ -114,7 +114,7 @@ export class LessonService {
         let lesson = await this.lessonRepo.findOne({id: lessonId}, {populate: ["course", "course.language", "course.addedBy.user"]});
         if (lesson) {
             if (user && !(user instanceof AnonymousUser)) {
-                await this.lessonRepo.annotateVocabsByLevel([lesson], user.id);
+                await this.lessonRepo.annotateLessonsWithUserData([lesson], user);
                 await this.courseRepo.annotateCoursesWithUserData([lesson.course], user);
             }
         }
@@ -164,7 +164,7 @@ export class LessonService {
         await this.em.flush();
 
         if (user && !(user instanceof AnonymousUser)) {
-            await this.lessonRepo.annotateVocabsByLevel([lesson], user.id);
+            await this.lessonRepo.annotateLessonsWithUserData([lesson], user);
             await this.courseRepo.annotateCoursesWithUserData([lesson.course], user);
         }
         return lesson;

@@ -12,6 +12,9 @@ import {ValidationAPIError} from "@/src/utils/errors/ValidationAPIError.js";
 import {LanguageService} from "@/src/services/LanguageService.js";
 import {numericStringValidator} from "@/src/validators/utilValidators.js";
 import {courseSerializer} from "@/src/presentation/response/serializers/entities/CourseSerializer.js";
+import {UserService} from "@/src/services/UserService.js";
+import {LessonService} from "@/src/services/LessonService.js";
+import {lessonSerializer} from "@/src/presentation/response/serializers/entities/LessonSerializer.js";
 
 class CourseController {
     async getCourses(request: FastifyRequest, reply: FastifyReply) {
@@ -156,6 +159,26 @@ class CourseController {
             pageCount: Math.ceil(recordsCount / pagination.pageSize),
             data: courseSerializer.serializeList(courses)
         });
+    }
+
+    async addCourseToUserBookmarks(request: FastifyRequest, reply: FastifyReply) {
+        const user = request.user as User;
+        const bodyValidator = z.object({courseId: z.number().min(0)});
+        const body = bodyValidator.parse(request.body);
+
+        const courseService = new CourseService(request.em);
+        const course = await courseService.getCourse(body.courseId, request.user);
+        if (!course || (!course.isPublic && request?.user?.profile !== course.addedBy))
+            throw new ValidationAPIError({course: {message: "Not found"}});
+        if (!(request.user as User).profile.languagesLearning.contains(course.language))
+            throw new ValidationAPIError({course: {message: "not in a language the user is learning"}});
+        const existingCourseMapping = await courseService.findBookMarkerCourseMapping({course: course, bookmarker: user.profile});
+        if (existingCourseMapping) {
+            reply.status(200).send(courseSerializer.serialize(existingCourseMapping.course));
+            return;
+        }
+        const newCourseMapping = await courseService.addCourseToUserBookmarks(course, request.user as User);
+        reply.status(201).send(courseSerializer.serialize(newCourseMapping.course));
     }
 }
 
