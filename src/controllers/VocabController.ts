@@ -82,14 +82,7 @@ class VocabController {
     }
 
     async getUserVocabs(request: FastifyRequest, reply: FastifyReply) {
-        const pathParamsValidator = z.object({username: usernameValidator.or(z.literal("me"))});
-        const pathParams = pathParamsValidator.parse(request.params);
-        const userService = new UserService(request.em);
-        const user = await userService.getUser(pathParams.username, request.user);
-        if (!user || (!user.profile.isPublic && user !== request.user))
-            throw new NotFoundAPIError("User");
-        if (user !== request.user)
-            throw new ForbiddenAPIError();
+        const user = request.user as User;
 
         const queryParamsValidator = z.object({
             languageCode: languageCodeValidator.optional(),
@@ -116,15 +109,7 @@ class VocabController {
     }
 
     async addVocabToUser(request: FastifyRequest, reply: FastifyReply) {
-        const pathParamsValidator = z.object({username: usernameValidator.or(z.literal("me"))});
-        const pathParams = pathParamsValidator.parse(request.params);
-        const userService = new UserService(request.em);
-        const user = await userService.getUser(pathParams.username, request.user);
-        if (!user || (!user.profile.isPublic && user !== request.user))
-            throw new NotFoundAPIError("User");
-        if (user !== request.user)
-            throw new ForbiddenAPIError();
-
+        const user = request.user as User;
         const bodyValidator = z.object({vocabId: z.number().min(0)});
         const body = bodyValidator.parse(request.body);
 
@@ -144,17 +129,11 @@ class VocabController {
     }
 
     async getUserVocab(request: FastifyRequest, reply: FastifyReply) {
+        const user = request.user as User;
         const pathParamsValidator = z.object({
-            username: usernameValidator.or(z.literal("me")),
             vocabId: numericStringValidator
         });
         const pathParams = pathParamsValidator.parse(request.params);
-        const userService = new UserService(request.em);
-        const user = await userService.getUser(pathParams.username, request.user);
-        if (!user || (!user.profile.isPublic && user !== request.user))
-            throw new NotFoundAPIError("User");
-        if (user !== request.user)
-            throw new ForbiddenAPIError();
 
         const vocabService = new VocabService(request.em);
         const mapping = await vocabService.getUserVocab(pathParams.vocabId, user.profile);
@@ -164,17 +143,11 @@ class VocabController {
     }
 
     async updateUserVocab(request: FastifyRequest, reply: FastifyReply) {
+        const user = request.user as User;
         const pathParamsValidator = z.object({
-            username: usernameValidator.or(z.literal("me")),
             vocabId: numericStringValidator
         });
         const pathParams = pathParamsValidator.parse(request.params);
-        const userService = new UserService(request.em);
-        const user = await userService.getUser(pathParams.username, request.user);
-        if (!user || (!user.profile.isPublic && user !== request.user))
-            throw new NotFoundAPIError("User");
-        if (user !== request.user)
-            throw new ForbiddenAPIError();
 
         const bodyValidator = z.object({
             level: vocabLevelValidator.optional(),

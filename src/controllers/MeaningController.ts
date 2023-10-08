@@ -48,14 +48,7 @@ class MeaningController {
     }
 
     async getUserMeanings(request: FastifyRequest, reply: FastifyReply) {
-        const pathParamsValidator = z.object({username: usernameValidator.or(z.literal("me"))});
-        const pathParams = pathParamsValidator.parse(request.params);
-        const userService = new UserService(request.em);
-        const user = await userService.getUser(pathParams.username, request.user);
-        if (!user || (!user.profile.isPublic && user !== request.user))
-            throw new NotFoundAPIError("User");
-        if (user !== request.user)
-            throw new ForbiddenAPIError();
+        const user = request.user as User;
 
         const queryParamsValidator = z.object({
             vocabId: numericStringValidator.optional(),
@@ -65,9 +58,9 @@ class MeaningController {
             pageSize: z.coerce.number().int().min(1).max(50).optional().default(10),
         });
         const queryParams = queryParamsValidator.parse(request.query);
-        const filters = {vocabId: queryParams.vocabId}
+        const filters = {vocabId: queryParams.vocabId};
         const sort = {sortBy: queryParams.sortBy, sortOrder: queryParams.sortOrder};
-        const pagination = {page: queryParams.page, pageSize: queryParams.pageSize}
+        const pagination = {page: queryParams.page, pageSize: queryParams.pageSize};
 
         const meaningService = new MeaningService(request.em);
         const [meanings, recordsCount] = await meaningService.getUserMeanings(filters, sort, pagination, user);
@@ -77,18 +70,11 @@ class MeaningController {
             pageSize: pagination.pageSize,
             pageCount: Math.ceil(recordsCount / pagination.pageSize),
             data: meaningSerializer.serializeList(meanings)
-        })
+        });
     }
 
     async addMeaningToUser(request: FastifyRequest, reply: FastifyReply) {
-        const pathParamsValidator = z.object({username: usernameValidator.or(z.literal("me"))});
-        const pathParams = pathParamsValidator.parse(request.params);
-        const userService = new UserService(request.em);
-        const user = await userService.getUser(pathParams.username, request.user);
-        if (!user || (!user.profile.isPublic && user !== request.user))
-            throw new NotFoundAPIError("User");
-        if (user !== request.user)
-            throw new ForbiddenAPIError();
+        const user = request.user as User;
 
         const bodyValidator = z.object({meaningId: z.number().min(0)});
         const body = bodyValidator.parse(request.body);
@@ -109,17 +95,11 @@ class MeaningController {
     }
 
     async removeMeaningFromUser(request: FastifyRequest, reply: FastifyReply) {
+        const user = request.user as User;
         const pathParamsValidator = z.object({
-            username: usernameValidator.or(z.literal("me")),
             meaningId: numericStringValidator,
         });
         const pathParams = pathParamsValidator.parse(request.params);
-        const userService = new UserService(request.em);
-        const user = await userService.getUser(pathParams.username, request.user);
-        if (!user || (!user.profile.isPublic && user !== request.user))
-            throw new NotFoundAPIError("User");
-        if (user !== request.user)
-            throw new ForbiddenAPIError();
 
         const meaningService = new MeaningService(request.em);
         const meaningMapping = await meaningService.getUserMeaning(pathParams.meaningId, user);

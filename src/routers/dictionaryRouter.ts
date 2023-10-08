@@ -5,7 +5,7 @@ import {requiresEmailConfirmed} from "@/src/middlewares/requiresEmailConfirmed.j
 
 export const dictionaryRouter: FastifyPluginCallback = function (fastify, options, done) {
     fastify.get(`/dictionaries/`, DictionaryController.getDictionaries);
-    fastify.get(`/users/:username/dictionaries/`, {
+    fastify.get(`/users/me/dictionaries/`, {
         preHandler: [requiresAuth, requiresEmailConfirmed],
         handler: DictionaryController.getUserDictionaries
     });

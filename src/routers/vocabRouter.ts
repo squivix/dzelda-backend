@@ -6,19 +6,19 @@ import {requiresEmailConfirmed} from "@/src/middlewares/requiresEmailConfirmed.j
 export const vocabRouter: FastifyPluginCallback = function (fastify, options, done) {
     fastify.post(`/vocabs/`, {preHandler: [requiresAuth, requiresEmailConfirmed], handler: vocabController.createVocab});
     fastify.get(`/vocabs/`, vocabController.getVocabs);
-    fastify.get(`/users/:username/vocabs/`, {
+    fastify.get(`/users/me/vocabs/`, {
         preHandler: [requiresAuth, requiresEmailConfirmed],
         handler: vocabController.getUserVocabs
     });
-    fastify.post(`/users/:username/vocabs/`, {
+    fastify.post(`/users/me/vocabs/`, {
         preHandler: [requiresAuth, requiresEmailConfirmed],
         handler: vocabController.addVocabToUser
     });
-    fastify.get(`/users/:username/vocabs/:vocabId/`, {
+    fastify.get(`/users/me/vocabs/:vocabId/`, {
         preHandler: [requiresAuth, requiresEmailConfirmed],
         handler: vocabController.getUserVocab
     });
-    fastify.patch(`/users/:username/vocabs/:vocabId/`, {
+    fastify.patch(`/users/me/vocabs/:vocabId/`, {
         preHandler: [requiresAuth, requiresEmailConfirmed],
         handler: vocabController.updateUserVocab
     });

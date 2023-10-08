@@ -49,14 +49,7 @@ class LanguageController {
     }
 
     async addLanguageToUser(request: FastifyRequest, reply: FastifyReply) {
-        const pathParamsValidator = z.object({
-            username: usernameValidator.or(z.literal("me")),
-        });
-        const pathParams = pathParamsValidator.parse(request.params);
-        const userService = new UserService(request.em);
-        const user = await userService.getUser(pathParams.username, request.user);
-        if (!user || user !== request.user)
-            throw new ForbiddenAPIError();
+        const user = request.user as User;
 
         const bodyValidator = z.object({
             languageCode: languageCodeValidator
@@ -77,15 +70,11 @@ class LanguageController {
     }
 
     async updateUserLanguage(request: FastifyRequest, reply: FastifyReply) {
+        const user = request.user as User;
         const pathParamsValidator = z.object({
-            username: usernameValidator.or(z.literal("me")),
             languageCode: languageCodeValidator
         });
         const pathParams = pathParamsValidator.parse(request.params);
-        const userService = new UserService(request.em);
-        const user = await userService.getUser(pathParams.username, request.user);
-        if (!user || user !== request.user)
-            throw new ForbiddenAPIError();
 
         const bodyValidator = z.object({
             lastOpened: z.literal("now")
@@ -93,7 +82,7 @@ class LanguageController {
         bodyValidator.parse(request.body);
 
         const languageService = new LanguageService(request.em);
-        const languageMapping = await languageService.getUserLanguage(pathParams.languageCode, request.user as User);
+        const languageMapping = await languageService.getUserLanguage(pathParams.languageCode, user);
         if (!languageMapping)
             throw new APIError(StatusCodes.NOT_FOUND, "User is not learning language", "The user is not learning this language.");
         const updatedLanguageMapping = await languageService.updateUserLanguage(languageMapping);
@@ -101,18 +90,14 @@ class LanguageController {
     }
 
     async deleteUserLanguage(request: FastifyRequest, reply: FastifyReply) {
+        const user = request.user as User;
         const pathParamsValidator = z.object({
-            username: usernameValidator.or(z.literal("me")),
             languageCode: languageCodeValidator
         });
         const pathParams = pathParamsValidator.parse(request.params);
-        const userService = new UserService(request.em);
-        const user = await userService.getUser(pathParams.username, request.user);
-        if (!user || user !== request.user)
-            throw new ForbiddenAPIError();
 
         const languageService = new LanguageService(request.em);
-        const languageMapping = await languageService.getUserLanguage(pathParams.languageCode, request.user as User);
+        const languageMapping = await languageService.getUserLanguage(pathParams.languageCode, user);
         if (!languageMapping)
             throw new NotFoundAPIError("Language");
         await languageService.removeLanguageFromUser(languageMapping);

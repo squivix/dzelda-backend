@@ -365,48 +365,30 @@ describe("GET users/:username/languages/", function () {
 });
 
 /**{@link LanguageController#addLanguageToUser}*/
-describe("POST users/:username/languages/", function () {
-    const makeRequest = async (username: "me" | string, body: object, authToken?: string) => {
+describe("POST users/me/languages/", function () {
+    const makeRequest = async (body: object, authToken?: string) => {
         const options: InjectOptions = {
             method: "POST",
-            url: `users/${username}/languages/`,
+            url: `users/me/languages/`,
             payload: body,
         };
         return await fetchRequest(options, authToken);
     };
 
-    describe("If user is logged in, and all fields are valid return 201", async () => {
-        test<LocalTestContext>("If username is me return 201", async (context) => {
-            const user = await context.userFactory.createOne();
-            const session = await context.sessionFactory.createOne({user});
-            const language = await context.languageFactory.createOne({learnersCount: 1});
-            const expectedMapping = context.em.create(MapLearnerLanguage, {language, learner: user.profile}, {persist: false});
+    test<LocalTestContext>("If user is logged in, and all fields are valid return 201", async (context) => {
+        const user = await context.userFactory.createOne();
+        const session = await context.sessionFactory.createOne({user});
+        const language = await context.languageFactory.createOne({learnersCount: 1});
+        const expectedMapping = context.em.create(MapLearnerLanguage, {language, learner: user.profile}, {persist: false});
 
-            const response = await makeRequest("me", {languageCode: language.code}, session.token);
+        const response = await makeRequest({languageCode: language.code}, session.token);
 
-            const responseBody = response.json();
-            expect(response.statusCode).to.equal(201);
-            expect(responseBody).toMatchObject(learnerLanguageSerializer.serialize(expectedMapping, {ignore: ["addedOn", "lastOpened"]}));
-            const dbRecord = await context.em.findOne(MapLearnerLanguage, {language, learner: user.profile});
-            expect(dbRecord).not.toBeNull();
-            expect(learnerLanguageSerializer.serialize(dbRecord!)).toMatchObject(learnerLanguageSerializer.serialize(expectedMapping, {ignore: ["addedOn", "lastOpened"]}));
-        });
-        test<LocalTestContext>("If username is not me and authenticated as user with username return 201", async (context) => {
-            const user = await context.userFactory.createOne();
-            const session = await context.sessionFactory.createOne({user});
-            const language = await context.languageFactory.createOne({learnersCount: 1});
-            const expectedMapping = context.em.create(MapLearnerLanguage, {language, learner: user.profile}, {persist: false});
-
-            const response = await makeRequest(user.username, {languageCode: language.code}, session.token);
-
-            const responseBody = response.json();
-            expect(response.statusCode).to.equal(201);
-            expect(responseBody).toMatchObject(learnerLanguageSerializer.serialize(expectedMapping, {ignore: ["addedOn", "lastOpened"]}));
-
-            const dbRecord = await context.em.findOne(MapLearnerLanguage, {language, learner: user.profile});
-            expect(dbRecord).not.toBeNull();
-            expect(learnerLanguageSerializer.serialize(dbRecord!)).toMatchObject(learnerLanguageSerializer.serialize(expectedMapping, {ignore: ["addedOn", "lastOpened"]}));
-        });
+        const responseBody = response.json();
+        expect(response.statusCode).to.equal(201);
+        expect(responseBody).toMatchObject(learnerLanguageSerializer.serialize(expectedMapping, {ignore: ["addedOn", "lastOpened"]}));
+        const dbRecord = await context.em.findOne(MapLearnerLanguage, {language, learner: user.profile});
+        expect(dbRecord).not.toBeNull();
+        expect(learnerLanguageSerializer.serialize(dbRecord!)).toMatchObject(learnerLanguageSerializer.serialize(expectedMapping, {ignore: ["addedOn", "lastOpened"]}));
     });
     test<LocalTestContext>("If user is already learning language return 200", async (context) => {
         const user = await context.userFactory.createOne();
@@ -415,7 +397,7 @@ describe("POST users/:username/languages/", function () {
         const expectedMapping = context.em.create(MapLearnerLanguage, {language, learner: user.profile});
         await context.em.flush();
 
-        const response = await makeRequest("me", {languageCode: language.code}, session.token);
+        const response = await makeRequest({languageCode: language.code}, session.token);
 
         expect(response.statusCode).to.equal(200);
         expect(response.json()).toEqual(learnerLanguageSerializer.serialize(expectedMapping));
@@ -423,7 +405,7 @@ describe("POST users/:username/languages/", function () {
     test<LocalTestContext>("If user is not logged in return 401", async (context) => {
         const language = await context.languageFactory.createOne();
 
-        const response = await makeRequest("me", {languageCode: language.code});
+        const response = await makeRequest({languageCode: language.code});
         expect(response.statusCode).to.equal(401);
     });
     test<LocalTestContext>("If user email is not confirmed return 403", async (context) => {
@@ -431,7 +413,7 @@ describe("POST users/:username/languages/", function () {
         const session = await context.sessionFactory.createOne({user});
         const language = await context.languageFactory.createOne();
 
-        const response = await makeRequest("me", {languageCode: language.code}, session.token);
+        const response = await makeRequest({languageCode: language.code}, session.token);
         expect(response.statusCode).to.equal(403);
     });
     describe("If fields are invalid return 400", () => {
@@ -440,7 +422,7 @@ describe("POST users/:username/languages/", function () {
                 const currentUser = await context.userFactory.createOne();
                 const session = await context.sessionFactory.createOne({user: currentUser});
 
-                const response = await makeRequest("me", {languageCode: faker.random.alpha({count: 10})}, session.token);
+                const response = await makeRequest({languageCode: faker.random.alpha({count: 10})}, session.token);
                 expect(response.statusCode).to.equal(400);
             });
             test<LocalTestContext>("If language is not found return 400", async (context) => {
@@ -448,7 +430,7 @@ describe("POST users/:username/languages/", function () {
                 const session = await context.sessionFactory.createOne({user: currentUser});
                 const language = context.languageFactory.makeOne();
 
-                const response = await makeRequest("me", {languageCode: language.code}, session.token);
+                const response = await makeRequest({languageCode: language.code}, session.token);
                 expect(response.statusCode).to.equal(400);
             });
             test<LocalTestContext>("If language is not supported return 400", async (context) => {
@@ -456,100 +438,52 @@ describe("POST users/:username/languages/", function () {
                 const session = await context.sessionFactory.createOne({user: currentUser});
                 const language = await context.languageFactory.createOne({isSupported: false});
 
-                const response = await makeRequest("me", {languageCode: language.code}, session.token);
+                const response = await makeRequest({languageCode: language.code}, session.token);
                 expect(response.statusCode).to.equal(400);
             });
-        });
-    });
-    describe("If username is not me and not authenticated as user with username return 403", async () => {
-        test<LocalTestContext>("If username does not belong to any user return 403", async (context) => {
-            const currentUser = await context.userFactory.createOne();
-            const session = await context.sessionFactory.createOne({user: currentUser});
-
-            const language = await context.languageFactory.createOne();
-
-            const response = await makeRequest(faker.random.alphaNumeric(20), {languageCode: language.code}, session.token);
-            expect(response.statusCode).to.equal(403);
-        });
-        test<LocalTestContext>("If username belongs to another user return 403", async (context) => {
-            const currentUser = await context.userFactory.createOne();
-            const otherUser = await context.userFactory.createOne();
-            const session = await context.sessionFactory.createOne({user: currentUser});
-
-            const language = await context.languageFactory.createOne();
-
-            const response = await makeRequest(otherUser.username, {languageCode: language.code}, session.token);
-            expect(response.statusCode).to.equal(403);
         });
     });
 });
 
 /**{@link LanguageController#updateUserLanguage}*/
-describe("PATCH users/:username/languages/:languageCode/", () => {
-    const makeRequest = async (username: "me" | string, languageCode: string, body: object, authToken?: string) => {
+describe("PATCH users/me/languages/:languageCode/", () => {
+    const makeRequest = async (languageCode: string, body: object, authToken?: string) => {
         const options: InjectOptions = {
             method: "PATCH",
-            url: `users/${username}/languages/${languageCode}/`,
+            url: `users/me/languages/${languageCode}/`,
             payload: body,
         };
         return await fetchRequest(options, authToken);
     };
-    describe("If user is logged in, and all fields are valid return 200", async () => {
-        test<LocalTestContext>("If username is me and authenticated return 200", async (context) => {
-            const user = await context.userFactory.createOne();
-            const session = await context.sessionFactory.createOne({user: user});
-            const language = await context.languageFactory.createOne({learnersCount: 1});
-            const oldLastOpened = "2023-02-14T11:00:43.818Z", oldAddedOn = "2023-01-14T11:00:43.818Z";
-            const expectedMapping = context.em.create(MapLearnerLanguage, {
-                learner: user.profile,
-                language: language,
-                addedOn: new Date(oldAddedOn),
-                lastOpened: new Date(oldLastOpened)
-            });
-            await context.em.flush();
-
-            const response = await makeRequest("me", language.code, {lastOpened: "now"}, session.token);
-
-            const responseBody = response.json();
-            const dbRecord = await context.em.findOneOrFail(MapLearnerLanguage, {language, learner: user.profile});
-
-            expect(response.statusCode).to.equal(200);
-            expect(responseBody).toMatchObject(learnerLanguageSerializer.serialize(expectedMapping, {ignore: ["addedOn", "lastOpened"]}));
-            expect(responseBody).toMatchObject(learnerLanguageSerializer.serialize(dbRecord));
-            const {addedOn: newAddedOn, lastOpened: newLastOpened} = responseBody;
-            expect(newAddedOn).not.toEqual(oldAddedOn);
-            expect(newLastOpened).not.toEqual(oldLastOpened);
+    test<LocalTestContext>("If user is logged in, and all fields are valid return 200", async (context) => {
+        const user = await context.userFactory.createOne();
+        const session = await context.sessionFactory.createOne({user: user});
+        const language = await context.languageFactory.createOne({learnersCount: 1});
+        const oldLastOpened = "2023-02-14T11:00:43.818Z", oldAddedOn = "2023-01-14T11:00:43.818Z";
+        const expectedMapping = context.em.create(MapLearnerLanguage, {
+            learner: user.profile,
+            language: language,
+            addedOn: new Date(oldAddedOn),
+            lastOpened: new Date(oldLastOpened)
         });
-        test<LocalTestContext>("If username is not me and authenticated as user with username return 200", async (context) => {
-            const user = await context.userFactory.createOne();
-            const session = await context.sessionFactory.createOne({user: user});
-            const language = await context.languageFactory.createOne({learnersCount: 1});
-            const oldLastOpened = "2023-02-14T11:00:43.818Z", oldAddedOn = "2023-01-14T11:00:43.818Z";
-            const expectedMapping = context.em.create(MapLearnerLanguage, {
-                learner: user.profile,
-                language: language,
-                addedOn: new Date(oldAddedOn),
-                lastOpened: new Date(oldLastOpened)
-            });
-            await context.em.flush();
+        await context.em.flush();
 
-            const response = await makeRequest(user.username, language.code, {lastOpened: "now"}, session.token);
+        const response = await makeRequest(language.code, {lastOpened: "now"}, session.token);
 
-            const responseBody = response.json();
-            const dbRecord = await context.em.findOneOrFail(MapLearnerLanguage, {language, learner: user.profile});
+        const responseBody = response.json();
+        const dbRecord = await context.em.findOneOrFail(MapLearnerLanguage, {language, learner: user.profile});
 
-            expect(response.statusCode).to.equal(200);
-            expect(responseBody).toMatchObject(learnerLanguageSerializer.serialize(expectedMapping, {ignore: ["addedOn", "lastOpened"]}));
-            expect(responseBody).toMatchObject(learnerLanguageSerializer.serialize(dbRecord));
-            const {addedOn: newAddedOn, lastOpened: newLastOpened} = responseBody;
-            expect(newAddedOn).not.toEqual(oldAddedOn);
-            expect(newLastOpened).not.toEqual(oldLastOpened);
-        });
+        expect(response.statusCode).to.equal(200);
+        expect(responseBody).toMatchObject(learnerLanguageSerializer.serialize(expectedMapping, {ignore: ["addedOn", "lastOpened"]}));
+        expect(responseBody).toMatchObject(learnerLanguageSerializer.serialize(dbRecord));
+        const {addedOn: newAddedOn, lastOpened: newLastOpened} = responseBody;
+        expect(newAddedOn).not.toEqual(oldAddedOn);
+        expect(newLastOpened).not.toEqual(oldLastOpened);
     });
     test<LocalTestContext>("If user is not logged in return 401", async (context) => {
         const language = await context.languageFactory.createOne();
 
-        const response = await makeRequest("me", language.code, {lastOpened: "now"});
+        const response = await makeRequest(language.code, {lastOpened: "now"});
 
         expect(response.statusCode).to.equal(401);
     });
@@ -558,17 +492,7 @@ describe("PATCH users/:username/languages/:languageCode/", () => {
         const session = await context.sessionFactory.createOne({user});
         const language = await context.languageFactory.createOne();
 
-        const response = await makeRequest("me", language.code, {lastOpened: "now"}, session.token);
-
-        expect(response.statusCode).to.equal(403);
-    });
-    test<LocalTestContext>("If username does not belong the authenticated user return 403", async (context) => {
-        const user = await context.userFactory.createOne();
-        const otherUser = await context.userFactory.createOne();
-        const session = await context.sessionFactory.createOne({user: user});
-        const language = await context.languageFactory.createOne({learners: otherUser.profile});
-
-        const response = await makeRequest(otherUser.username, language.code, {lastOpened: "now"}, session.token);
+        const response = await makeRequest(language.code, {lastOpened: "now"}, session.token);
 
         expect(response.statusCode).to.equal(403);
     });
@@ -576,7 +500,7 @@ describe("PATCH users/:username/languages/:languageCode/", () => {
         const user = await context.userFactory.createOne();
         const session = await context.sessionFactory.createOne({user: user});
 
-        const response = await makeRequest(user.username, "", {lastOpened: "now"}, session.token);
+        const response = await makeRequest("", {lastOpened: "now"}, session.token);
 
         expect(response.statusCode).to.equal(400);
     });
@@ -585,7 +509,7 @@ describe("PATCH users/:username/languages/:languageCode/", () => {
         const session = await context.sessionFactory.createOne({user: user});
         const language = await context.languageFactory.makeOne();
 
-        const response = await makeRequest(user.username, language.code, {lastOpened: "now"}, session.token);
+        const response = await makeRequest(language.code, {lastOpened: "now"}, session.token);
 
         expect(response.statusCode).to.equal(404);
     });
@@ -594,7 +518,7 @@ describe("PATCH users/:username/languages/:languageCode/", () => {
         const session = await context.sessionFactory.createOne({user: user});
         const language = await context.languageFactory.createOne();
 
-        const response = await makeRequest(user.username, language.code, {lastOpened: "now"}, session.token);
+        const response = await makeRequest(language.code, {lastOpened: "now"}, session.token);
 
         expect(response.statusCode).to.equal(404);
     });
@@ -603,85 +527,55 @@ describe("PATCH users/:username/languages/:languageCode/", () => {
         const session = await context.sessionFactory.createOne({user: user});
         const language = await context.languageFactory.createOne();
 
-        const response = await makeRequest(user.username, language.code, {lastOpened: "2023-02-14T11:00:43.818Z"}, session.token);
+        const response = await makeRequest(language.code, {lastOpened: "2023-02-14T11:00:43.818Z"}, session.token);
 
         expect(response.statusCode).to.equal(400);
     });
 });
 
 /**{@link LanguageController#deleteUserLanguage}*/
-describe("DELETE users/:username/languages/:languageCode/", () => {
-    const makeRequest = async (username: "me" | string, languageCode: string, authToken?: string) => {
+describe("DELETE users/me/languages/:languageCode/", () => {
+    const makeRequest = async (languageCode: string, authToken?: string) => {
         const options: InjectOptions = {
             method: "DELETE",
-            url: `users/${username}/languages/${languageCode}/`,
+            url: `users/me/languages/${languageCode}/`,
         };
         return await fetchRequest(options, authToken);
     };
-    describe("If user is logged in and is learning language delete language for user and all associated resources and return 204", async () => {
-        test<LocalTestContext>("If username is me and authenticated return 204", async (context) => {
-            const user = await context.userFactory.createOne();
-            const session = await context.sessionFactory.createOne({user: user});
-            const language = await context.languageFactory.createOne({learners: user.profile});
+    test<LocalTestContext>("If user is logged in and is learning language delete language for user and all associated resources and return 204", async (context) => {
+        const user = await context.userFactory.createOne();
+        const session = await context.sessionFactory.createOne({user: user});
+        const language = await context.languageFactory.createOne({learners: user.profile});
 
-            const courses = await context.courseFactory.create(3, {language});
-            const lessons = [...await context.lessonFactory.create(3, {course: courses[0]}), ...await context.lessonFactory.create(3, {course: courses[1]}), ...await context.lessonFactory.create(3, {course: courses[2]})];
-            await context.em.insertMany(MapPastViewerLesson, lessons.map(l => ({lesson: l, pastViewer: user.profile})));
-            const dictionaries = await context.dictionaryFactory.create(3, {language});
-            await context.em.insertMany(MapLearnerDictionary, dictionaries.map(d => ({dictionary: d, learner: user.profile})));
-            const vocabs = await context.vocabFactory.create(3, {language});
-            await context.em.insertMany(MapLearnerVocab, vocabs.map(v => ({vocab: v, learner: user.profile})));
-            const meaningLanguage = await context.languageFactory.createOne();
-            vi.spyOn(parserExports, "getParser").mockImplementation((_) => parserExports.parsers["en"]);
-            const meanings = [
-                ...await context.meaningFactory.create(3, {addedBy: user.profile, vocab: vocabs[0], language: meaningLanguage}),
-                ...await context.meaningFactory.create(3, {addedBy: user.profile, vocab: vocabs[1], language: meaningLanguage}),
-                ...await context.meaningFactory.create(3, {addedBy: user.profile, vocab: vocabs[2], language: meaningLanguage})];
-            await context.em.insertMany(MapLearnerMeaning, meanings.map(m => ({meaning: m, learner: user.profile})));
+        const courses = await context.courseFactory.create(3, {language});
+        const lessons = [...await context.lessonFactory.create(3, {course: courses[0]}), ...await context.lessonFactory.create(3, {course: courses[1]}), ...await context.lessonFactory.create(3, {course: courses[2]})];
+        await context.em.insertMany(MapPastViewerLesson, lessons.map(l => ({lesson: l, pastViewer: user.profile})));
+        const dictionaries = await context.dictionaryFactory.create(3, {language});
+        await context.em.insertMany(MapLearnerDictionary, dictionaries.map(d => ({dictionary: d, learner: user.profile})));
+        const vocabs = await context.vocabFactory.create(3, {language});
+        await context.em.insertMany(MapLearnerVocab, vocabs.map(v => ({vocab: v, learner: user.profile})));
+        const meaningLanguage = await context.languageFactory.createOne();
+        vi.spyOn(parserExports, "getParser").mockImplementation((_) => parserExports.parsers["en"]);
+        const meanings = [
+            ...await context.meaningFactory.create(3, {addedBy: user.profile, vocab: vocabs[0], language: meaningLanguage}),
+            ...await context.meaningFactory.create(3, {addedBy: user.profile, vocab: vocabs[1], language: meaningLanguage}),
+            ...await context.meaningFactory.create(3, {addedBy: user.profile, vocab: vocabs[2], language: meaningLanguage})];
+        await context.em.insertMany(MapLearnerMeaning, meanings.map(m => ({meaning: m, learner: user.profile})));
 
-            const response = await makeRequest("me", language.code, session.token);
+        const response = await makeRequest(language.code, session.token);
 
-            expect(response.statusCode).to.equal(204);
+        expect(response.statusCode).to.equal(204);
 
-            expect((await context.em.findOne(MapLearnerLanguage, {learner: user.profile, language}))?.toObject() ?? null).toBeNull();
-            expect(await context.em.find(MapLearnerDictionary, {learner: user.profile, dictionary: {language}})).toHaveLength(0);
-            expect(await context.em.find(MapLearnerVocab, {learner: user.profile, vocab: {language}})).toHaveLength(0);
-            expect(await context.em.find(MapLearnerMeaning, {learner: user.profile, meaning: {vocab: {language}}})).toHaveLength(0);
-        });
-        test<LocalTestContext>("If username is not me and authenticated as user with username return 204", async (context) => {
-            const user = await context.userFactory.createOne();
-            const session = await context.sessionFactory.createOne({user: user});
-            const language = await context.languageFactory.createOne({learners: user.profile});
-
-            const courses = await context.courseFactory.create(3, {language});
-            const lessons = [...await context.lessonFactory.create(3, {course: courses[0]}), ...await context.lessonFactory.create(3, {course: courses[1]}), ...await context.lessonFactory.create(3, {course: courses[2]})];
-            await context.em.insertMany(MapPastViewerLesson, lessons.map(l => ({lesson: l, pastViewer: user.profile})));
-            const dictionaries = await context.dictionaryFactory.create(3, {language});
-            await context.em.insertMany(MapLearnerDictionary, dictionaries.map(d => ({dictionary: d, learner: user.profile})));
-            const vocabs = await context.vocabFactory.create(3, {language});
-            await context.em.insertMany(MapLearnerVocab, vocabs.map(v => ({vocab: v, learner: user.profile})));
-            const meaningLanguage = await context.languageFactory.createOne();
-            vi.spyOn(parserExports, "getParser").mockImplementation((_) => parserExports.parsers["en"]);
-            const meanings = [
-                ...await context.meaningFactory.create(3, {addedBy: user.profile, vocab: vocabs[0], language: meaningLanguage}),
-                ...await context.meaningFactory.create(3, {addedBy: user.profile, vocab: vocabs[1], language: meaningLanguage}),
-                ...await context.meaningFactory.create(3, {addedBy: user.profile, vocab: vocabs[2], language: meaningLanguage})];
-            await context.em.insertMany(MapLearnerMeaning, meanings.map(m => ({meaning: m, learner: user.profile})));
-
-            const response = await makeRequest(user.username, language.code, session.token);
-
-            expect(response.statusCode).to.equal(204);
-            expect((await context.em.findOne(MapLearnerLanguage, {learner: user.profile, language}))?.toObject() ?? null).toBeNull();
-            expect(await context.em.find(MapLearnerDictionary, {learner: user.profile, dictionary: {language}})).toHaveLength(0);
-            expect(await context.em.find(MapLearnerVocab, {learner: user.profile, vocab: {language}})).toHaveLength(0);
-            expect(await context.em.find(MapLearnerMeaning, {learner: user.profile, meaning: {vocab: {language}}})).toHaveLength(0);
-        });
+        expect((await context.em.findOne(MapLearnerLanguage, {learner: user.profile, language}))?.toObject() ?? null).toBeNull();
+        expect(await context.em.find(MapLearnerDictionary, {learner: user.profile, dictionary: {language}})).toHaveLength(0);
+        expect(await context.em.find(MapLearnerVocab, {learner: user.profile, vocab: {language}})).toHaveLength(0);
+        expect(await context.em.find(MapLearnerMeaning, {learner: user.profile, meaning: {vocab: {language}}})).toHaveLength(0);
     });
     test<LocalTestContext>("If user is not logged in return 401", async (context) => {
         const user = await context.userFactory.createOne();
         const language = await context.languageFactory.createOne({learners: user.profile});
 
-        const response = await makeRequest("me", language.code);
+        const response = await makeRequest(language.code);
 
         expect(response.statusCode).to.equal(401);
     });
@@ -690,17 +584,7 @@ describe("DELETE users/:username/languages/:languageCode/", () => {
         const session = await context.sessionFactory.createOne({user});
         const language = await context.languageFactory.createOne({learners: user.profile});
 
-        const response = await makeRequest("me", language.code, session.token);
-
-        expect(response.statusCode).to.equal(403);
-    });
-    test<LocalTestContext>("If username does not belong the authenticated user return 403", async (context) => {
-        const user = await context.userFactory.createOne();
-        const otherUser = await context.userFactory.createOne();
-        const session = await context.sessionFactory.createOne({user: user});
-        const language = await context.languageFactory.createOne({learners: otherUser.profile});
-
-        const response = await makeRequest(otherUser.username, language.code, session.token);
+        const response = await makeRequest(language.code, session.token);
 
         expect(response.statusCode).to.equal(403);
     });
@@ -708,7 +592,7 @@ describe("DELETE users/:username/languages/:languageCode/", () => {
         const user = await context.userFactory.createOne();
         const session = await context.sessionFactory.createOne({user: user});
 
-        const response = await makeRequest(user.username, "", session.token);
+        const response = await makeRequest("", session.token);
 
         expect(response.statusCode).to.equal(400);
     });
@@ -717,7 +601,7 @@ describe("DELETE users/:username/languages/:languageCode/", () => {
         const session = await context.sessionFactory.createOne({user: user});
         const language = await context.languageFactory.makeOne();
 
-        const response = await makeRequest(user.username, language.code, session.token);
+        const response = await makeRequest(language.code, session.token);
 
         expect(response.statusCode).to.equal(404);
     });
@@ -726,7 +610,7 @@ describe("DELETE users/:username/languages/:languageCode/", () => {
         const session = await context.sessionFactory.createOne({user: user});
         const language = await context.languageFactory.createOne();
 
-        const response = await makeRequest(user.username, language.code, session.token);
+        const response = await makeRequest(language.code, session.token);
 
         expect(response.statusCode).to.equal(404);
     });

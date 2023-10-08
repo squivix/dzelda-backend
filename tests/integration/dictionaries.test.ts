@@ -83,11 +83,11 @@ describe("GET dictionaries/", function () {
 });
 
 /**{@link DictionaryController#getUserDictionaries}*/
-describe("GET users/:username/dictionaries/", function () {
-    const makeRequest = async (username: string | "me", queryParams: object = {}, authToken?: string) => {
+describe("GET users/me/dictionaries/", function () {
+    const makeRequest = async (queryParams: object = {}, authToken?: string) => {
         const options: InjectOptions = {
             method: "GET",
-            url: `users/${username}/dictionaries/${buildQueryString(queryParams)}`,
+            url: `users/me/dictionaries/${buildQueryString(queryParams)}`,
         };
         return await fetchRequest(options, authToken);
     };
@@ -96,33 +96,18 @@ describe("GET users/:username/dictionaries/", function () {
         {property: "id", order: "asc"}]
     );
 
-    describe("If user is logged in and there are no filters return dictionaries user has saved", () => {
-        test<LocalTestContext>("If username is me", async (context) => {
-            const user = await context.userFactory.createOne();
-            const session = await context.sessionFactory.createOne({user: user});
-            const language = await context.languageFactory.createOne({learners: user.profile});
-            const expectedDictionaries = await context.dictionaryFactory.create(5, {language, learners: user.profile});
-            await context.dictionaryFactory.create(5, {language});
-            expectedDictionaries.sort(defaultSortComparator);
+    test<LocalTestContext>("If user is logged in and there are no filters return dictionaries user has saved", async (context) => {
+        const user = await context.userFactory.createOne();
+        const session = await context.sessionFactory.createOne({user: user});
+        const language = await context.languageFactory.createOne({learners: user.profile});
+        const expectedDictionaries = await context.dictionaryFactory.create(5, {language, learners: user.profile});
+        await context.dictionaryFactory.create(5, {language});
+        expectedDictionaries.sort(defaultSortComparator);
 
-            const response = await makeRequest("me", {}, session.token);
+        const response = await makeRequest({}, session.token);
 
-            expect(response.statusCode).to.equal(200);
-            expect(response.json()).toEqual(dictionarySerializer.serializeList(expectedDictionaries));
-        });
-        test<LocalTestContext>("If username belongs to the currently logged in user", async (context) => {
-            const user = await context.userFactory.createOne();
-            const session = await context.sessionFactory.createOne({user: user});
-            const language = await context.languageFactory.createOne({learners: user.profile});
-            const expectedDictionaries = await context.dictionaryFactory.create(5, {language, learners: user.profile});
-            await context.dictionaryFactory.create(5, {language});
-            expectedDictionaries.sort(defaultSortComparator);
-
-            const response = await makeRequest(user.username, {}, session.token);
-
-            expect(response.statusCode).to.equal(200);
-            expect(response.json()).toEqual(dictionarySerializer.serializeList(expectedDictionaries));
-        });
+        expect(response.statusCode).to.equal(200);
+        expect(response.json()).toEqual(dictionarySerializer.serializeList(expectedDictionaries));
     });
     describe("test language filter", () => {
         test<LocalTestContext>("If language filter is valid and language exists only return saved user dictionaries in that language", async (context) => {
@@ -135,7 +120,7 @@ describe("GET users/:username/dictionaries/", function () {
             await context.dictionaryFactory.create(5, {language: language1});
             expectedDictionaries.sort(defaultSortComparator);
 
-            const response = await makeRequest("me", {languageCode: language1.code}, session.token);
+            const response = await makeRequest({languageCode: language1.code}, session.token);
 
             expect(response.statusCode).to.equal(200);
             expect(response.json()).toEqual(dictionarySerializer.serializeList(expectedDictionaries));
@@ -149,48 +134,25 @@ describe("GET users/:username/dictionaries/", function () {
             });
             const language = await context.languageFactory.makeOne();
 
-            const response = await makeRequest("me", {languageCode: language.code}, session.token);
+            const response = await makeRequest({languageCode: language.code}, session.token);
             expect(response.statusCode).to.equal(200);
             expect(response.json()).toEqual([]);
         });
         test<LocalTestContext>("If language filter is invalid return 400", async (context) => {
             const user = await context.userFactory.createOne();
             const session = await context.sessionFactory.createOne({user: user});
-            const response = await makeRequest("me", {languageCode: 12345}, session.token);
+            const response = await makeRequest({languageCode: 12345}, session.token);
             expect(response.statusCode).to.equal(400);
         });
     });
     test<LocalTestContext>("If user is not logged in return 401", async () => {
-        const response = await makeRequest("me");
+        const response = await makeRequest();
         expect(response.statusCode).to.equal(401);
     });
     test<LocalTestContext>("If user email is not confirmed return 403", async (context) => {
         const user = await context.userFactory.createOne({isEmailConfirmed: false});
-        const session = await context.sessionFactory.createOne({user})
-        const response = await makeRequest("me", {}, session.token);
-        expect(response.statusCode).to.equal(403);
-    });
-    test<LocalTestContext>("If username does not exist return 404", async (context) => {
-        const user = await context.userFactory.createOne();
-        const session = await context.sessionFactory.createOne({user: user});
-
-        const response = await makeRequest(faker.random.alphaNumeric(20), {}, session.token);
-        expect(response.statusCode).to.equal(404);
-    });
-    test<LocalTestContext>(`If user exists and is not public and not authenticated as user return 404`, async (context) => {
-        const user = await context.userFactory.createOne();
-        const session = await context.sessionFactory.createOne({user: user});
-        const otherUser = await context.userFactory.createOne({profile: {isPublic: false}});
-
-        const response = await makeRequest(otherUser.username, {}, session.token);
-        expect(response.statusCode).to.equal(404);
-    });
-    test<LocalTestContext>(`If username exists and is public and not authenticated as user return 403`, async (context) => {
-        const user = await context.userFactory.createOne();
-        const session = await context.sessionFactory.createOne({user: user});
-        const otherUser = await context.userFactory.createOne({profile: {isPublic: true}});
-
-        const response = await makeRequest(otherUser.username, {}, session.token);
+        const session = await context.sessionFactory.createOne({user});
+        const response = await makeRequest({}, session.token);
         expect(response.statusCode).to.equal(403);
     });
 });

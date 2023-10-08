@@ -7,6 +7,7 @@ import {ForbiddenAPIError} from "@/src/utils/errors/ForbiddenAPIError.js";
 import {DictionaryService} from "@/src/services/DictionaryService.js";
 import {dictionarySerializer} from "@/src/presentation/response/serializers/entities/DictionarySerializer.js";
 import {languageCodeValidator} from "@/src/validators/languageValidators.js";
+import {User} from "@/src/models/entities/auth/User.js";
 
 class DictionaryController {
     async getDictionaries(request: FastifyRequest, reply: FastifyReply) {
@@ -22,14 +23,7 @@ class DictionaryController {
     }
 
     async getUserDictionaries(request: FastifyRequest, reply: FastifyReply) {
-        const pathParamsValidator = z.object({username: usernameValidator.or(z.literal("me"))});
-        const pathParams = pathParamsValidator.parse(request.params);
-        const userService = new UserService(request.em);
-        const user = await userService.getUser(pathParams.username, request.user);
-        if (!user || (!user.profile.isPublic && user !== request.user))
-            throw new NotFoundAPIError("User");
-        if (user !== request.user)
-            throw new ForbiddenAPIError();
+        const user = request.user as User;
 
         const queryParamsValidator = z.object({
             languageCode: languageCodeValidator.optional(),

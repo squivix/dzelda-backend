@@ -5,15 +5,15 @@ import {requiresEmailConfirmed} from "@/src/middlewares/requiresEmailConfirmed.j
 
 export const meaningRouter: FastifyPluginCallback = function (fastify, options, done) {
     fastify.post(`/meanings/`, {preHandler: [requiresAuth, requiresEmailConfirmed], handler: meaningController.createMeaning});
-    fastify.get(`/users/:username/meanings/`, {
+    fastify.get(`/users/me/meanings/`, {
         preHandler: [requiresAuth, requiresEmailConfirmed],
         handler: meaningController.getUserMeanings
     });
-    fastify.post(`/users/:username/meanings/`, {
+    fastify.post(`/users/me/meanings/`, {
         preHandler: [requiresAuth, requiresEmailConfirmed],
         handler: meaningController.addMeaningToUser
     });
-    fastify.delete(`/users/:username/meanings/:meaningId/`, {
+    fastify.delete(`/users/me/meanings/:meaningId/`, {
         preHandler: [requiresAuth, requiresEmailConfirmed],
         handler: meaningController.removeMeaningFromUser
     });

@@ -11,7 +11,14 @@ import {orm} from "@/src/server.js";
 import {Lesson} from "@/src/models/entities/Lesson.js";
 import {Course} from "@/src/models/entities/Course.js";
 import {InjectOptions} from "light-my-request";
-import {buildQueryString, createComparator, fetchRequest, fetchWithFiles, mockValidateFileFields, readSampleFile} from "@/tests/integration/utils.js";
+import {
+    buildQueryString,
+    createComparator,
+    fetchRequest,
+    fetchWithFiles,
+    mockValidateFileFields,
+    readSampleFile
+} from "@/tests/integration/utils.js";
 import {lessonSerializer} from "@/src/presentation/response/serializers/entities/LessonSerializer.js";
 import {faker} from "@faker-js/faker";
 import {randomCase, randomEnum, randomEnums} from "@/tests/utils.js";
@@ -1706,11 +1713,11 @@ describe("PUT lessons/:lessonId/", () => {
 });
 
 /**{@link LessonController#getUserLessonsHistory}*/
-describe("GET users/:username/lessons/history/", () => {
-    const makeRequest = async (username: string | "me", queryParams: object = {}, authToken?: string) => {
+describe("GET users/me/lessons/history/", () => {
+    const makeRequest = async (queryParams: object = {}, authToken?: string) => {
         const options: InjectOptions = {
             method: "GET",
-            url: `users/${username}/lessons/history/${buildQueryString(queryParams)}`,
+            url: `users/me/lessons/history/${buildQueryString(queryParams)}`,
         };
         return await fetchRequest(options, authToken);
     };
@@ -1719,48 +1726,25 @@ describe("GET users/:username/lessons/history/", () => {
         {property: "title", order: "asc"},
         {property: "id", order: "asc"}]
     );
-    describe("If user is logged in and there are no filters return lessons in user history", () => {
-        test<LocalTestContext>("If username is me", async (context) => {
-            const user = await context.userFactory.createOne();
-            const session = await context.sessionFactory.createOne({user: user});
-            const language = await context.languageFactory.createOne();
-            const course = await context.courseFactory.createOne({language: language, isPublic: true});
-            const expectedLessons = await context.lessonFactory.create(3, {course, pastViewers: [user.profile]});
-            await context.lessonFactory.create(3, {course});
-            context.lessonRepo.annotateLessonsWithUserData(expectedLessons, user);
-            expectedLessons.sort(defaultSortComparator);
-            const recordsCount = expectedLessons.length;
+    test<LocalTestContext>("If user is logged in and there are no filters return lessons in user history", async (context) => {
+        const user = await context.userFactory.createOne();
+        const session = await context.sessionFactory.createOne({user: user});
+        const language = await context.languageFactory.createOne();
+        const course = await context.courseFactory.createOne({language: language, isPublic: true});
+        const expectedLessons = await context.lessonFactory.create(3, {course, pastViewers: [user.profile]});
+        await context.lessonFactory.create(3, {course});
+        context.lessonRepo.annotateLessonsWithUserData(expectedLessons, user);
+        expectedLessons.sort(defaultSortComparator);
+        const recordsCount = expectedLessons.length;
 
-            const response = await makeRequest("me", {}, session.token);
+        const response = await makeRequest({}, session.token);
 
-            expect(response.statusCode).to.equal(200);
-            expect(response.json()).toEqual({
-                page: queryDefaults.pagination.page,
-                pageSize: queryDefaults.pagination.pageSize,
-                pageCount: Math.ceil(recordsCount / queryDefaults.pagination.pageSize),
-                data: lessonSerializer.serializeList(expectedLessons)
-            });
-        });
-        test<LocalTestContext>("If username belongs to the currently logged in user", async (context) => {
-            const user = await context.userFactory.createOne();
-            const session = await context.sessionFactory.createOne({user: user});
-            const language = await context.languageFactory.createOne();
-            const course = await context.courseFactory.createOne({language: language, isPublic: true});
-            const expectedLessons = await context.lessonFactory.create(3, {course, pastViewers: [user.profile]});
-            await context.lessonFactory.create(3, {course});
-            context.lessonRepo.annotateLessonsWithUserData(expectedLessons, user);
-            expectedLessons.sort(defaultSortComparator);
-            const recordsCount = expectedLessons.length;
-
-            const response = await makeRequest(user.username, {}, session.token);
-
-            expect(response.statusCode).to.equal(200);
-            expect(response.json()).toEqual({
-                page: queryDefaults.pagination.page,
-                pageSize: queryDefaults.pagination.pageSize,
-                pageCount: Math.ceil(recordsCount / queryDefaults.pagination.pageSize),
-                data: lessonSerializer.serializeList(expectedLessons)
-            });
+        expect(response.statusCode).to.equal(200);
+        expect(response.json()).toEqual({
+            page: queryDefaults.pagination.page,
+            pageSize: queryDefaults.pagination.pageSize,
+            pageCount: Math.ceil(recordsCount / queryDefaults.pagination.pageSize),
+            data: lessonSerializer.serializeList(expectedLessons)
         });
     });
     describe("test languageCode filter", () => {
@@ -1778,7 +1762,7 @@ describe("GET users/:username/lessons/history/", () => {
             await context.lessonRepo.annotateLessonsWithUserData(expectedLessons, user);
             const recordsCount = expectedLessons.length;
 
-            const response = await makeRequest("me", {languageCode: language1.code}, session.token);
+            const response = await makeRequest({languageCode: language1.code}, session.token);
 
             expect(response.statusCode).to.equal(200);
             expect(response.json()).toEqual({
@@ -1798,7 +1782,7 @@ describe("GET users/:username/lessons/history/", () => {
                 }),
                 pastViewers: [user.profile]
             });
-            const response = await makeRequest("me", {languageCode: faker.random.alpha({count: 4})}, session.token);
+            const response = await makeRequest({languageCode: faker.random.alpha({count: 4})}, session.token);
 
             expect(response.statusCode).to.equal(200);
             expect(response.json()).toEqual({
@@ -1811,7 +1795,7 @@ describe("GET users/:username/lessons/history/", () => {
         test<LocalTestContext>("If language filter is invalid return 400", async (context) => {
             const user = await context.userFactory.createOne();
             const session = await context.sessionFactory.createOne({user: user});
-            const response = await makeRequest("me", {languageCode: 12345}, session.token);
+            const response = await makeRequest({languageCode: 12345}, session.token);
             expect(response.statusCode).to.equal(400);
         });
     });
@@ -1833,7 +1817,7 @@ describe("GET users/:username/lessons/history/", () => {
             await context.lessonRepo.annotateLessonsWithUserData(expectedLessons, user);
             const recordsCount = expectedLessons.length;
 
-            const response = await makeRequest("me", {addedBy: user1.username}, session.token);
+            const response = await makeRequest({addedBy: user1.username}, session.token);
 
             expect(response.statusCode).to.equal(200);
             expect(response.json()).toEqual({
@@ -1857,7 +1841,7 @@ describe("GET users/:username/lessons/history/", () => {
             await context.lessonRepo.annotateLessonsWithUserData(expectedLessons, user);
             const recordsCount = expectedLessons.length;
 
-            const response = await makeRequest("me", {addedBy: "me"}, session.token);
+            const response = await makeRequest({addedBy: "me"}, session.token);
 
             expect(response.statusCode).to.equal(200);
             expect(response.json()).toEqual({
@@ -1878,7 +1862,7 @@ describe("GET users/:username/lessons/history/", () => {
                 pastViewers: [user.profile]
             });
 
-            const response = await makeRequest("me", {addedBy: faker.random.alpha({count: 20})}, session.token);
+            const response = await makeRequest({addedBy: faker.random.alpha({count: 20})}, session.token);
 
             expect(response.statusCode).to.equal(200);
             expect(response.json()).toEqual({
@@ -1891,7 +1875,7 @@ describe("GET users/:username/lessons/history/", () => {
         test<LocalTestContext>("If addedBy filter is invalid return 400", async (context) => {
             const user = await context.userFactory.createOne();
             const session = await context.sessionFactory.createOne({user: user});
-            const response = await makeRequest("me", {addedBy: "!@#%#%^#^!"}, session.token);
+            const response = await makeRequest({addedBy: "!@#%#%^#^!"}, session.token);
             expect(response.statusCode).to.equal(400);
         });
     });
@@ -1919,7 +1903,7 @@ describe("GET users/:username/lessons/history/", () => {
             await context.lessonFactory.create(3, {course});
             const recordsCount = expectedLessons.length;
 
-            const response = await makeRequest("me", {searchQuery: searchQuery}, session.token);
+            const response = await makeRequest({searchQuery: searchQuery}, session.token);
 
             expect(response.statusCode).to.equal(200);
             expect(response.json()).toEqual({
@@ -1932,7 +1916,7 @@ describe("GET users/:username/lessons/history/", () => {
         test<LocalTestContext>("If searchQuery is invalid return 400", async (context) => {
             const user = await context.userFactory.createOne();
             const session = await context.sessionFactory.createOne({user: user});
-            const response = await makeRequest("me", {searchQuery: faker.random.alpha({count: 300})}, session.token);
+            const response = await makeRequest({searchQuery: faker.random.alpha({count: 300})}, session.token);
 
             expect(response.statusCode).to.equal(400);
         });
@@ -1945,7 +1929,7 @@ describe("GET users/:username/lessons/history/", () => {
             await context.lessonFactory.create(3, {course});
 
 
-            const response = await makeRequest("me", {searchQuery: faker.random.alpha({count: 200})}, session.token);
+            const response = await makeRequest({searchQuery: faker.random.alpha({count: 200})}, session.token);
 
             expect(response.statusCode).to.equal(200);
             expect(response.json()).toEqual({
@@ -1970,7 +1954,7 @@ describe("GET users/:username/lessons/history/", () => {
             await context.lessonRepo.annotateLessonsWithUserData(expectedLessons, user);
             const recordsCount = expectedLessons.length;
 
-            const response = await makeRequest("me", {level: level}, session.token);
+            const response = await makeRequest({level: level}, session.token);
 
             expect(response.statusCode).to.equal(200);
             expect(response.json()).toEqual({
@@ -1997,7 +1981,7 @@ describe("GET users/:username/lessons/history/", () => {
             await context.lessonRepo.annotateLessonsWithUserData(expectedLessons, user);
             const recordsCount = expectedLessons.length;
 
-            const response = await makeRequest("me", {level: levels}, session.token);
+            const response = await makeRequest({level: levels}, session.token);
 
             expect(response.statusCode).to.equal(200);
             expect(response.json()).toEqual({
@@ -2010,7 +1994,7 @@ describe("GET users/:username/lessons/history/", () => {
         test<LocalTestContext>("If the level is invalid return 400", async (context) => {
             const user = await context.userFactory.createOne();
             const session = await context.sessionFactory.createOne({user: user});
-            const response = await makeRequest("me", {level: "hard"}, session.token);
+            const response = await makeRequest({level: "hard"}, session.token);
 
             expect(response.statusCode).to.equal(400);
         });
@@ -2029,7 +2013,7 @@ describe("GET users/:username/lessons/history/", () => {
             await context.lessonRepo.annotateLessonsWithUserData(expectedLessons, user);
             const recordsCount = expectedLessons.length;
 
-            const response = await makeRequest("me", {hasAudio: true}, session.token);
+            const response = await makeRequest({hasAudio: true}, session.token);
 
             expect(response.statusCode).to.equal(200);
             expect(response.json()).toEqual({
@@ -2052,7 +2036,7 @@ describe("GET users/:username/lessons/history/", () => {
             await context.lessonRepo.annotateLessonsWithUserData(expectedLessons, user);
             const recordsCount = expectedLessons.length;
 
-            const response = await makeRequest("me", {hasAudio: false}, session.token);
+            const response = await makeRequest({hasAudio: false}, session.token);
 
             expect(response.statusCode).to.equal(200);
             expect(response.json()).toEqual({
@@ -2065,7 +2049,7 @@ describe("GET users/:username/lessons/history/", () => {
         test<LocalTestContext>("If hasAudio is invalid return 400", async (context) => {
             const user = await context.userFactory.createOne();
             const session = await context.sessionFactory.createOne({user: user});
-            const response = await makeRequest("me", {hasAudio: "maybe?"}, session.token);
+            const response = await makeRequest({hasAudio: "maybe?"}, session.token);
             expect(response.statusCode).to.equal(400);
         });
     });
@@ -2083,7 +2067,7 @@ describe("GET users/:username/lessons/history/", () => {
                 await context.lessonRepo.annotateLessonsWithUserData(expectedLessons, user);
                 const recordsCount = expectedLessons.length;
 
-                const response = await makeRequest("me", {sortBy: "title"}, session.token);
+                const response = await makeRequest({sortBy: "title"}, session.token);
 
                 expect(response.statusCode).to.equal(200);
                 expect(response.json()).toEqual({
@@ -2114,7 +2098,7 @@ describe("GET users/:username/lessons/history/", () => {
                 await context.lessonRepo.annotateLessonsWithUserData(expectedLessons, user);
                 const recordsCount = expectedLessons.length;
 
-                const response = await makeRequest("me", {sortBy: "createdDate"}, session.token);
+                const response = await makeRequest({sortBy: "createdDate"}, session.token);
 
                 expect(response.statusCode).to.equal(200);
                 expect(response.json()).toEqual({
@@ -2141,7 +2125,7 @@ describe("GET users/:username/lessons/history/", () => {
                 await context.lessonRepo.annotateLessonsWithUserData(expectedLessons, user);
                 const recordsCount = expectedLessons.length;
 
-                const response = await makeRequest("me", {sortBy: "pastViewersCount"}, session.token);
+                const response = await makeRequest({sortBy: "pastViewersCount"}, session.token);
 
                 expect(response.statusCode).to.equal(200);
                 expect(response.json()).toEqual({
@@ -2155,7 +2139,7 @@ describe("GET users/:username/lessons/history/", () => {
                 const user = await context.userFactory.createOne();
                 const session = await context.sessionFactory.createOne({user: user});
 
-                const response = await makeRequest("me", {sortBy: "text"}, session.token);
+                const response = await makeRequest({sortBy: "text"}, session.token);
                 expect(response.statusCode).to.equal(400);
             });
         });
@@ -2172,7 +2156,7 @@ describe("GET users/:username/lessons/history/", () => {
                 await context.lessonRepo.annotateLessonsWithUserData(expectedLessons, user);
                 const recordsCount = expectedLessons.length;
 
-                const response = await makeRequest("me", {sortOrder: "asc"}, session.token);
+                const response = await makeRequest({sortOrder: "asc"}, session.token);
 
                 expect(response.statusCode).to.equal(200);
                 expect(response.json()).toEqual({
@@ -2194,7 +2178,7 @@ describe("GET users/:username/lessons/history/", () => {
                 await context.lessonRepo.annotateLessonsWithUserData(expectedLessons, user);
                 const recordsCount = expectedLessons.length;
 
-                const response = await makeRequest("me", {sortOrder: "desc"}, session.token);
+                const response = await makeRequest({sortOrder: "desc"}, session.token);
 
                 expect(response.statusCode).to.equal(200);
                 expect(response.json()).toEqual({
@@ -2208,7 +2192,7 @@ describe("GET users/:username/lessons/history/", () => {
                 const user = await context.userFactory.createOne();
                 const session = await context.sessionFactory.createOne({user: user});
 
-                const response = await makeRequest("me", {sortOrder: "rising"}, session.token);
+                const response = await makeRequest({sortOrder: "rising"}, session.token);
                 expect(response.statusCode).to.equal(400);
             });
         });
@@ -2228,7 +2212,7 @@ describe("GET users/:username/lessons/history/", () => {
                 const expectedLessons = allLessons.slice(pageSize * (page - 1), pageSize * (page - 1) + pageSize);
                 await context.lessonRepo.annotateLessonsWithUserData(expectedLessons, user);
 
-                const response = await makeRequest("me", {page, pageSize}, session.token);
+                const response = await makeRequest({page, pageSize}, session.token);
 
                 expect(response.statusCode).to.equal(200);
                 expect(response.json()).toEqual({
@@ -2251,7 +2235,7 @@ describe("GET users/:username/lessons/history/", () => {
                 const expectedLessons = allLessons.slice(pageSize * (page - 1), pageSize * (page - 1) + pageSize);
                 await context.lessonRepo.annotateLessonsWithUserData(expectedLessons, user);
 
-                const response = await makeRequest("me", {page, pageSize}, session.token);
+                const response = await makeRequest({page, pageSize}, session.token);
 
                 expect(response.statusCode).to.equal(200);
                 expect(response.json()).toEqual({
@@ -2275,7 +2259,7 @@ describe("GET users/:username/lessons/history/", () => {
                 const expectedLessons = allLessons.slice(pageSize * (page - 1), pageSize * (page - 1) + pageSize);
                 await context.lessonRepo.annotateLessonsWithUserData(expectedLessons, user);
 
-                const response = await makeRequest("me", {page, pageSize}, session.token);
+                const response = await makeRequest({page, pageSize}, session.token);
 
                 expect(response.statusCode).to.equal(200);
                 expect(response.json()).toEqual({
@@ -2299,7 +2283,7 @@ describe("GET users/:username/lessons/history/", () => {
                 const expectedLessons = allLessons.slice(pageSize * (page - 1), pageSize * (page - 1) + pageSize);
                 await context.lessonRepo.annotateLessonsWithUserData(expectedLessons, user);
 
-                const response = await makeRequest("me", {page, pageSize}, session.token);
+                const response = await makeRequest({page, pageSize}, session.token);
 
                 expect(response.statusCode).to.equal(200);
                 expect(response.json()).toEqual({
@@ -2321,14 +2305,14 @@ describe("GET users/:username/lessons/history/", () => {
                 test<LocalTestContext>("If page is less than 1 return 400", async (context) => {
                     const user = await context.userFactory.createOne();
                     const session = await context.sessionFactory.createOne({user: user});
-                    const response = await makeRequest("me", {page: 0, pageSize: 3}, session.token);
+                    const response = await makeRequest({page: 0, pageSize: 3}, session.token);
 
                     expect(response.statusCode).to.equal(400);
                 });
                 test<LocalTestContext>("If page is not a number return 400", async (context) => {
                     const user = await context.userFactory.createOne();
                     const session = await context.sessionFactory.createOne({user: user});
-                    const response = await makeRequest("me", {page: "last", pageSize: 3}, session.token);
+                    const response = await makeRequest({page: "last", pageSize: 3}, session.token);
 
                     expect(response.statusCode).to.equal(400);
                 });
@@ -2347,7 +2331,7 @@ describe("GET users/:username/lessons/history/", () => {
                 const expectedLessons = allLessons.slice(pageSize * (page - 1), pageSize * (page - 1) + pageSize);
                 await context.lessonRepo.annotateLessonsWithUserData(expectedLessons, user);
 
-                const response = await makeRequest("me", {page, pageSize}, session.token);
+                const response = await makeRequest({page, pageSize}, session.token);
 
                 expect(response.statusCode).to.equal(200);
                 expect(response.json()).toEqual({
@@ -2362,21 +2346,21 @@ describe("GET users/:username/lessons/history/", () => {
                 test<LocalTestContext>("If pageSize is too big return 400", async (context) => {
                     const user = await context.userFactory.createOne();
                     const session = await context.sessionFactory.createOne({user: user});
-                    const response = await makeRequest("me", {page: 1, pageSize: 250}, session.token);
+                    const response = await makeRequest({page: 1, pageSize: 250}, session.token);
 
                     expect(response.statusCode).to.equal(400);
                 });
                 test<LocalTestContext>("If pageSize is negative return 400", async (context) => {
                     const user = await context.userFactory.createOne();
                     const session = await context.sessionFactory.createOne({user: user});
-                    const response = await makeRequest("me", {page: 1, pageSize: -20}, session.token);
+                    const response = await makeRequest({page: 1, pageSize: -20}, session.token);
 
                     expect(response.statusCode).to.equal(400);
                 });
                 test<LocalTestContext>("If pageSize is not a number return 400", async (context) => {
                     const user = await context.userFactory.createOne();
                     const session = await context.sessionFactory.createOne({user: user});
-                    const response = await makeRequest("me", {page: 1, pageSize: "a lot"}, session.token);
+                    const response = await makeRequest({page: 1, pageSize: "a lot"}, session.token);
 
                     expect(response.statusCode).to.equal(400);
                 });
@@ -2384,91 +2368,46 @@ describe("GET users/:username/lessons/history/", () => {
         });
     });
     test<LocalTestContext>("If user is not logged in return 401", async () => {
-        const response = await makeRequest("me");
+        const response = await makeRequest();
         expect(response.statusCode).to.equal(401);
     });
     test<LocalTestContext>("If user email is not confirmed return 403", async (context) => {
         const user = await context.userFactory.createOne({isEmailConfirmed: false});
         const session = await context.sessionFactory.createOne({user});
-        const response = await makeRequest("me", {}, session.token);
-        expect(response.statusCode).to.equal(403);
-    });
-    test<LocalTestContext>("If username does not exist return 404", async (context) => {
-        const user = await context.userFactory.createOne();
-        const session = await context.sessionFactory.createOne({user: user});
-
-        const response = await makeRequest(faker.random.alphaNumeric(20), {}, session.token);
-        expect(response.statusCode).to.equal(404);
-    });
-    test<LocalTestContext>(`If user exists and is not public and not authenticated as user return 404`, async (context) => {
-        const user = await context.userFactory.createOne();
-        const session = await context.sessionFactory.createOne({user: user});
-        const otherUser = await context.userFactory.createOne({profile: {isPublic: false}});
-
-        const response = await makeRequest(otherUser.username, {}, session.token);
-        expect(response.statusCode).to.equal(404);
-    });
-    test<LocalTestContext>(`If username exists and is public and not authenticated as user return 403`, async (context) => {
-        const user = await context.userFactory.createOne();
-        const session = await context.sessionFactory.createOne({user: user});
-        const otherUser = await context.userFactory.createOne({profile: {isPublic: true}});
-
-        const response = await makeRequest(otherUser.username, {}, session.token);
+        const response = await makeRequest({}, session.token);
         expect(response.statusCode).to.equal(403);
     });
 });
 
 /**{@link LessonController#addLessonToUserHistory}*/
-describe("POST users/:username/lessons/history/", () => {
-    const makeRequest = async (username: string | "me", body: object, authToken?: string) => {
+describe("POST users/me/lessons/history/", () => {
+    const makeRequest = async (body: object, authToken?: string) => {
         const options: InjectOptions = {
             method: "POST",
-            url: `users/${username}/lessons/history/`,
+            url: `users/me/lessons/history/`,
             payload: body
         };
         return await fetchRequest(options, authToken);
     };
-    describe("If the lesson exists and is public and user is learning lesson language add lesson to user's lesson history", () => {
-        test<LocalTestContext>("If username is me", async (context) => {
-            const user = await context.userFactory.createOne();
-            const session = await context.sessionFactory.createOne({user});
-            const language = await context.languageFactory.createOne({learners: user.profile});
-            const course = await context.courseFactory.createOne({language, isPublic: true});
-            const expectedLesson = await context.lessonFactory.createOne({course});
-            await context.lessonRepo.annotateLessonsWithUserData([expectedLesson], user);
-            await context.courseRepo.annotateCoursesWithUserData([expectedLesson.course], user);
+    test<LocalTestContext>("If the lesson exists and is public and user is learning lesson language add lesson to user's lesson history", async (context) => {
+        const user = await context.userFactory.createOne();
+        const session = await context.sessionFactory.createOne({user});
+        const language = await context.languageFactory.createOne({learners: user.profile});
+        const course = await context.courseFactory.createOne({language, isPublic: true});
+        const expectedLesson = await context.lessonFactory.createOne({course});
+        await context.lessonRepo.annotateLessonsWithUserData([expectedLesson], user);
+        await context.courseRepo.annotateCoursesWithUserData([expectedLesson.course], user);
 
-            const response = await makeRequest("me", {lessonId: expectedLesson.id}, session.token);
+        const response = await makeRequest({lessonId: expectedLesson.id}, session.token);
 
-            expectedLesson.pastViewersCount++;
-            expect(response.statusCode).to.equal(201);
-            expect(response.json()).toEqual(lessonSerializer.serialize(expectedLesson));
-            const dbRecord = await context.em.findOne(MapPastViewerLesson, {
-                pastViewer: user.profile, lesson: expectedLesson
-            }, {populate: ["lesson"]});
-            expect(dbRecord).not.toBeNull();
-            expect(lessonSerializer.serialize(dbRecord!.lesson)).toEqual(lessonSerializer.serialize(expectedLesson));
-        });
-        test<LocalTestContext>("If username is belongs to the current user", async (context) => {
-            const user = await context.userFactory.createOne();
-            const session = await context.sessionFactory.createOne({user});
-            const language = await context.languageFactory.createOne({learners: user.profile});
-            const course = await context.courseFactory.createOne({language, isPublic: true});
-            const expectedLesson = await context.lessonFactory.createOne({course});
-            await context.lessonRepo.annotateLessonsWithUserData([expectedLesson], user);
-            await context.courseRepo.annotateCoursesWithUserData([expectedLesson.course], user);
-
-            const response = await makeRequest(user.username, {lessonId: expectedLesson.id}, session.token);
-
-            expectedLesson.pastViewersCount++;
-            expect(response.statusCode).to.equal(201);
-            expect(response.json()).toEqual(lessonSerializer.serialize(expectedLesson));
-            const dbRecord = await context.em.findOne(MapPastViewerLesson, {
-                pastViewer: user.profile, lesson: expectedLesson
-            }, {populate: ["lesson"]});
-            expect(dbRecord).not.toBeNull();
-            expect(lessonSerializer.serialize(dbRecord!.lesson)).toEqual(lessonSerializer.serialize(expectedLesson));
-        });
+        expectedLesson.pastViewersCount++;
+        expect(response.statusCode).to.equal(201);
+        expect(response.json()).toEqual(lessonSerializer.serialize(expectedLesson));
+        const dbRecord = await context.em.findOne(MapPastViewerLesson, {
+            pastViewer: user.profile, lesson: expectedLesson
+        }, {populate: ["lesson"]});
+        expect(dbRecord).not.toBeNull();
+        expect(lessonSerializer.serialize(dbRecord!.lesson)).toEqual(lessonSerializer.serialize(expectedLesson));
     });
     test<LocalTestContext>("If lesson is already in user history add it again with newer timestamp", async (context) => {
         const user = await context.userFactory.createOne();
@@ -2479,7 +2418,7 @@ describe("POST users/:username/lessons/history/", () => {
         await context.lessonRepo.annotateLessonsWithUserData([expectedLesson], user);
         await context.courseRepo.annotateCoursesWithUserData([expectedLesson.course], user);
 
-        const response = await makeRequest("me", {lessonId: expectedLesson.id}, session.token);
+        const response = await makeRequest({lessonId: expectedLesson.id}, session.token);
 
         expect(response.statusCode).to.equal(201);
         expect(response.json()).toEqual(lessonSerializer.serialize(expectedLesson));
@@ -2494,7 +2433,7 @@ describe("POST users/:username/lessons/history/", () => {
             const user = await context.userFactory.createOne();
             const session = await context.sessionFactory.createOne({user});
 
-            const response = await makeRequest("me", {}, session.token);
+            const response = await makeRequest({}, session.token);
             expect(response.statusCode).to.equal(400);
         });
     });
@@ -2504,14 +2443,14 @@ describe("POST users/:username/lessons/history/", () => {
                 const user = await context.userFactory.createOne();
                 const session = await context.sessionFactory.createOne({user});
 
-                const response = await makeRequest("me", {lessonId: faker.random.alpha(10)}, session.token);
+                const response = await makeRequest({lessonId: faker.random.alpha(10)}, session.token);
                 expect(response.statusCode).to.equal(400);
             });
             test<LocalTestContext>("If the lesson is not found return 400", async (context) => {
                 const user = await context.userFactory.createOne();
                 const session = await context.sessionFactory.createOne({user});
 
-                const response = await makeRequest("me", {lessonId: faker.datatype.number({min: 100000})}, session.token);
+                const response = await makeRequest({lessonId: faker.datatype.number({min: 100000})}, session.token);
                 expect(response.statusCode).to.equal(400);
             });
             test<LocalTestContext>("If the lesson is not public and the user is logged in as author return 400", async (context) => {
@@ -2522,7 +2461,7 @@ describe("POST users/:username/lessons/history/", () => {
                 const course = await context.courseFactory.createOne({language, isPublic: false, addedBy: author.profile});
                 const lesson = await context.lessonFactory.createOne({course});
 
-                const response = await makeRequest("me", {lessonId: lesson.id}, session.token);
+                const response = await makeRequest({lessonId: lesson.id}, session.token);
 
                 expect(response.statusCode).to.equal(400);
             });
@@ -2533,14 +2472,14 @@ describe("POST users/:username/lessons/history/", () => {
                 const course = await context.courseFactory.createOne({language, isPublic: true});
                 const lesson = await context.lessonFactory.createOne({course});
 
-                const response = await makeRequest("me", {lessonId: lesson.id}, session.token);
+                const response = await makeRequest({lessonId: lesson.id}, session.token);
 
                 expect(response.statusCode).to.equal(400);
             });
         });
     });
     test<LocalTestContext>("If user is not logged in return 401", async () => {
-        const response = await makeRequest("me", {});
+        const response = await makeRequest({});
         expect(response.statusCode).to.equal(401);
     });
     test<LocalTestContext>("If user email is not confirmed return 403", async (context) => {
@@ -2550,32 +2489,7 @@ describe("POST users/:username/lessons/history/", () => {
         const course = await context.courseFactory.createOne({language, isPublic: true});
         const lesson = await context.lessonFactory.createOne({course});
 
-        const response = await makeRequest("me", {lessonId: lesson.id}, session.token);
-        expect(response.statusCode).to.equal(403);
-    });
-    test<LocalTestContext>("If username does not exist return 404", async (context) => {
-        const user = await context.userFactory.createOne();
-        const session = await context.sessionFactory.createOne({user: user});
-
-        const response = await makeRequest(faker.random.alphaNumeric(20), {}, session.token);
-        expect(response.statusCode).to.equal(404);
-    });
-    test<LocalTestContext>(`If user exists and is not public and not authenticated as user return 404`, async (context) => {
-        const user = await context.userFactory.createOne();
-        const session = await context.sessionFactory.createOne({user: user});
-        const otherUser = await context.userFactory.createOne({profile: {isPublic: false}});
-        await context.languageFactory.create(10, {learners: user.profile});
-
-        const response = await makeRequest(otherUser.username, {}, session.token);
-        expect(response.statusCode).to.equal(404);
-    });
-    test<LocalTestContext>(`If username exists and is public and not authenticated as user return 403`, async (context) => {
-        const user = await context.userFactory.createOne();
-        const session = await context.sessionFactory.createOne({user: user});
-        const otherUser = await context.userFactory.createOne({profile: {isPublic: true}});
-        await context.languageFactory.create(10, {learners: user.profile});
-
-        const response = await makeRequest(otherUser.username, {}, session.token);
+        const response = await makeRequest({lessonId: lesson.id}, session.token);
         expect(response.statusCode).to.equal(403);
     });
 });

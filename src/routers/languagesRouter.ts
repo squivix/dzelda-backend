@@ -6,15 +6,15 @@ import {requiresEmailConfirmed} from "@/src/middlewares/requiresEmailConfirmed.j
 export const languageRouter: FastifyPluginCallback = function (fastify, options, done) {
     fastify.get(`/languages/`, LanguageController.getLanguages);
     fastify.get(`/users/:username/languages/`, LanguageController.getUserLanguages);
-    fastify.post(`/users/:username/languages/`, {
+    fastify.post(`/users/me/languages/`, {
         preHandler: [requiresAuth, requiresEmailConfirmed],
         handler: LanguageController.addLanguageToUser
     });
-    fastify.patch(`/users/:username/languages/:languageCode/`, {
+    fastify.patch(`/users/me/languages/:languageCode/`, {
         preHandler: [requiresAuth, requiresEmailConfirmed],
         handler: LanguageController.updateUserLanguage
     });
-    fastify.delete(`/users/:username/languages/:languageCode/`, {
+    fastify.delete(`/users/me/languages/:languageCode/`, {
         preHandler: [requiresAuth, requiresEmailConfirmed],
         handler: LanguageController.deleteUserLanguage
     });

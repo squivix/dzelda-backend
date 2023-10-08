@@ -148,15 +148,7 @@ class LessonController {
 
     //TODO show deleted and privated lessons as deleted and privated lessons instead of hiding them. Do this with bookmarked courses as well
     async getUserLessonsHistory(request: FastifyRequest, reply: FastifyReply) {
-        const pathParamsValidator = z.object({username: usernameValidator.or(z.literal("me"))});
-        const pathParams = pathParamsValidator.parse(request.params);
-        const userService = new UserService(request.em);
-        const user = await userService.getUser(pathParams.username, request.user);
-        if (!user || (!user.profile.isPublic && user !== request.user))
-            throw new NotFoundAPIError("User");
-        if (user !== request.user)
-            throw new ForbiddenAPIError();
-
+        const user = request.user as User;
         const queryParamsValidator = z.object({
             languageCode: languageCodeValidator.optional(),
             addedBy: usernameValidator.or(z.literal("me")).optional(),
@@ -194,27 +186,20 @@ class LessonController {
     }
 
     async addLessonToUserHistory(request: FastifyRequest, reply: FastifyReply) {
-        const pathParamsValidator = z.object({username: usernameValidator.or(z.literal("me"))});
-        const pathParams = pathParamsValidator.parse(request.params);
-        const userService = new UserService(request.em);
-        const user = await userService.getUser(pathParams.username, request.user);
-        if (!user || (!user.profile.isPublic && user !== request.user))
-            throw new NotFoundAPIError("User");
-        if (user !== request.user)
-            throw new ForbiddenAPIError();
+        const user = request.user as User;
 
         const bodyValidator = z.object({lessonId: z.number().min(0)});
         const body = bodyValidator.parse(request.body);
 
         const lessonService = new LessonService(request.em);
         const lesson = await lessonService.getLesson(body.lessonId, request.user);
-        if (!lesson || (!lesson.course.isPublic && request?.user?.profile !== lesson.course.addedBy))
+        if (!lesson || (!lesson.course.isPublic && user.profile !== lesson.course.addedBy))
             throw new ValidationAPIError({lesson: {message: "Not found"}});
         // TODO: explicitly fetch request.user.profile.languagesLearning instead of populating in middleware
-        if (!(request.user as User).profile.languagesLearning.contains(lesson.course.language))
+        if (!user.profile.languagesLearning.contains(lesson.course.language))
             throw new ValidationAPIError({lesson: {message: "not in a language the user is learning"}});
 
-        const newLessonMapping = await lessonService.addLessonToUserHistory(lesson, request.user as User);
+        const newLessonMapping = await lessonService.addLessonToUserHistory(lesson, user);
         reply.status(201).send(lessonSerializer.serialize(newLessonMapping.lesson));
     }
 }
