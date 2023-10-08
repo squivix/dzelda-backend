@@ -49,13 +49,16 @@ export class Course extends CustomBaseEntity {
 
     [OptionalProps]?: "description" | "image" | "isPublic" | "addedOn" | "bookmarkers" | "avgPastViewersCountPerLesson";
 
-    //annotated properties
-    @Property({persist: false, type: types.json})
-    vocabsByLevel?: Record<VocabLevel, number>;
 
     @Formula((alias: string) => `(SELECT COUNT(DISTINCT map_past_viewer_lesson.past_viewer_id)::float / GREATEST(COUNT(DISTINCT lesson.id), 1) FROM course LEFT JOIN lesson on course.id = lesson.course_id LEFT JOIN map_past_viewer_lesson on map_past_viewer_lesson.lesson_id = lesson.id WHERE course.id = ${alias}.id)`, {
         type: "number"
     })
     avgPastViewersCountPerLesson?: number;
 
+    //annotated properties
+    @Property({persist: false, type: types.json})
+    vocabsByLevel?: Record<VocabLevel, number>;
+
+    @Property({persist: false, type: types.boolean})
+    isBookmarked?: boolean;
 }

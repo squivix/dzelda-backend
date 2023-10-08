@@ -56,7 +56,7 @@ export class CourseService {
             offset: pagination.pageSize * (pagination.page - 1),
         });
         if (user && !(user instanceof AnonymousUser))
-            await this.courseRepo.annotateVocabsByLevel(courses, user.id);
+            await this.courseRepo.annotateCoursesWithUserData(courses, user);
 
         return [courses, totalCount];
     }
@@ -82,8 +82,8 @@ export class CourseService {
         if (course) {
             await this.em.populate(course, ["lessons"], {orderBy: {lessons: {orderInCourse: "asc"}}, refresh: true});
             if (user && !(user instanceof AnonymousUser)) {
-                await this.courseRepo.annotateVocabsByLevel([course], user.id);
-                await this.lessonRepo.annotateVocabsByLevel(course.lessons.getItems(), user.id);
+                await this.courseRepo.annotateCoursesWithUserData([course], user);
+                await this.lessonRepo.annotateVocabsByLevel(course.lessons.getItems(), user.profile.id);
             }
         }
         return course;
@@ -110,9 +110,9 @@ export class CourseService {
         courseLessons.forEach(l => l.orderInCourse = idToOrder[l.id]);
         this.em.persist(course);
         this.em.persist(courseLessons);
-        await this.courseRepo.flush();
+        await this.em.flush();
 
-        return (await this.getCourse(course.id, user))!
+        return (await this.getCourse(course.id, user))!;
     }
 
     async findCourse(where: FilterQuery<Course>, fields: EntityField<Course>[] = ["id", "isPublic", "addedBy"]) {

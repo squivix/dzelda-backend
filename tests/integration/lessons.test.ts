@@ -706,7 +706,7 @@ describe("POST lessons/", () => {
             expect(dbRecord).not.toBeNull();
             if (!dbRecord) return;
             await context.lessonRepo.annotateVocabsByLevel([dbRecord], user.id);
-            await context.courseRepo.annotateVocabsByLevel([dbRecord.course], user.id);
+            await context.courseRepo.annotateCoursesWithUserData([dbRecord.course], user);
             expect(response.json()).toMatchObject(lessonSerializer.serialize(newLesson, {ignore: ["addedOn"]}));
             expect(lessonSerializer.serialize(dbRecord)).toMatchObject(lessonSerializer.serialize(newLesson, {ignore: ["addedOn"]}));
 
@@ -742,7 +742,7 @@ describe("POST lessons/", () => {
             expect(dbRecord).not.toBeNull();
             if (!dbRecord) return;
             await context.lessonRepo.annotateVocabsByLevel([dbRecord], user.id);
-            await context.courseRepo.annotateVocabsByLevel([dbRecord.course], user.id);
+            await context.courseRepo.annotateCoursesWithUserData([dbRecord.course], user);
             expect(response.json()).toMatchObject(lessonSerializer.serialize(newLesson, {ignore: ["addedOn", "image", "audio"]}));
             expect(lessonSerializer.serialize(dbRecord)).toMatchObject(lessonSerializer.serialize(newLesson, {ignore: ["addedOn", "image", "audio"]}));
             expect(dbRecord.image).toEqual(expect.stringMatching(imagePathRegex));
@@ -1083,7 +1083,7 @@ describe("GET lessons/:lessonId/", () => {
                 })
             });
             await context.lessonRepo.annotateVocabsByLevel([expectedLesson], user.id);
-            await context.courseRepo.annotateVocabsByLevel([expectedLesson.course], user.id);
+            await context.courseRepo.annotateCoursesWithUserData([expectedLesson.course], user);
 
             const response = await makeRequest(expectedLesson.id, session.token);
 
@@ -1131,7 +1131,7 @@ describe("GET lessons/:lessonId/", () => {
         const response = await makeRequest(lesson.id, session.token);
 
         await context.lessonRepo.annotateVocabsByLevel([lesson], author.id);
-        await context.courseRepo.annotateVocabsByLevel([lesson.course], author.id);
+        await context.courseRepo.annotateCoursesWithUserData([lesson.course], author);
 
         expect(response.statusCode).to.equal(200);
         expect(response.json()).toEqual(lessonSerializer.serialize(lesson));
@@ -1182,8 +1182,8 @@ describe("PUT lessons/:lessonId/", () => {
 
             const dbRecord = await context.lessonRepo.findOneOrFail({id: lesson.id}, {populate: ["course", "course.language", "course.addedBy.user"]});
             await context.lessonRepo.annotateVocabsByLevel([dbRecord], author.id);
-            await context.courseRepo.annotateVocabsByLevel([dbRecord.course], author.id);
-            await context.courseRepo.annotateVocabsByLevel([updatedLesson.course], author.id);
+            await context.courseRepo.annotateCoursesWithUserData([dbRecord.course], author);
+            await context.courseRepo.annotateCoursesWithUserData([updatedLesson.course], author);
 
             expect(response.statusCode).to.equal(200);
             expect(response.json()).toMatchObject(lessonSerializer.serialize(updatedLesson, {ignore: ["addedOn"]}));
@@ -1229,8 +1229,8 @@ describe("PUT lessons/:lessonId/", () => {
                 const dbRecord = await context.lessonRepo.findOneOrFail({id: lesson.id}, {populate: ["course", "course.language", "course.addedBy.user"]});
                 await context.em.populate(dbRecord, ["course"]);
                 await context.lessonRepo.annotateVocabsByLevel([dbRecord], author.id);
-                await context.courseRepo.annotateVocabsByLevel([updatedLesson.course], author.id);
-                await context.courseRepo.annotateVocabsByLevel([dbRecord.course], author.id);
+                await context.courseRepo.annotateCoursesWithUserData([updatedLesson.course], author);
+                await context.courseRepo.annotateCoursesWithUserData([dbRecord.course], author);
 
                 expect(response.statusCode).to.equal(200);
                 expect(response.json()).toMatchObject(lessonSerializer.serialize(updatedLesson, {ignore: ["addedOn", "audio", "image"]}));
@@ -1271,8 +1271,8 @@ describe("PUT lessons/:lessonId/", () => {
                 const dbRecord = await context.lessonRepo.findOneOrFail({id: lesson.id}, {populate: ["course", "course.language", "course.addedBy.user"]});
                 await context.em.populate(dbRecord, ["course"]);
                 await context.lessonRepo.annotateVocabsByLevel([dbRecord], author.id);
-                await context.courseRepo.annotateVocabsByLevel([dbRecord.course], author.id);
-                await context.courseRepo.annotateVocabsByLevel([updatedLesson.course], author.id);
+                await context.courseRepo.annotateCoursesWithUserData([dbRecord.course], author);
+                await context.courseRepo.annotateCoursesWithUserData([updatedLesson.course], author);
 
                 expect(response.statusCode).to.equal(200);
                 expect(response.json()).toMatchObject(lessonSerializer.serialize(updatedLesson, {ignore: ["addedOn"]}));
@@ -2436,7 +2436,7 @@ describe("POST users/:username/lessons/history/", () => {
             const course = await context.courseFactory.createOne({language, isPublic: true});
             const expectedLesson = await context.lessonFactory.createOne({course});
             await context.lessonRepo.annotateVocabsByLevel([expectedLesson], user.id);
-            await context.courseRepo.annotateVocabsByLevel([expectedLesson.course], user.id);
+            await context.courseRepo.annotateCoursesWithUserData([expectedLesson.course], user);
 
             const response = await makeRequest("me", {lessonId: expectedLesson.id}, session.token);
 
@@ -2456,7 +2456,7 @@ describe("POST users/:username/lessons/history/", () => {
             const course = await context.courseFactory.createOne({language, isPublic: true});
             const expectedLesson = await context.lessonFactory.createOne({course});
             await context.lessonRepo.annotateVocabsByLevel([expectedLesson], user.id);
-            await context.courseRepo.annotateVocabsByLevel([expectedLesson.course], user.id);
+            await context.courseRepo.annotateCoursesWithUserData([expectedLesson.course], user);
 
             const response = await makeRequest(user.username, {lessonId: expectedLesson.id}, session.token);
 
@@ -2477,7 +2477,7 @@ describe("POST users/:username/lessons/history/", () => {
         const course = await context.courseFactory.createOne({language, isPublic: true});
         const expectedLesson = await context.lessonFactory.createOne({course, pastViewers: user.profile});
         await context.lessonRepo.annotateVocabsByLevel([expectedLesson], user.id);
-        await context.courseRepo.annotateVocabsByLevel([expectedLesson.course], user.id);
+        await context.courseRepo.annotateCoursesWithUserData([expectedLesson.course], user);
 
         const response = await makeRequest("me", {lessonId: expectedLesson.id}, session.token);
 

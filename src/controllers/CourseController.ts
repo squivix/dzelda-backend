@@ -11,7 +11,6 @@ import {ForbiddenAPIError} from "@/src/utils/errors/ForbiddenAPIError.js";
 import {ValidationAPIError} from "@/src/utils/errors/ValidationAPIError.js";
 import {LanguageService} from "@/src/services/LanguageService.js";
 import {numericStringValidator} from "@/src/validators/utilValidators.js";
-import {UserService} from "@/src/services/UserService.js";
 import {courseSerializer} from "@/src/presentation/response/serializers/entities/CourseSerializer.js";
 
 class CourseController {

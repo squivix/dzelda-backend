@@ -1,10 +1,17 @@
 import {EntityRepository} from "@mikro-orm/postgresql";
 import {defaultVocabsByLevel} from "@/src/models/enums/VocabLevel.js";
 import {Course} from "@/src/models/entities/Course.js";
+import {User} from "@/src/models/entities/auth/User.js";
+import {Loaded} from "@mikro-orm/core";
 
 export class CourseRepo extends EntityRepository<Course> {
 
-    async annotateVocabsByLevel(courses: Course[], learnerId: number) {
+    async annotateCoursesWithUserData(courses: Course[], user: User) {
+        await this.annotateVocabsByLevel(courses, user.profile.id);
+        return await this.annotateIsBookmarked(courses, user.profile.id);
+    }
+
+    private async annotateVocabsByLevel(courses: Course[], learnerId: number) {
         if (courses.length === 0)
             return courses;
         const query = `SELECT json_object_agg(outq.id, outq.vocab_levels) AS vocab_levels_by_course
@@ -25,6 +32,14 @@ FROM (SELECT subq.course_id                          AS id,
         const defaultCounts = defaultVocabsByLevel();
         courses.forEach(course => course.vocabsByLevel = Object.assign({}, defaultCounts, vocabsLevelsByCourse?.[course.id] ?? {}));
         return courses;
+    }
+
+    private async annotateIsBookmarked(courses: Course[], learnerId: number) {
+        if (courses.length === 0)
+            return courses;
+        const query = `SELECT json_object_agg(course_id, true) AS course_id_to_is_bookmarked FROM map_bookmarker_course WHERE bookmarker_id = ${learnerId};`;
+        const courseIdToIsBookmarked = (await this.em.execute(query))[0].course_id_to_is_bookmarked;
+        courses.forEach(course => course.isBookmarked = courseIdToIsBookmarked?.[course.id] ?? false);
     }
 
 }

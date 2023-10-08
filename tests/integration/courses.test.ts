@@ -151,7 +151,7 @@ describe("GET courses/", function () {
                 ...await context.courseFactory.create(3, {language, addedBy: user.profile, isPublic: true}),
                 ...await context.courseFactory.create(3, {language, addedBy: user.profile, isPublic: false})
             ];
-            await context.courseRepo.annotateVocabsByLevel(expectedCourses, user.profile.id);
+            await context.courseRepo.annotateCoursesWithUserData(expectedCourses, user);
             await context.courseFactory.create(3, {language});
 
             expectedCourses.sort(defaultSortComparator);
@@ -491,7 +491,7 @@ describe("GET courses/", function () {
         const expectedCourses = await context.courseFactory.create(5, {language, isPublic: true});
         await context.courseFactory.create(5, {language, isPublic: false});
         expectedCourses.sort(defaultSortComparator);
-        await context.courseRepo.annotateVocabsByLevel(expectedCourses, user.id);
+        await context.courseRepo.annotateCoursesWithUserData(expectedCourses, user);
         const recordsCount = expectedCourses.length;
 
         const response = await makeRequest({}, session.token);
@@ -514,7 +514,7 @@ describe("GET courses/", function () {
         ];
         await context.courseFactory.create(5, {language, isPublic: false});
         expectedCourses.sort(defaultSortComparator);
-        await context.courseRepo.annotateVocabsByLevel(expectedCourses, user.id);
+        await context.courseRepo.annotateCoursesWithUserData(expectedCourses, user);
         const recordsCount = expectedCourses.length;
 
         const response = await makeRequest({}, session.token);
@@ -586,7 +586,7 @@ describe("POST courses/", function () {
 
             const dbRecord = await context.courseRepo.findOne({title: newCourse.title, language}, {populate: ["lessons"]});
             expect(dbRecord).not.toBeNull();
-            await context.courseRepo.annotateVocabsByLevel([dbRecord!], user.profile.id);
+            await context.courseRepo.annotateCoursesWithUserData([dbRecord!], user);
             expect(courseSerializer.serialize(dbRecord!)).toMatchObject(courseSerializer.serialize(newCourse));
         });
         test<LocalTestContext>("If optional fields are provided use provided values", async (context) => {
@@ -619,7 +619,7 @@ describe("POST courses/", function () {
 
             const dbRecord = await context.courseRepo.findOne({title: newCourse.title, language}, {populate: ["lessons"]});
             expect(dbRecord).not.toBeNull();
-            await context.courseRepo.annotateVocabsByLevel([dbRecord!], user.profile.id);
+            await context.courseRepo.annotateCoursesWithUserData([dbRecord!], user);
             expect(dbRecord!.image).toEqual(expect.stringMatching(imagePathRegex));
         });
     });
@@ -847,7 +847,7 @@ describe("GET courses/:courseId/", function () {
             const user = await context.userFactory.createOne();
             const session = await context.sessionFactory.createOne({user: user});
             const course = await context.courseFactory.createOne({isPublic: true, language: await context.languageFactory.createOne()});
-            await context.courseRepo.annotateVocabsByLevel([course], user.id);
+            await context.courseRepo.annotateCoursesWithUserData([course], user);
 
             const response = await makeRequest(course.id, session.token);
 
@@ -892,7 +892,7 @@ describe("GET courses/:courseId/", function () {
             language: await context.languageFactory.createOne(),
             lessons: context.lessonFactory.makeDefinitions(3)
         });
-        await context.courseRepo.annotateVocabsByLevel([course], author.id);
+        await context.courseRepo.annotateCoursesWithUserData([course], author);
         await context.lessonRepo.annotateVocabsByLevel(course.lessons.getItems(), author.id);
         const session = await context.sessionFactory.createOne({user: author});
 
@@ -956,7 +956,7 @@ describe("PUT courses/:courseId/", function () {
             context.em.clear();
             course = await context.courseRepo.findOneOrFail({id: course.id}, {populate: ["language", "addedBy", "addedBy.user", "addedBy.languagesLearning"]});
             await context.em.populate(course, ["lessons"], {orderBy: {lessons: {orderInCourse: "asc"}}});
-            await context.courseRepo.annotateVocabsByLevel([course], author.id);
+            await context.courseRepo.annotateCoursesWithUserData([course], author);
             await context.lessonRepo.annotateVocabsByLevel(course.lessons.getItems(), author.id);
 
             expect(response.statusCode).to.equal(200);
@@ -992,7 +992,7 @@ describe("PUT courses/:courseId/", function () {
             context.em.clear();
             course = await context.courseRepo.findOneOrFail({id: course.id}, {populate: ["language", "addedBy", "addedBy.user", "addedBy.languagesLearning"]});
             await context.em.populate(course, ["lessons"], {orderBy: {lessons: {orderInCourse: "asc"}}});
-            await context.courseRepo.annotateVocabsByLevel([course], author.id);
+            await context.courseRepo.annotateCoursesWithUserData([course], author);
             await context.lessonRepo.annotateVocabsByLevel(course.lessons.getItems(), author.id);
 
             expect(response.statusCode).to.equal(200);
@@ -1029,7 +1029,7 @@ describe("PUT courses/:courseId/", function () {
             context.em.clear();
             course = await context.courseRepo.findOneOrFail({id: course.id}, {populate: ["language", "addedBy", "addedBy.user", "addedBy.languagesLearning"]});
             await context.em.populate(course, ["lessons"], {orderBy: {lessons: {orderInCourse: "asc"}}});
-            await context.courseRepo.annotateVocabsByLevel([course], author.id);
+            await context.courseRepo.annotateCoursesWithUserData([course], author);
             await context.lessonRepo.annotateVocabsByLevel(course.lessons.getItems(), author.id);
 
             expect(response.statusCode).to.equal(200);
@@ -1573,7 +1573,7 @@ describe("GET users/me/courses/bookmarked/", function () {
         const language = await context.languageFactory.createOne();
         const expectedCourses = await context.courseFactory.create(3, {language, bookmarkers: user.profile});
         await context.courseFactory.create(3, {language});
-        await context.courseRepo.annotateVocabsByLevel(expectedCourses, user.profile.id)
+        await context.courseRepo.annotateCoursesWithUserData(expectedCourses, user)
         expectedCourses.sort(defaultSortComparator);
         const recordsCount = expectedCourses.length;
 
@@ -1597,7 +1597,7 @@ describe("GET users/me/courses/bookmarked/", function () {
             const expectedCourses = await context.courseFactory.create(3, {language: language1, bookmarkers: user.profile});
             await context.courseFactory.create(3, {language: language2, bookmarkers: user.profile});
             await context.courseFactory.create(3, {language: language1});
-            await context.courseRepo.annotateVocabsByLevel(expectedCourses, user.profile.id)
+            await context.courseRepo.annotateCoursesWithUserData(expectedCourses, user)
             expectedCourses.sort(defaultSortComparator);
             const recordsCount = expectedCourses.length;
 
@@ -1643,7 +1643,7 @@ describe("GET users/me/courses/bookmarked/", function () {
             const expectedCourses = await context.courseFactory.create(3, {language, addedBy: user1.profile, bookmarkers: user.profile});
             await context.courseFactory.create(3, {language, addedBy: user2.profile, bookmarkers: user.profile});
             await context.courseFactory.create(3, {language, addedBy: user1.profile});
-            await context.courseRepo.annotateVocabsByLevel(expectedCourses, user.profile.id)
+            await context.courseRepo.annotateCoursesWithUserData(expectedCourses, user)
             expectedCourses.sort(defaultSortComparator);
             const recordsCount = expectedCourses.length;
 
@@ -1666,7 +1666,7 @@ describe("GET users/me/courses/bookmarked/", function () {
             const expectedCourses = await context.courseFactory.create(3, {language, addedBy: user.profile, bookmarkers: user.profile});
             await context.courseFactory.create(3, {language, addedBy: otherUser.profile, bookmarkers: user.profile});
             await context.courseFactory.create(3, {language, addedBy: user.profile});
-            await context.courseRepo.annotateVocabsByLevel(expectedCourses, user.profile.id)
+            await context.courseRepo.annotateCoursesWithUserData(expectedCourses, user)
             expectedCourses.sort(defaultSortComparator);
             const recordsCount = expectedCourses.length;
 
@@ -1725,7 +1725,7 @@ describe("GET users/me/courses/bookmarked/", function () {
                 language: language,
                 description: `description ${randomCase(searchQuery)} ${faker.random.alphaNumeric(10)}`
             });
-            await context.courseRepo.annotateVocabsByLevel(expectedCourses, user.profile.id)
+            await context.courseRepo.annotateCoursesWithUserData(expectedCourses, user)
             expectedCourses.sort(defaultSortComparator);
             const recordsCount = expectedCourses.length;
 
@@ -1772,7 +1772,7 @@ describe("GET users/me/courses/bookmarked/", function () {
                     await context.courseFactory.createOne({title: "abc", bookmarkers: user.profile, language}),
                     await context.courseFactory.createOne({title: "def", bookmarkers: user.profile, language})
                 ];
-                await context.courseRepo.annotateVocabsByLevel(expectedCourses, user.profile.id)
+                await context.courseRepo.annotateCoursesWithUserData(expectedCourses, user)
                 const recordsCount = expectedCourses.length;
 
                 const response = await makeRequest({sortBy: "title"}, session.token);
@@ -1793,7 +1793,7 @@ describe("GET users/me/courses/bookmarked/", function () {
                     await context.courseFactory.createOne({addedOn: new Date("2018-07-22T10:30:45.000Z"), bookmarkers: user.profile, language}),
                     await context.courseFactory.createOne({addedOn: new Date("2023-03-15T20:29:42.000Z"), bookmarkers: user.profile, language}),
                 ];
-                await context.courseRepo.annotateVocabsByLevel(expectedCourses, user.profile.id)
+                await context.courseRepo.annotateCoursesWithUserData(expectedCourses, user)
                 const recordsCount = expectedCourses.length;
 
                 const response = await makeRequest({sortBy: "createdDate"}, session.token);
@@ -1831,7 +1831,7 @@ describe("GET users/me/courses/bookmarked/", function () {
                         lessons: [context.lessonFactory.makeOne({pastViewers: [user1.profile, user2.profile]})]
                     }),
                 ];
-                await context.courseRepo.annotateVocabsByLevel(expectedCourses, user.profile.id)
+                await context.courseRepo.annotateCoursesWithUserData(expectedCourses, user)
                 const recordsCount = expectedCourses.length;
 
                 const response = await makeRequest({sortBy: "avgPastViewersCountPerLesson"}, session.token);
@@ -1860,7 +1860,7 @@ describe("GET users/me/courses/bookmarked/", function () {
                     await context.courseFactory.createOne({title: "abc", bookmarkers: user.profile, language}),
                     await context.courseFactory.createOne({title: "def", bookmarkers: user.profile, language})
                 ];
-                await context.courseRepo.annotateVocabsByLevel(expectedCourses, user.profile.id)
+                await context.courseRepo.annotateCoursesWithUserData(expectedCourses, user)
                 const recordsCount = expectedCourses.length;
 
                 const response = await makeRequest({sortOrder: "asc"}, session.token);
@@ -1881,7 +1881,7 @@ describe("GET users/me/courses/bookmarked/", function () {
                     await context.courseFactory.createOne({title: "def", bookmarkers: user.profile, language}),
                     await context.courseFactory.createOne({title: "abc", bookmarkers: user.profile, language}),
                 ];
-                await context.courseRepo.annotateVocabsByLevel(expectedCourses, user.profile.id)
+                await context.courseRepo.annotateCoursesWithUserData(expectedCourses, user)
                 const recordsCount = expectedCourses.length;
 
                 const response = await makeRequest({sortOrder: "desc"}, session.token);
@@ -1913,7 +1913,7 @@ describe("GET users/me/courses/bookmarked/", function () {
                 const recordsCount = allCourses.length;
                 const page = 1, pageSize = 3;
                 const expectedCourses = allCourses.slice(pageSize * (page - 1), pageSize * (page - 1) + pageSize);
-                await context.courseRepo.annotateVocabsByLevel(expectedCourses, user.profile.id)
+                await context.courseRepo.annotateCoursesWithUserData(expectedCourses, user)
 
                 const response = await makeRequest({page, pageSize}, session.token);
 
@@ -1934,7 +1934,7 @@ describe("GET users/me/courses/bookmarked/", function () {
                 const recordsCount = allCourses.length;
                 const page = 2, pageSize = 3;
                 const expectedCourses = allCourses.slice(pageSize * (page - 1), pageSize * (page - 1) + pageSize);
-                await context.courseRepo.annotateVocabsByLevel(expectedCourses, user.profile.id)
+                await context.courseRepo.annotateCoursesWithUserData(expectedCourses, user)
 
                 const response = await makeRequest({page, pageSize}, session.token);
 
@@ -1956,7 +1956,7 @@ describe("GET users/me/courses/bookmarked/", function () {
                 const pageSize = 3;
                 const page = Math.ceil(recordsCount / pageSize);
                 const expectedCourses = allCourses.slice(pageSize * (page - 1), pageSize * (page - 1) + pageSize);
-                await context.courseRepo.annotateVocabsByLevel(expectedCourses, user.profile.id)
+                await context.courseRepo.annotateCoursesWithUserData(expectedCourses, user)
 
                 const response = await makeRequest({page, pageSize}, session.token);
 
@@ -1977,7 +1977,7 @@ describe("GET users/me/courses/bookmarked/", function () {
                 const pageSize = 3;
                 const page = Math.ceil(recordsCount / pageSize) + 1;
                 const expectedCourses = allCourses.slice(pageSize * (page - 1), pageSize * (page - 1) + pageSize);
-                await context.courseRepo.annotateVocabsByLevel(expectedCourses, user.profile.id)
+                await context.courseRepo.annotateCoursesWithUserData(expectedCourses, user)
 
                 const response = await makeRequest({page, pageSize}, session.token);
 
@@ -2016,7 +2016,7 @@ describe("GET users/me/courses/bookmarked/", function () {
                 const recordsCount = allCourses.length;
                 const page = 2, pageSize = 20;
                 const expectedCourses = allCourses.slice(pageSize * (page - 1), pageSize * (page - 1) + pageSize);
-                await context.courseRepo.annotateVocabsByLevel(expectedCourses, user.profile.id)
+                await context.courseRepo.annotateCoursesWithUserData(expectedCourses, user)
 
                 const response = await makeRequest({page, pageSize}, session.token);
 

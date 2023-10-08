@@ -101,12 +101,12 @@ export class LessonService {
         const [lessonParsedText, lessonWords] = parser.parseText(`${newLesson.title} ${newLesson.text}`);
 
         await this.em.upsertMany(Vocab, lessonWords.map(word => ({text: word, language: language.id})));
-        const lessonVocabs = await this.em.createQueryBuilder(Vocab).select("*").where(`? ~ text`, [lessonParsedText])
+        const lessonVocabs = await this.em.createQueryBuilder(Vocab).select("*").where(`? ~ text`, [lessonParsedText]);
 
         await this.em.insertMany(MapLessonVocab, lessonVocabs.map(vocab => ({lesson: newLesson.id, vocab: vocab.id})));
 
         await this.lessonRepo.annotateVocabsByLevel([newLesson], user.id);
-        await this.courseRepo.annotateVocabsByLevel([newLesson.course], user.id);
+        await this.courseRepo.annotateCoursesWithUserData([newLesson.course], user);
         return newLesson;
     }
 
@@ -115,7 +115,7 @@ export class LessonService {
         if (lesson) {
             if (user && !(user instanceof AnonymousUser)) {
                 await this.lessonRepo.annotateVocabsByLevel([lesson], user.id);
-                await this.courseRepo.annotateVocabsByLevel([lesson.course], user.id);
+                await this.courseRepo.annotateCoursesWithUserData([lesson.course], user);
             }
         }
         return lesson;
@@ -139,9 +139,9 @@ export class LessonService {
 
             await this.em.nativeDelete(MapLessonVocab, {lesson: lesson, vocab: {text: {$nin: lessonWords}}});
 
-            await this.em.createQueryBuilder(Vocab).delete().where(`? !~ text`, [lessonParsedText])
+            await this.em.createQueryBuilder(Vocab).delete().where(`? !~ text`, [lessonParsedText]);
             await this.em.upsertMany(Vocab, lessonWords.map(word => ({text: word, language: language.id})));
-            const lessonVocabs = await this.em.createQueryBuilder(Vocab).select(["id"]).where(`? ~ text`, [lessonParsedText])
+            const lessonVocabs = await this.em.createQueryBuilder(Vocab).select(["id"]).where(`? ~ text`, [lessonParsedText]);
             await this.em.upsertMany(MapLessonVocab, lessonVocabs.map(vocab => ({lesson: lesson.id, vocab: vocab.id})));
         }
 
@@ -160,12 +160,12 @@ export class LessonService {
         if (updatedLessonData.audio !== undefined)
             lesson.audio = updatedLessonData.audio;
 
-        this.lessonRepo.persist(lesson);
-        await this.lessonRepo.flush();
+        this.em.persist(lesson);
+        await this.em.flush();
 
         if (user && !(user instanceof AnonymousUser)) {
             await this.lessonRepo.annotateVocabsByLevel([lesson], user.id);
-            await this.courseRepo.annotateVocabsByLevel([lesson.course], user.id);
+            await this.courseRepo.annotateCoursesWithUserData([lesson.course], user);
         }
         return lesson;
     }

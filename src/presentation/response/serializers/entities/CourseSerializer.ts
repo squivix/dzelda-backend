@@ -18,7 +18,8 @@ export class CourseSerializer extends CustomEntitySerializer<Course, CourseSchem
             lessons: () => lessonSerializer.serializeList(course.lessons.getItems(), {ignore: ["course"]}) as Omit<LessonSchema, "course">[],
             addedOn: () => course.addedOn.toISOString(),
             addedBy: () => course.addedBy.user.username,
-            vocabsByLevel: () => course.vocabsByLevel
+            vocabsByLevel: () => course.vocabsByLevel,
+            isBookmarked: () => course.isBookmarked
         };
     }
 
