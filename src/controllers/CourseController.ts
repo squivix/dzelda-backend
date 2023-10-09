@@ -12,9 +12,8 @@ import {ValidationAPIError} from "@/src/utils/errors/ValidationAPIError.js";
 import {LanguageService} from "@/src/services/LanguageService.js";
 import {numericStringValidator} from "@/src/validators/utilValidators.js";
 import {courseSerializer} from "@/src/presentation/response/serializers/entities/CourseSerializer.js";
-import {UserService} from "@/src/services/UserService.js";
-import {LessonService} from "@/src/services/LessonService.js";
-import {lessonSerializer} from "@/src/presentation/response/serializers/entities/LessonSerializer.js";
+import {APIError} from "@/src/utils/errors/APIError.js";
+import {StatusCodes} from "http-status-codes";
 
 class CourseController {
     async getCourses(request: FastifyRequest, reply: FastifyReply) {
@@ -179,6 +178,22 @@ class CourseController {
         }
         const newCourseMapping = await courseService.addCourseToUserBookmarks(course, request.user as User);
         reply.status(201).send(courseSerializer.serialize(newCourseMapping.course));
+    }
+
+    async removeCourseFromUserBookmarks(request: FastifyRequest, reply: FastifyReply) {
+        const user = request.user as User;
+        const pathParamsValidator = z.object({courseId: numericStringValidator});
+        const pathParams = pathParamsValidator.parse(request.params);
+
+        const courseService = new CourseService(request.em);
+        const course = await courseService.getCourse(pathParams.courseId, request.user);
+        if (!course || (!course.isPublic && request?.user?.profile !== course.addedBy))
+            throw new NotFoundAPIError("Course");
+        const existingCourseMapping = await courseService.findBookMarkerCourseMapping({course: course, bookmarker: user.profile});
+        if (!existingCourseMapping)
+            throw new APIError(StatusCodes.NOT_FOUND, "Course is not bookmarked");
+        await courseService.removeCourseFromUserBookmarks(course, user);
+        reply.status(204).send();
     }
 }
 

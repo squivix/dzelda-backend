@@ -80,7 +80,7 @@ export class CourseService {
     }
 
     async getCourse(courseId: number, user: User | AnonymousUser | null) {
-        let course = await this.courseRepo.findOne({id: courseId}, {populate: ["language", "addedBy", "addedBy.user"]});
+        const course = await this.courseRepo.findOne({id: courseId}, {populate: ["language", "addedBy", "addedBy.user"]});
         if (course) {
             await this.em.populate(course, ["lessons"], {orderBy: {lessons: {orderInCourse: "asc"}}, refresh: true});
             if (user && !(user instanceof AnonymousUser)) {
@@ -130,6 +130,10 @@ export class CourseService {
         await this.em.flush();
         await this.courseRepo.annotateCoursesWithUserData([course], user);
         return mapping;
+    }
+
+    async removeCourseFromUserBookmarks(course: Course, user: User) {
+        await this.em.nativeDelete(MapBookmarkerCourse, {course: course, bookmarker: user.profile}, {});
     }
 
 }

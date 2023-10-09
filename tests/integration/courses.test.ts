@@ -33,6 +33,11 @@ import {Profile} from "@/src/models/entities/Profile.js";
 import {MapBookmarkerCourse} from "@/src/models/entities/MapBookmarkerCourse.js";
 import {lessonSerializer} from "@/src/presentation/response/serializers/entities/LessonSerializer.js";
 import {MapPastViewerLesson} from "@/src/models/entities/MapPastViewerLesson.js";
+import {MapLearnerDictionary} from "@/src/models/entities/MapLearnerDictionary.js";
+import {MapLearnerVocab} from "@/src/models/entities/MapLearnerVocab.js";
+import * as parserExports from "@/src/utils/parsers/parsers.js";
+import {MapLearnerMeaning} from "@/src/models/entities/MapLearnerMeaning.js";
+import {MapLearnerLanguage} from "@/src/models/entities/MapLearnerLanguage.js";
 
 interface LocalTestContext extends TestContext {
     courseRepo: CourseRepo;
@@ -2173,5 +2178,73 @@ describe("POST users/me/courses/bookmarked/", function () {
 
         const response = await makeRequest({courseId: lesson.id}, session.token);
         expect(response.statusCode).to.equal(403);
+    });
+});
+
+/**{@link CourseController#removeCourseFromUserBookmarks}*/
+describe("DELETE users/me/courses/bookmarked/:courseId", function () {
+    const makeRequest = async (courseId: number, authToken?: string) => {
+        const options: InjectOptions = {
+            method: "DELETE",
+            url: `users/me/courses/bookmarked/${courseId}/`
+        };
+        return await fetchRequest(options, authToken);
+    };
+
+    test<LocalTestContext>("If user is logged in and is course is bookmarked delete bookmark, return 204", async (context) => {
+        const user = await context.userFactory.createOne();
+        const session = await context.sessionFactory.createOne({user});
+        const language = await context.languageFactory.createOne();
+        const course = await context.courseFactory.createOne({language, bookmarkers: user.profile});
+
+        const response = await makeRequest(course.id, session.token);
+
+        expect(response.statusCode).to.equal(204);
+        expect(await context.em.findOne(MapBookmarkerCourse, {bookmarker: user.profile, course})).toBeNull();
+    });
+    test<LocalTestContext>("If user is not logged in return 401", async (context) => {
+        const user = await context.userFactory.createOne();
+        const language = await context.languageFactory.createOne();
+        const course = await context.courseFactory.createOne({language, bookmarkers: user.profile});
+
+        const response = await makeRequest(course.id);
+
+        expect(response.statusCode).to.equal(401);
+    });
+    test<LocalTestContext>("If user email is not confirmed return 403", async (context) => {
+        const user = await context.userFactory.createOne({isEmailConfirmed: false});
+        const session = await context.sessionFactory.createOne({user});
+        const language = await context.languageFactory.createOne();
+        const course = await context.courseFactory.createOne({language, bookmarkers: user.profile});
+
+        const response = await makeRequest(course.id, session.token);
+
+        expect(response.statusCode).to.equal(403);
+    });
+    test<LocalTestContext>("If courseId is invalid return  400", async (context) => {
+        const user = await context.userFactory.createOne();
+        const session = await context.sessionFactory.createOne({user});
+
+        const response = await makeRequest(-1, session.token);
+
+        expect(response.statusCode).to.equal(400);
+    });
+    test<LocalTestContext>("If course is not found return  404", async (context) => {
+        const user = await context.userFactory.createOne();
+        const session = await context.sessionFactory.createOne({user});
+
+        const response = await makeRequest(faker.datatype.number({min: 100000}), session.token);
+
+        expect(response.statusCode).to.equal(404);
+    });
+    test<LocalTestContext>("If course is not bookmarked return  404", async (context) => {
+        const user = await context.userFactory.createOne();
+        const session = await context.sessionFactory.createOne({user});
+        const language = await context.languageFactory.createOne();
+        const course = await context.courseFactory.createOne({language});
+
+        const response = await makeRequest(course.id, session.token);
+
+        expect(response.statusCode).to.equal(404);
     });
 });

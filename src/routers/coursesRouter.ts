@@ -33,5 +33,10 @@ export const coursesRouter: FastifyPluginCallback = function (fastify, options, 
         handler: CourseController.addCourseToUserBookmarks,
     });
 
+    fastify.delete(`/users/me/courses/bookmarked/:courseId/`, {
+        preHandler: [requiresAuth, requiresEmailConfirmed],
+        handler: CourseController.removeCourseFromUserBookmarks,
+    });
+
     done();
 };
