@@ -32,9 +32,6 @@ export class Lesson extends CustomBaseEntity {
     @Property({type: types.integer, default: 0})
     orderInCourse: number = 0;
 
-    @Enum({items: () => LanguageLevel, type: types.enum, default: LanguageLevel.ADVANCED_1})
-    level: LanguageLevel = LanguageLevel.ADVANCED_1;
-
     @Property({type: types.datetime, defaultRaw: "now()"})
     addedOn!: Date;
 
@@ -54,7 +51,7 @@ export class Lesson extends CustomBaseEntity {
     })
     pastViewers: Collection<Profile> = new Collection<Profile>(this);
 
-    [OptionalProps]?: "image" | "audio" | "level" | "addedOn" | "pastViewersCount";
+    [OptionalProps]?: "image" | "audio" | "addedOn" | "pastViewersCount";
 
     //annotated properties
     @Property({persist: false, type: types.json})

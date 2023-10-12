@@ -11,18 +11,10 @@ import {orm} from "@/src/server.js";
 import {Lesson} from "@/src/models/entities/Lesson.js";
 import {Course} from "@/src/models/entities/Course.js";
 import {InjectOptions} from "light-my-request";
-import {
-    buildQueryString,
-    createComparator,
-    fetchRequest,
-    fetchWithFiles,
-    mockValidateFileFields,
-    readSampleFile
-} from "@/tests/integration/utils.js";
+import {buildQueryString, createComparator, fetchRequest, fetchWithFiles, mockValidateFileFields, readSampleFile} from "@/tests/integration/utils.js";
 import {lessonSerializer} from "@/src/presentation/response/serializers/entities/LessonSerializer.js";
 import {faker} from "@faker-js/faker";
-import {randomCase, randomEnum, randomEnums} from "@/tests/utils.js";
-import {LanguageLevel} from "@/src/models/enums/LanguageLevel.js";
+import {randomCase} from "@/tests/utils.js";
 import {Vocab} from "@/src/models/entities/Vocab.js";
 import {EntityRepository} from "@mikro-orm/core";
 import * as parserExports from "@/src/utils/parsers/parsers.js";
@@ -248,51 +240,6 @@ describe("GET lessons/", () => {
                 pageCount: 0,
                 data: []
             });
-        });
-    });
-    describe("test level filter", () => {
-        test<LocalTestContext>("If the level is valid return lessons in that level", async (context) => {
-            const level = randomEnum(LanguageLevel);
-            const language = await context.languageFactory.createOne();
-            const course = await context.courseFactory.createOne({isPublic: true, language: language});
-            const expectedLessons = await context.lessonFactory.create(3, {level, course});
-            await context.lessonFactory.create(3, {course, level: randomEnum(LanguageLevel, [level])});
-            expectedLessons.sort(defaultSortComparator);
-            const recordsCount = expectedLessons.length;
-
-            const response = await makeRequest({level: level});
-
-            expect(response.statusCode).to.equal(200);
-            expect(response.json()).toEqual({
-                page: queryDefaults.pagination.page,
-                pageSize: queryDefaults.pagination.pageSize,
-                pageCount: Math.ceil(recordsCount / queryDefaults.pagination.pageSize),
-                data: lessonSerializer.serializeList(expectedLessons)
-            });
-        });
-        test<LocalTestContext>("If multiple levels are sent return lessons in any of those levels", async (context) => {
-            const levels = randomEnums(2, LanguageLevel);
-            const language = await context.languageFactory.createOne();
-            const course = await context.courseFactory.createOne({isPublic: true, language: language});
-            const expectedLessons = (await Promise.all(levels.map(level => context.lessonFactory.create(3, {level, course})))).flat();
-            await context.lessonFactory.create(3, {course, level: randomEnum(LanguageLevel, levels)});
-            expectedLessons.sort(defaultSortComparator);
-            const recordsCount = expectedLessons.length;
-
-            const response = await makeRequest({level: levels});
-
-            expect(response.statusCode).to.equal(200);
-            expect(response.json()).toEqual({
-                page: queryDefaults.pagination.page,
-                pageSize: queryDefaults.pagination.pageSize,
-                pageCount: Math.ceil(recordsCount / queryDefaults.pagination.pageSize),
-                data: lessonSerializer.serializeList(expectedLessons)
-            });
-        });
-        test<LocalTestContext>("If the level is invalid return 400", async () => {
-            const response = await makeRequest({level: "hard"});
-
-            expect(response.statusCode).to.equal(400);
         });
     });
     describe("test hasAudio filter", () => {
@@ -1177,7 +1124,7 @@ describe("PUT lessons/:lessonId/", () => {
 
             const oldLessonImage = lesson.image;
             const oldLessonAudio = lesson.audio;
-            const updatedLesson = context.lessonFactory.makeOne({course: newCourse, level: lesson.level});
+            const updatedLesson = context.lessonFactory.makeOne({course: newCourse});
 
             const response = await makeRequest(lesson.id, {
                 data: {
@@ -1208,7 +1155,7 @@ describe("PUT lessons/:lessonId/", () => {
             expect(lessonVocabMappings.length).toEqual(lessonWordsText.length);
         });
         describe("If optional fields are provided, update their values", async () => {
-            test<LocalTestContext>("If new image, audio, and level are provided, update them", async (context) => {
+            test<LocalTestContext>("If new image and audio are provided, update them", async (context) => {
                 const author = await context.userFactory.createOne();
                 const session = await context.sessionFactory.createOne({user: author});
                 const language = await context.languageFactory.createOne();
@@ -1218,14 +1165,13 @@ describe("PUT lessons/:lessonId/", () => {
                 let lesson = await context.lessonFactory.createOne({course: course});
                 const oldLessonImage = lesson.image;
                 const oldLessonAudio = lesson.audio;
-                const updatedLesson = context.lessonFactory.makeOne({course: newCourse, level: randomEnum(LanguageLevel, [lesson.level])});
+                const updatedLesson = context.lessonFactory.makeOne({course: newCourse});
 
                 const response = await makeRequest(lesson.id, {
                     data: {
                         courseId: newCourse.id,
                         title: updatedLesson.title,
                         text: updatedLesson.text,
-                        level: updatedLesson.level
                     },
                     files: {
                         image: readSampleFile("images/lorem-ipsum-69_8KB-1_1ratio.png"),
@@ -1938,65 +1884,6 @@ describe("GET users/me/lessons/history/", () => {
                 pageCount: 0,
                 data: []
             });
-        });
-    });
-    describe("test level filter", () => {
-        test<LocalTestContext>("If the level is valid return lessons in that level", async (context) => {
-            const user = await context.userFactory.createOne();
-            const session = await context.sessionFactory.createOne({user: user});
-            const language = await context.languageFactory.createOne();
-            const course = await context.courseFactory.createOne({language, isPublic: true});
-            const level = randomEnum(LanguageLevel);
-            const expectedLessons = await context.lessonFactory.create(3, {course, pastViewers: [user.profile], level});
-            await context.lessonFactory.create(3, {course, pastViewers: [user.profile], level: randomEnum(LanguageLevel, [level])});
-            await context.lessonFactory.create(3, {course, level});
-            expectedLessons.sort(defaultSortComparator);
-            await context.lessonRepo.annotateLessonsWithUserData(expectedLessons, user);
-            const recordsCount = expectedLessons.length;
-
-            const response = await makeRequest({level: level}, session.token);
-
-            expect(response.statusCode).to.equal(200);
-            expect(response.json()).toEqual({
-                page: queryDefaults.pagination.page,
-                pageSize: queryDefaults.pagination.pageSize,
-                pageCount: Math.ceil(recordsCount / queryDefaults.pagination.pageSize),
-                data: lessonSerializer.serializeList(expectedLessons)
-            });
-        });
-        test<LocalTestContext>("If multiple levels are sent return lessons in any of those levels", async (context) => {
-            const user = await context.userFactory.createOne();
-            const session = await context.sessionFactory.createOne({user: user});
-            const language = await context.languageFactory.createOne();
-            const course = await context.courseFactory.createOne({language, isPublic: true});
-            const levels = randomEnums(2, LanguageLevel);
-            const expectedLessons = (await Promise.all(levels.map(level => context.lessonFactory.create(3, {
-                course,
-                level,
-                pastViewers: [user.profile],
-            })))).flat();
-            await context.lessonFactory.create(3, {course, pastViewers: [user.profile], level: randomEnum(LanguageLevel, levels)});
-            await Promise.all(levels.map(level => context.lessonFactory.create(3, {course, level})));
-            expectedLessons.sort(defaultSortComparator);
-            await context.lessonRepo.annotateLessonsWithUserData(expectedLessons, user);
-            const recordsCount = expectedLessons.length;
-
-            const response = await makeRequest({level: levels}, session.token);
-
-            expect(response.statusCode).to.equal(200);
-            expect(response.json()).toEqual({
-                page: queryDefaults.pagination.page,
-                pageSize: queryDefaults.pagination.pageSize,
-                pageCount: Math.ceil(recordsCount / queryDefaults.pagination.pageSize),
-                data: lessonSerializer.serializeList(expectedLessons)
-            });
-        });
-        test<LocalTestContext>("If the level is invalid return 400", async (context) => {
-            const user = await context.userFactory.createOne();
-            const session = await context.sessionFactory.createOne({user: user});
-            const response = await makeRequest({level: "hard"}, session.token);
-
-            expect(response.statusCode).to.equal(400);
         });
     });
     describe("test hasAudio filter", () => {

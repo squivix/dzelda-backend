@@ -8,15 +8,9 @@ import {UnauthenticatedAPIError} from "@/src/utils/errors/UnauthenticatedAPIErro
 import {booleanStringValidator, numericStringValidator} from "@/src/validators/utilValidators.js";
 import {ValidationAPIError} from "@/src/utils/errors/ValidationAPIError.js";
 import {CourseService} from "@/src/services/CourseService.js";
-import {
-    lessonLevelsFilterValidator,
-    lessonLevelValidator,
-    lessonTextValidator,
-    lessonTitleValidator
-} from "@/src/validators/lessonValidators.js";
+import {lessonTextValidator, lessonTitleValidator} from "@/src/validators/lessonValidators.js";
 import {ForbiddenAPIError} from "@/src/utils/errors/ForbiddenAPIError.js";
 import {NotFoundAPIError} from "@/src/utils/errors/NotFoundAPIError.js";
-import {UserService} from "@/src/services/UserService.js";
 import {lessonSerializer} from "@/src/presentation/response/serializers/entities/LessonSerializer.js";
 
 class LessonController {
@@ -25,7 +19,6 @@ class LessonController {
             languageCode: languageCodeValidator.optional(),
             addedBy: usernameValidator.or(z.literal("me")).optional(),
             searchQuery: z.string().max(256).optional(),
-            level: lessonLevelsFilterValidator.default([]),
             hasAudio: booleanStringValidator.optional(),
             sortBy: z.union([z.literal("title"), z.literal("createdDate"), z.literal("pastViewersCount")]).optional().default("title"),
             sortOrder: z.union([z.literal("asc"), z.literal("desc")]).optional().default("asc"),
@@ -43,7 +36,6 @@ class LessonController {
             languageCode: queryParams.languageCode,
             addedBy: queryParams.addedBy,
             searchQuery: queryParams.searchQuery,
-            level: queryParams.level,
             hasAudio: queryParams.hasAudio,
         };
         const sort = {sortBy: queryParams.sortBy, sortOrder: queryParams.sortOrder};
@@ -63,7 +55,6 @@ class LessonController {
             data: z.object({
                 title: lessonTitleValidator,
                 text: lessonTextValidator,
-                level: lessonLevelValidator.optional(),
                 courseId: z.number().min(0)
             }),
             image: z.string().optional(),
@@ -83,7 +74,6 @@ class LessonController {
             title: body.data.title,
             text: body.data.text,
             course: course,
-            level: body.data.level,
             image: body.image,
             audio: body.audio,
         }, request.user as User);
@@ -111,7 +101,6 @@ class LessonController {
                 courseId: z.number().min(0),
                 title: lessonTitleValidator,
                 text: lessonTextValidator,
-                level: lessonLevelValidator.optional(),
             }),
             image: z.string().optional(),
             audio: z.string().optional()
@@ -138,7 +127,6 @@ class LessonController {
             course: newCourse,
             title: body.data.title,
             text: body.data.text,
-            level: body.data.level,
             image: body.image,
             audio: body.audio
         }, request.user as User);
@@ -153,7 +141,6 @@ class LessonController {
             languageCode: languageCodeValidator.optional(),
             addedBy: usernameValidator.or(z.literal("me")).optional(),
             searchQuery: z.string().max(256).optional(),
-            level: lessonLevelsFilterValidator.default([]),
             hasAudio: booleanStringValidator.optional(),
             sortBy: z.union([z.literal("title"), z.literal("createdDate"), z.literal("pastViewersCount")]).optional().default("title"),
             sortOrder: z.union([z.literal("asc"), z.literal("desc")]).optional().default("asc"),
@@ -169,7 +156,6 @@ class LessonController {
             languageCode: queryParams.languageCode,
             addedBy: queryParams.addedBy,
             searchQuery: queryParams.searchQuery,
-            level: queryParams.level,
             hasAudio: queryParams.hasAudio,
             isInHistory: true
         };

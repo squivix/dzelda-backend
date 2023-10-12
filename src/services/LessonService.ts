@@ -3,7 +3,6 @@ import {Lesson} from "@/src/models/entities/Lesson.js";
 import {SqlEntityManager} from "@mikro-orm/postgresql";
 import {LessonRepo} from "@/src/models/repos/LessonRepo.js";
 import {AnonymousUser, User} from "@/src/models/entities/auth/User.js";
-import {LanguageLevel} from "@/src/models/enums/LanguageLevel.js";
 import {Course} from "@/src/models/entities/Course.js";
 import {getParser} from "@/src/utils/parsers/parsers.js";
 import {Vocab} from "@/src/models/entities/Vocab.js";
@@ -29,7 +28,6 @@ export class LessonService {
                                   languageCode?: string,
                                   addedBy?: string,
                                   searchQuery?: string,
-                                  level?: LanguageLevel[],
                                   hasAudio?: boolean;
                                   isInHistory?: boolean
                               },
@@ -52,8 +50,6 @@ export class LessonService {
             dbFilters.$and!.push({title: {$ilike: `%${filters.searchQuery}%`}});
         if (filters.hasAudio !== undefined)
             dbFilters.$and!.push({audio: {[filters.hasAudio ? "$ne" : "$eq"]: ""}});
-        if (filters.level !== undefined)
-            dbFilters.$and!.push({$or: filters.level.map(level => ({level}))});
 
         const dbOrderBy: QueryOrderMap<Lesson>[] = [];
         if (sort.sortBy == "title")
@@ -79,7 +75,6 @@ export class LessonService {
     async createLesson(fields: {
         title: string;
         text: string;
-        level?: LanguageLevel,
         course: Course;
         image?: string;
         audio?: string;
@@ -87,7 +82,6 @@ export class LessonService {
         let newLesson = this.lessonRepo.create({
             title: fields.title,
             text: fields.text,
-            level: fields.level,
             image: fields.image,
             audio: fields.audio,
             course: fields.course,
@@ -124,7 +118,6 @@ export class LessonService {
     async updateLesson(lesson: Lesson, updatedLessonData: {
         title: string;
         text: string;
-        level?: LanguageLevel
         course: Course,
         image?: string;
         audio?: string;
@@ -150,9 +143,6 @@ export class LessonService {
             lesson.course = updatedLessonData.course;
             lesson.orderInCourse = await updatedLessonData.course.lessons.loadCount(true);
         }
-
-        if (updatedLessonData.level !== undefined)
-            lesson.level = updatedLessonData.level;
 
         if (updatedLessonData.image !== undefined)
             lesson.image = updatedLessonData.image;

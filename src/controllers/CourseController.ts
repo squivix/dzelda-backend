@@ -5,7 +5,12 @@ import {AnonymousUser, User} from "@/src/models/entities/auth/User.js";
 import {languageCodeValidator} from "@/src/validators/languageValidators.js";
 import {usernameValidator} from "@/src/validators/userValidator.js";
 import {UnauthenticatedAPIError} from "@/src/utils/errors/UnauthenticatedAPIError.js";
-import {courseDescriptionValidator, courseTitleValidator} from "@/src/validators/courseValidator.js";
+import {
+    courseDescriptionValidator,
+    courseLevelsFilterValidator,
+    courseLevelValidator,
+    courseTitleValidator
+} from "@/src/validators/courseValidator.js";
 import {NotFoundAPIError} from "@/src/utils/errors/NotFoundAPIError.js";
 import {ForbiddenAPIError} from "@/src/utils/errors/ForbiddenAPIError.js";
 import {ValidationAPIError} from "@/src/utils/errors/ValidationAPIError.js";
@@ -23,6 +28,7 @@ class CourseController {
             searchQuery: z.string().max(256).optional(),
             sortBy: z.union([z.literal("title"), z.literal("createdDate"), z.literal("avgPastViewersCountPerLesson")]).optional().default("title"),
             sortOrder: z.union([z.literal("asc"), z.literal("desc")]).optional().default("asc"),
+            level: courseLevelsFilterValidator.default([]),
             page: z.coerce.number().int().min(1).optional().default(1),
             pageSize: z.coerce.number().int().min(1).max(100).optional().default(10),
         });
@@ -35,6 +41,7 @@ class CourseController {
         const filters = {
             languageCode: queryParams.languageCode,
             addedBy: queryParams.addedBy,
+            level: queryParams.level,
             searchQuery: queryParams.searchQuery,
         };
         const sort = {sortBy: queryParams.sortBy, sortOrder: queryParams.sortOrder};
@@ -55,6 +62,7 @@ class CourseController {
                 languageCode: languageCodeValidator,
                 title: courseTitleValidator,
                 description: courseDescriptionValidator.optional(),
+                level: courseLevelValidator.optional(),
                 isPublic: z.boolean().optional(),
             }),
             image: z.string().optional(),
@@ -74,6 +82,7 @@ class CourseController {
             title: body.data.title,
             description: body.data.description,
             isPublic: body.data.isPublic,
+            level: body.data.level,
             image: body.image,
         }, request.user as User);
         reply.status(201).send(courseSerializer.serialize(course));
@@ -100,6 +109,7 @@ class CourseController {
                 title: courseTitleValidator,
                 description: courseDescriptionValidator,
                 isPublic: z.boolean(),
+                level: courseLevelValidator,
                 lessonsOrder: z.array(z.number().int().min(0)).refine(e => new Set(e).size === e.length)
             }),
             image: z.string().optional()
@@ -117,13 +127,14 @@ class CourseController {
 
         const lessonOrderIdSet = new Set(body.data.lessonsOrder);
         if (course.lessons.length !== body.data.lessonsOrder.length || !course.lessons.getItems().map(c => c.id).every(l => lessonOrderIdSet.has(l)))
-            throw new ValidationAPIError({lessonsOrder: {message: "ids don't match course lessons: cannot add or remove lessons through this endpoint"}});
+            throw new ValidationAPIError({lessonsOrder: {message: "ids don't match course lessons: cannot add or remove lessons through this endpoint, only reorder"}});
 
         const updatedCourse = await courseService.updateCourse(course, {
             title: body.data.title,
             description: body.data.description,
             isPublic: body.data.isPublic,
             image: body.image,
+            level: body.data.level,
             lessonsOrder: body.data.lessonsOrder
         }, request.user as User);
         reply.status(200).send(courseSerializer.serialize(updatedCourse));
@@ -134,6 +145,7 @@ class CourseController {
             languageCode: languageCodeValidator.optional(),
             addedBy: usernameValidator.or(z.literal("me")).optional(),
             searchQuery: z.string().max(256).optional(),
+            level: courseLevelsFilterValidator.default([]),
             sortBy: z.union([z.literal("title"), z.literal("createdDate"), z.literal("avgPastViewersCountPerLesson")]).optional().default("title"),
             sortOrder: z.union([z.literal("asc"), z.literal("desc")]).optional().default("asc"),
             page: z.coerce.number().int().min(1).optional().default(1),
@@ -145,6 +157,7 @@ class CourseController {
         const filters = {
             languageCode: queryParams.languageCode,
             addedBy: queryParams.addedBy,
+            level: queryParams.level,
             searchQuery: queryParams.searchQuery,
             isBookmarked: true
         };

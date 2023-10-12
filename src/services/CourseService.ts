@@ -9,7 +9,7 @@ import {LessonRepo} from "@/src/models/repos/LessonRepo.js";
 import {QueryOrderMap} from "@mikro-orm/core/enums.js";
 import {EntityField} from "@mikro-orm/core/drivers/IDatabaseDriver.js";
 import {MapBookmarkerCourse} from "@/src/models/entities/MapBookmarkerCourse.js";
-import {MapPastViewerLesson} from "@/src/models/entities/MapPastViewerLesson.js";
+import {LanguageLevel} from "@/src/models/enums/LanguageLevel.js";
 
 export class CourseService {
     em: EntityManager;
@@ -22,7 +22,10 @@ export class CourseService {
         this.lessonRepo = this.em.getRepository(Lesson) as LessonRepo;
     }
 
-    async getPaginatedCourses(filters: { languageCode?: string, addedBy?: string, searchQuery?: string, isBookmarked?: boolean }, sort: {
+    async getPaginatedCourses(filters: {
+        languageCode?: string, addedBy?: string,
+        level?: LanguageLevel[], searchQuery?: string, isBookmarked?: boolean
+    }, sort: {
         sortBy: "title" | "createdDate" | "avgPastViewersCountPerLesson",
         sortOrder: "asc" | "desc"
     }, pagination: { page: number, pageSize: number }, user: User | AnonymousUser | null): Promise<[Course[], number]> {
@@ -41,6 +44,8 @@ export class CourseService {
             dbFilters.$and!.push({addedBy: {user: {username: filters.addedBy}}});
         if (filters.searchQuery !== undefined && filters.searchQuery !== "")
             dbFilters.$and!.push({$or: [{title: {$ilike: `%${filters.searchQuery}%`}}, {description: {$ilike: `%${filters.searchQuery}%`}}]});
+        if (filters.level !== undefined)
+            dbFilters.$and!.push({$or: filters.level.map(level => ({level}))});
 
         const dbOrderBy: QueryOrderMap<Course>[] = [];
         if (sort.sortBy == "title")
@@ -64,11 +69,12 @@ export class CourseService {
     }
 
     async createCourse(fields: {
-        language: Language, title: string, description?: string, isPublic?: boolean, image?: string
+        language: Language, title: string, description?: string, level?: LanguageLevel, isPublic?: boolean, image?: string
     }, user: User) {
         const newCourse = this.courseRepo.create({
             title: fields.title,
             addedBy: user.profile,
+            level: fields.level,
             language: fields.language,
             description: fields.description,
             image: fields.image,
@@ -95,12 +101,15 @@ export class CourseService {
         title: string;
         description: string;
         isPublic: boolean;
+        level: LanguageLevel
         image?: string;
         lessonsOrder: number[]
     }, user: User) {
         course.title = updatedCourseData.title;
         course.description = updatedCourseData.description;
         course.isPublic = updatedCourseData.isPublic;
+        course.level = updatedCourseData.level;
+
         if (updatedCourseData.image !== undefined)
             course.image = updatedCourseData.image;
 
