@@ -6,7 +6,7 @@ import {Profile} from "@/src/models/entities/Profile.js";
 import {LanguageFactory} from "@/src/seeders/factories/LanguageFactory.js";
 import {Language} from "@/src/models/entities/Language.js";
 import {orm} from "@/src/server.js";
-import {fetchRequest, parseUrlQueryString} from "@/tests/integration/utils.js";
+import {fetchRequest, mockValidateFileFields, parseUrlQueryString, readSampleFile} from "@/tests/integration/utils.js";
 import {EntityRepository} from "@mikro-orm/core";
 import {InjectOptions} from "light-my-request";
 import {userSerializer} from "@/src/presentation/response/serializers/entities/UserSerializer.js";
@@ -20,6 +20,12 @@ import {expiringTokenHasher} from "@/src/utils/security/ExpiringTokenHasher.js";
 import {passwordHasher} from "@/src/utils/security/PasswordHasher.js";
 import {Session} from "@/src/models/entities/auth/Session.js";
 import {EmailConfirmationToken} from "@/src/models/entities/auth/EmailConfirmationToken.js";
+import {LanguageLevel} from "@/src/models/enums/LanguageLevel.js";
+import {shuffleArray} from "@/tests/utils.js";
+import {courseSerializer} from "@/src/presentation/response/serializers/entities/CourseSerializer.js";
+import {CourseSchema, LessonSchema} from "dzelda-types";
+import fs from "fs-extra";
+import * as fileValidatorExports from "@/src/validators/fileValidator.js";
 
 interface LocalTestContext extends TestContext {
     languageRepo: EntityRepository<Language>;
@@ -316,7 +322,6 @@ describe("DELETE users/me/", function () {
         expect(response.statusCode).to.equal(403);
     });
 });
-
 
 /**{@link UserController#confirmEmail}*/
 describe("POST users/me/email/confirm", function () {
@@ -925,3 +930,37 @@ describe("PUT users/me/password/", function () {
         expect(sendMailSpy).not.toHaveBeenCalled();
     });
 });
+
+/**{@link UserController#updateUserProfile}*/
+describe("PUT users/me/profile/", function () {
+    describe("If user is logged in and all fields are valid update user profile, return 200", async (context) => {
+        test.todo<LocalTestContext>("If new profile picture is not provided, keep old profile picture", async (context) => {
+        });
+        test.todo<LocalTestContext>("If new profile picture is blank clear profile picture", async (context) => {
+        });
+        test.todo<LocalTestContext>("If new profile picture is provided, update profile picture", async (context) => {
+        });
+    })
+    describe("If required fields are missing do not update profile, return 400", async (context) => {
+        test.todo<LocalTestContext>("If bio is missing return 400", async (context) => {
+        });
+    })
+    describe("If fields are invalid do not update profile, return 4XX", async (context) => {
+        test.todo<LocalTestContext>("If bio is invalid return 400", async (context) => {
+        });
+        describe("If profile picture is invalid return 4XX", async (context) => {
+            test.todo<LocalTestContext>("If profile picture is not a jpeg or png return 415", async (context) => {
+            });
+            test.todo<LocalTestContext>("If the profile picture file is more than 500KB return 413", async (context) => {
+            });
+            test.todo<LocalTestContext>("If the profile picture is not square return 400", async (context) => {
+            });
+        });
+    })
+    test.todo<LocalTestContext>("If user is not logged in return 401", async (context) => {
+
+    })
+    test.todo<LocalTestContext>("If user email is not confirmed return 403", async (context) => {
+
+    })
+})

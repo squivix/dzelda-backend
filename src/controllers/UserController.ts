@@ -14,6 +14,7 @@ import {LanguageService} from "@/src/services/LanguageService.js";
 import {User} from "@/src/models/entities/auth/User.js";
 import {Session} from "@/src/models/entities/auth/Session.js";
 import {ValidationAPIError} from "@/src/utils/errors/ValidationAPIError.js";
+import {bioValidator} from "@/src/validators/profileValidators.js";
 
 class UserController {
     async signUp(request: FastifyRequest, reply: FastifyReply) {
@@ -210,6 +211,22 @@ class UserController {
         const user = request.user as User;
         await userService.deleteUserAccount(user);
         reply.status(204).send();
+    }
+
+    async updateUserProfile(request: FastifyRequest, reply: FastifyReply) {
+        const bodyValidator = z.object({
+            data: z.object({
+                bio: bioValidator
+            }),
+            profilePicture: z.string().optional()
+        });
+        const body = bodyValidator.parse(request.body);
+        const userService = new UserService(request.em);
+        const user = request.user as User;
+
+        await userService.updateUserProfile(user, {bio: body.data.bio, profilePicture: body.profilePicture});
+
+        reply.status(200).send(profileSerializer.serialize(user.profile))
     }
 }
 

@@ -14,6 +14,7 @@ import {PasswordResetToken} from "@/src/models/entities/auth/PasswordResetToken.
 import {expiringTokenHasher} from "@/src/utils/security/ExpiringTokenHasher.js";
 import {EmailConfirmationToken} from "@/src/models/entities/auth/EmailConfirmationToken.js";
 import {ValidationAPIError} from "@/src/utils/errors/ValidationAPIError.js";
+import {FastifyReply, FastifyRequest} from "fastify";
 
 
 export class UserService {
@@ -185,6 +186,13 @@ export class UserService {
 
     async deleteUserAccount(user: User) {
         this.em.remove(user);
+        await this.em.flush();
+    }
+
+    async updateUserProfile(user: User, updatedProfileData: { bio: string, profilePicture?: string }) {
+        user.profile.bio = updatedProfileData.bio;
+        if (updatedProfileData.profilePicture !== undefined)
+            user.profile.profilePicture = updatedProfileData.profilePicture;
         await this.em.flush();
     }
 }

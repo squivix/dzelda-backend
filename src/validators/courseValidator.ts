@@ -12,7 +12,7 @@ export async function courseImageValidator(imageFile?: File) {
     const FIELD_NAME = "image";
     if (imageFile) {
         await validateFileType(imageFile, FIELD_NAME, "image");
-        await validateFileSize(imageFile, FIELD_NAME, 500);
-        await validateImageAspectRatio(imageFile, FIELD_NAME, 1, 1);
+        validateFileSize(imageFile, FIELD_NAME, 500);
+        validateImageAspectRatio(imageFile, FIELD_NAME, 1, 1);
     }
 }
