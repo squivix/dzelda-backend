@@ -6,7 +6,7 @@ import {Profile} from "@/src/models/entities/Profile.js";
 import {LanguageFactory} from "@/src/seeders/factories/LanguageFactory.js";
 import {Language} from "@/src/models/entities/Language.js";
 import {orm} from "@/src/server.js";
-import {fetchRequest, mockValidateFileFields, parseUrlQueryString, readSampleFile} from "@/tests/integration/utils.js";
+import {fetchRequest, fetchWithFiles, mockValidateFileFields, parseUrlQueryString, readSampleFile} from "@/tests/integration/utils.js";
 import {EntityRepository} from "@mikro-orm/core";
 import {InjectOptions} from "light-my-request";
 import {userSerializer} from "@/src/presentation/response/serializers/entities/UserSerializer.js";
@@ -20,11 +20,14 @@ import {expiringTokenHasher} from "@/src/utils/security/ExpiringTokenHasher.js";
 import {passwordHasher} from "@/src/utils/security/PasswordHasher.js";
 import {Session} from "@/src/models/entities/auth/Session.js";
 import {EmailConfirmationToken} from "@/src/models/entities/auth/EmailConfirmationToken.js";
+import {ProfileFactory} from "@/src/seeders/factories/ProfileFactory.js";
+import {profileSerializer} from "@/src/presentation/response/serializers/entities/ProfileSerializer.js";
+import {ProfileSchema} from "dzelda-types";
+import {courseSerializer} from "@/src/presentation/response/serializers/entities/CourseSerializer.js";
+import fs from "fs-extra";
+import {s} from "vitest/dist/types-198fd1d9.js";
 import {LanguageLevel} from "@/src/models/enums/LanguageLevel.js";
 import {shuffleArray} from "@/tests/utils.js";
-import {courseSerializer} from "@/src/presentation/response/serializers/entities/CourseSerializer.js";
-import {CourseSchema, LessonSchema} from "dzelda-types";
-import fs from "fs-extra";
 import * as fileValidatorExports from "@/src/validators/fileValidator.js";
 
 interface LocalTestContext extends TestContext {
@@ -39,6 +42,7 @@ beforeEach<LocalTestContext>(async (context) => {
     context.em = orm.em.fork();
 
     context.userFactory = new UserFactory(context.em);
+    context.profileFactory = new ProfileFactory(context.em);
     context.languageFactory = new LanguageFactory(context.em);
     context.sessionFactory = new SessionFactory(context.em);
     context.languageRepo = context.em.getRepository(Language);
@@ -933,34 +937,182 @@ describe("PUT users/me/password/", function () {
 
 /**{@link UserController#updateUserProfile}*/
 describe("PUT users/me/profile/", function () {
+    const makeRequest = async ({data, files = {}}: {
+        data?: object;
+        files?: {
+            [key: string]: {
+                value: "";
+            } | {
+                value: Buffer;
+                fileName?: string,
+                mimeType?: string
+            }
+        };
+    }, authToken?: string) => {
+        return await fetchWithFiles({
+            options: {
+                method: "PUT",
+                url: `users/me/profile/`,
+                body: {
+                    data: data,
+                    files: files
+                },
+            },
+            authToken: authToken
+        });
+    };
+
     describe("If user is logged in and all fields are valid update user profile, return 200", async (context) => {
-        test.todo<LocalTestContext>("If new profile picture is not provided, keep old profile picture", async (context) => {
+        test<LocalTestContext>("If new profile picture is not provided, keep old profile picture", async (context) => {
+            const user = await context.userFactory.createOne();
+            const session = await context.sessionFactory.createOne({user})
+            const updatedProfile = context.profileFactory.makeOne();
+
+            const response = await makeRequest({
+                data: {
+                    bio: updatedProfile.bio
+                }
+            }, session.token);
+            await context.em.refresh(user.profile);
+
+            expect(response.statusCode).to.equal(200);
+            expect(response.json()).toEqual(profileSerializer.serialize(user.profile))
+            const updatedFields: (keyof ProfileSchema)[] = ["bio"];
+            expect(profileSerializer.serialize(user.profile, {include: updatedFields})).toEqual(profileSerializer.serialize(updatedProfile, {include: updatedFields}));
         });
-        test.todo<LocalTestContext>("If new profile picture is blank clear profile picture", async (context) => {
+        test<LocalTestContext>("If new profile picture is blank clear profile picture", async (context) => {
+            const user = await context.userFactory.createOne();
+            const session = await context.sessionFactory.createOne({user})
+            const updatedProfile = context.profileFactory.makeOne({profilePicture: ""});
+
+            const response = await makeRequest({
+                data: {
+                    bio: updatedProfile.bio
+                },
+                files: {profilePicture: {value: ""}}
+            }, session.token);
+            await context.em.refresh(user.profile);
+
+            expect(response.statusCode).to.equal(200);
+            expect(response.json()).toEqual(profileSerializer.serialize(user.profile))
+            const updatedFields: (keyof ProfileSchema)[] = ["profilePicture", "bio"];
+            expect(profileSerializer.serialize(user.profile, {include: updatedFields})).toEqual(profileSerializer.serialize(updatedProfile, {include: updatedFields}));
         });
-        test.todo<LocalTestContext>("If new profile picture is provided, update profile picture", async (context) => {
+        test<LocalTestContext>("If new profile picture is provided, update profile picture", async (context) => {
+            const user = await context.userFactory.createOne();
+            const session = await context.sessionFactory.createOne({user})
+            const updatedProfile = context.profileFactory.makeOne({});
+
+            const response = await makeRequest({
+                data: {
+                    bio: updatedProfile.bio
+                },
+                files: {profilePicture: readSampleFile("images/lorem-ipsum-69_8KB-1_1ratio.png")}
+            }, session.token);
+            await context.em.refresh(user.profile);
+
+            expect(response.statusCode).to.equal(200);
+            expect(response.json()).toEqual(profileSerializer.serialize(user.profile))
+            expect(fs.existsSync(user.profile.profilePicture)).toBeTruthy();
+            const updatedFields: (keyof ProfileSchema)[] = ["bio"];
+            expect(profileSerializer.serialize(user.profile, {include: updatedFields})).toEqual(profileSerializer.serialize(updatedProfile, {include: updatedFields}));
         });
     })
-    describe("If required fields are missing do not update profile, return 400", async (context) => {
-        test.todo<LocalTestContext>("If bio is missing return 400", async (context) => {
+    describe("If required fields are missing return 400", async (context) => {
+        test<LocalTestContext>("If data is missing return 400", async (context) => {
+            const user = await context.userFactory.createOne();
+            const session = await context.sessionFactory.createOne({user})
+
+            const response = await makeRequest({}, session.token);
+
+            expect(response.statusCode).to.equal(400);
+        })
+        test<LocalTestContext>("If bio is missing return 400", async (context) => {
+            const user = await context.userFactory.createOne();
+            const session = await context.sessionFactory.createOne({user})
+
+            const response = await makeRequest({
+                data: {}
+            }, session.token);
+
+            expect(response.statusCode).to.equal(400);
         });
     })
     describe("If fields are invalid do not update profile, return 4XX", async (context) => {
-        test.todo<LocalTestContext>("If bio is invalid return 400", async (context) => {
+        test<LocalTestContext>("If bio is invalid return 400", async (context) => {
+            const user = await context.userFactory.createOne();
+            const session = await context.sessionFactory.createOne({user})
+
+            const response = await makeRequest({
+                data: {bio: faker.random.alpha(300)}
+            }, session.token);
+
+            expect(response.statusCode).to.equal(400);
         });
         describe("If profile picture is invalid return 4XX", async (context) => {
-            test.todo<LocalTestContext>("If profile picture is not a jpeg or png return 415", async (context) => {
+            test<LocalTestContext>("If profile picture is not a jpeg or png return 415", async (context) => {
+                const user = await context.userFactory.createOne();
+                const session = await context.sessionFactory.createOne({user})
+                const updatedProfile = context.profileFactory.makeOne({});
+
+                const response = await makeRequest({
+                    data: {
+                        bio: updatedProfile.bio
+                    },
+                    files: {profilePicture: readSampleFile("images/audio-468_4KB.png")}
+                }, session.token);
+
+                expect(response.statusCode).to.equal(415);
             });
-            test.todo<LocalTestContext>("If the profile picture file is more than 500KB return 413", async (context) => {
+            test<LocalTestContext>("If the profile picture file is more than 500KB return 413", async (context) => {
+                const user = await context.userFactory.createOne();
+                const session = await context.sessionFactory.createOne({user})
+                const updatedProfile = context.profileFactory.makeOne({});
+
+                vi.spyOn(fileValidatorExports, "validateFileFields").mockImplementation(mockValidateFileFields({"profilePicture": 510 * 1024}));
+                const response = await makeRequest({
+                    data: {
+                        bio: updatedProfile.bio
+                    },
+                    files: {profilePicture: readSampleFile("images/lorem-ipsum-69_8KB-1_1ratio.png")}
+                }, session.token);
+
+                expect(response.statusCode).to.equal(413);
             });
-            test.todo<LocalTestContext>("If the profile picture is not square return 400", async (context) => {
+            test<LocalTestContext>("If the profile picture is not square return 400", async (context) => {
+                const user = await context.userFactory.createOne();
+                const session = await context.sessionFactory.createOne({user})
+                const updatedProfile = context.profileFactory.makeOne({});
+
+                const response = await makeRequest({
+                    data: {
+                        bio: updatedProfile.bio
+                    },
+                    files: {profilePicture: readSampleFile("images/rectangle-5_2KB-2_1ratio.png")}
+                }, session.token);
+
+                expect(response.statusCode).to.equal(400);
             });
         });
     })
-    test.todo<LocalTestContext>("If user is not logged in return 401", async (context) => {
+    test<LocalTestContext>("If user is not logged in return 401", async (context) => {
+        const updatedProfile = context.profileFactory.makeOne();
 
+        const response = await makeRequest({
+            data: {bio: updatedProfile.bio}
+        });
+
+        expect(response.statusCode).to.equal(401);
     })
-    test.todo<LocalTestContext>("If user email is not confirmed return 403", async (context) => {
+    test<LocalTestContext>("If user email is not confirmed return 403", async (context) => {
+        const user = await context.userFactory.createOne({isEmailConfirmed: false});
+        const session = await context.sessionFactory.createOne({user})
+        const updatedProfile = context.profileFactory.makeOne();
 
+        const response = await makeRequest({
+            data: {bio: updatedProfile.bio}
+        }, session.token);
+
+        expect(response.statusCode).to.equal(403);
     })
 })
