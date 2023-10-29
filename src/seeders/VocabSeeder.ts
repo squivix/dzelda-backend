@@ -53,7 +53,8 @@ export class VocabSeeder extends Seeder {
             learner: mappingData.learner,
             vocab: mappingData.vocab,
             level: mappingData.level,
-            notes: mappingData.notes
+            notes: mappingData.notes,
+            savedOn: mappingData.savedOn
         })));
     }
 }

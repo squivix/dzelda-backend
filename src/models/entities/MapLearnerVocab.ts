@@ -1,9 +1,8 @@
-import {Collection, Entity, Enum, ManyToOne, OptionalProps, Property, types, Unique} from "@mikro-orm/core";
+import {Entity, Enum, ManyToOne, OptionalProps, Property, types, Unique} from "@mikro-orm/core";
 import {CustomBaseEntity} from "@/src/models/entities/CustomBaseEntity.js";
 import {Vocab} from "@/src/models/entities/Vocab.js";
 import {Profile} from "@/src/models/entities/Profile.js";
 import {VocabLevel} from "@/src/models/enums/VocabLevel.js";
-import {Meaning} from "@/src/models/entities/Meaning.js";
 
 @Entity()
 @Unique({properties: ["vocab", "learner"]})
@@ -20,5 +19,9 @@ export class MapLearnerVocab extends CustomBaseEntity {
     @Property({type: types.string, length: 2048, default: ""})
     notes: string = "";
 
-    [OptionalProps]?: "level" | "notes";
+    @Property({type: types.datetime, defaultRaw: "now()"})
+    savedOn!: Date;
+
+    [OptionalProps]?: "level" | "notes" | "savedOn";
+
 }

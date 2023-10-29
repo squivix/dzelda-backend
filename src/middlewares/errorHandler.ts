@@ -35,9 +35,6 @@ export const errorHandler = (error: Error, request: FastifyRequest, reply: Fasti
         if (field)
             apiError = new ValidationAPIError({[field]: {message: "not unique"}});
     }
-        // else if (error instanceof MulterError && error.code === "LIMIT_FILE_SIZE") {
-        //     apiError = new FilesTooLargeAPIError();
-    // }
     else if (isFastifyError(error)) {
         if (error.statusCode && error.statusCode < 500)
             apiError = new APIError(error.statusCode, error.message)
