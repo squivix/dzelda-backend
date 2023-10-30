@@ -29,7 +29,7 @@ export function fileUploadMiddleware(fields: {
                 file.filepath = `${ROOT_UPLOAD_DIR}/${fields[formName].path}/${fileName}${path.extname(file.filepath)}`;
             }
         });
-        //TODO don't allow any string in file field. If file field is for example "null", return 400
+        //TODO don't allow any string in file field. If file field is for example "abc" or "null", return 400
         await request.parseMultipart(formidableInstance);
 
         if (!request[kIsMultipart])
