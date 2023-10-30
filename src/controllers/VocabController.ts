@@ -11,7 +11,7 @@ import {UserService} from "@/src/services/UserService.js";
 import {NotFoundAPIError} from "@/src/utils/errors/NotFoundAPIError.js";
 import {ForbiddenAPIError} from "@/src/utils/errors/ForbiddenAPIError.js";
 import {User} from "@/src/models/entities/auth/User.js";
-import {numericStringValidator} from "@/src/validators/utilValidators.js";
+import {booleanStringValidator, numericStringValidator} from "@/src/validators/utilValidators.js";
 import {LessonService} from "@/src/services/LessonService.js";
 import {vocabSerializer} from "@/src/presentation/response/serializers/entities/VocabSerializer.js";
 import {learnerVocabSerializer} from "@/src/presentation/response/serializers/mappings/LearnerVocabSerializer.js";
@@ -175,6 +175,66 @@ class VocabController {
 
         const vocabs = await vocabService.getLessonVocabs(lesson, request.user as User);
         reply.send(learnerVocabSerializer.serializeList(vocabs));
+    }
+
+    async getUserSavedVocabsCountTimeSeries(request: FastifyRequest, reply: FastifyReply) {
+        const pathParamsValidator = z.object({username: usernameValidator.or(z.literal("me"))});
+        const pathParams = pathParamsValidator.parse(request.params);
+        const userService = new UserService(request.em);
+        const user = await userService.getUser(pathParams.username, request.user);
+        if (!user || (!user.profile.isPublic && user !== request.user))
+            throw new NotFoundAPIError("User");
+        const epochDate = new Date(0);
+        const nowDate = new Date();
+
+        const queryParamsValidator = z.object({
+            savedOnFrom: z.coerce.date().min(epochDate).max(nowDate).optional().default(epochDate),
+            savedOnTo: z.coerce.date().min(epochDate).max(nowDate).optional().default(nowDate),
+            savedOnInterval: z.union([z.literal("day"), z.literal("month"), z.literal("year")]).optional().default("year"),
+            groupBy: z.literal("language").optional(),
+            level: vocabLevelValidator.transform(l => [l]).or(z.array(vocabLevelValidator)).optional(),
+            isPhrase: booleanStringValidator.optional(),
+        });
+        const queryParams = queryParamsValidator.parse(request.query);
+        if (queryParams.savedOnFrom && queryParams.savedOnTo && queryParams.savedOnFrom > queryParams.savedOnTo)
+            throw new ValidationAPIError({savedOnFrom: {message: "Must be before savedOnTo"}});
+        const vocabService = new VocabService(request.em);
+        const stats = await vocabService.getUserSavedVocabsCountTimeSeries(user, {
+            savedOnFrom: queryParams.savedOnFrom,
+            savedOnTo: queryParams.savedOnTo,
+            savedOnInterval: queryParams.savedOnInterval,
+            filters: {isPhrase: queryParams.isPhrase, levels: queryParams.level},
+            groupBy: queryParams.groupBy,
+        });
+        reply.send(stats);
+    }
+
+    async getUserSavedVocabsCount(request: FastifyRequest, reply: FastifyReply) {
+        const pathParamsValidator = z.object({username: usernameValidator.or(z.literal("me"))});
+        const pathParams = pathParamsValidator.parse(request.params);
+        const userService = new UserService(request.em);
+        const user = await userService.getUser(pathParams.username, request.user);
+        if (!user || (!user.profile.isPublic && user !== request.user))
+            throw new NotFoundAPIError("User");
+        const queryParamsValidator = z.object({
+            savedOnFrom: z.coerce.date().optional(),
+            savedOnTo: z.coerce.date().optional(),
+            level: vocabLevelValidator.transform(l => [l]).or(z.array(vocabLevelValidator)).optional(),
+            isPhrase: booleanStringValidator.optional(),
+            groupBy: z.literal("language").optional(),
+        });
+        const queryParams = queryParamsValidator.parse(request.query);
+        const vocabService = new VocabService(request.em);
+        const stats = await vocabService.getUserSavedVocabsCount(user, {
+            groupBy: queryParams.groupBy,
+            filters: {
+                savedOnFrom: queryParams.savedOnFrom,
+                savedOnTo: queryParams.savedOnTo,
+                isPhrase: queryParams.isPhrase,
+                levels: queryParams.level
+            }
+        });
+        reply.send(stats);
     }
 }
 

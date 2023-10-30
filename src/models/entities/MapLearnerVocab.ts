@@ -20,5 +20,8 @@ export class MapLearnerVocab extends CustomBaseEntity {
     @Property({type: types.string, length: 2048, default: ""})
     notes: string = "";
 
-    [OptionalProps]?: "level" | "notes";
+    @Property({type: types.datetime, defaultRaw: "now()"})
+    savedOn!: Date;
+
+    [OptionalProps]?: "level" | "notes" | "savedOn";
 }

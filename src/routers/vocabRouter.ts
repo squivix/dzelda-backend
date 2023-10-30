@@ -10,6 +10,9 @@ export const vocabRouter: FastifyPluginCallback = function (fastify, options, do
         preHandler: [requiresAuth, requiresEmailConfirmed],
         handler: vocabController.getUserVocabs
     });
+    fastify.get(`/users/:username/vocabs/saved/count/`, vocabController.getUserSavedVocabsCount);
+    fastify.get(`/users/:username/vocabs/saved/count/time-series/`, vocabController.getUserSavedVocabsCountTimeSeries);
+
     fastify.post(`/users/me/vocabs/`, {
         preHandler: [requiresAuth, requiresEmailConfirmed],
         handler: vocabController.addVocabToUser

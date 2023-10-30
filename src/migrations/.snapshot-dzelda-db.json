@@ -1852,6 +1852,17 @@
           "length": 2048,
           "default": "''",
           "mappedType": "string"
+        },
+        "saved_on": {
+          "name": "saved_on",
+          "type": "timestamptz(0)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "length": 6,
+          "default": "now()",
+          "mappedType": "datetime"
         }
       },
       "name": "map_learner_vocab",

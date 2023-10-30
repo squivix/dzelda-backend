@@ -12,6 +12,7 @@ import {EntityField} from "@mikro-orm/core/drivers/IDatabaseDriver.js";
 import {Profile} from "@/src/models/entities/Profile.js";
 import {MapLessonVocab} from "@/src/models/entities/MapLessonVocab.js";
 import {escapeRegExp} from "@/src/utils/utils.js";
+import {ZodEffects, ZodLiteral, ZodNativeEnum, ZodUnion} from "zod";
 
 export class VocabService {
     em: EntityManager;
@@ -175,5 +176,26 @@ export class VocabService {
     async findLearnerVocab(where: FilterQuery<MapLearnerVocab>, fields?: EntityField<MapLearnerVocab>[]) {
         return await this.em.findOne(MapLearnerVocab, where, {fields});
     }
+
+    async getUserSavedVocabsCount(user: User, options: {
+        groupBy?: "language",
+        filters: { savedOnFrom?: Date, savedOnTo?: Date, levels?: VocabLevel[], isPhrase?: boolean }
+    }) {
+        return await this.vocabRepo.countSavedVocabs(user.profile, {groupBy: options.groupBy, filters: options.filters});
+    }
+
+    async getUserSavedVocabsCountTimeSeries(user: User, options: {
+        groupBy: "language" | undefined;
+        savedOnInterval: "day" | "month" | "year";
+        savedOnTo: Date;
+        savedOnFrom: Date,
+        filters: {
+            isPhrase?: boolean;
+            levels?: VocabLevel[]
+        };
+    }) {
+        return await this.vocabRepo.countSavedVocabsTimeSeries(user.profile, options);
+    }
+
 
 }
