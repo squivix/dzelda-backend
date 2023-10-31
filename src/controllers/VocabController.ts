@@ -177,6 +177,34 @@ class VocabController {
         reply.send(learnerVocabSerializer.serializeList(vocabs));
     }
 
+    async getUserSavedVocabsCount(request: FastifyRequest, reply: FastifyReply) {
+        const pathParamsValidator = z.object({username: usernameValidator.or(z.literal("me"))});
+        const pathParams = pathParamsValidator.parse(request.params);
+        const userService = new UserService(request.em);
+        const user = await userService.getUser(pathParams.username, request.user);
+        if (!user || (!user.profile.isPublic && user !== request.user))
+            throw new NotFoundAPIError("User");
+        const queryParamsValidator = z.object({
+            savedOnFrom: z.coerce.date().optional(),
+            savedOnTo: z.coerce.date().optional(),
+            level: vocabLevelValidator.transform(l => [l]).or(z.array(vocabLevelValidator)).optional(),
+            isPhrase: booleanStringValidator.optional(),
+            groupBy: z.literal("language").optional(),
+        });
+        const queryParams = queryParamsValidator.parse(request.query);
+        const vocabService = new VocabService(request.em);
+        const stats = await vocabService.getUserSavedVocabsCount(user, {
+            groupBy: queryParams.groupBy,
+            filters: {
+                savedOnFrom: queryParams.savedOnFrom,
+                savedOnTo: queryParams.savedOnTo,
+                isPhrase: queryParams.isPhrase,
+                levels: queryParams.level
+            }
+        });
+        reply.send(stats);
+    }
+
     async getUserSavedVocabsCountTimeSeries(request: FastifyRequest, reply: FastifyReply) {
         const pathParamsValidator = z.object({username: usernameValidator.or(z.literal("me"))});
         const pathParams = pathParamsValidator.parse(request.params);
@@ -205,34 +233,6 @@ class VocabController {
             savedOnInterval: queryParams.savedOnInterval,
             filters: {isPhrase: queryParams.isPhrase, levels: queryParams.level},
             groupBy: queryParams.groupBy,
-        });
-        reply.send(stats);
-    }
-
-    async getUserSavedVocabsCount(request: FastifyRequest, reply: FastifyReply) {
-        const pathParamsValidator = z.object({username: usernameValidator.or(z.literal("me"))});
-        const pathParams = pathParamsValidator.parse(request.params);
-        const userService = new UserService(request.em);
-        const user = await userService.getUser(pathParams.username, request.user);
-        if (!user || (!user.profile.isPublic && user !== request.user))
-            throw new NotFoundAPIError("User");
-        const queryParamsValidator = z.object({
-            savedOnFrom: z.coerce.date().optional(),
-            savedOnTo: z.coerce.date().optional(),
-            level: vocabLevelValidator.transform(l => [l]).or(z.array(vocabLevelValidator)).optional(),
-            isPhrase: booleanStringValidator.optional(),
-            groupBy: z.literal("language").optional(),
-        });
-        const queryParams = queryParamsValidator.parse(request.query);
-        const vocabService = new VocabService(request.em);
-        const stats = await vocabService.getUserSavedVocabsCount(user, {
-            groupBy: queryParams.groupBy,
-            filters: {
-                savedOnFrom: queryParams.savedOnFrom,
-                savedOnTo: queryParams.savedOnTo,
-                isPhrase: queryParams.isPhrase,
-                levels: queryParams.level
-            }
         });
         reply.send(stats);
     }
