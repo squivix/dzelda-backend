@@ -60,6 +60,7 @@ export class VocabService {
         });
         await this.em.flush();
         //TODO move vocab in lesson regex somewhere centralized and test the heck out of it
+        //TODO fix case sensitive phrases ex: "Hubo muchos" not detected (probably among many other issues, will probably have to save parsed text and match against that)
         const lessonsWithVocab = await this.em.find(Lesson, {text: new RegExp(`(\\s|^)${escapeRegExp(newVocab.text)}(\\s|$)`)});
         if (lessonsWithVocab.length > 0)
             await this.em.insertMany(MapLessonVocab, lessonsWithVocab.map(lesson => ({lesson, vocab: newVocab})));
