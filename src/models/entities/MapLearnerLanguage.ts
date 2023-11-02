@@ -1,10 +1,12 @@
-import {Entity, ManyToOne, OptionalProps, Property, types, Unique} from "@mikro-orm/core";
+import {Entity, Index, ManyToOne, OptionalProps, Property, types, Unique} from "@mikro-orm/core";
 import {CustomBaseEntity} from "@/src/models/entities/CustomBaseEntity.js";
 import {Profile} from "@/src/models/entities/Profile.js";
 import {Language} from "@/src/models/entities/Language.js";
 
 @Entity()
 @Unique({properties: ["language", "learner"]})
+@Index({properties: ["learner"]})
+@Index({properties: ["language"]})
 export class MapLearnerLanguage extends CustomBaseEntity {
     constructor(learner: Profile, language: Language) {
         super();

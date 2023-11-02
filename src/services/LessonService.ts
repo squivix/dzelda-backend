@@ -79,9 +79,14 @@ export class LessonService {
         image?: string;
         audio?: string;
     }, user: User) {
+        const language = fields.course.language;
+        const parser = getParser(language.code);
+        const [lessonParsedText, lessonWords] = parser.parseText(`${fields.title} ${fields.text}`);
+
         let newLesson = this.lessonRepo.create({
             title: fields.title,
             text: fields.text,
+            parsedText: lessonParsedText,
             image: fields.image,
             audio: fields.audio,
             course: fields.course,
@@ -89,14 +94,9 @@ export class LessonService {
             pastViewersCount: 0
         });
         await this.em.flush();
-
-        const language = fields.course.language;
-        const parser = getParser(language.code);
-        const [lessonParsedText, lessonWords] = parser.parseText(`${newLesson.title} ${newLesson.text}`);
-
+        //TODO: test this a lot
         await this.em.upsertMany(Vocab, lessonWords.map(word => ({text: word, language: language.id})));
-        const lessonVocabs = await this.em.createQueryBuilder(Vocab).select("*").where(`? ~ text`, [lessonParsedText]);
-
+        const lessonVocabs = await this.em.createQueryBuilder(Vocab).select("*").where({language: language}).andWhere(`? LIKE '% ' || text || ' %'`, [lessonParsedText]);
         await this.em.insertMany(MapLessonVocab, lessonVocabs.map(vocab => ({lesson: newLesson.id, vocab: vocab.id})));
 
         await this.lessonRepo.annotateLessonsWithUserData([newLesson], user);
@@ -132,7 +132,7 @@ export class LessonService {
 
             await this.em.nativeDelete(MapLessonVocab, {lesson: lesson, vocab: {text: {$nin: lessonWords}}});
 
-            await this.em.createQueryBuilder(Vocab).delete().where(`? !~ text`, [lessonParsedText]);
+            // await this.em.createQueryBuilder(Vocab).delete().where(`? !~ text`, [lessonParsedText]);
             await this.em.upsertMany(Vocab, lessonWords.map(word => ({text: word, language: language.id})));
             const lessonVocabs = await this.em.createQueryBuilder(Vocab).select(["id"]).where(`? ~ text`, [lessonParsedText]);
             await this.em.upsertMany(MapLessonVocab, lessonVocabs.map(vocab => ({lesson: lesson.id, vocab: vocab.id})));

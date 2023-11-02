@@ -1,5 +1,5 @@
 import {CustomBaseEntity} from "@/src/models/entities/CustomBaseEntity.js";
-import {Collection, Entity, Enum, Formula, Index, ManyToMany, ManyToOne, OptionalProps, Property, types} from "@mikro-orm/core";
+import {Collection, Entity, Formula, Index, ManyToMany, ManyToOne, OptionalProps, Property, types} from "@mikro-orm/core";
 import {Course} from "@/src/models/entities/Course.js";
 import {Vocab} from "@/src/models/entities/Vocab.js";
 import {MapLessonVocab} from "@/src/models/entities/MapLessonVocab.js";
@@ -7,7 +7,6 @@ import {Profile} from "@/src/models/entities/Profile.js";
 import {MapPastViewerLesson} from "@/src/models/entities/MapPastViewerLesson.js";
 import {LessonRepo} from "@/src/models/repos/LessonRepo.js";
 import {VocabLevel} from "@/src/models/enums/VocabLevel.js";
-import {LanguageLevel} from "@/src/models/enums/LanguageLevel.js";
 
 @Entity({customRepository: () => LessonRepo})
 @Index({properties: ["course"]})
@@ -19,6 +18,9 @@ export class Lesson extends CustomBaseEntity {
 
     @Property({type: types.text, length: 50_000})
     text!: string;
+
+    @Property({type: types.text, length: 50_000, nullable: true})
+    parsedText!: string;
 
     @Property({type: types.string, length: 500, default: ""})
     audio: string = "";
@@ -51,7 +53,7 @@ export class Lesson extends CustomBaseEntity {
     })
     pastViewers: Collection<Profile> = new Collection<Profile>(this);
 
-    [OptionalProps]?: "image" | "audio" | "addedOn" | "pastViewersCount";
+    [OptionalProps]?: "image" | "audio" | "addedOn" | "pastViewersCount" | "parsedText";
 
     //annotated properties
     @Property({persist: false, type: types.json})

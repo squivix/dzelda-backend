@@ -5,6 +5,8 @@ import {Profile} from "@/src/models/entities/Profile.js";
 
 @Entity()
 @Index({properties: ["lesson", "pastViewer"]})
+@Index({properties: ["lesson"]})
+@Index({properties: ["pastViewer"]})
 export class MapPastViewerLesson extends CustomBaseEntity {
     @ManyToOne({entity: () => Lesson, onDelete: "cascade", onUpdateIntegrity: "cascade"})
     lesson!: Lesson;

@@ -1,7 +1,6 @@
 import {Dictionary, EntityData, EntityManager} from "@mikro-orm/core";
 import {Seeder} from "@mikro-orm/seeder";
 import fs from "fs-extra";
-import {LessonFactory} from "@/src/seeders/factories/LessonFactory.js";
 import {Lesson} from "@/src/models/entities/Lesson.js";
 import {batchSeed, syncIdSequence} from "@/src/seeders/utils.js";
 import {MapLessonVocab} from "@/src/models/entities/MapLessonVocab.js";
@@ -42,9 +41,7 @@ export class LessonSeeder extends Seeder {
 
 
     private async insertLessonsBatch(em: EntityManager, batch: EntityData<Lesson>[]) {
-        const lessonFactory = new LessonFactory(em);
-
-        const entities = batch.map(lessonData => lessonFactory.makeEntity({
+        await em.insertMany(Lesson, batch.map(lessonData => ({
             id: lessonData.id,
             title: lessonData.title,
             text: lessonData.text,
@@ -53,9 +50,7 @@ export class LessonSeeder extends Seeder {
             addedOn: lessonData.addedOn,
             audio: lessonData.audio,
             image: lessonData.image,
-            learners: lessonData.learners
-        }));
-        await em.persistAndFlush(entities);
+        })));
     }
 
     private async insertMapLessonVocabsBatch(em: EntityManager, batch: EntityData<MapLessonVocab>[]) {

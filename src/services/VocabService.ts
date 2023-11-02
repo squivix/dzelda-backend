@@ -61,7 +61,7 @@ export class VocabService {
         await this.em.flush();
         //TODO move vocab in lesson regex somewhere centralized and test the heck out of it
         //TODO fix case sensitive phrases ex: "Hubo muchos" not detected (probably among many other issues, will probably have to save parsed text and match against that)
-        const lessonsWithVocab = await this.em.find(Lesson, {text: new RegExp(`(\\s|^)${escapeRegExp(newVocab.text)}(\\s|$)`)});
+        const lessonsWithVocab = await this.em.find(Lesson, {parsedText: new RegExp(`(\\s|^)${escapeRegExp(newVocab.text)}(\\s|$)`)});
         if (lessonsWithVocab.length > 0)
             await this.em.insertMany(MapLessonVocab, lessonsWithVocab.map(lesson => ({lesson, vocab: newVocab})));
         return newVocab;
@@ -154,10 +154,11 @@ export class VocabService {
     }
 
     async getLessonVocabs(lesson: Lesson, user: User) {
+        //TODO only fetch columns89 you need, everywhere. This endpoint had performance problems when fetching everything
         const existingMappings = await this.em.find(MapLearnerVocab, {
             vocab: {lessonsAppearingIn: lesson},
             learner: user.profile
-        }, {populate: ["vocab.language", "vocab.meanings.addedBy.user"],});
+        }, {populate: ["vocab.language", "vocab.meanings.addedBy.user"], fields: ["vocab.*", "vocab.language.code"]});
         await this.em.populate(existingMappings, ["vocab.learnerMeanings", "vocab.learnerMeanings.addedBy.user"], {
             where: {vocab: {learnerMeanings: {learners: user.profile}}}
         });
@@ -165,7 +166,7 @@ export class VocabService {
         const newVocabs = await this.em.find(Vocab, {
             lessonsAppearingIn: lesson,
             $nin: existingMappings.map(m => m.vocab)
-        }, {populate: ["language", "meanings", "meanings.addedBy.user"]});
+        }, {populate: ["language", "meanings", "meanings.addedBy.user"], fields: ["*", "language.code"]});
 
         return [...existingMappings, ...newVocabs];
     }

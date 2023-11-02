@@ -9,7 +9,6 @@ import {getParser} from "@/src/utils/parsers/parsers.js";
 import {usernameValidator} from "@/src/validators/userValidator.js";
 import {UserService} from "@/src/services/UserService.js";
 import {NotFoundAPIError} from "@/src/utils/errors/NotFoundAPIError.js";
-import {ForbiddenAPIError} from "@/src/utils/errors/ForbiddenAPIError.js";
 import {User} from "@/src/models/entities/auth/User.js";
 import {booleanStringValidator, numericStringValidator} from "@/src/validators/utilValidators.js";
 import {LessonService} from "@/src/services/LessonService.js";

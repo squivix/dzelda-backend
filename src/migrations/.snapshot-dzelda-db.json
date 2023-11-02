@@ -591,6 +591,24 @@
       "schema": "public",
       "indexes": [
         {
+          "keyName": "map_learner_language_language_id_index",
+          "columnNames": [
+            "language_id"
+          ],
+          "composite": false,
+          "primary": false,
+          "unique": false
+        },
+        {
+          "keyName": "map_learner_language_learner_id_index",
+          "columnNames": [
+            "learner_id"
+          ],
+          "composite": false,
+          "primary": false,
+          "unique": false
+        },
+        {
           "keyName": "map_learner_language_language_id_learner_id_unique",
           "columnNames": [
             "language_id",
@@ -673,6 +691,24 @@
       "name": "map_learner_dictionary",
       "schema": "public",
       "indexes": [
+        {
+          "keyName": "map_learner_dictionary_learner_id_index",
+          "columnNames": [
+            "learner_id"
+          ],
+          "composite": false,
+          "primary": false,
+          "unique": false
+        },
+        {
+          "keyName": "map_learner_dictionary_dictionary_id_index",
+          "columnNames": [
+            "dictionary_id"
+          ],
+          "composite": false,
+          "primary": false,
+          "unique": false
+        },
         {
           "keyName": "map_learner_dictionary_dictionary_id_learner_id_unique",
           "columnNames": [
@@ -937,6 +973,24 @@
       "schema": "public",
       "indexes": [
         {
+          "keyName": "map_bookmarker_course_bookmarker_id_index",
+          "columnNames": [
+            "bookmarker_id"
+          ],
+          "composite": false,
+          "primary": false,
+          "unique": false
+        },
+        {
+          "keyName": "map_bookmarker_course_course_id_index",
+          "columnNames": [
+            "course_id"
+          ],
+          "composite": false,
+          "primary": false,
+          "unique": false
+        },
+        {
           "keyName": "map_bookmarker_course_course_id_bookmarker_id_unique",
           "columnNames": [
             "course_id",
@@ -1014,6 +1068,16 @@
           "autoincrement": false,
           "primary": false,
           "nullable": false,
+          "length": 50000,
+          "mappedType": "text"
+        },
+        "parsed_text": {
+          "name": "parsed_text",
+          "type": "text",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
           "length": 50000,
           "mappedType": "text"
         },
@@ -1171,6 +1235,24 @@
       "name": "map_past_viewer_lesson",
       "schema": "public",
       "indexes": [
+        {
+          "keyName": "map_past_viewer_lesson_past_viewer_id_index",
+          "columnNames": [
+            "past_viewer_id"
+          ],
+          "composite": false,
+          "primary": false,
+          "unique": false
+        },
+        {
+          "keyName": "map_past_viewer_lesson_lesson_id_index",
+          "columnNames": [
+            "lesson_id"
+          ],
+          "composite": false,
+          "primary": false,
+          "unique": false
+        },
         {
           "keyName": "map_past_viewer_lesson_lesson_id_past_viewer_id_index",
           "columnNames": [
@@ -1671,6 +1753,24 @@
       "schema": "public",
       "indexes": [
         {
+          "keyName": "map_learner_meaning_learner_id_index",
+          "columnNames": [
+            "learner_id"
+          ],
+          "composite": false,
+          "primary": false,
+          "unique": false
+        },
+        {
+          "keyName": "map_learner_meaning_meaning_id_index",
+          "columnNames": [
+            "meaning_id"
+          ],
+          "composite": false,
+          "primary": false,
+          "unique": false
+        },
+        {
           "keyName": "map_learner_meaning_meaning_id_learner_id_unique",
           "columnNames": [
             "meaning_id",
@@ -1753,6 +1853,24 @@
       "name": "map_lesson_vocab",
       "schema": "public",
       "indexes": [
+        {
+          "keyName": "map_lesson_vocab_vocab_id_index",
+          "columnNames": [
+            "vocab_id"
+          ],
+          "composite": false,
+          "primary": false,
+          "unique": false
+        },
+        {
+          "keyName": "map_lesson_vocab_lesson_id_index",
+          "columnNames": [
+            "lesson_id"
+          ],
+          "composite": false,
+          "primary": false,
+          "unique": false
+        },
         {
           "keyName": "map_lesson_vocab_vocab_id_lesson_id_unique",
           "columnNames": [
@@ -1868,6 +1986,24 @@
       "name": "map_learner_vocab",
       "schema": "public",
       "indexes": [
+        {
+          "keyName": "map_learner_vocab_learner_id_index",
+          "columnNames": [
+            "learner_id"
+          ],
+          "composite": false,
+          "primary": false,
+          "unique": false
+        },
+        {
+          "keyName": "map_learner_vocab_vocab_id_index",
+          "columnNames": [
+            "vocab_id"
+          ],
+          "composite": false,
+          "primary": false,
+          "unique": false
+        },
         {
           "keyName": "map_learner_vocab_vocab_id_learner_id_unique",
           "columnNames": [

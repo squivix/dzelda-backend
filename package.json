@@ -15,6 +15,7 @@
     "migrate": "mikro-orm migration:up",
     "prefresh": "npm run clean",
     "fresh": "mikro-orm migration:fresh --seed",
+    "drop": "mikro-orm schema:drop --run",
     "dev": "env-cmd -f ./env/dev.env tsx --watch ./src/main.ts"
   },
   "author": "squivix <devintheamateurdevin@gmail.com> (https://github.com/squivix)",
