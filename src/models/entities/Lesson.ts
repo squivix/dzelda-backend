@@ -64,4 +64,9 @@ export class Lesson extends CustomBaseEntity {
     })
     pastViewersCount!: number;
     //TODO add field for keeping track of which parser last parsed lesson (to reparse on demand if parser was updated)
+
+    @Formula((alias: string) => `(SELECT ${alias}.order_in_course = MAX(order_in_course) from lesson WHERE course_id = ${alias}.course_id)`, {
+        type: "boolean"
+    })
+    isLastInCourse!: boolean;
 }

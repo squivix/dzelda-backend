@@ -124,20 +124,18 @@ export class LessonService {
     }, user: User) {
         const language = lesson.course.language;
         if (lesson.title !== updatedLessonData.title || lesson.text !== updatedLessonData.text) {
-            lesson.title = updatedLessonData.title;
-            lesson.text = updatedLessonData.text;
-
             const parser = getParser(language.code);
             const [lessonParsedText, lessonWords] = parser.parseText(`${updatedLessonData.title} ${updatedLessonData.text}`);
 
-            await this.em.nativeDelete(MapLessonVocab, {lesson: lesson, vocab: {text: {$nin: lessonWords}}});
+            lesson.title = updatedLessonData.title;
+            lesson.text = updatedLessonData.text;
+            lesson.parsedText = lessonParsedText;
 
-            // await this.em.createQueryBuilder(Vocab).delete().where(`? !~ text`, [lessonParsedText]);
+            await this.em.nativeDelete(MapLessonVocab, {lesson: lesson, vocab: {text: {$nin: lessonWords}}});
             await this.em.upsertMany(Vocab, lessonWords.map(word => ({text: word, language: language.id})));
             const lessonVocabs = await this.em.createQueryBuilder(Vocab).select(["id"]).where(`? ~ text`, [lessonParsedText]);
             await this.em.upsertMany(MapLessonVocab, lessonVocabs.map(vocab => ({lesson: lesson.id, vocab: vocab.id})));
         }
-
 
         if (lesson.course.id !== updatedLessonData.course.id) {
             lesson.course = updatedLessonData.course;

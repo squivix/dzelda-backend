@@ -12,6 +12,8 @@ import {lessonTextValidator, lessonTitleValidator} from "@/src/validators/lesson
 import {ForbiddenAPIError} from "@/src/utils/errors/ForbiddenAPIError.js";
 import {NotFoundAPIError} from "@/src/utils/errors/NotFoundAPIError.js";
 import {lessonSerializer} from "@/src/presentation/response/serializers/entities/LessonSerializer.js";
+import {courseSerializer} from "@/src/presentation/response/serializers/entities/CourseSerializer.js";
+import {API_ROOT} from "@/src/server.js";
 
 class LessonController {
     async getLessons(request: FastifyRequest, reply: FastifyReply) {
@@ -187,6 +189,22 @@ class LessonController {
 
         const newLessonMapping = await lessonService.addLessonToUserHistory(lesson, user);
         reply.status(201).send(lessonSerializer.serialize(newLessonMapping.lesson));
+    }
+
+    async getNextLesson(request: FastifyRequest, reply: FastifyReply) {
+        const pathParamsValidator = z.object({courseId: numericStringValidator, lessonId: numericStringValidator});
+        const pathParams = pathParamsValidator.parse(request.params);
+
+        const courseService = new CourseService(request.em);
+        const course = await courseService.findCourse({id: pathParams.courseId});
+
+        if (!course || (!course.isPublic && request?.user?.profile !== course.addedBy))
+            throw new NotFoundAPIError("Course");
+        const nextLesson = await courseService.getNextLessonInCourse(course, pathParams.lessonId);
+        if (!nextLesson)
+            throw new NotFoundAPIError("Lesson");
+
+        reply.header("Location", `${API_ROOT}/lessons/${nextLesson.id}/`).status(303);
     }
 }
 

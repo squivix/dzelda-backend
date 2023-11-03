@@ -126,6 +126,15 @@ export class CourseService {
         return (await this.getCourse(course.id, user))!;
     }
 
+    async getNextLessonInCourse(course: Course, lessonId: number) {
+        const queryBuilder = this.lessonRepo.createQueryBuilder("l0");
+        const subQueryBuilder = this.lessonRepo.createQueryBuilder("l1").select("orderInCourse").where({id: lessonId}).getKnexQuery();
+        return await queryBuilder.select(["id", "orderInCourse"])
+            .where({course: course.id})
+            .andWhere({'orderInCourse': queryBuilder.raw(`(${subQueryBuilder}) + 1`)})
+            .execute("get")
+    }
+
     async findCourse(where: FilterQuery<Course>, fields: EntityField<Course>[] = ["id", "isPublic", "addedBy"]) {
         return await this.courseRepo.findOne(where, {fields});
     }

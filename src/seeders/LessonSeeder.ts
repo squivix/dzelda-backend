@@ -34,9 +34,6 @@ export class LessonSeeder extends Seeder {
             insertBatch: (batch) => this.insertMapLessonVocabsBatch(em, batch),
             resourceName: "lesson-vocab mappings",
         });
-
-        await em.flush();
-        console.log("done");
     }
 
 
@@ -45,6 +42,7 @@ export class LessonSeeder extends Seeder {
             id: lessonData.id,
             title: lessonData.title,
             text: lessonData.text,
+            parsedText: lessonData.parsedText,
             course: lessonData.course,
             orderInCourse: lessonData.orderInCourse,
             addedOn: lessonData.addedOn,

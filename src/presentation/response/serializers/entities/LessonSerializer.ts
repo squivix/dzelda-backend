@@ -15,6 +15,7 @@ export class LessonSerializer extends CustomEntitySerializer<Lesson, LessonSchem
             // @ts-ignore
             course: () => courseSerializer.serialize(lesson.course, {ignore: ["lessons"]}) as Omit<CourseSchema, "lessons">,
             orderInCourse: () => lesson.orderInCourse,
+            isLastInCourse: () => lesson.isLastInCourse,
             addedOn: () => lesson.addedOn.toISOString(),
             vocabsByLevel: () => lesson.vocabsByLevel,
             pastViewersCount: () => Number(lesson.pastViewersCount)
