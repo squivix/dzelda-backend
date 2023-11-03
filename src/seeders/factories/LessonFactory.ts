@@ -14,7 +14,9 @@ export class LessonFactory extends CustomFactory<Lesson> {
             image: faker.image.imageUrl(100, 100),
             addedOn: new Date(Math.round(Date.now() / 1000) * 1000), // now rounded to nearest second because db column is timestampz(0)
             audio: "https://upload.wikimedia.org/wikipedia/commons/d/de/Lorem_ipsum.ogg",
-            pastViewersCount: 0
+            pastViewersCount: 0,
+            orderInCourse: 0,
+            isLastInCourse: true
         };
     }
 

@@ -23,11 +23,7 @@ import {EmailConfirmationToken} from "@/src/models/entities/auth/EmailConfirmati
 import {ProfileFactory} from "@/src/seeders/factories/ProfileFactory.js";
 import {profileSerializer} from "@/src/presentation/response/serializers/entities/ProfileSerializer.js";
 import {ProfileSchema} from "dzelda-types";
-import {courseSerializer} from "@/src/presentation/response/serializers/entities/CourseSerializer.js";
 import fs from "fs-extra";
-import {s} from "vitest/dist/types-198fd1d9.js";
-import {LanguageLevel} from "@/src/models/enums/LanguageLevel.js";
-import {shuffleArray} from "@/tests/utils.js";
 import * as fileValidatorExports from "@/src/validators/fileValidator.js";
 
 interface LocalTestContext extends TestContext {

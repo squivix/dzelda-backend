@@ -2380,3 +2380,8 @@ describe("POST users/me/lessons/history/", () => {
         expect(response.statusCode).to.equal(403);
     });
 });
+
+/**{@link LessonController#getNextLessonInCourse}*/
+describe("GET courses/:courseId/lessons/:lessonId/next/", () => {
+    test.todo("")
+});

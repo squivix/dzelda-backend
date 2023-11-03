@@ -1531,3 +1531,12 @@ describe("GET lessons/:lessonId/vocabs/", () => {
 
 
 });
+
+/**{@link VocabController#getUserSavedVocabsCount}*/
+describe.todo("GET /users/:username/vocabs/saved/count/", () => {
+    test.todo("");
+});
+/**{@link VocabController#getUserSavedVocabsCountTimeSeries}*/
+describe.todo("GET /users/:username/vocabs/saved/count/time-series", () => {
+    test.todo("");
+});

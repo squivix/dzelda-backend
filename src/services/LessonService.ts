@@ -91,12 +91,13 @@ export class LessonService {
             audio: fields.audio,
             course: fields.course,
             orderInCourse: fields.course.lessons.count(),
+            isLastInCourse: true,
             pastViewersCount: 0
         });
         await this.em.flush();
         //TODO: test this a lot
         await this.em.upsertMany(Vocab, lessonWords.map(word => ({text: word, language: language.id})));
-        const lessonVocabs = await this.em.createQueryBuilder(Vocab).select("*").where({language: language}).andWhere(`? LIKE '% ' || text || ' %'`, [lessonParsedText]);
+        const lessonVocabs = await this.em.createQueryBuilder(Vocab).select("*").where({language: language}).andWhere(`? LIKE '% ' || text || ' %'`, [` ${lessonParsedText} `]);
         await this.em.insertMany(MapLessonVocab, lessonVocabs.map(vocab => ({lesson: newLesson.id, vocab: vocab.id})));
 
         await this.lessonRepo.annotateLessonsWithUserData([newLesson], user);

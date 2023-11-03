@@ -191,7 +191,7 @@ class LessonController {
         reply.status(201).send(lessonSerializer.serialize(newLessonMapping.lesson));
     }
 
-    async getNextLesson(request: FastifyRequest, reply: FastifyReply) {
+    async getNextLessonInCourse(request: FastifyRequest, reply: FastifyReply) {
         const pathParamsValidator = z.object({courseId: numericStringValidator, lessonId: numericStringValidator});
         const pathParams = pathParamsValidator.parse(request.params);
 

@@ -53,7 +53,7 @@ export class Lesson extends CustomBaseEntity {
     })
     pastViewers: Collection<Profile> = new Collection<Profile>(this);
 
-    [OptionalProps]?: "image" | "audio" | "addedOn" | "pastViewersCount" | "parsedText";
+    [OptionalProps]?: "image" | "audio" | "addedOn" | "pastViewersCount" | "parsedText" | "isLastInCourse";
 
     //annotated properties
     @Property({persist: false, type: types.json})
@@ -63,10 +63,11 @@ export class Lesson extends CustomBaseEntity {
         type: "number"
     })
     pastViewersCount!: number;
-    //TODO add field for keeping track of which parser last parsed lesson (to reparse on demand if parser was updated)
 
     @Formula((alias: string) => `(SELECT ${alias}.order_in_course = MAX(order_in_course) from lesson WHERE course_id = ${alias}.course_id)`, {
         type: "boolean"
     })
     isLastInCourse!: boolean;
+
+    //TODO add field for keeping track of which parser last parsed lesson (to reparse on demand if parser was updated)
 }
