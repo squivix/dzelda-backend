@@ -1,4 +1,5 @@
 import {open} from "node:fs/promises";
+import {UniqueConstraintViolationException} from "@mikro-orm/core";
 
 export function toCapitalizedCase(string: string) {
     return string.charAt(0).toUpperCase() + string.slice(1);
@@ -25,11 +26,17 @@ export function numericEnumValues<E extends Enum<E>>(inputEnum: E): number[] {
 
 
 export async function countFileLines(filePath: string): Promise<number> {
-    const fileHandle = await open(filePath)
+    const fileHandle = await open(filePath);
     let count = 0;
 
     for await (const _ of fileHandle.readLines())
         count++;
 
     return count;
+}
+
+export function extractFieldFromUniqueConstraintError(error: UniqueConstraintViolationException) {
+    //extracts column name from error message: "Key (column)=(value) already exists."
+    //not ideal but seems like the only way
+    return (error as UniqueConstraintViolationException & { detail: string }).detail.match(/\(([^)]*)\)/)?.pop();
 }

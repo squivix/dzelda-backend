@@ -15,6 +15,7 @@ import {expiringTokenHasher} from "@/src/utils/security/ExpiringTokenHasher.js";
 import {EmailConfirmationToken} from "@/src/models/entities/auth/EmailConfirmationToken.js";
 import {ValidationAPIError} from "@/src/utils/errors/ValidationAPIError.js";
 import {FastifyReply, FastifyRequest} from "fastify";
+import {extractFieldFromUniqueConstraintError} from "@/src/utils/utils.js";
 
 
 export class UserService {
@@ -35,7 +36,18 @@ export class UserService {
         const newProfile = new Profile(newUser);
         this.em.persist(newUser);
         this.em.persist(newProfile);
-        await this.em.flush();
+        try {
+            await this.em.flush();
+        } catch (error) {
+            if (error instanceof UniqueConstraintViolationException) {
+                const field = extractFieldFromUniqueConstraintError(error);
+                if (field == "email")
+                    throw new ValidationAPIError({[field]: "Email is already taken, please use a different email for each account"});
+                else if (field == "username")
+                    throw new ValidationAPIError({[field]: "Username is already taken, please choose a unique one"});
+            }
+            throw error;
+        }
 
         return newUser;
     }
@@ -93,7 +105,7 @@ export class UserService {
         const emailConfirmToken = crypto.randomBytes(EMAIL_CONFIRM_TOKEN_LENGTH).toString("hex");
 
         if (await this.em.count(User, {id: {$ne: tokenData.user.id}, email: tokenData.email}) > 0)
-            throw new ValidationAPIError({email: "not unique"});
+            throw new ValidationAPIError({email: "Not unique"});
         await this.em.nativeDelete(EmailConfirmationToken, {user: tokenData.user});
         await this.em.insert(EmailConfirmationToken, {
             user: tokenData.user,
