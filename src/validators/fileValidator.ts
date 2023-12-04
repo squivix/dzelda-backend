@@ -36,9 +36,10 @@ export function validateImageAspectRatio(imageFile: File, imageFieldName = "imag
     if (dimensions && dimensions.width && dimensions.height) {
         const divisor = (dimensions.width + dimensions.height) / (widthRatio + heightRatio);
         if (dimensions.width !== divisor * widthRatio || dimensions.height !== divisor * heightRatio)
-            throw new ValidationAPIError({image: {message: "incorrect aspect ratio"}});
+            throw new ValidationAPIError({image: "incorrect aspect ratio"});
     }
 }
+
 export async function validateFileFields(fields: {
     [fieldName: string]: { path: string, validate: (file?: File) => Promise<void> }
 }, files: Files): Promise<void> {

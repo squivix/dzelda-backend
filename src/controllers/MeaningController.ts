@@ -26,12 +26,12 @@ class MeaningController {
         const languageService = new LanguageService(request.em);
         const language = await languageService.findLanguage({code: body.languageCode});
         if (!language)
-            throw new ValidationAPIError({language: {message: "not found"}});
+            throw new ValidationAPIError({language: "not found"});
 
         const vocabService = new VocabService(request.em);
         const vocab = await vocabService.getVocab(body.vocabId);
         if (!vocab)
-            throw new ValidationAPIError({vocab: {message: "not found"}});
+            throw new ValidationAPIError({vocab: "not found"});
 
         const meaningService = new MeaningService(request.em);
         const existingMeaning = await meaningService.getMeaningByText({vocab: vocab, language: language, text: body.text});
@@ -82,9 +82,9 @@ class MeaningController {
         const meaningService = new MeaningService(request.em);
         const meaning = await meaningService.getMeaning(body.meaningId);
         if (!meaning)
-            throw new ValidationAPIError({meaning: {message: "Not found"}});
+            throw new ValidationAPIError({meaning: "Not found"});
         if (!(request.user as User).profile.languagesLearning.contains(meaning.vocab.language))
-            throw new ValidationAPIError({meaning: {message: "not in a language the user is learning"}});
+            throw new ValidationAPIError({meaning: "not in a language the user is learning"});
 
         const existingMeaningMapping = await meaningService.getUserMeaning(meaning.id, user);
         if (existingMeaningMapping)

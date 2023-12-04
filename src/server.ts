@@ -15,7 +15,7 @@ export const API_VERSION = 1;
 export const API_ROOT = `/api/v${API_VERSION}`;
 
 export const server = Fastify(
-    // {logger: {transport: {target: "@fastify/one-line-logger"}}}
+    {logger: {transport: {target: "@fastify/one-line-logger"}}}
 );
 await server.register(cors, {});
 export const orm = await MikroORM.init(options);
@@ -26,4 +26,3 @@ server.register(fastifyStatic, {
 server.register(rootRouter, {prefix: API_ROOT});
 
 server.setErrorHandler(errorHandler);
-2;

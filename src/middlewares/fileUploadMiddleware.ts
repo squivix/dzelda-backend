@@ -39,7 +39,7 @@ export function fileUploadMiddleware(fields: {
         try {
             (request.body as any).data = JSON.parse((request.body as any).data);
         } catch (e) {
-            throw new ValidationAPIError({data: {message: "not a valid JSON"}});
+            throw new ValidationAPIError({data: "not a valid JSON"});
         }
     };
 }

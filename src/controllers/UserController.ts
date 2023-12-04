@@ -94,7 +94,7 @@ class UserController {
         const user = request.user as User;
 
         if (user.email == body.newEmail)
-            throw new ValidationAPIError({email: {message: "same as existing email address"}});
+            throw new ValidationAPIError({email: "same as existing email address"});
 
         const token = await userService.generateEmailConfirmToken({
             user: user,
@@ -226,7 +226,7 @@ class UserController {
 
         await userService.updateUserProfile(user, {bio: body.data.bio, profilePicture: body.profilePicture});
 
-        reply.status(200).send(profileSerializer.serialize(user.profile))
+        reply.status(200).send(profileSerializer.serialize(user.profile));
     }
 }
 

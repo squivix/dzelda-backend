@@ -53,17 +53,17 @@ class VocabController {
         const languageService = new LanguageService(request.em);
         const language = await languageService.findLanguage({code: body.languageCode});
         if (!language)
-            throw new ValidationAPIError({language: {message: "not found"}});
+            throw new ValidationAPIError({language: "not found"});
         if (!language.isSupported)
-            throw new ValidationAPIError({language: {message: "not supported"}});
+            throw new ValidationAPIError({language: "not supported"});
 
         const parser = getParser(language.code);
         const [_, words] = parser.parseText(body.text, true);
 
         if (words.length == 0)
-            throw new ValidationAPIError({text: {message: "vocab is invalid for this language"}});
+            throw new ValidationAPIError({text: "vocab is invalid for this language"});
         if (words.length > 1 && !body.isPhrase)
-            throw new ValidationAPIError({text: {message: "more than 1 word, but isPhrase is false"}});
+            throw new ValidationAPIError({text: "more than 1 word, but isPhrase is false"});
 
         const vocabText = parser.combineTokens(words);
         const vocabService = new VocabService(request.em);
@@ -115,9 +115,9 @@ class VocabController {
         const vocabService = new VocabService(request.em);
         const vocab = await vocabService.findVocab({id: body.vocabId});
         if (!vocab)
-            throw new ValidationAPIError({vocab: {message: "Not found"}});
+            throw new ValidationAPIError({vocab: "Not found"});
         if (!(request.user as User).profile.languagesLearning.contains(vocab.language))
-            throw new ValidationAPIError({vocab: {message: "not in a language the user is learning"}});
+            throw new ValidationAPIError({vocab: "not in a language the user is learning"});
 
         const existingVocabMapping = await vocabService.getUserVocab(vocab.id, user.profile);
         if (existingVocabMapping)
@@ -224,7 +224,7 @@ class VocabController {
         });
         const queryParams = queryParamsValidator.parse(request.query);
         if (queryParams.savedOnFrom && queryParams.savedOnTo && queryParams.savedOnFrom > queryParams.savedOnTo)
-            throw new ValidationAPIError({savedOnFrom: {message: "Must be before savedOnTo"}});
+            throw new ValidationAPIError({savedOnFrom: "Must be before savedOnTo"});
         const vocabService = new VocabService(request.em);
         const stats = await vocabService.getUserSavedVocabsCountTimeSeries(user, {
             savedOnFrom: queryParams.savedOnFrom,

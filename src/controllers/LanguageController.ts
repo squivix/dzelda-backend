@@ -58,9 +58,9 @@ class LanguageController {
         const languageService = new LanguageService(request.em);
         const language = await languageService.findLanguage({code: body.languageCode});
         if (!language)
-            throw new ValidationAPIError({language: {message: "not found"}});
+            throw new ValidationAPIError({language: "not found"});
         if (!language.isSupported)
-            throw new ValidationAPIError({language: {message: "not supported"}});
+            throw new ValidationAPIError({language: "not supported"});
 
         const existingLanguageMapping = await languageService.getUserLanguage(language.code, user);
         if (existingLanguageMapping)

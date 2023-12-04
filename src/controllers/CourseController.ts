@@ -72,9 +72,9 @@ class CourseController {
         const languageService = new LanguageService(request.em);
         const language = await languageService.findLanguage({code: body.data.languageCode});
         if (!language)
-            throw new ValidationAPIError({language: {message: "not found"}});
+            throw new ValidationAPIError({language: "not found"});
         if (!language.isSupported)
-            throw new ValidationAPIError({language: {message: "not supported"}});
+            throw new ValidationAPIError({language: "not supported"});
 
         const courseService = new CourseService(request.em);
         const course = await courseService.createCourse({
@@ -127,7 +127,7 @@ class CourseController {
 
         const lessonOrderIdSet = new Set(body.data.lessonsOrder);
         if (course.lessons.length !== body.data.lessonsOrder.length || !course.lessons.getItems().map(c => c.id).every(l => lessonOrderIdSet.has(l)))
-            throw new ValidationAPIError({lessonsOrder: {message: "ids don't match course lessons: cannot add or remove lessons through this endpoint, only reorder"}});
+            throw new ValidationAPIError({lessonsOrder: "ids don't match course lessons: cannot add or remove lessons through this endpoint, only reorder"});
 
         const updatedCourse = await courseService.updateCourse(course, {
             title: body.data.title,
@@ -181,9 +181,9 @@ class CourseController {
         const courseService = new CourseService(request.em);
         const course = await courseService.getCourse(body.courseId, request.user);
         if (!course || (!course.isPublic && request?.user?.profile !== course.addedBy))
-            throw new ValidationAPIError({course: {message: "Not found"}});
+            throw new ValidationAPIError({course: "Not found"});
         if (!(request.user as User).profile.languagesLearning.contains(course.language))
-            throw new ValidationAPIError({course: {message: "not in a language the user is learning"}});
+            throw new ValidationAPIError({course: "not in a language the user is learning"});
         const existingCourseMapping = await courseService.findBookMarkerCourseMapping({course: course, bookmarker: user.profile});
         if (existingCourseMapping) {
             reply.status(200).send(courseSerializer.serialize(existingCourseMapping.course));

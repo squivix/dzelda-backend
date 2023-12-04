@@ -67,7 +67,7 @@ class LessonController {
         const courseService = new CourseService(request.em);
         const course = await courseService.getCourse(body.data.courseId, request.user);
         if (!course || (!course.isPublic && course.addedBy !== request.user?.profile))
-            throw new ValidationAPIError({course: {message: "not found"}});
+            throw new ValidationAPIError({course: "not found"});
         if (course.addedBy !== request.user?.profile)
             throw new ForbiddenAPIError();
 
@@ -119,11 +119,11 @@ class LessonController {
         const courseService = new CourseService(request.em);
         const newCourse = await courseService.getCourse(body.data.courseId, request.user);
         if (!newCourse)
-            throw new ValidationAPIError({course: {message: "Not found"}});
+            throw new ValidationAPIError({course: "Not found"});
         if (request?.user?.profile !== newCourse.addedBy)
-            throw newCourse.isPublic ? new ForbiddenAPIError() : new ValidationAPIError({course: {message: "Not found"}});
+            throw newCourse.isPublic ? new ForbiddenAPIError() : new ValidationAPIError({course: "Not found"});
         if (newCourse.language !== lesson.course.language)
-            throw new ValidationAPIError({course: {message: "Cannot move lesson to a course in a different language"}});
+            throw new ValidationAPIError({course: "Cannot move lesson to a course in a different language"});
 
         const updatedLesson = await lessonService.updateLesson(lesson, {
             course: newCourse,
@@ -182,10 +182,10 @@ class LessonController {
         const lessonService = new LessonService(request.em);
         const lesson = await lessonService.getLesson(body.lessonId, request.user);
         if (!lesson || (!lesson.course.isPublic && user.profile !== lesson.course.addedBy))
-            throw new ValidationAPIError({lesson: {message: "Not found"}});
+            throw new ValidationAPIError({lesson: "Not found"});
         // TODO: explicitly fetch request.user.profile.languagesLearning instead of populating in middleware
         if (!user.profile.languagesLearning.contains(lesson.course.language))
-            throw new ValidationAPIError({lesson: {message: "not in a language the user is learning"}});
+            throw new ValidationAPIError({lesson: "not in a language the user is learning"});
 
         const newLessonMapping = await lessonService.addLessonToUserHistory(lesson, user);
         reply.status(201).send(lessonSerializer.serialize(newLessonMapping.lesson));

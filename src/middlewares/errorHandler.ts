@@ -8,7 +8,7 @@ import * as process from "process";
 
 const isFastifyError = (error: Error): error is FastifyError => {
     return error.name === "FastifyError";
-}
+};
 
 
 export const errorHandler = (error: Error, request: FastifyRequest, reply: FastifyReply) => {
@@ -21,7 +21,7 @@ export const errorHandler = (error: Error, request: FastifyRequest, reply: Fasti
         const fields: FieldsObject = {};
         //TODO find specific error field for nested objects (don't just use root field invalid)
         for (const issue of error.issues)
-            fields[issue.path[0] ?? "root"] = {message: issue.message};
+            fields[issue.path[0] ?? "root"] = issue.message;
 
         apiError = new ValidationAPIError(fields);
     } else if (error instanceof NotFoundError) {
@@ -33,11 +33,10 @@ export const errorHandler = (error: Error, request: FastifyRequest, reply: Fasti
         //extracts column name from error message: "Key (column)=(value) already exists."
         const field = (error as any).detail?.match(/\(([^)]*)\)/)?.pop();
         if (field)
-            apiError = new ValidationAPIError({[field]: {message: "not unique"}});
-    }
-    else if (isFastifyError(error)) {
+            apiError = new ValidationAPIError({[field]: "not unique"});
+    } else if (isFastifyError(error)) {
         if (error.statusCode && error.statusCode < 500)
-            apiError = new APIError(error.statusCode, error.message)
+            apiError = new APIError(error.statusCode, error.message);
     }
 
     if (apiError)
@@ -46,4 +45,4 @@ export const errorHandler = (error: Error, request: FastifyRequest, reply: Fasti
         console.error(error);
         reply.status(500).send("Something went wrong");
     }
-}
+};
