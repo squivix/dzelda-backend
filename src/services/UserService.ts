@@ -105,7 +105,7 @@ export class UserService {
         const emailConfirmToken = crypto.randomBytes(EMAIL_CONFIRM_TOKEN_LENGTH).toString("hex");
 
         if (await this.em.count(User, {id: {$ne: tokenData.user.id}, email: tokenData.email}) > 0)
-            throw new ValidationAPIError({email: "Not unique"});
+            throw new ValidationAPIError({email: "Email is already taken, please use a different email for each account"});
         await this.em.nativeDelete(EmailConfirmationToken, {user: tokenData.user});
         await this.em.insert(EmailConfirmationToken, {
             user: tokenData.user,
