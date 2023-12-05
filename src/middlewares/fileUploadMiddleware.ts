@@ -15,7 +15,7 @@ export function fileUploadMiddleware(fields: {
 }): preHandlerHookHandler {
     return async (request) => {
         const formidableInstance = formidable({
-            maxFileSize: MAX_TOTAL_FILE_UPLOAD_SIZE,
+            maxTotalFileSize: MAX_TOTAL_FILE_UPLOAD_SIZE,
             uploadDir: ROOT_UPLOAD_DIR,
             keepExtensions: true
         });

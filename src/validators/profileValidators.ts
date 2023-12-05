@@ -11,4 +11,4 @@ export async function profilePictureValidator(imageFile?: File) {
     }
 }
 
-export const bioValidator = z.string().max(255);
+export const bioValidator = z.string().max(255, "Bio must be no longer than 255 characters");

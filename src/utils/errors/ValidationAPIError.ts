@@ -14,7 +14,6 @@ export class ValidationAPIError extends APIError {
         this.fields = fields;
     }
 
-    // noinspection JSUnusedGlobalSymbols
     toJSON() {
         return {
             ...super.toJSON(),
