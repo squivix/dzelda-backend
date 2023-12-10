@@ -7,7 +7,7 @@ import formidable, {Files} from "formidable";
 import path from "path";
 import crypto from "crypto";
 import {validateFileFields} from "@/src/validators/fileValidator.js";
-import {MAX_TOTAL_FILE_UPLOAD_SIZE, ROOT_UPLOAD_DIR} from "@/src/constants.js";
+import {MAX_TOTAL_FILE_UPLOAD_SIZE_IN_BYTES, ROOT_UPLOAD_DIR} from "@/src/constants.js";
 
 
 export function fileUploadMiddleware(fields: {
@@ -15,7 +15,7 @@ export function fileUploadMiddleware(fields: {
 }): preHandlerHookHandler {
     return async (request) => {
         const formidableInstance = formidable({
-            maxTotalFileSize: MAX_TOTAL_FILE_UPLOAD_SIZE,
+            maxTotalFileSize: MAX_TOTAL_FILE_UPLOAD_SIZE_IN_BYTES,
             uploadDir: ROOT_UPLOAD_DIR,
             keepExtensions: true
         });

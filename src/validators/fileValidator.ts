@@ -6,9 +6,9 @@ import {FilesTooLargeAPIError} from "@/src/utils/errors/FilesTooLargeAPIError.js
 import {fileTypeFromFile} from "file-type";
 import formidable, {Files} from "formidable";
 
-export function validateFileSize(file: File, fieldName: string, sizeInKb: number) {
-    if (file.size > sizeInKb * 1024)
-        throw new FilesTooLargeAPIError({field: fieldName, maxSizeInKb: sizeInKb});
+export function validateFileSize(file: File, fieldName: string, sizeInBytes: number) {
+    if (file.size > sizeInBytes)
+        throw new FilesTooLargeAPIError({field: fieldName, maxSizeInBytes: sizeInBytes});
 }
 
 
