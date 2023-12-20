@@ -2,7 +2,7 @@ import {NotFoundError, UniqueConstraintViolationException} from "@mikro-orm/core
 import {ZodError} from "zod";
 import {FastifyError, FastifyReply, FastifyRequest} from "fastify";
 import {APIError} from "@/src/utils/errors/APIError.js";
-import {FieldsObject, ValidationAPIError} from "@/src/utils/errors/ValidationAPIError.js";
+import {ValidationAPIError} from "@/src/utils/errors/ValidationAPIError.js";
 import {NotFoundAPIError} from "@/src/utils/errors/NotFoundAPIError.js";
 import * as process from "process";
 import {extractFieldFromUniqueConstraintError} from "@/src/utils/utils.js";
@@ -19,7 +19,7 @@ export const errorHandler = (error: Error, request: FastifyRequest, reply: Fasti
     if (error instanceof APIError)
         apiError = error;
     else if (error instanceof ZodError) {
-        const fields: FieldsObject = {};
+        const fields: { [field: string]: string } = {};
         //TODO find specific error field for nested objects (don't just use root field invalid)
         for (const issue of error.issues) {
             const paths = issue.path[issue.path.length - 1];
