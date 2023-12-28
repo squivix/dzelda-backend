@@ -1424,6 +1424,12 @@ describe("PATCH users/me/vocabs/:vocabId/", () => {
     });
 });
 
+/**{@link VocabController#deleteUserVocab}*/
+describe.todo("DELETE users/me/vocabs/:vocabId/", () => {
+    test.todo("");
+});
+
+
 /**{@link VocabController#getLessonVocabs}*/
 describe("GET lessons/:lessonId/vocabs/", () => {
     const makeRequest = async (lessonId: number | string, authToken?: string) => {

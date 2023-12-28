@@ -25,6 +25,10 @@ export const vocabRouter: FastifyPluginCallback = function (fastify, options, do
         preHandler: [requiresAuth, requiresEmailConfirmed],
         handler: vocabController.updateUserVocab
     });
+    fastify.delete(`/users/me/vocabs/:vocabId/`, {
+        preHandler: [requiresAuth, requiresEmailConfirmed],
+        handler: vocabController.deleteUserVocab
+    });
     fastify.get(`/lessons/:lessonId/vocabs/`, {
         preHandler: [requiresAuth, requiresEmailConfirmed],
         handler: vocabController.getLessonVocabs

@@ -162,6 +162,22 @@ class VocabController {
         reply.send(learnerVocabSerializer.serialize(updatedMapping));
     }
 
+    async deleteUserVocab(request: FastifyRequest, reply: FastifyReply) {
+        const user = request.user as User;
+        const pathParamsValidator = z.object({
+            vocabId: numericStringValidator
+        });
+        const pathParams = pathParamsValidator.parse(request.params);
+
+        const vocabService = new VocabService(request.em);
+        const mapping = await vocabService.findLearnerVocab({vocab: pathParams.vocabId, learner: user.profile});
+        if (!mapping)
+            throw new NotFoundAPIError("Vocab");
+        await vocabService.deleteUserVocab(mapping);
+        reply.status(204).send();
+    }
+
+
     async getLessonVocabs(request: FastifyRequest, reply: FastifyReply) {
         const pathParamsValidator = z.object({lessonId: numericStringValidator});
         const pathParams = pathParamsValidator.parse(request.params);

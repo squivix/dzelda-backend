@@ -5,6 +5,8 @@ import {Language} from "@/src/models/entities/Language.js";
 import {User} from "@/src/models/entities/auth/User.js";
 import {MapLearnerMeaning} from "@/src/models/entities/MapLearnerMeaning.js";
 import {QueryOrderMap} from "@mikro-orm/core/enums.js";
+import {MapLearnerVocab} from "@/src/models/entities/MapLearnerVocab.js";
+import {VocabLevel} from "@/src/models/enums/VocabLevel.js";
 
 export class MeaningService {
 
@@ -71,6 +73,7 @@ export class MeaningService {
     async addMeaningToUserLearning(meaning: Meaning, user: User) {
         const mapping = this.em.create(MapLearnerMeaning, {learner: user.profile, meaning: meaning});
         await this.em.flush();
+        await this.em.nativeUpdate(MapLearnerVocab, {learner: user.profile, vocab: meaning.vocab}, {level: VocabLevel.LEVEL_1});
         await this.em.refresh(mapping.meaning);
         return mapping;
     }
