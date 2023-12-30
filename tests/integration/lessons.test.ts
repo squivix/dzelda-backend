@@ -11,14 +11,21 @@ import {orm} from "@/src/server.js";
 import {Lesson} from "@/src/models/entities/Lesson.js";
 import {Course} from "@/src/models/entities/Course.js";
 import {InjectOptions} from "light-my-request";
-import {buildQueryString, createComparator, fetchRequest, fetchWithFiles, mockValidateFileFields, readSampleFile} from "@/tests/integration/utils.js";
+import {
+    buildQueryString,
+    createComparator,
+    fetchRequest,
+    fetchWithFiles,
+    mockValidateFileFields,
+    readSampleFile
+} from "@/tests/integration/utils.js";
 import {lessonSerializer} from "@/src/presentation/response/serializers/entities/LessonSerializer.js";
 import {faker} from "@faker-js/faker";
 import {randomCase} from "@/tests/utils.js";
 import {Vocab} from "@/src/models/entities/Vocab.js";
 import {EntityRepository} from "@mikro-orm/core";
-import * as parserExports from "@/src/utils/parsers/parsers.js";
-import {getParser, parsers} from "@/src/utils/parsers/parsers.js";
+import * as parserExports from "dzelda-common/src/parsers/parsers.js";
+import {parsers} from "dzelda-common";
 import {MapLessonVocab} from "@/src/models/entities/MapLessonVocab.js";
 import fs from "fs-extra";
 import {MapPastViewerLesson} from "@/src/models/entities/MapPastViewerLesson.js";
@@ -663,8 +670,8 @@ describe("POST lessons/", () => {
             await context.courseRepo.annotateCoursesWithUserData([dbRecord.course], user);
             expect(response.json()).toMatchObject(lessonSerializer.serialize(newLesson, {ignore: ["addedOn"]}));
             expect(lessonSerializer.serialize(dbRecord)).toMatchObject(lessonSerializer.serialize(newLesson, {ignore: ["addedOn"]}));
-
-            const [_, lessonWordsText] = parsers["en"].parseText(`${newLesson.title} ${newLesson.text}`);
+            const parser = parsers["en"];
+            const lessonWordsText = parser.splitWords(parser.parseText(`${newLesson.title} ${newLesson.text}`), {keepDuplicates: false});
             const lessonVocabs = await context.vocabRepo.find({text: lessonWordsText, language: course.language});
             const lessonVocabMappings = await context.em.find(MapLessonVocab, {vocab: lessonVocabs, lesson: dbRecord});
 
@@ -702,7 +709,8 @@ describe("POST lessons/", () => {
             expect(dbRecord.image).toEqual(expect.stringMatching(imagePathRegex));
             expect(dbRecord.audio).toEqual(expect.stringMatching(audioPathRegex));
 
-            const [_, lessonWordsText] = parsers["en"].parseText(`${newLesson.title} ${newLesson.text}`);
+            const parser = parsers["en"];
+            const lessonWordsText = parser.splitWords(parser.parseText(`${newLesson.title} ${newLesson.text}`), {keepDuplicates: false});
             const lessonVocabs = await context.vocabRepo.find({text: lessonWordsText, language: course.language});
             const lessonVocabMappings = await context.em.find(MapLessonVocab, {vocab: lessonVocabs, lesson: dbRecord});
 
@@ -1146,7 +1154,8 @@ describe("PUT lessons/:lessonId/", () => {
             expect(dbRecord.audio).toEqual(oldLessonAudio);
             expect(dbRecord.orderInCourse).toEqual(await newCourse.lessons.loadCount() - 1);
 
-            const [_, lessonWordsText] = parsers["en"].parseText(`${updatedLesson.title} ${updatedLesson.text}`);
+            const parser = parsers["en"];
+            const lessonWordsText = parser.splitWords(parser.parseText(`${updatedLesson.title} ${updatedLesson.text}`), {keepDuplicates: false});
             const lessonVocabs = await context.vocabRepo.find({text: lessonWordsText, language: course.language});
             const lessonVocabMappings = await context.em.find(MapLessonVocab, {vocab: lessonVocabs, lesson: dbRecord});
 
@@ -1195,7 +1204,8 @@ describe("PUT lessons/:lessonId/", () => {
                 expect(dbRecord.audio).toEqual(expect.stringMatching(audioPathRegex));
                 expect(dbRecord.orderInCourse).toEqual(await newCourse.lessons.loadCount() - 1);
 
-                const [_, lessonWordsText] = parsers["en"].parseText(`${updatedLesson.title} ${updatedLesson.text}`);
+                const parser = parsers["en"];
+                const lessonWordsText = parser.splitWords(parser.parseText(`${updatedLesson.title} ${updatedLesson.text}`), {keepDuplicates: false});
                 const lessonVocabs = await context.vocabRepo.find({text: lessonWordsText, language: course.language});
                 const lessonVocabMappings = await context.em.find(MapLessonVocab, {vocab: lessonVocabs, lesson: dbRecord});
 
@@ -1232,7 +1242,8 @@ describe("PUT lessons/:lessonId/", () => {
                 expect(lessonSerializer.serialize(dbRecord)).toMatchObject(lessonSerializer.serialize(updatedLesson, {ignore: ["addedOn"]}));
                 expect(dbRecord.orderInCourse).toEqual(await newCourse.lessons.loadCount() - 1);
 
-                const [_, lessonWordsText] = parsers["en"].parseText(`${updatedLesson.title} ${updatedLesson.text}`);
+                const parser = parsers["en"];
+                const lessonWordsText = parser.splitWords(parser.parseText(`${updatedLesson.title} ${updatedLesson.text}`), {keepDuplicates: false});
                 const lessonVocabs = await context.vocabRepo.find({text: lessonWordsText, language: course.language});
                 const lessonVocabMappings = await context.em.find(MapLessonVocab, {vocab: lessonVocabs, lesson: dbRecord});
 
@@ -2383,5 +2394,5 @@ describe("POST users/me/lessons/history/", () => {
 
 /**{@link LessonController#getNextLessonInCourse}*/
 describe("GET courses/:courseId/lessons/:lessonId/next/", () => {
-    test.todo("")
+    test.todo("");
 });

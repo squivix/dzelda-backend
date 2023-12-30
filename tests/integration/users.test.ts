@@ -22,7 +22,7 @@ import {Session} from "@/src/models/entities/auth/Session.js";
 import {EmailConfirmationToken} from "@/src/models/entities/auth/EmailConfirmationToken.js";
 import {ProfileFactory} from "@/src/seeders/factories/ProfileFactory.js";
 import {profileSerializer} from "@/src/presentation/response/serializers/entities/ProfileSerializer.js";
-import {ProfileSchema} from "dzelda-types";
+import {ProfileSchema} from "dzelda-common";
 import fs from "fs-extra";
 import * as fileValidatorExports from "@/src/validators/fileValidator.js";
 

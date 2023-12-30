@@ -1,6 +1,6 @@
 import {CustomCallbackObject, CustomEntitySerializer} from "@/src/presentation/response/serializers/CustomEntitySerializer.js";
 import {Vocab} from "@/src/models/entities/Vocab.js";
-import {MeaningSchema, VocabSchema} from "dzelda-types";
+import {MeaningSchema, VocabSchema} from "dzelda-common";
 import {meaningSerializer} from "@/src/presentation/response/serializers/entities/MeaningSerializer.js";
 
 class VocabSerializer extends CustomEntitySerializer<Vocab, VocabSchema> {

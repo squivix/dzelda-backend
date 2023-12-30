@@ -42,6 +42,7 @@ export class LessonSeeder extends Seeder {
             id: lessonData.id,
             title: lessonData.title,
             text: lessonData.text,
+            parsedTitle: lessonData.parsedTitle,
             parsedText: lessonData.parsedText,
             course: lessonData.course,
             orderInCourse: lessonData.orderInCourse,

@@ -4,7 +4,7 @@ import {SqlEntityManager} from "@mikro-orm/postgresql";
 import {LessonRepo} from "@/src/models/repos/LessonRepo.js";
 import {AnonymousUser, User} from "@/src/models/entities/auth/User.js";
 import {Course} from "@/src/models/entities/Course.js";
-import {getParser} from "@/src/utils/parsers/parsers.js";
+import {getParser} from "dzelda-common";
 import {Vocab} from "@/src/models/entities/Vocab.js";
 import {MapLessonVocab} from "@/src/models/entities/MapLessonVocab.js";
 import {CourseRepo} from "@/src/models/repos/CourseRepo.js";
@@ -81,12 +81,18 @@ export class LessonService {
     }, user: User) {
         const language = fields.course.language;
         const parser = getParser(language.code);
-        const [lessonParsedText, lessonWords] = parser.parseText(`${fields.title} ${fields.text}`);
+        const lessonParsedTitle = parser.parseText(fields.title);
+        const lessonParsedText = parser.parseText(fields.text);
+        const lessonWords: string[] = [
+            ...parser.splitWords(lessonParsedTitle, {keepDuplicates: false}),
+            ...parser.splitWords(lessonParsedText, {keepDuplicates: false})
+        ];
 
         let newLesson = this.lessonRepo.create({
             title: fields.title,
             text: fields.text,
             parsedText: lessonParsedText,
+            parsedTitle: lessonParsedTitle,
             image: fields.image,
             audio: fields.audio,
             course: fields.course,
@@ -97,7 +103,7 @@ export class LessonService {
         await this.em.flush();
         //TODO: test this a lot
         await this.em.upsertMany(Vocab, lessonWords.map(word => ({text: word, language: language.id})));
-        const lessonVocabs = await this.em.createQueryBuilder(Vocab).select("*").where({language: language}).andWhere(`? LIKE '% ' || text || ' %'`, [` ${lessonParsedText} `]);
+        const lessonVocabs = await this.em.createQueryBuilder(Vocab).select("*").where({language: language}).andWhere(`? LIKE '% ' || text || ' %'`, [` ${lessonParsedTitle} ${lessonParsedText} `]);
         await this.em.insertMany(MapLessonVocab, lessonVocabs.map(vocab => ({lesson: newLesson.id, vocab: vocab.id})));
 
         await this.lessonRepo.annotateLessonsWithUserData([newLesson], user);
@@ -126,15 +132,21 @@ export class LessonService {
         const language = lesson.course.language;
         if (lesson.title !== updatedLessonData.title || lesson.text !== updatedLessonData.text) {
             const parser = getParser(language.code);
-            const [lessonParsedText, lessonWords] = parser.parseText(`${updatedLessonData.title} ${updatedLessonData.text}`);
+            const lessonParsedTitle = parser.parseText(updatedLessonData.title);
+            const lessonParsedText = parser.parseText(updatedLessonData.text);
+            const lessonWords: string[] = [
+                ...parser.splitWords(lessonParsedTitle, {keepDuplicates: false}),
+                ...parser.splitWords(lessonParsedText, {keepDuplicates: false})
+            ];
 
             lesson.title = updatedLessonData.title;
             lesson.text = updatedLessonData.text;
+            lesson.parsedTitle = lessonParsedTitle;
             lesson.parsedText = lessonParsedText;
 
             await this.em.nativeDelete(MapLessonVocab, {lesson: lesson, vocab: {text: {$nin: lessonWords}}});
             await this.em.upsertMany(Vocab, lessonWords.map(word => ({text: word, language: language.id})));
-            const lessonVocabs = await this.em.createQueryBuilder(Vocab).select(["id"]).where(`? ~ text`, [lessonParsedText]);
+            const lessonVocabs = await this.em.createQueryBuilder(Vocab).select(["id"]).where(`? ~ text`, [` ${lessonParsedTitle} ${lessonParsedText} `]);
             await this.em.upsertMany(MapLessonVocab, lessonVocabs.map(vocab => ({lesson: lesson.id, vocab: vocab.id})));
         }
 

@@ -1,7 +1,7 @@
 import {CustomCallbackObject, CustomEntitySerializer} from "@/src/presentation/response/serializers/CustomEntitySerializer.js";
 import {MapLearnerVocab} from "@/src/models/entities/MapLearnerVocab.js";
 import {Vocab} from "@/src/models/entities/Vocab.js";
-import {LearnerVocabSchema, MeaningSchema} from "dzelda-types";
+import {LearnerVocabSchema, MeaningSchema} from "dzelda-common";
 import {meaningSerializer} from "@/src/presentation/response/serializers/entities/MeaningSerializer.js";
 import {VocabLevel} from "@/src/models/enums/VocabLevel.js";
 

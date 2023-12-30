@@ -1,6 +1,13 @@
 import {beforeEach, describe, expect, test, TestContext, vi} from "vitest";
 import {orm} from "@/src/server.js";
-import {buildQueryString, createComparator, fetchRequest, fetchWithFiles, mockValidateFileFields, readSampleFile} from "@/tests/integration/utils.js";
+import {
+    buildQueryString,
+    createComparator,
+    fetchRequest,
+    fetchWithFiles,
+    mockValidateFileFields,
+    readSampleFile
+} from "@/tests/integration/utils.js";
 import {UserFactory} from "@/src/seeders/factories/UserFactory.js";
 import {SessionFactory} from "@/src/seeders/factories/SessionFactory.js";
 import {ProfileFactory} from "@/src/seeders/factories/ProfileFactory.js";
@@ -11,20 +18,19 @@ import {InjectOptions} from "light-my-request";
 import {LanguageFactory} from "@/src/seeders/factories/LanguageFactory.js";
 import {faker} from "@faker-js/faker";
 import {randomCase, randomEnum, randomEnums, shuffleArray} from "@/tests/utils.js";
-import {defaultVocabsByLevel, VocabLevel} from "@/src/models/enums/VocabLevel.js";
+import {defaultVocabsByLevel} from "@/src/models/enums/VocabLevel.js";
 import fs from "fs-extra";
 import {LessonFactory} from "@/src/seeders/factories/LessonFactory.js";
 import {LessonRepo} from "@/src/models/repos/LessonRepo.js";
 import {Lesson} from "@/src/models/entities/Lesson.js";
 import {courseSerializer} from "@/src/presentation/response/serializers/entities/CourseSerializer";
-import {CourseSchema, LessonSchema} from "dzelda-types";
+import {CourseSchema, LessonSchema} from "dzelda-common";
 import * as fileValidatorExports from "@/src/validators/fileValidator.js";
 import * as constantExports from "@/src/constants.js";
 import {TEMP_ROOT_FILE_UPLOAD_DIR} from "@/tests/testConstants.js";
 import {escapeRegExp} from "@/src/utils/utils.js";
 import {MapBookmarkerCourse} from "@/src/models/entities/MapBookmarkerCourse.js";
 import {LanguageLevel} from "@/src/models/enums/LanguageLevel.js";
-import {Vocab} from "@/src/models/entities/Vocab.js";
 
 interface LocalTestContext extends TestContext {
     courseRepo: CourseRepo;

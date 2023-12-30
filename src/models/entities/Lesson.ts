@@ -19,7 +19,10 @@ export class Lesson extends CustomBaseEntity {
     @Property({type: types.text, length: 50_000})
     text!: string;
 
-    @Property({type: types.text, length: 50_000, nullable: true})
+    @Property({type: types.string, length: 248, nullable: true})
+    parsedTitle!: string;
+
+    @Property({type: types.text, length: 100_000, nullable: true})
     parsedText!: string;
 
     @Property({type: types.string, length: 500, default: ""})
@@ -53,7 +56,7 @@ export class Lesson extends CustomBaseEntity {
     })
     pastViewers: Collection<Profile> = new Collection<Profile>(this);
 
-    [OptionalProps]?: "image" | "audio" | "addedOn" | "pastViewersCount" | "parsedText" | "isLastInCourse";
+    [OptionalProps]?: "image" | "audio" | "addedOn" | "pastViewersCount" | "parsedText" | "parsedTitle" | "isLastInCourse";
 
     //annotated properties
     @Property({persist: false, type: types.json})

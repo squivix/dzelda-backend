@@ -17,7 +17,7 @@ import {VocabLevel} from "@/src/models/enums/VocabLevel.js";
 import {learnerVocabSerializer} from "@/src/presentation/response/serializers/mappings/LearnerVocabSerializer.js";
 import {LessonFactory} from "@/src/seeders/factories/LessonFactory.js";
 import {CourseFactory} from "@/src/seeders/factories/CourseFactory.js";
-import * as parserExports from "@/src/utils/parsers/parsers.js";
+import * as parserExports from "dzelda-common/src/parsers/parsers.js";
 import {MeaningFactory} from "@/src/seeders/factories/MeaningFactory.js";
 import {MapLearnerMeaning} from "@/src/models/entities/MapLearnerMeaning.js";
 import {Meaning} from "@/src/models/entities/Meaning.js";

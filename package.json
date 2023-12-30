@@ -16,7 +16,8 @@
     "prefresh": "npm run clean",
     "fresh": "mikro-orm migration:fresh --seed",
     "drop": "mikro-orm schema:drop --run",
-    "dev": "env-cmd -f ./env/dev.env tsx --watch ./src/main.ts"
+    "dev": "env-cmd -f ./env/dev.env tsx --watch ./src/main.ts",
+    "temp": "tsx test.ts"
   },
   "author": "squivix <devintheamateurdevin@gmail.com> (https://github.com/squivix)",
   "license": "MIT",
@@ -27,7 +28,7 @@
     "@mikro-orm/core": "^5.6.7",
     "@mikro-orm/postgresql": "^5.6.7",
     "bcrypt": "^5.1.1",
-    "dzelda-types": "git+https://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:x-oauth-basic@github.com/squivix/dzelda-types.git#main",
+    "dzelda-common": "git+https://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:x-oauth-basic@github.com/squivix/dzelda-common.git#main",
     "fastify": "^4.9.2",
     "fastify-formidable": "^3.0.2",
     "file-type": "^18.2.0",

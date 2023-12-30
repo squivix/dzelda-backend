@@ -1,6 +1,6 @@
 import {Language} from "@/src/models/entities/Language.js";
 import {CustomCallbackObject, CustomEntitySerializer} from "@/src/presentation/response/serializers/CustomEntitySerializer.js";
-import {LanguageSchema} from "dzelda-types";
+import {LanguageSchema} from "dzelda-common";
 
 export class LanguageSerializer extends CustomEntitySerializer<Language, LanguageSchema> {
     definition(languageOrMapping: Language): CustomCallbackObject<Partial<LanguageSchema>> {

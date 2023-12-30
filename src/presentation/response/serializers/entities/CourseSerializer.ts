@@ -1,7 +1,7 @@
 import {Course} from "@/src/models/entities/Course.js";
 import {CustomCallbackObject, CustomEntitySerializer} from "@/src/presentation/response/serializers/CustomEntitySerializer.js";
 import {lessonSerializer} from "@/src/presentation/response/serializers/entities/LessonSerializer.js";
-import {CourseSchema, LessonSchema} from "dzelda-types";
+import {CourseSchema, LessonSchema} from "dzelda-common";
 
 export class CourseSerializer extends CustomEntitySerializer<Course, CourseSchema> {
 

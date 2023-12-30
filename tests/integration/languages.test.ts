@@ -21,7 +21,7 @@ import {MapLearnerVocab} from "@/src/models/entities/MapLearnerVocab.js";
 import {MeaningFactory} from "@/src/seeders/factories/MeaningFactory.js";
 import {MapLearnerMeaning} from "@/src/models/entities/MapLearnerMeaning.js";
 import {learnerLanguageSerializer} from "@/src/presentation/response/serializers/mappings/LearnerLanguageSerializer.js";
-import * as parserExports from "@/src/utils/parsers/parsers.js";
+import * as parserExports from "dzelda-common/src/parsers/parsers.js";
 
 
 interface LocalTestContext extends TestContext {

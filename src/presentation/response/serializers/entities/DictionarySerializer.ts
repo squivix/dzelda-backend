@@ -1,6 +1,6 @@
 import {CustomCallbackObject, CustomEntitySerializer} from "@/src/presentation/response/serializers/CustomEntitySerializer.js";
 import {Dictionary} from "@/src/models/entities/Dictionary.js";
-import {DictionarySchema} from "dzelda-types";
+import {DictionarySchema} from "dzelda-common";
 
 export class DictionarySerializer extends CustomEntitySerializer<Dictionary, DictionarySchema> {
     definition(dictionary: Dictionary): CustomCallbackObject<Partial<DictionarySchema>> {

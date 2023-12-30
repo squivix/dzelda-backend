@@ -5,7 +5,7 @@ import {languageCodeValidator} from "@/src/validators/languageValidators.js";
 import {vocabLevelValidator, vocabNotesValidator, vocabTextValidator} from "@/src/validators/vocabValidators.js";
 import {LanguageService} from "@/src/services/LanguageService.js";
 import {VocabService} from "@/src/services/VocabService.js";
-import {getParser} from "@/src/utils/parsers/parsers.js";
+import {getParser} from "dzelda-common";
 import {usernameValidator} from "@/src/validators/userValidator.js";
 import {UserService} from "@/src/services/UserService.js";
 import {NotFoundAPIError} from "@/src/utils/errors/NotFoundAPIError.js";
@@ -58,14 +58,14 @@ class VocabController {
             throw new ValidationAPIError({language: "not supported"});
 
         const parser = getParser(language.code);
-        const [_, words] = parser.parseText(body.text, true);
+        const words = parser.splitWords(parser.parseText(body.text));
 
         if (words.length == 0)
             throw new ValidationAPIError({text: "vocab is invalid for this language"});
         if (words.length > 1 && !body.isPhrase)
             throw new ValidationAPIError({text: "more than 1 word, but isPhrase is false"});
 
-        const vocabText = parser.combineTokens(words);
+        const vocabText = parser.combineWords(words);
         const vocabService = new VocabService(request.em);
         const existingVocab = await vocabService.getVocabByText({language: language, text: vocabText,});
         if (existingVocab) {

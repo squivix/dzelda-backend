@@ -1,7 +1,7 @@
 import {CustomCallbackObject, CustomEntitySerializer} from "@/src/presentation/response/serializers/CustomEntitySerializer.js";
 import {Language} from "@/src/models/entities/Language.js";
 import {MapLearnerLanguage} from "@/src/models/entities/MapLearnerLanguage.js";
-import {LearnerLanguageSchema} from "dzelda-types";
+import {LearnerLanguageSchema} from "dzelda-common";
 
 export class LearnerLanguageSerializer extends CustomEntitySerializer<Language | MapLearnerLanguage, LearnerLanguageSchema> {
     definition(mapping: MapLearnerLanguage): CustomCallbackObject<Partial<LearnerLanguageSchema>> {

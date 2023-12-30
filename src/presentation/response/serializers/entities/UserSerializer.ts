@@ -1,6 +1,6 @@
 import {CustomCallbackObject, CustomEntitySerializer} from "@/src/presentation/response/serializers/CustomEntitySerializer.js";
 import {User} from "@/src/models/entities/auth/User.js";
-import {ProfileSchema, UserSchema} from "dzelda-types";
+import {ProfileSchema, UserSchema} from "dzelda-common";
 import {profileSerializer} from "@/src/presentation/response/serializers/entities/ProfileSerializer.js";
 
 

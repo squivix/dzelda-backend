@@ -60,7 +60,8 @@ export class VocabService {
         });
         await this.em.flush();
         //TODO move vocab in lesson regex somewhere centralized and test the heck out of it
-        const lessonsWithVocab = await this.em.find(Lesson, {parsedText: new RegExp(`(\\s|^)${escapeRegExp(newVocab.text)}(\\s|$)`)});
+        const vocabFindRegex = new RegExp(`(\\s|^)${escapeRegExp(newVocab.text)}(\\s|$)`);
+        const lessonsWithVocab = await this.em.find(Lesson, {$or: [{parsedText: vocabFindRegex}, {parsedTitle: vocabFindRegex}]});
         if (lessonsWithVocab.length > 0)
             await this.em.insertMany(MapLessonVocab, lessonsWithVocab.map(lesson => ({lesson, vocab: newVocab})));
         return newVocab;
