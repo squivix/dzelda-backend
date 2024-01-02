@@ -17,7 +17,7 @@ export class LearnerLanguageSerializer extends CustomEntitySerializer<Language |
             isSupported: () => mapping.language.isSupported,
             levelThresholds: () => mapping.language.levelThresholds,
             learnersCount: () => Number(mapping?.language?.learnersCount),
-            addedOn: () => mapping.addedOn.toISOString(),
+            startedLearningOn: () => mapping.startedLearningOn.toISOString(),
             lastOpened: () => mapping.lastOpened.toISOString(),
         };
     }

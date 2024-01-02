@@ -463,7 +463,7 @@ describe("PATCH users/me/languages/:languageCode/", () => {
         const expectedMapping = context.em.create(MapLearnerLanguage, {
             learner: user.profile,
             language: language,
-            addedOn: new Date(oldAddedOn),
+            startedLearningOn: new Date(oldAddedOn),
             lastOpened: new Date(oldLastOpened)
         });
         await context.em.flush();

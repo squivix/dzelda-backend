@@ -575,8 +575,8 @@
           "nullable": false,
           "mappedType": "integer"
         },
-        "added_on": {
-          "name": "added_on",
+        "started_learning_on": {
+          "name": "started_learning_on",
           "type": "timestamptz(0)",
           "unsigned": false,
           "autoincrement": false,
