@@ -1,4 +1,4 @@
-import {Entity, OneToOne, OptionalProps, Property, types, Unique} from "@mikro-orm/core";
+import {Entity, Formula, OneToOne, OptionalProps, Property, types, Unique} from "@mikro-orm/core";
 import {CustomBaseEntity} from "@/src/models/entities/CustomBaseEntity.js";
 import {Profile} from "@/src/models/entities/Profile.js";
 import {PasswordResetToken} from "@/src/models/entities/auth/PasswordResetToken.js";
@@ -58,6 +58,11 @@ export class User extends CustomBaseEntity {
         lazy: true
     })
     emailConfirmToken?: EmailConfirmationToken | null;
+
+    @Formula((alias: string) => `EXISTS (SELECT 1 FROM email_confirmation_token t WHERE t.user_id = ${alias}.id AND ${alias}.is_email_confirmed)`, {
+        type: "boolean"
+    })
+    isPendingEmailChange!: boolean;
 
     [OptionalProps]?: "isEmailConfirmed" | "isStaff" | "isAdmin" | "accountCreatedAt" | "lastLogin";
 }

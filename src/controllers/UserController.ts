@@ -127,7 +127,7 @@ class UserController {
         // private user don't exist to the outside
         if (!user || (!user.profile.isPublic && user !== request.user))
             throw new NotFoundAPIError("User");
-        reply.status(200).send(userSerializer.serialize(user, {ignore: request.user !== user ? ["email", "isEmailConfirmed"] : []}));
+        reply.status(200).send(userSerializer.serialize(user, {ignore: request.user !== user ? ["email", "isEmailConfirmed", "isPendingEmailChange"] : []}));
     }
 
     async requestPasswordReset(request: FastifyRequest, reply: FastifyReply) {
