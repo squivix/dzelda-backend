@@ -77,6 +77,17 @@
           "default": "null",
           "mappedType": "string"
         },
+        "color": {
+          "name": "color",
+          "type": "varchar(32)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "length": 32,
+          "default": "null",
+          "mappedType": "string"
+        },
         "is_supported": {
           "name": "is_supported",
           "type": "boolean",

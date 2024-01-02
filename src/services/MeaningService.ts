@@ -73,7 +73,11 @@ export class MeaningService {
     async addMeaningToUserLearning(meaning: Meaning, user: User) {
         const mapping = this.em.create(MapLearnerMeaning, {learner: user.profile, meaning: meaning});
         await this.em.flush();
-        await this.em.nativeUpdate(MapLearnerVocab, {learner: user.profile, vocab: meaning.vocab}, {level: VocabLevel.LEVEL_1});
+        await this.em.nativeUpdate(MapLearnerVocab, {
+            learner: user.profile,
+            vocab: meaning.vocab,
+            level: {$in: [VocabLevel.LEARNED, VocabLevel.KNOWN, VocabLevel.IGNORED]}
+        }, {level: VocabLevel.LEVEL_1});
         await this.em.refresh(mapping.meaning);
         return mapping;
     }

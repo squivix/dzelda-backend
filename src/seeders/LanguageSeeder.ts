@@ -33,8 +33,9 @@ export class LanguageSeeder extends Seeder {
             flagCircular: languageData.flagCircular,
             flag: languageData.flag,
             flagEmoji: languageData.flagEmoji,
+            color: languageData.color,
             isSupported: languageData.isSupported
-        })))
+        })));
     }
 }
 

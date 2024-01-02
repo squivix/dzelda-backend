@@ -3,18 +3,19 @@ import {CustomCallbackObject, CustomEntitySerializer} from "@/src/presentation/r
 import {LanguageSchema} from "dzelda-common";
 
 export class LanguageSerializer extends CustomEntitySerializer<Language, LanguageSchema> {
-    definition(languageOrMapping: Language): CustomCallbackObject<Partial<LanguageSchema>> {
+    definition(language: Language): CustomCallbackObject<Partial<LanguageSchema>> {
         return {
-            id: () => languageOrMapping.id,
-            code: () => languageOrMapping.code,
-            name: () => languageOrMapping.name,
-            greeting: () => languageOrMapping.greeting,
-            flag: () => languageOrMapping.flag,
-            flagCircular: () => languageOrMapping.flagCircular,
-            flagEmoji: () => languageOrMapping.flagEmoji,
-            isSupported: () => languageOrMapping.isSupported,
-            levelThresholds: () => languageOrMapping.levelThresholds,
-            learnersCount: () => Number(languageOrMapping?.learnersCount)
+            id: () => language.id,
+            code: () => language.code,
+            name: () => language.name,
+            greeting: () => language.greeting,
+            flag: () => language.flag,
+            flagCircular: () => language.flagCircular,
+            flagEmoji: () => language.flagEmoji,
+            color: () => language.color,
+            isSupported: () => language.isSupported,
+            levelThresholds: () => language.levelThresholds,
+            learnersCount: () => Number(language?.learnersCount)
         };
     }
 }

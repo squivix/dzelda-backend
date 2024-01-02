@@ -13,6 +13,7 @@ export class LearnerLanguageSerializer extends CustomEntitySerializer<Language |
             flag: () => mapping.language.flag,
             flagCircular: () => mapping.language.flagCircular,
             flagEmoji: () => mapping.language.flagEmoji,
+            color: () => mapping.language.color,
             isSupported: () => mapping.language.isSupported,
             levelThresholds: () => mapping.language.levelThresholds,
             learnersCount: () => Number(mapping?.language?.learnersCount),
