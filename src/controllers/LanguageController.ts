@@ -99,8 +99,26 @@ class LanguageController {
         const languageService = new LanguageService(request.em);
         const languageMapping = await languageService.getUserLanguage(pathParams.languageCode, user);
         if (!languageMapping)
-            throw new NotFoundAPIError("Language");
+            throw new APIError(StatusCodes.NOT_FOUND, "User is not learning language", "The user is not learning this language.");
         await languageService.removeLanguageFromUser(languageMapping);
+        reply.status(204).send();
+    }
+
+
+    async resetUserLanguageProgress(request: FastifyRequest, reply: FastifyReply) {
+        const user = request.user as User;
+        const pathParamsValidator = z.object({
+            languageCode: languageCodeValidator
+        });
+        const pathParams = pathParamsValidator.parse(request.params);
+
+        const languageService = new LanguageService(request.em);
+        const languageMapping = await languageService.getUserLanguage(pathParams.languageCode, user);
+        if (!languageMapping)
+            throw new APIError(StatusCodes.NOT_FOUND, "User is not learning language", "The user is not learning this language.");
+        const language = languageMapping.language;
+        await languageService.removeLanguageFromUser(languageMapping);
+        await languageService.addLanguageToUser(user, language);
         reply.status(204).send();
     }
 }

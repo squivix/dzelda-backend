@@ -18,5 +18,9 @@ export const languageRouter: FastifyPluginCallback = function (fastify, options,
         preHandler: [requiresAuth, requiresEmailConfirmed],
         handler: LanguageController.deleteUserLanguage
     });
+    fastify.delete(`/users/me/languages/:languageCode/progress/`, {
+        preHandler: [requiresAuth, requiresEmailConfirmed],
+        handler: LanguageController.resetUserLanguageProgress
+    });
     done();
 };

@@ -615,3 +615,7 @@ describe("DELETE users/me/languages/:languageCode/", () => {
         expect(response.statusCode).to.equal(404);
     });
 });
+
+
+/**{@link LanguageController#resetUserLanguageProgress}*/
+describe.todo("DELETE users/me/languages/:languageCode/", () => {});
