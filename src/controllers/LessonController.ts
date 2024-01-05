@@ -14,6 +14,10 @@ import {NotFoundAPIError} from "@/src/utils/errors/NotFoundAPIError.js";
 import {lessonSerializer} from "@/src/presentation/response/serializers/entities/LessonSerializer.js";
 import {courseSerializer} from "@/src/presentation/response/serializers/entities/CourseSerializer.js";
 import {API_ROOT} from "@/src/server.js";
+import {
+    lessonHistoryEntrySerializer,
+    LessonHistoryEntrySerializer
+} from "@/src/presentation/response/serializers/mappings/LessonHistoryEntrySerializer.js";
 
 class LessonController {
     async getLessons(request: FastifyRequest, reply: FastifyReply) {
@@ -144,7 +148,7 @@ class LessonController {
             addedBy: usernameValidator.or(z.literal("me")).optional(),
             searchQuery: z.string().max(256).optional(),
             hasAudio: booleanStringValidator.optional(),
-            sortBy: z.union([z.literal("title"), z.literal("createdDate"), z.literal("pastViewersCount")]).optional().default("title"),
+            sortBy: z.union([z.literal("timeViewed"),z.literal("title"), z.literal("createdDate"), z.literal("pastViewersCount")]).optional().default("title"),
             sortOrder: z.union([z.literal("asc"), z.literal("desc")]).optional().default("asc"),
             page: z.coerce.number().int().min(1).optional().default(1),
             pageSize: z.coerce.number().int().min(1).max(100).optional().default(10),
@@ -164,12 +168,12 @@ class LessonController {
         const sort = {sortBy: queryParams.sortBy, sortOrder: queryParams.sortOrder};
         const pagination = {page: queryParams.page, pageSize: queryParams.pageSize};
         const lessonService = new LessonService(request.em);
-        const [lessons, recordsCount] = await lessonService.getPaginatedLessons(filters, sort, pagination, user);
+        const [lessonHistoryEntries, recordsCount] = await lessonService.getPaginatedLessonHistory(filters, sort, pagination, user);
         reply.send({
             page: pagination.page,
             pageSize: pagination.pageSize,
             pageCount: Math.ceil(recordsCount / pagination.pageSize),
-            data: lessonSerializer.serializeList(lessons)
+            data: lessonHistoryEntrySerializer.serializeList(lessonHistoryEntries)
         });
     }
 

@@ -29,17 +29,14 @@ export class LessonService {
                                   addedBy?: string,
                                   searchQuery?: string,
                                   hasAudio?: boolean;
-                                  isInHistory?: boolean
                               },
                               sort: { sortBy: "title" | "createdDate" | "pastViewersCount", sortOrder: "asc" | "desc" },
                               pagination: { page: number, pageSize: number },
                               user: User | AnonymousUser | null): Promise<[Lesson[], number]> {
         const dbFilters: FilterQuery<Lesson> = {$and: []};
-        if (user && user instanceof User) {
+        if (user && user instanceof User)
             dbFilters.$and!.push({$or: [{course: {isPublic: true}}, {course: {addedBy: (user as User).profile}}]});
-            if (filters.isInHistory)
-                dbFilters.$and!.push({pastViewers: user.profile});
-        } else
+        else
             dbFilters.$and!.push({course: {isPublic: true}});
 
         if (filters.languageCode !== undefined)
@@ -70,6 +67,54 @@ export class LessonService {
         if (user && !(user instanceof AnonymousUser))
             await this.lessonRepo.annotateLessonsWithUserData(lessons, user);
         return [lessons, totalCount];
+    }
+
+    async getPaginatedLessonHistory(filters: {
+                                        languageCode?: string,
+                                        addedBy?: string,
+                                        searchQuery?: string,
+                                        hasAudio?: boolean;
+                                    },
+                                    sort: {
+                                        sortBy: "timeViewed" | "title" | "createdDate" | "pastViewersCount",
+                                        sortOrder: "asc" | "desc"
+                                    },
+                                    pagination: { page: number, pageSize: number },
+                                    user: User): Promise<[MapPastViewerLesson[], number]> {
+        const dbFilters: FilterQuery<MapPastViewerLesson> = {$and: []};
+        dbFilters.$and!.push({$or: [{lesson: {course: {isPublic: true}}}, {lesson: {course: {addedBy: (user as User).profile}}}]});
+        dbFilters.$and!.push({pastViewer: user.profile});
+
+        if (filters.languageCode !== undefined)
+            dbFilters.$and!.push({lesson: {course: {language: {code: filters.languageCode}}}});
+        if (filters.addedBy !== undefined)
+            dbFilters.$and!.push({lesson: {course: {addedBy: {user: {username: filters.addedBy}}}}});
+        if (filters.searchQuery !== undefined && filters.searchQuery !== "")
+            dbFilters.$and!.push({lesson: {title: {$ilike: `%${filters.searchQuery}%`}}});
+        if (filters.hasAudio !== undefined)
+            dbFilters.$and!.push({lesson: {audio: {[filters.hasAudio ? "$ne" : "$eq"]: ""}}});
+
+        const dbOrderBy: QueryOrderMap<MapPastViewerLesson>[] = [];
+        if (sort.sortBy == "title")
+            dbOrderBy.push({lesson: {title: sort.sortOrder}});
+        else if (sort.sortBy == "createdDate")
+            dbOrderBy.push({lesson: {addedOn: sort.sortOrder}});
+        else if (sort.sortBy == "pastViewersCount")
+            dbOrderBy.push({lesson: {pastViewersCount: sort.sortOrder}});
+        else if (sort.sortBy == "timeViewed")
+            dbOrderBy.push({timeViewed: sort.sortOrder});
+        dbOrderBy.push({lesson: {id: "asc"}});
+
+        let [lessonHistoryEntries, totalCount] = await this.em.findAndCount(MapPastViewerLesson, dbFilters, {
+            populate: ["lesson.course", "lesson.course.language", "lesson.course.addedBy.user"],
+            orderBy: dbOrderBy,
+            limit: pagination.pageSize,
+            offset: pagination.pageSize * (pagination.page - 1),
+        });
+
+        if (user && !(user instanceof AnonymousUser))
+            await this.lessonRepo.annotateLessonsWithUserData(lessonHistoryEntries.map(e => e.lesson), user);
+        return [lessonHistoryEntries, totalCount];
     }
 
     async createLesson(fields: {
