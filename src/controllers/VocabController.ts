@@ -109,7 +109,10 @@ class VocabController {
 
     async addVocabToUser(request: FastifyRequest, reply: FastifyReply) {
         const user = request.user as User;
-        const bodyValidator = z.object({vocabId: z.number().min(0)});
+        const bodyValidator = z.object({
+            vocabId: z.number().min(0),
+            level: vocabLevelValidator.optional()
+        });
         const body = bodyValidator.parse(request.body);
 
         const vocabService = new VocabService(request.em);
@@ -123,7 +126,7 @@ class VocabController {
         if (existingVocabMapping)
             reply.status(200).send(learnerVocabSerializer.serialize(existingVocabMapping));
 
-        const newVocabMapping = await vocabService.addVocabToUserLearning(vocab, user);
+        const newVocabMapping = await vocabService.addVocabToUserLearning(vocab, user, body.level);
         reply.status(201).send(learnerVocabSerializer.serialize(newVocabMapping));
     }
 

@@ -1149,7 +1149,7 @@ describe("POST users/me/vocabs/", () => {
         };
         return await fetchRequest(options, authToken);
     };
-
+    // TODO test optional field: level
     test<LocalTestContext>("If the vocab exists and user is learning vocab language add vocab to user's vocabs learning", async (context) => {
         const user = await context.userFactory.createOne();
         const session = await context.sessionFactory.createOne({user});

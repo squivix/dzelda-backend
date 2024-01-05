@@ -113,10 +113,11 @@ export class VocabService {
         return [mappings, totalCount];
     }
 
-    async addVocabToUserLearning(vocab: Vocab, user: User) {
+    async addVocabToUserLearning(vocab: Vocab, user: User, level?:VocabLevel) {
         this.em.create(MapLearnerVocab, {
             learner: user.profile,
-            vocab: vocab
+            vocab: vocab,
+            level: level
         });
         await this.em.flush();
         return (await this.getUserVocab(vocab.id, user.profile))!;
