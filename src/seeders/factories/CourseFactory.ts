@@ -5,6 +5,7 @@ import {Course} from "@/src/models/entities/Course.js";
 import {ProfileFactory} from "@/src/seeders/factories/ProfileFactory.js";
 import {UserFactory} from "@/src/seeders/factories/UserFactory.js";
 import {LanguageLevel} from "@/src/models/enums/LanguageLevel.js";
+import {Lesson} from "@/src/models/entities/Lesson.js";
 
 export class CourseFactory extends CustomFactory<Course> {
     readonly model = Course;
@@ -23,5 +24,11 @@ export class CourseFactory extends CustomFactory<Course> {
             addedBy: profileFactory.makeDefinition({user: userFactory.makeDefinition({}, ["profile"])}),
             lessons: []
         };
+    }
+
+    override makeDefinition(overrideParameters?: EntityData<Course>): EntityData<Course> {
+        if (Array.isArray(overrideParameters?.lessons))
+            (overrideParameters!.lessons as EntityData<Lesson>[]).forEach((l, i) => l.orderInCourse = i + 1);
+        return super.makeDefinition(overrideParameters);
     }
 }

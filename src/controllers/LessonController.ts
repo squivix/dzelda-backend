@@ -206,9 +206,9 @@ class LessonController {
             throw new NotFoundAPIError("Course");
         const nextLesson = await courseService.getNextLessonInCourse(course, pathParams.lessonId);
         if (!nextLesson)
-            throw new NotFoundAPIError("Lesson");
+            throw new NotFoundAPIError("Next lesson");
 
-        reply.header("Location", `${API_ROOT}/lessons/${nextLesson.id}/`).status(303);
+        reply.header("Location", `${API_ROOT}/lessons/${nextLesson.id}/`).status(303).send();
     }
 }
 

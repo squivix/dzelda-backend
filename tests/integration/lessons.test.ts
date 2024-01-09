@@ -7,7 +7,7 @@ import {LessonRepo} from "@/src/models/repos/LessonRepo.js";
 import {LanguageFactory} from "@/src/seeders/factories/LanguageFactory.js";
 import {CourseFactory} from "@/src/seeders/factories/CourseFactory.js";
 import {LessonFactory} from "@/src/seeders/factories/LessonFactory.js";
-import {orm} from "@/src/server.js";
+import {API_ROOT, orm} from "@/src/server.js";
 import {Lesson} from "@/src/models/entities/Lesson.js";
 import {Course} from "@/src/models/entities/Course.js";
 import {InjectOptions} from "light-my-request";
@@ -2055,7 +2055,35 @@ describe("GET users/me/lessons/history/", () => {
                     data: lessonHistoryEntrySerializer.serializeList(expectedHistoryEntries)
                 });
             });
-            test.todo<LocalTestContext>("test sortBy timeViewed", async (context) => {
+            test<LocalTestContext>("test sortBy timeViewed", async (context) => {
+                const user = await context.userFactory.createOne();
+                const session = await context.sessionFactory.createOne({user: user});
+                const language = await context.languageFactory.createOne();
+                const course = await context.courseFactory.createOne({language: language, isPublic: true});
+
+                const expectedHistoryEntries = [
+                    context.em.create(MapPastViewerLesson, {
+                        lesson: await context.lessonFactory.createOne({course, pastViewersCount: 1}), pastViewer: user.profile,
+                        timeViewed: new Date("2018-07-22T10:30:45.000Z")
+                    }),
+                    context.em.create(MapPastViewerLesson, {
+                        lesson: await context.lessonFactory.createOne({course, pastViewersCount: 1}), pastViewer: user.profile,
+                        timeViewed: new Date("2023-03-15T20:29:42.000Z")
+                    })
+                ];
+                await context.em.flush();
+                await context.lessonRepo.annotateLessonsWithUserData(expectedHistoryEntries.map(e => e.lesson), user);
+                const recordsCount = expectedHistoryEntries.length;
+
+                const response = await makeRequest({sortBy: "timeViewed"}, session.token);
+
+                expect(response.statusCode).to.equal(200);
+                expect(response.json()).toEqual({
+                    page: queryDefaults.pagination.page,
+                    pageSize: queryDefaults.pagination.pageSize,
+                    pageCount: Math.ceil(recordsCount / queryDefaults.pagination.pageSize),
+                    data: lessonHistoryEntrySerializer.serializeList(expectedHistoryEntries)
+                });
             });
             test<LocalTestContext>("if sortBy is invalid return 400", async (context) => {
                 const user = await context.userFactory.createOne();
@@ -2436,5 +2464,95 @@ describe("POST users/me/lessons/history/", () => {
 
 /**{@link LessonController#getNextLessonInCourse}*/
 describe("GET courses/:courseId/lessons/:lessonId/next/", () => {
-    test.todo("");
+    const makeRequest = async (courseId: number, lessonId: number | string, authToken?: string) => {
+        const options: InjectOptions = {
+            method: "GET",
+            url: `courses/${courseId}/lessons/${lessonId}/next/`,
+        };
+        return await fetchRequest(options, authToken);
+    };
+
+    describe("If the course and lesson exist and lesson is not last return redirect to next lesson in course", async () => {
+        test<LocalTestContext>("If lesson is public return redirect to next lesson in course", async (context) => {
+            const language = await context.languageFactory.createOne();
+            const course = await context.courseFactory.createOne({language, isPublic: true, lessons: context.lessonFactory.makeDefinitions(5)});
+            const previousLesson = course.lessons[0];
+            const expectedLesson = course.lessons[1];
+
+            const response = await makeRequest(course.id, previousLesson.id);
+
+            expect(response.statusCode).to.equal(303);
+            expect(response.headers.location).toEqual(`${API_ROOT}/lessons/${expectedLesson.id}/`);
+        });
+        test<LocalTestContext>("If lesson is not public and user is logged in as author return redirect to next lesson in course", async (context) => {
+            const language = await context.languageFactory.createOne();
+            const author = await context.userFactory.createOne();
+            const session = await context.sessionFactory.createOne({user: author});
+            const course = await context.courseFactory.createOne({language, isPublic: false, addedBy: author, lessons: context.lessonFactory.makeDefinitions(5)});
+            const previousLesson = course.lessons[0];
+            const expectedLesson = course.lessons[1];
+
+            const response = await makeRequest(course.id, previousLesson.id, session.token);
+
+            expect(response.statusCode).to.equal(303);
+            expect(response.headers.location).toEqual(`${API_ROOT}/lessons/${expectedLesson.id}/`);
+        });
+    });
+
+    test<LocalTestContext>("If the course does not exist return 404", async (context) => {
+        const language = await context.languageFactory.createOne();
+        const lesson = await context.lessonFactory.createOne({course: await context.courseFactory.createOne({language, isPublic: true})});
+        const response = await makeRequest(Number(faker.random.numeric(8)), lesson.id);
+        expect(response.statusCode).to.equal(404);
+    });
+    test<LocalTestContext>("If the lesson does not exist return 404", async (context) => {
+        const language = await context.languageFactory.createOne();
+        const course = await context.courseFactory.createOne({language, isPublic: true, lessons: context.lessonFactory.makeDefinitions(5)});
+        const response = await makeRequest(course.id, Number(faker.random.numeric(8)));
+
+        expect(response.statusCode).to.equal(404);
+    });
+    test<LocalTestContext>("If the lesson is last in course return 404", async (context) => {
+        const language = await context.languageFactory.createOne();
+        const course = await context.courseFactory.createOne({language, isPublic: true, lessons: context.lessonFactory.makeDefinitions(5)});
+        const previousLesson = course.lessons[course.lessons.length - 1];
+
+        const response = await makeRequest(course.id, previousLesson.id);
+
+        expect(response.statusCode).to.equal(404);
+    });
+    test<LocalTestContext>("If course id is invalid return 400", async (context) => {
+        const language = await context.languageFactory.createOne();
+        const lesson = await context.lessonFactory.createOne({course: await context.courseFactory.createOne({language, isPublic: true})});
+
+        const response = await makeRequest(faker.random.alpha(8), lesson.id);
+        expect(response.statusCode).to.equal(400);
+    });
+    test<LocalTestContext>("If lesson id is invalid return 400", async (context) => {
+        const language = await context.languageFactory.createOne();
+        const course = await context.courseFactory.createOne({language, isPublic: true, lessons: context.lessonFactory.makeDefinitions(5)});
+
+        const response = await makeRequest(course.id, faker.random.alpha(8));
+        expect(response.statusCode).to.equal(400);
+    });
+    test<LocalTestContext>("If the lesson is not public and the user is not logged in return 404", async (context) => {
+        const language = await context.languageFactory.createOne();
+        const course = await context.courseFactory.createOne({language, isPublic: false, lessons: context.lessonFactory.makeDefinitions(5)});
+        const previousLesson = course.lessons[0];
+        const expectedLesson = course.lessons[1];
+
+        const response = await makeRequest(course.id, previousLesson.id);
+        expect(response.statusCode).to.equal(404);
+    });
+    test<LocalTestContext>("If the lesson is not public and the user is logged in as a non-author return 404", async (context) => {
+        const author = await context.userFactory.createOne();
+        const otherUser = await context.userFactory.createOne();
+        const session = await context.sessionFactory.createOne({user: otherUser});
+        const language = await context.languageFactory.createOne();
+        const course = await context.courseFactory.createOne({language, isPublic: false, addedBy: author.profile, lessons: context.lessonFactory.makeDefinitions(5)});
+        const previousLesson = course.lessons[0];
+
+        const response = await makeRequest(course.id, previousLesson.id, session.token);
+        expect(response.statusCode).to.equal(404);
+    });
 });
