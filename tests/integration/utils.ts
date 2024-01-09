@@ -90,27 +90,42 @@ export function mockValidateFileFields(fakeFieldFileSizes: { [fieldName: string]
         }));
     };
 }
-
 export function createComparator<T>(entityName: EntityClass<T>,
                                     properties: {
-                                        property: keyof (T | EntityData<T>),
+                                        property: string,
                                         order: "asc" | "desc",
                                         preProcess?: (value: any) => any,
                                         comparator?: (value1: any, value2: any) => number,
                                     }[]): (obj1: T | EntityData<T>, obj2: T | EntityData<T>) => number {
     return (obj1, obj2) => {
-        for (const {property, order, preProcess, comparator} of properties) {
-            let value1 = obj1[property];
-            let value2 = obj2[property];
+        for (const { property, order, preProcess, comparator } of properties) {
+            let value1 = getValue(obj1, property);
+            let value2 = getValue(obj2, property);
+
             if (preProcess !== undefined) {
                 value1 = preProcess(value1);
                 value2 = preProcess(value2);
             }
+
             if (comparator !== undefined)
                 return comparator(value1, value2);
+
             if (value1 < value2) return order == "asc" ? -1 : 1;
             if (value1 > value2) return order == "asc" ? 1 : -1;
         }
         return 0;
     };
+
+    function getValue(obj: any, property: string): any {
+        const properties = property.split('.');
+        return properties.reduce((acc, prop) => acc[prop], obj);
+    }
+}
+
+export function kibiBytes(sizeInKib: number) {
+    return sizeInKib * 1024;
+}
+
+export function mebiBytes(sizeInMib: number) {
+    return sizeInMib * 1048576;
 }

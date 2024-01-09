@@ -21,7 +21,7 @@ import {MapLearnerVocab} from "@/src/models/entities/MapLearnerVocab.js";
 import {MeaningFactory} from "@/src/seeders/factories/MeaningFactory.js";
 import {MapLearnerMeaning} from "@/src/models/entities/MapLearnerMeaning.js";
 import {learnerLanguageSerializer} from "@/src/presentation/response/serializers/mappings/LearnerLanguageSerializer.js";
-import * as parserExports from "dzelda-common/src/parsers/parsers.js";
+import {parsers} from "dzelda-common";
 
 
 interface LocalTestContext extends TestContext {
@@ -35,6 +35,13 @@ interface LocalTestContext extends TestContext {
     meaningFactory: MeaningFactory;
 }
 
+
+vi.mock("dzelda-common", async () => {
+    return {
+        ...(await vi.importActual("dzelda-common") as any),
+        getParser: vi.fn(() => parsers["en"])
+    };
+});
 beforeEach<LocalTestContext>(async (context) => {
     await orm.getSchemaGenerator().clearDatabase();
     context.em = orm.em.fork();
@@ -385,10 +392,10 @@ describe("POST users/me/languages/", function () {
 
         const responseBody = response.json();
         expect(response.statusCode).to.equal(201);
-        expect(responseBody).toMatchObject(learnerLanguageSerializer.serialize(expectedMapping, {ignore: ["addedOn", "lastOpened"]}));
+        expect(responseBody).toMatchObject(learnerLanguageSerializer.serialize(expectedMapping, {ignore: ["startedLearningOn", "lastOpened"]}));
         const dbRecord = await context.em.findOne(MapLearnerLanguage, {language, learner: user.profile});
         expect(dbRecord).not.toBeNull();
-        expect(learnerLanguageSerializer.serialize(dbRecord!)).toMatchObject(learnerLanguageSerializer.serialize(expectedMapping, {ignore: ["addedOn", "lastOpened"]}));
+        expect(learnerLanguageSerializer.serialize(dbRecord!)).toMatchObject(learnerLanguageSerializer.serialize(expectedMapping, {ignore: ["startedLearningOn", "lastOpened"]}));
     });
     test<LocalTestContext>("If user is already learning language return 200", async (context) => {
         const user = await context.userFactory.createOne();
@@ -555,7 +562,7 @@ describe("DELETE users/me/languages/:languageCode/", () => {
         const vocabs = await context.vocabFactory.create(3, {language});
         await context.em.insertMany(MapLearnerVocab, vocabs.map(v => ({vocab: v, learner: user.profile})));
         const meaningLanguage = await context.languageFactory.createOne();
-        vi.spyOn(parserExports, "getParser").mockImplementation((_) => parserExports.parsers["en"]);
+
         const meanings = [
             ...await context.meaningFactory.create(3, {addedBy: user.profile, vocab: vocabs[0], language: meaningLanguage}),
             ...await context.meaningFactory.create(3, {addedBy: user.profile, vocab: vocabs[1], language: meaningLanguage}),
@@ -618,4 +625,5 @@ describe("DELETE users/me/languages/:languageCode/", () => {
 
 
 /**{@link LanguageController#resetUserLanguageProgress}*/
-describe.todo("DELETE users/me/languages/:languageCode/", () => {});
+describe.todo("DELETE users/me/languages/:languageCode/", () => {
+});

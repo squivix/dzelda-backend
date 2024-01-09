@@ -7,11 +7,13 @@ import {EmailConfirmationToken} from "@/src/models/entities/auth/EmailConfirmati
 
 @Entity()
 export class User extends CustomBaseEntity {
-    constructor(username: string, email: string, password: string) {
+    constructor(username: string, email: string, password: string, isPendingEmailChange?: boolean) {
         super();
         this.username = username;
         this.email = email;
         this.password = password;
+        if (isPendingEmailChange !== undefined)
+            this.isPendingEmailChange = isPendingEmailChange;
     }
 
     @Property({type: types.string, length: 20})

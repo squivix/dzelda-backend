@@ -242,7 +242,7 @@ describe("GET courses/", function () {
             const level = randomEnum(LanguageLevel);
             const language = await context.languageFactory.createOne();
             const expectedCourses = await context.courseFactory.create(3, {language, level});
-            await context.courseFactory.create(3, {language});
+            await context.courseFactory.create(3, {language, level: randomEnum(LanguageLevel, [level])});
             expectedCourses.sort(defaultSortComparator);
             const recordsCount = expectedCourses.length;
 
@@ -1067,7 +1067,11 @@ describe("PUT courses/:courseId/", function () {
                 l.orderInCourse = lessonCounter;
                 lessonCounter++;
             }).create(10, {course: course});
-            const updatedCourse = context.courseFactory.makeOne({addedBy: author.profile, level: LanguageLevel.BEGINNER_1, language: language});
+            const updatedCourse = context.courseFactory.makeOne({
+                addedBy: author.profile,
+                level: LanguageLevel.BEGINNER_1,
+                language: language
+            });
             const shuffledLessonIds = shuffleArray(courseLessons).map(l => l.id);
 
             const response = await makeRequest(course.id, {
@@ -1508,7 +1512,11 @@ describe("PUT courses/:courseId/", function () {
                         l.orderInCourse = lessonCounter;
                         lessonCounter++;
                     }).create(10, {course: course});
-                    const updatedCourse = context.courseFactory.makeOne({addedBy: author.profile, language, level: LanguageLevel.BEGINNER_1});
+                    const updatedCourse = context.courseFactory.makeOne({
+                        addedBy: author.profile,
+                        language,
+                        level: LanguageLevel.BEGINNER_1
+                    });
                     const otherLesson = await context.lessonFactory.createOne({course: await context.courseFactory.createOne({language: language})});
 
                     const response = await makeRequest(course.id, {
@@ -1538,7 +1546,11 @@ describe("PUT courses/:courseId/", function () {
                         l.orderInCourse = lessonCounter;
                         lessonCounter++;
                     }).create(10, {course: course});
-                    const updatedCourse = context.courseFactory.makeOne({addedBy: author.profile, language, level: LanguageLevel.BEGINNER_1});
+                    const updatedCourse = context.courseFactory.makeOne({
+                        addedBy: author.profile,
+                        language,
+                        level: LanguageLevel.BEGINNER_1
+                    });
                     const lessonOrder = shuffleArray(courseLessons).map(l => l.id);
                     lessonOrder.splice(faker.datatype.number({max: courseLessons.length - 1}),
                         faker.datatype.number({min: 1, max: courseLessons.length}));
@@ -1918,7 +1930,7 @@ describe("GET users/me/courses/bookmarked/", function () {
             const expectedCourses = (await Promise.all(levels.map(level =>
                 context.courseFactory.create(3, {language, level, bookmarkers: user.profile})))).flat();
             await context.courseFactory.create(3, {language, level: randomEnum(LanguageLevel, levels), bookmarkers: user.profile});
-            await Promise.all(levels.map(level => context.courseFactory.create(3, {language, level})))
+            await Promise.all(levels.map(level => context.courseFactory.create(3, {language, level})));
             await context.courseRepo.annotateCoursesWithUserData(expectedCourses, user);
             expectedCourses.sort(defaultSortComparator);
             const recordsCount = expectedCourses.length;

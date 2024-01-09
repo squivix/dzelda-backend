@@ -32,7 +32,7 @@ export class UserService {
     }
 
     async createUser(username: string, email: string, password: string) {
-        const newUser = new User(username, email, await passwordHasher.hash(password));
+        const newUser = new User(username, email, await passwordHasher.hash(password), false);
         const newProfile = new Profile(newUser);
         this.em.persist(newUser);
         this.em.persist(newProfile);
