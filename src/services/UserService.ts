@@ -6,7 +6,7 @@ import {Language} from "@/src/models/entities/Language.js";
 import {Session} from "@/src/models/entities/auth/Session.js";
 import {StatusCodes} from "http-status-codes";
 import {APIError} from "@/src/utils/errors/APIError.js";
-import {EntityManager, EntityRepository, FilterQuery, UniqueConstraintViolationException} from "@mikro-orm/core";
+import {EntityManager, EntityRepository, FilterQuery, ManyToOne, Property, types, UniqueConstraintViolationException} from "@mikro-orm/core";
 import {UnauthenticatedAPIError} from "@/src/utils/errors/UnauthenticatedAPIError.js";
 import {AUTH_TOKEN_LENGTH, EMAIL_CONFIRM_TOKEN_LENGTH, PASSWORD_RESET_TOKEN_LENGTH} from "@/src/constants.js";
 import {EntityField} from "@mikro-orm/core/drivers/IDatabaseDriver.js";
@@ -16,6 +16,8 @@ import {EmailConfirmationToken} from "@/src/models/entities/auth/EmailConfirmati
 import {ValidationAPIError} from "@/src/utils/errors/ValidationAPIError.js";
 import {FastifyReply, FastifyRequest} from "fastify";
 import {extractFieldFromUniqueConstraintError} from "@/src/utils/utils.js";
+import {FileFieldType} from "@/src/validators/fileValidator.js";
+import {FileUploadRequest} from "@/src/models/entities/FileUploadRequest.js";
 
 
 export class UserService {
@@ -205,6 +207,29 @@ export class UserService {
         user.profile.bio = updatedProfileData.bio;
         if (updatedProfileData.profilePicture !== undefined)
             user.profile.profilePicture = updatedProfileData.profilePicture;
+        await this.em.flush();
+    }
+
+    async generateFileUploadRequest(fileUploadRequestData: { user: User, fileField: keyof FileFieldType, fileUrl: string, objectKey: string }) {
+        this.em.create(FileUploadRequest, {
+            user: fileUploadRequestData.user,
+            fileField: fileUploadRequestData.fileField,
+            fileUrl: fileUploadRequestData.fileUrl,
+            objectKey: fileUploadRequestData.objectKey,
+        });
+        await this.em.flush();
+    }
+
+    async findFileUploadRequest({user, fileField, objectKey}: { user: User, fileField: keyof FileFieldType, objectKey: string }) {
+        return await this.em.findOne(FileUploadRequest, {
+            user: user,
+            fileField: fileField,
+            objectKey: objectKey,
+        });
+    }
+
+    async deleteFileUploadRequest(fileUploadRequest: FileUploadRequest) {
+        this.em.remove(fileUploadRequest);
         await this.em.flush();
     }
 }

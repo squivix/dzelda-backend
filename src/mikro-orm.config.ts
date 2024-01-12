@@ -17,13 +17,14 @@ import {Vocab} from "@/src/models/entities/Vocab.js";
 import {MapLearnerLanguage} from "@/src/models/entities/MapLearnerLanguage.js";
 import {PasswordResetToken} from "@/src/models/entities/auth/PasswordResetToken.js";
 import {EmailConfirmationToken} from "@/src/models/entities/auth/EmailConfirmationToken.js";
+import {FileUploadRequest} from "@/src/models/entities/FileUploadRequest.js";
 
 
 const devOptions: Options = {
     type: "postgresql",
     entities: [Course, CustomBaseEntity, Dictionary, Language, Lesson, MapLearnerDictionary,
         MapPastViewerLesson, MapLearnerMeaning, MapLearnerVocab, MapLessonVocab, MapLearnerLanguage, Meaning,
-        Profile, Vocab, User, Session, PasswordResetToken, EmailConfirmationToken],
+        Profile, Vocab, User, Session, PasswordResetToken, EmailConfirmationToken, FileUploadRequest],
     loadStrategy: LoadStrategy.JOINED,
     debug: true,
     migrations: {

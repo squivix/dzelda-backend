@@ -12,12 +12,10 @@ import {lessonTextValidator, lessonTitleValidator} from "@/src/validators/lesson
 import {ForbiddenAPIError} from "@/src/utils/errors/ForbiddenAPIError.js";
 import {NotFoundAPIError} from "@/src/utils/errors/NotFoundAPIError.js";
 import {lessonSerializer} from "@/src/presentation/response/serializers/entities/LessonSerializer.js";
-import {courseSerializer} from "@/src/presentation/response/serializers/entities/CourseSerializer.js";
 import {API_ROOT} from "@/src/server.js";
-import {
-    lessonHistoryEntrySerializer,
-    LessonHistoryEntrySerializer
-} from "@/src/presentation/response/serializers/mappings/LessonHistoryEntrySerializer.js";
+import {lessonHistoryEntrySerializer} from "@/src/presentation/response/serializers/mappings/LessonHistoryEntrySerializer.js";
+import {UserService} from "@/src/services/UserService.js";
+import {validateFileObjectKey} from "@/src/controllers/ControllerUtils.js";
 
 class LessonController {
     async getLessons(request: FastifyRequest, reply: FastifyReply) {
@@ -58,27 +56,31 @@ class LessonController {
 
     async createLesson(request: FastifyRequest, reply: FastifyReply) {
         const bodyValidator = z.object({
-            data: z.object({
-                title: lessonTitleValidator,
-                text: lessonTextValidator,
-                courseId: z.number().min(0)
-            }),
+            title: lessonTitleValidator,
+            text: lessonTextValidator,
+            courseId: z.number().min(0),
             image: z.string().optional(),
             audio: z.string().optional(),
         });
         const body = bodyValidator.parse(request.body);
 
         const courseService = new CourseService(request.em);
-        const course = await courseService.getCourse(body.data.courseId, request.user);
+        const course = await courseService.getCourse(body.courseId, request.user);
         if (!course || (!course.isPublic && course.addedBy !== request.user?.profile))
             throw new ValidationAPIError({course: "not found"});
         if (course.addedBy !== request.user?.profile)
             throw new ForbiddenAPIError();
 
+        const userService = new UserService(request.em);
+        if (body.image)
+            body.image = await validateFileObjectKey(userService, request.user as User, body.image, "lessonImage", "image");
+        if (body.audio)
+            body.audio = await validateFileObjectKey(userService, request.user as User, body.audio, "lessonAudio", "audio");
+
         const lessonService = new LessonService(request.em);
         const lesson = await lessonService.createLesson({
-            title: body.data.title,
-            text: body.data.text,
+            title: body.title,
+            text: body.text,
             course: course,
             image: body.image,
             audio: body.audio,
@@ -103,11 +105,9 @@ class LessonController {
         const pathParams = pathParamsValidator.parse(request.params);
 
         const bodyValidator = z.object({
-            data: z.object({
-                courseId: z.number().min(0),
-                title: lessonTitleValidator,
-                text: lessonTextValidator,
-            }),
+            courseId: z.number().min(0),
+            title: lessonTitleValidator,
+            text: lessonTextValidator,
             image: z.string().optional(),
             audio: z.string().optional()
         });
@@ -121,18 +121,23 @@ class LessonController {
             throw lesson.course.isPublic ? new ForbiddenAPIError() : new NotFoundAPIError("Lesson");
 
         const courseService = new CourseService(request.em);
-        const newCourse = await courseService.getCourse(body.data.courseId, request.user);
+        const newCourse = await courseService.getCourse(body.courseId, request.user);
         if (!newCourse)
             throw new ValidationAPIError({course: "Not found"});
         if (request?.user?.profile !== newCourse.addedBy)
             throw newCourse.isPublic ? new ForbiddenAPIError() : new ValidationAPIError({course: "Not found"});
         if (newCourse.language !== lesson.course.language)
             throw new ValidationAPIError({course: "Cannot move lesson to a course in a different language"});
+        const userService = new UserService(request.em);
+        if (body.image)
+            body.image = await validateFileObjectKey(userService, request.user as User, body.image, "lessonImage", "image");
+        if (body.audio)
+            body.audio = await validateFileObjectKey(userService, request.user as User, body.audio, "lessonAudio", "audio");
 
         const updatedLesson = await lessonService.updateLesson(lesson, {
             course: newCourse,
-            title: body.data.title,
-            text: body.data.text,
+            title: body.title,
+            text: body.text,
             image: body.image,
             audio: body.audio
         }, request.user as User);
@@ -148,7 +153,7 @@ class LessonController {
             addedBy: usernameValidator.or(z.literal("me")).optional(),
             searchQuery: z.string().max(256).optional(),
             hasAudio: booleanStringValidator.optional(),
-            sortBy: z.union([z.literal("timeViewed"),z.literal("title"), z.literal("createdDate"), z.literal("pastViewersCount")]).optional().default("title"),
+            sortBy: z.union([z.literal("timeViewed"), z.literal("title"), z.literal("createdDate"), z.literal("pastViewersCount")]).optional().default("title"),
             sortOrder: z.union([z.literal("asc"), z.literal("desc")]).optional().default("asc"),
             page: z.coerce.number().int().min(1).optional().default(1),
             pageSize: z.coerce.number().int().min(1).max(100).optional().default(10),

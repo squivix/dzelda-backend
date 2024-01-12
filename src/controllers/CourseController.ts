@@ -19,6 +19,8 @@ import {numericStringValidator} from "@/src/validators/utilValidators.js";
 import {courseSerializer} from "@/src/presentation/response/serializers/entities/CourseSerializer.js";
 import {APIError} from "@/src/utils/errors/APIError.js";
 import {StatusCodes} from "http-status-codes";
+import {UserService} from "@/src/services/UserService.js";
+import {validateFileObjectKey} from "@/src/controllers/ControllerUtils.js";
 
 class CourseController {
     async getCourses(request: FastifyRequest, reply: FastifyReply) {
@@ -58,31 +60,31 @@ class CourseController {
 
     async createCourse(request: FastifyRequest, reply: FastifyReply) {
         const bodyValidator = z.object({
-            data: z.object({
-                languageCode: languageCodeValidator,
-                title: courseTitleValidator,
-                description: courseDescriptionValidator.optional(),
-                level: courseLevelValidator.optional(),
-                isPublic: z.boolean().optional(),
-            }),
+            languageCode: languageCodeValidator,
+            title: courseTitleValidator,
+            description: courseDescriptionValidator.optional(),
+            level: courseLevelValidator.optional(),
+            isPublic: z.boolean().optional(),
             image: z.string().optional(),
         });
         const body = bodyValidator.parse(request.body);
 
         const languageService = new LanguageService(request.em);
-        const language = await languageService.findLanguage({code: body.data.languageCode});
+        const language = await languageService.findLanguage({code: body.languageCode});
         if (!language)
             throw new ValidationAPIError({language: "not found"});
         if (!language.isSupported)
             throw new ValidationAPIError({language: "not supported"});
-
+        const userService = new UserService(request.em);
+        if (body.image)
+            body.image = await validateFileObjectKey(userService, request.user as User, body.image, "courseImage", "image");
         const courseService = new CourseService(request.em);
         const course = await courseService.createCourse({
             language: language,
-            title: body.data.title,
-            description: body.data.description,
-            isPublic: body.data.isPublic,
-            level: body.data.level,
+            title: body.title,
+            description: body.description,
+            isPublic: body.isPublic,
+            level: body.level,
             image: body.image,
         }, request.user as User);
         reply.status(201).send(courseSerializer.serialize(course));
@@ -105,13 +107,11 @@ class CourseController {
         const pathParams = pathParamsValidator.parse(request.params);
 
         const bodyValidator = z.object({
-            data: z.object({
-                title: courseTitleValidator,
-                description: courseDescriptionValidator,
-                isPublic: z.boolean(),
-                level: courseLevelValidator,
-                lessonsOrder: z.array(z.number().int().min(0)).refine(e => new Set(e).size === e.length)
-            }),
+            title: courseTitleValidator,
+            description: courseDescriptionValidator,
+            isPublic: z.boolean(),
+            level: courseLevelValidator,
+            lessonsOrder: z.array(z.number().int().min(0)).refine(e => new Set(e).size === e.length),
             image: z.string().optional()
         });
         const body = bodyValidator.parse(request.body);
@@ -125,17 +125,20 @@ class CourseController {
         if (request?.user?.profile !== course.addedBy)
             throw course.isPublic ? new ForbiddenAPIError() : new NotFoundAPIError("Course");
 
-        const lessonOrderIdSet = new Set(body.data.lessonsOrder);
-        if (course.lessons.length !== body.data.lessonsOrder.length || !course.lessons.getItems().map(c => c.id).every(l => lessonOrderIdSet.has(l)))
+        const lessonOrderIdSet = new Set(body.lessonsOrder);
+        if (course.lessons.length !== body.lessonsOrder.length || !course.lessons.getItems().map(c => c.id).every(l => lessonOrderIdSet.has(l)))
             throw new ValidationAPIError({lessonsOrder: "ids don't match course lessons: cannot add or remove lessons through this endpoint, only reorder"});
+        const userService = new UserService(request.em);
+        if (body.image)
+            body.image = await validateFileObjectKey(userService, request.user as User, body.image, "courseImage", "image");
 
         const updatedCourse = await courseService.updateCourse(course, {
-            title: body.data.title,
-            description: body.data.description,
-            isPublic: body.data.isPublic,
+            title: body.title,
+            description: body.description,
+            isPublic: body.isPublic,
             image: body.image,
-            level: body.data.level,
-            lessonsOrder: body.data.lessonsOrder
+            level: body.level,
+            lessonsOrder: body.lessonsOrder
         }, request.user as User);
         reply.status(200).send(courseSerializer.serialize(updatedCourse));
     }

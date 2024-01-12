@@ -13,6 +13,14 @@ import {User} from "@/src/models/entities/auth/User.js";
 import {Session} from "@/src/models/entities/auth/Session.js";
 import {ValidationAPIError} from "@/src/utils/errors/ValidationAPIError.js";
 import {bioValidator} from "@/src/validators/profileValidators.js";
+import {createPresignedPost} from "@aws-sdk/s3-presigned-post";
+import crypto from "crypto";
+import {Conditions as PolicyEntry} from "@aws-sdk/s3-presigned-post/dist-types/types.js";
+import {s3Client} from "@/src/storageClient.js";
+import * as process from "process";
+import mime from "mime-types";
+import {fileFields, fileFieldsKeys, FileFieldType} from "@/src/validators/fileValidator.js";
+import {validateFileObjectKey} from "@/src/controllers/ControllerUtils.js";
 
 class UserController {
     async signUp(request: FastifyRequest, reply: FastifyReply) {
@@ -213,18 +221,64 @@ class UserController {
 
     async updateUserProfile(request: FastifyRequest, reply: FastifyReply) {
         const bodyValidator = z.object({
-            data: z.object({
-                bio: bioValidator
-            }),
+            bio: bioValidator,
             profilePicture: z.string().optional()
         });
         const body = bodyValidator.parse(request.body);
         const userService = new UserService(request.em);
         const user = request.user as User;
 
-        await userService.updateUserProfile(user, {bio: body.data.bio, profilePicture: body.profilePicture});
+        if (body.profilePicture)
+            body.profilePicture = await validateFileObjectKey(userService, request.user as User, body.profilePicture, "profilePicture", "profilePicture");
+        await userService.updateUserProfile(user, {bio: body.bio, profilePicture: body.profilePicture});
 
         reply.status(200).send(profileSerializer.serialize(user.profile));
+    }
+
+    async generateFileUploadPresignedUrl(request: FastifyRequest, reply: FastifyReply) {
+        const bodyValidator = z.object({
+            fileField: z.string().refine(f => fileFieldsKeys.includes(f), {message: "Unexpected file field"}).transform(f => f as keyof FileFieldType),
+            fileExtension: z.string().min(1).max(20).regex(/^[^.\s\x00-\x1f/\\:*?"<>|]+$/).toLowerCase(),
+        });
+        const body = bodyValidator.parse(request.body);
+        const fieldMetaData = fileFields[body.fileField];
+        if (!fieldMetaData.extensions.includes(body.fileExtension))
+            throw new ValidationAPIError({fileExtension: `Unexpected file extension must be one of: ${fieldMetaData.extensions.join(", ")}`});
+
+        const bucket = process.env.SPACES_BUCKET!;
+        const fileName = `${Date.now()}-${crypto.randomBytes(8).toString("hex")}`;
+        const objectKey = `${fieldMetaData.path}/${fileName}.${body.fileExtension}`;
+        const mimeType = mime.lookup(body.fileExtension) as string;
+        const conditions = [
+            {bucket: bucket},
+            {key: objectKey},
+            {"Content-Type": mimeType},
+            ["content-length-range", fieldMetaData.minSize, fieldMetaData.maxSize],
+        ] as PolicyEntry[];
+
+        const {url: uploadUrl, fields: formFields} = await createPresignedPost(s3Client, {
+            Bucket: bucket,
+            Key: objectKey,
+            Conditions: conditions,
+            Fields: {
+                acl: "public-read",
+                "Content-Type": mimeType
+            },
+            Expires: 300,
+        });
+        const userService = new UserService(request.em);
+        await userService.generateFileUploadRequest({
+            user: request.user as User,
+            fileField: body.fileField,
+            fileUrl: new URL(objectKey, uploadUrl).href,
+            objectKey: objectKey
+        });
+
+        reply.status(200).send({
+            uploadUrl: uploadUrl,
+            uploadFormFields: formFields,
+            objectKey: objectKey
+        });
     }
 }
 

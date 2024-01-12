@@ -6,6 +6,11 @@ declare global {
             MIKRO_ORM_CLIENT_URL?: string;
             EMAIL_SERVER_HOST?: string;
             EMAIL_SERVER_PORT?: string;
+            SPACES_ACCESS_KEY?: string;
+            SPACES_SECRET_KEY?: string;
+            SPACES_ENDPOINT?: string;
+            SPACES_BUCKET?: string;
+            SPACES_REGION?: string;
         }
     }
 }

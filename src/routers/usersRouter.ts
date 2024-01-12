@@ -2,8 +2,6 @@ import {userController} from "@/src/controllers/UserController.js";
 import {FastifyPluginCallback} from "fastify/types/plugin.js";
 import {requiresAuth} from "@/src/middlewares/requiresAuth.js";
 import {requiresEmailConfirmed} from "@/src/middlewares/requiresEmailConfirmed.js";
-import {deleteFileOnFail, fileUploadMiddleware} from "@/src/middlewares/fileUploadMiddleware.js";
-import {profilePictureValidator} from "@/src/validators/profileValidators.js";
 
 export const userRouter: FastifyPluginCallback = function (fastify, options, done) {
     fastify.post(`/users/`, userController.signUp);
@@ -19,11 +17,12 @@ export const userRouter: FastifyPluginCallback = function (fastify, options, don
     fastify.post(`/password-reset-tokens/`, userController.requestPasswordReset);
     fastify.post(`/password-reset-tokens/verify/`, userController.verifyPasswordResetToken);
     fastify.put(`/users/me/profile/`, {
-        preHandler: [requiresAuth, requiresEmailConfirmed,
-            fileUploadMiddleware({"profilePicture": {path: "profiles/pictures", validate: profilePictureValidator}})],
+        preHandler: [requiresAuth, requiresEmailConfirmed],
         handler: userController.updateUserProfile,
-        onResponse: deleteFileOnFail,
     });
+
+    fastify.post(`/file-upload-requests/`, userController.generateFileUploadPresignedUrl);
+
 
     done();
 };

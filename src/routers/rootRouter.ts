@@ -9,7 +9,7 @@ import FastifyFormidable from "fastify-formidable";
 import {vocabRouter} from "@/src/routers/vocabRouter.js";
 import {meaningRouter} from "@/src/routers/meaningRouter.js";
 import {dictionaryRouter} from "@/src/routers/dictionaryRouter.js";
-
+//TODO return 400 for invalid json not 500
 const rootRouter: FastifyPluginCallback = function rootRouter(fastify, options, done) {
     fastify.register(FastifyFormidable);
     fastify.decorateRequest("em", null);
