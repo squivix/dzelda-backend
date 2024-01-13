@@ -23,6 +23,7 @@
   "license": "MIT",
   "dependencies": {
     "@aws-sdk/client-s3": "^3.489.0",
+    "@aws-sdk/client-ses": "^3.490.0",
     "@aws-sdk/s3-presigned-post": "^3.489.0",
     "@fastify/cors": "^8.3.0",
     "@fastify/one-line-logger": "^1.0.0",

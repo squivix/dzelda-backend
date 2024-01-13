@@ -17,7 +17,6 @@ const rootRouter: FastifyPluginCallback = function rootRouter(fastify, options, 
     fastify.addHook("preParsing", attachOrmEntityManagerMiddleware);
     fastify.addHook("preParsing", authMiddleware);
 
-
     fastify.register(userRouter);
     fastify.register(languageRouter);
     fastify.register(coursesRouter);

@@ -62,7 +62,7 @@ export const fileFields = {
     },
     lessonAudio: {
         path: "uploads/lessons/audio",
-        extensions: ["mp3"],
+        extensions: ["mp3", "m4a"],
         minSize: 1,
         maxSize: mebiBytes(100)
     },

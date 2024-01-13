@@ -20,8 +20,7 @@ export const userRouter: FastifyPluginCallback = function (fastify, options, don
         preHandler: [requiresAuth, requiresEmailConfirmed],
         handler: userController.updateUserProfile,
     });
-
-    fastify.post(`/file-upload-requests/`, userController.generateFileUploadPresignedUrl);
+    fastify.post(`/file-upload-requests/`, {handler: userController.generateFileUploadPresignedUrl, preHandler: [requiresAuth, requiresEmailConfirmed]});
 
 
     done();
