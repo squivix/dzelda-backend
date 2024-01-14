@@ -11,33 +11,25 @@ import {API_ROOT, orm} from "@/src/server.js";
 import {Lesson} from "@/src/models/entities/Lesson.js";
 import {Course} from "@/src/models/entities/Course.js";
 import {InjectOptions} from "light-my-request";
-import {
-    buildQueryString,
-    createComparator,
-    fetchRequest,
-    fetchWithFiles,
-    mockValidateFileFields,
-    readSampleFile
-} from "@/tests/integration/utils.js";
+import {buildQueryString, createComparator, fetchRequest} from "@/tests/integration/utils.js";
 import {lessonSerializer} from "@/src/presentation/response/serializers/entities/LessonSerializer.js";
 import {faker} from "@faker-js/faker";
 import {randomCase} from "@/tests/utils.js";
 import {Vocab} from "@/src/models/entities/Vocab.js";
 import {EntityRepository} from "@mikro-orm/core";
 import {MapLessonVocab} from "@/src/models/entities/MapLessonVocab.js";
-import fs from "fs-extra";
 import {MapPastViewerLesson} from "@/src/models/entities/MapPastViewerLesson.js";
-import * as fileValidatorExports from "@/src/validators/fileValidator.js";
 import * as constantExports from "@/src/constants.js";
 import {TEMP_ROOT_FILE_UPLOAD_DIR} from "@/tests/testConstants.js";
-import {escapeRegExp} from "@/src/utils/utils.js";
 import {parsers} from "dzelda-common";
 import {lessonHistoryEntrySerializer} from "@/src/presentation/response/serializers/mappings/LessonHistoryEntrySerializer.js";
+import {FileUploadRequestFactory} from "@/src/seeders/factories/FileUploadRequestFactory.js";
 
 interface LocalTestContext extends TestContext {
     languageFactory: LanguageFactory;
     lessonFactory: LessonFactory;
     courseFactory: CourseFactory;
+    fileUploadRequestFactory: FileUploadRequestFactory;
     courseRepo: CourseRepo;
     lessonRepo: LessonRepo;
     vocabRepo: EntityRepository<Vocab>;
@@ -59,6 +51,7 @@ beforeEach<LocalTestContext>(async (context) => {
     context.lessonFactory = new LessonFactory(context.em);
     context.courseFactory = new CourseFactory(context.em);
     context.languageFactory = new LanguageFactory(context.em);
+    context.fileUploadRequestFactory = new FileUploadRequestFactory(context.em);
 
     context.vocabRepo = context.em.getRepository(Vocab);
     context.lessonRepo = context.em.getRepository(Lesson) as LessonRepo;
@@ -634,23 +627,13 @@ describe("GET lessons/", () => {
 
 /**{@link LessonController#createLesson}*/
 describe("POST lessons/", () => {
-    const makeRequest = async ({data, files = {}}: {
-        data: object; files?: { [key: string]: { value: ""; } | { value: Buffer; fileName?: string, mimeType?: string } };
-    }, authToken?: string) => {
-        return await fetchWithFiles({
-            options: {
-                method: "POST",
-                url: "lessons/",
-                body: {
-                    data: data,
-                    files: files
-                },
-            },
-            authToken: authToken
-        });
+    const makeRequest = async (body: object, authToken?: string) => {
+        return await fetchRequest({
+            method: "POST",
+            url: "lessons/",
+            body: body,
+        }, authToken);
     };
-    const imagePathRegex = new RegExp(`^${escapeRegExp(`${TEMP_ROOT_FILE_UPLOAD_DIR}/lessons/images/`)}.*-.*\.(png|jpg|jpeg)$`);
-    const audioPathRegex = new RegExp(`^${escapeRegExp(`${TEMP_ROOT_FILE_UPLOAD_DIR}/lessons/audios/`)}.*-.*\.(mp3|wav)$`);
 
     describe("If all fields are valid a new lesson should be created and return 201", () => {
         test<LocalTestContext>("If optional fields are missing use default values", async (context) => {
@@ -661,11 +644,9 @@ describe("POST lessons/", () => {
             const newLesson = context.lessonFactory.makeOne({course, image: "", audio: ""});
 
             const response = await makeRequest({
-                data: {
-                    title: newLesson.title,
-                    text: newLesson.text,
-                    courseId: course.id,
-                }
+                title: newLesson.title,
+                text: newLesson.text,
+                courseId: course.id,
             }, session.token);
 
             expect(response.statusCode).to.equal(201);
@@ -690,17 +671,16 @@ describe("POST lessons/", () => {
             const session = await context.sessionFactory.createOne({user: user});
             const language = await context.languageFactory.createOne();
             const course = await context.courseFactory.createOne({language: language, addedBy: user.profile, lessons: []});
-            const newLesson = context.lessonFactory.makeOne({course: course});
+            const imageUploadRequest = await context.fileUploadRequestFactory.createOne({user: user, fileField: "lessonImage"});
+            const audioUploadRequest = await context.fileUploadRequestFactory.createOne({user: user, fileField: "lessonAudio"});
+            const newLesson = context.lessonFactory.makeOne({course: course, image: imageUploadRequest.fileUrl, audio: audioUploadRequest.fileUrl});
 
             const response = await makeRequest({
-                data: {
-                    title: newLesson.title,
-                    text: newLesson.text,
-                    courseId: course.id,
-                }, files: {
-                    image: readSampleFile("images/lorem-ipsum-69_8KB-1_1ratio.png"),
-                    audio: readSampleFile("audio/piano-97_9MB.wav"),
-                }
+                title: newLesson.title,
+                text: newLesson.text,
+                courseId: course.id,
+                image: imageUploadRequest.objectKey,
+                audio: audioUploadRequest.objectKey,
             }, session.token);
 
             expect(response.statusCode).to.equal(201);
@@ -709,10 +689,8 @@ describe("POST lessons/", () => {
             if (!dbRecord) return;
             await context.lessonRepo.annotateLessonsWithUserData([dbRecord], user);
             await context.courseRepo.annotateCoursesWithUserData([dbRecord.course], user);
-            expect(response.json()).toMatchObject(lessonSerializer.serialize(newLesson, {ignore: ["addedOn", "image", "audio"]}));
-            expect(lessonSerializer.serialize(dbRecord)).toMatchObject(lessonSerializer.serialize(newLesson, {ignore: ["addedOn", "image", "audio"]}));
-            expect(dbRecord.image).toEqual(expect.stringMatching(imagePathRegex));
-            expect(dbRecord.audio).toEqual(expect.stringMatching(audioPathRegex));
+            expect(response.json()).toMatchObject(lessonSerializer.serialize(newLesson, {ignore: ["addedOn"]}));
+            expect(lessonSerializer.serialize(dbRecord)).toMatchObject(lessonSerializer.serialize(newLesson, {ignore: ["addedOn",]}));
 
             const parser = parsers["en"];
             const lessonWordsText = parser.splitWords(parser.parseText(`${newLesson.title} ${newLesson.text}`), {keepDuplicates: false});
@@ -729,11 +707,9 @@ describe("POST lessons/", () => {
         const newLesson = context.lessonFactory.makeOne({course: course});
 
         const response = await makeRequest({
-            data: {
-                title: newLesson.title,
-                text: newLesson.text,
-                courseId: course.id,
-            }
+            title: newLesson.title,
+            text: newLesson.text,
+            courseId: course.id,
         });
 
         expect(response.statusCode).to.equal(401);
@@ -745,11 +721,9 @@ describe("POST lessons/", () => {
         const newLesson = context.lessonFactory.makeOne({course: course});
 
         const response = await makeRequest({
-            data: {
-                title: newLesson.title,
-                text: newLesson.text,
-                courseId: course.id,
-            }
+            title: newLesson.title,
+            text: newLesson.text,
+            courseId: course.id,
         }, session.token);
 
         expect(response.statusCode).to.equal(403);
@@ -763,10 +737,8 @@ describe("POST lessons/", () => {
             let newLesson: Lesson | null = context.lessonFactory.makeOne({course: course});
 
             const response = await makeRequest({
-                data: {
-                    text: newLesson.text,
-                    courseId: course.id,
-                }
+                text: newLesson.text,
+                courseId: course.id,
             }, session.token);
 
             expect(response.statusCode).to.equal(400);
@@ -779,10 +751,8 @@ describe("POST lessons/", () => {
             let newLesson: Lesson | null = context.lessonFactory.makeOne({course: course});
 
             const response = await makeRequest({
-                data: {
-                    title: newLesson.title,
-                    courseId: course.id,
-                }
+                title: newLesson.title,
+                courseId: course.id,
             }, session.token);
 
             expect(response.statusCode).to.equal(400);
@@ -795,16 +765,14 @@ describe("POST lessons/", () => {
             let newLesson: Lesson | null = context.lessonFactory.makeOne({course: course});
 
             const response = await makeRequest({
-                data: {
-                    title: newLesson.title,
-                    text: newLesson.text,
-                }
+                title: newLesson.title,
+                text: newLesson.text,
             }, session.token);
 
             expect(response.statusCode).to.equal(400);
         });
     });
-    describe("If fields are invalid return 4xx code", async () => {
+    describe("If fields are invalid return 400", async () => {
         test<LocalTestContext>("If title is invalid return 400", async (context) => {
             const user = await context.userFactory.createOne();
             const session = await context.sessionFactory.createOne({user: user});
@@ -813,11 +781,9 @@ describe("POST lessons/", () => {
             let newLesson: Lesson | null = context.lessonFactory.makeOne({course: course});
 
             const response = await makeRequest({
-                data: {
-                    title: faker.random.alphaNumeric(200),
-                    text: newLesson.text,
-                    courseId: course.id,
-                }
+                title: faker.random.alphaNumeric(200),
+                text: newLesson.text,
+                courseId: course.id,
             }, session.token);
 
             expect(response.statusCode).to.equal(400);
@@ -830,11 +796,9 @@ describe("POST lessons/", () => {
             let newLesson: Lesson | null = context.lessonFactory.makeOne({course: course});
 
             const response = await makeRequest({
-                data: {
-                    title: newLesson.text,
-                    text: faker.random.words(40000),
-                    courseId: course.id,
-                }
+                title: newLesson.text,
+                text: faker.random.words(40000),
+                courseId: course.id,
             }, session.token);
 
             expect(response.statusCode).to.equal(400);
@@ -848,11 +812,9 @@ describe("POST lessons/", () => {
                 let newLesson: Lesson | null = context.lessonFactory.makeOne({course: course});
 
                 const response = await makeRequest({
-                    data: {
-                        title: newLesson.title,
-                        text: newLesson.text,
-                        courseId: faker.random.alpha(3),
-                    }
+                    title: newLesson.title,
+                    text: newLesson.text,
+                    courseId: faker.random.alpha(3),
                 }, session.token);
 
                 expect(response.statusCode).to.equal(400);
@@ -865,11 +827,9 @@ describe("POST lessons/", () => {
                 let newLesson: Lesson | null = context.lessonFactory.makeOne({course: course});
 
                 const response = await makeRequest({
-                    data: {
-                        title: newLesson.title,
-                        text: newLesson.text,
-                        courseId: faker.datatype.number({min: 10000}),
-                    }
+                    title: newLesson.title,
+                    text: newLesson.text,
+                    courseId: faker.datatype.number({min: 10000}),
                 }, session.token);
 
                 expect(response.statusCode).to.equal(400);
@@ -883,11 +843,9 @@ describe("POST lessons/", () => {
                 let newLesson: Lesson | null = context.lessonFactory.makeOne({course: course});
 
                 const response = await makeRequest({
-                    data: {
-                        title: newLesson.title,
-                        text: newLesson.text,
-                        courseId: course.id,
-                    }
+                    title: newLesson.title,
+                    text: newLesson.text,
+                    courseId: course.id,
                 }, session.token);
 
                 expect(response.statusCode).to.equal(400);
@@ -901,114 +859,132 @@ describe("POST lessons/", () => {
                 let newLesson: Lesson | null = context.lessonFactory.makeOne({course: course});
 
                 const response = await makeRequest({
-                    data: {
-                        title: newLesson.title,
-                        text: newLesson.text,
-                        courseId: course.id,
-                    }
+                    title: newLesson.title,
+                    text: newLesson.text,
+                    courseId: course.id,
                 }, session.token);
 
                 expect(response.statusCode).to.equal(403);
             });
         });
-        describe("If image is invalid return 4xx", async () => {
-            test<LocalTestContext>("If image is not a jpeg or png return 415", async (context) => {
+        describe("If image is invalid return 400", async () => {
+            test<LocalTestContext>("If file upload request with key does not exist return 400", async (context) => {
                 const user = await context.userFactory.createOne();
                 const session = await context.sessionFactory.createOne({user: user});
                 const language = await context.languageFactory.createOne();
-                const course = await context.courseFactory.createOne({language, addedBy: user.profile, lessons: []});
-                let newLesson: Lesson | null = context.lessonFactory.makeOne({course: course});
+                const course = await context.courseFactory.createOne({language: language, addedBy: user.profile, lessons: []});
+                const imageUploadRequest = await context.fileUploadRequestFactory.makeOne({user: user, fileField: "lessonImage"});
+                const audioUploadRequest = await context.fileUploadRequestFactory.createOne({user: user, fileField: "lessonAudio"});
+                const newLesson = context.lessonFactory.makeOne({course: course, image: imageUploadRequest.fileUrl, audio: audioUploadRequest.fileUrl});
 
                 const response = await makeRequest({
-                    data: {
-                        title: newLesson.title,
-                        text: newLesson.text,
-                        courseId: course.id,
-                    },
-                    files: {image: readSampleFile("images/audio-468_4KB.png")}
+                    title: newLesson.title,
+                    text: newLesson.text,
+                    courseId: course.id,
+                    image: imageUploadRequest.objectKey,
+                    audio: audioUploadRequest.objectKey,
                 }, session.token);
 
-                expect(response.statusCode).to.equal(415);
+                expect(response.statusCode).to.equal(400);
             });
-            // test<LocalTestContext>("If image is corrupted return 415", async (context) => {});
-            test<LocalTestContext>("If the image file is more than 500KB return 413", async (context) => {
+            test<LocalTestContext>("If file upload request with key was not requested by user return 400", async (context) => {
                 const user = await context.userFactory.createOne();
+                const otherUser = await context.userFactory.createOne();
                 const session = await context.sessionFactory.createOne({user: user});
                 const language = await context.languageFactory.createOne();
-                const course = await context.courseFactory.createOne({language, addedBy: user.profile, lessons: []});
-                let newLesson: Lesson | null = context.lessonFactory.makeOne({course: course});
-                vi.spyOn(fileValidatorExports, "validateFileFields").mockImplementation(mockValidateFileFields({"image": 510 * 1024}));
+                const course = await context.courseFactory.createOne({language: language, addedBy: user.profile, lessons: []});
+                const imageUploadRequest = await context.fileUploadRequestFactory.createOne({user: otherUser, fileField: "lessonImage"});
+                const audioUploadRequest = await context.fileUploadRequestFactory.createOne({user: user, fileField: "lessonAudio"});
+                const newLesson = context.lessonFactory.makeOne({course: course, image: imageUploadRequest.fileUrl, audio: audioUploadRequest.fileUrl});
 
                 const response = await makeRequest({
-                    data: {
-                        title: newLesson.title,
-                        text: newLesson.text,
-                        courseId: course.id,
-                    },
-                    files: {image: readSampleFile("images/lorem-ipsum-69_8KB-1_1ratio.png")}
+                    title: newLesson.title,
+                    text: newLesson.text,
+                    courseId: course.id,
+                    image: imageUploadRequest.objectKey,
+                    audio: audioUploadRequest.objectKey,
                 }, session.token);
 
-                expect(response.statusCode).to.equal(413);
+                expect(response.statusCode).to.equal(400);
             });
-            test<LocalTestContext>("If the image is not square return 400", async (context) => {
+            test<LocalTestContext>("If file upload request with key is not for lessonImage field return 400", async (context) => {
                 const user = await context.userFactory.createOne();
                 const session = await context.sessionFactory.createOne({user: user});
                 const language = await context.languageFactory.createOne();
-                const course = await context.courseFactory.createOne({language, addedBy: user.profile, lessons: []});
-                let newLesson: Lesson | null = context.lessonFactory.makeOne({course: course});
+                const course = await context.courseFactory.createOne({language: language, addedBy: user.profile, lessons: []});
+                const imageUploadRequest = await context.fileUploadRequestFactory.createOne({user: user, fileField: "courseImage"});
+                const audioUploadRequest = await context.fileUploadRequestFactory.createOne({user: user, fileField: "lessonAudio"});
+                const newLesson = context.lessonFactory.makeOne({course: course, image: imageUploadRequest.fileUrl, audio: audioUploadRequest.fileUrl});
 
                 const response = await makeRequest({
-                    data: {
-                        title: newLesson.title,
-                        text: newLesson.text,
-                        courseId: course.id,
-                    },
-                    files: {image: readSampleFile("images/rectangle-5_2KB-2_1ratio.png")}
+                    title: newLesson.title,
+                    text: newLesson.text,
+                    courseId: course.id,
+                    image: imageUploadRequest.objectKey,
+                    audio: audioUploadRequest.objectKey,
                 }, session.token);
 
                 expect(response.statusCode).to.equal(400);
             });
         });
-        describe("If audio is invalid return 4xx", async () => {
-            test<LocalTestContext>("If audio is not a mpeg or wav or ogg return 415", async (context) => {
+        describe("If audio is invalid return 400", async () => {
+            test<LocalTestContext>("If file upload request with key does not exist return 400", async (context) => {
                 const user = await context.userFactory.createOne();
                 const session = await context.sessionFactory.createOne({user: user});
                 const language = await context.languageFactory.createOne();
-                const course = await context.courseFactory.createOne({language, addedBy: user.profile, lessons: []});
-                let newLesson: Lesson | null = context.lessonFactory.makeOne({course: course});
+                const course = await context.courseFactory.createOne({language: language, addedBy: user.profile, lessons: []});
+                const imageUploadRequest = await context.fileUploadRequestFactory.createOne({user: user, fileField: "lessonImage"});
+                const audioUploadRequest = await context.fileUploadRequestFactory.makeOne({user: user, fileField: "lessonAudio"});
+                const newLesson = context.lessonFactory.makeOne({course: course, image: imageUploadRequest.fileUrl, audio: audioUploadRequest.fileUrl});
 
                 const response = await makeRequest({
-                    data: {
-                        title: newLesson.title,
-                        text: newLesson.text,
-                        courseId: course.id,
-                    },
-                    files: {audio: readSampleFile("audio/image-69_8KB.wav")}
+                    title: newLesson.title,
+                    text: newLesson.text,
+                    courseId: course.id,
+                    image: imageUploadRequest.objectKey,
+                    audio: audioUploadRequest.objectKey,
                 }, session.token);
 
-                expect(response.statusCode).to.equal(415);
+                expect(response.statusCode).to.equal(400);
             });
-            // test<LocalTestContext>("If audio is corrupted return 415", async (context) => {});
-            test<LocalTestContext>("If the audio file is more than 100MB return 413", async (context) => {
+            test<LocalTestContext>("If file upload request with key was not requested by user return 400", async (context) => {
+                const user = await context.userFactory.createOne();
+                const otherUser = await context.userFactory.createOne();
+                const session = await context.sessionFactory.createOne({user: user});
+                const language = await context.languageFactory.createOne();
+                const course = await context.courseFactory.createOne({language: language, addedBy: user.profile, lessons: []});
+                const imageUploadRequest = await context.fileUploadRequestFactory.createOne({user: user, fileField: "lessonImage"});
+                const audioUploadRequest = await context.fileUploadRequestFactory.createOne({user: otherUser, fileField: "lessonAudio"});
+                const newLesson = context.lessonFactory.makeOne({course: course, image: imageUploadRequest.fileUrl, audio: audioUploadRequest.fileUrl});
+
+                const response = await makeRequest({
+                    title: newLesson.title,
+                    text: newLesson.text,
+                    courseId: course.id,
+                    image: imageUploadRequest.objectKey,
+                    audio: audioUploadRequest.objectKey,
+                }, session.token);
+
+                expect(response.statusCode).to.equal(400);
+            });
+            test<LocalTestContext>("If file upload request with key is not for lessonAudio field return 400", async (context) => {
                 const user = await context.userFactory.createOne();
                 const session = await context.sessionFactory.createOne({user: user});
                 const language = await context.languageFactory.createOne();
-                const course = await context.courseFactory.createOne({language, addedBy: user.profile, lessons: []});
-                let newLesson: Lesson | null = context.lessonFactory.makeOne({course: course});
-                vi.spyOn(fileValidatorExports, "validateFileFields").mockImplementation(mockValidateFileFields({"audio": 110 * 1024 * 1024}));
+                const course = await context.courseFactory.createOne({language: language, addedBy: user.profile, lessons: []});
+                const imageUploadRequest = await context.fileUploadRequestFactory.createOne({user: user, fileField: "lessonImage"});
+                const audioUploadRequest = await context.fileUploadRequestFactory.createOne({user: user, fileField: "courseAudio"});
+                const newLesson = context.lessonFactory.makeOne({course: course, image: imageUploadRequest.fileUrl, audio: audioUploadRequest.fileUrl});
 
                 const response = await makeRequest({
-                    data: {
-                        title: newLesson.title,
-                        text: newLesson.text,
-                        courseId: course.id,
-                    },
-                    files: {
-                        audio: readSampleFile("audio/piano-97_9MB.wav")
-                    }
+                    title: newLesson.title,
+                    text: newLesson.text,
+                    courseId: course.id,
+                    image: imageUploadRequest.objectKey,
+                    audio: audioUploadRequest.objectKey,
                 }, session.token);
 
-                expect(response.statusCode).to.equal(413);
+                expect(response.statusCode).to.equal(400);
             });
         });
     });
@@ -1107,23 +1083,13 @@ describe("GET lessons/:lessonId/", () => {
 
 /**{@link LessonController#updateLesson}*/
 describe("PUT lessons/:lessonId/", () => {
-    const makeRequest = async (lessonId: number | string, {data, files = {}}: {
-        data?: object; files?: { [key: string]: { value: ""; } | { value: Buffer; fileName?: string, mimeType?: string } };
-    }, authToken?: string) => {
-        return await fetchWithFiles({
-            options: {
-                method: "PUT",
-                url: `lessons/${lessonId}/`,
-                body: {
-                    data: data,
-                    files: files
-                },
-            },
-            authToken: authToken
-        });
+    const makeRequest = async (lessonId: number | string, body: object, authToken?: string) => {
+        return await fetchRequest({
+            method: "PUT",
+            url: `lessons/${lessonId}/`,
+            body: body,
+        }, authToken);
     };
-    const imagePathRegex = new RegExp(`^${escapeRegExp(`${TEMP_ROOT_FILE_UPLOAD_DIR}/lessons/images/`)}.*-.*\.(png|jpg|jpeg)$`);
-    const audioPathRegex = new RegExp(`^${escapeRegExp(`${TEMP_ROOT_FILE_UPLOAD_DIR}/lessons/audios/`)}.*-.*\.(mp3|wav)$`);
 
     describe("If the lesson exists, user is logged in as author and all fields are valid, update lesson and return 200", async () => {
         test<LocalTestContext>("If optional field are not provided, keep old values", async (context) => {
@@ -1140,11 +1106,9 @@ describe("PUT lessons/:lessonId/", () => {
             const updatedLesson = context.lessonFactory.makeOne({course: newCourse});
 
             const response = await makeRequest(lesson.id, {
-                data: {
-                    courseId: updatedLesson.course.id,
-                    title: updatedLesson.title,
-                    text: updatedLesson.text
-                }
+                courseId: updatedLesson.course.id,
+                title: updatedLesson.title,
+                text: updatedLesson.text
             }, session.token);
 
             const dbRecord = await context.lessonRepo.findOneOrFail({id: lesson.id}, {populate: ["course", "course.language", "course.addedBy.user"]});
@@ -1177,20 +1141,16 @@ describe("PUT lessons/:lessonId/", () => {
                 const course = await context.courseFactory.createOne({addedBy: author.profile, language: language, lessons: []});
                 const newCourse = await context.courseFactory.createOne({addedBy: author.profile, language: language});
                 let lesson = await context.lessonFactory.createOne({course: course});
-                const oldLessonImage = lesson.image;
-                const oldLessonAudio = lesson.audio;
-                const updatedLesson = context.lessonFactory.makeOne({course: newCourse});
+                const imageUploadRequest = await context.fileUploadRequestFactory.createOne({user: author, fileField: "lessonImage"});
+                const audioUploadRequest = await context.fileUploadRequestFactory.createOne({user: author, fileField: "lessonAudio"});
+                const updatedLesson = context.lessonFactory.makeOne({course: newCourse, image: imageUploadRequest.fileUrl, audio: audioUploadRequest.fileUrl});
 
                 const response = await makeRequest(lesson.id, {
-                    data: {
-                        courseId: newCourse.id,
-                        title: updatedLesson.title,
-                        text: updatedLesson.text,
-                    },
-                    files: {
-                        image: readSampleFile("images/lorem-ipsum-69_8KB-1_1ratio.png"),
-                        audio: readSampleFile("audio/piano-97_9MB.wav")
-                    }
+                    courseId: newCourse.id,
+                    title: updatedLesson.title,
+                    text: updatedLesson.text,
+                    image: imageUploadRequest.objectKey,
+                    audio: audioUploadRequest.objectKey
                 }, session.token);
 
                 const dbRecord = await context.lessonRepo.findOneOrFail({id: lesson.id}, {populate: ["course", "course.language", "course.addedBy.user"]});
@@ -1200,13 +1160,8 @@ describe("PUT lessons/:lessonId/", () => {
                 await context.courseRepo.annotateCoursesWithUserData([dbRecord.course], author);
 
                 expect(response.statusCode).to.equal(200);
-                expect(response.json()).toMatchObject(lessonSerializer.serialize(updatedLesson, {ignore: ["addedOn", "audio", "image"]}));
-                expect(lessonSerializer.serialize(dbRecord)).toMatchObject(lessonSerializer.serialize(updatedLesson, {ignore: ["addedOn", "audio", "image"]}));
-                expect(fs.existsSync(dbRecord.image)).toBeTruthy();
-                expect(dbRecord.image).not.toEqual(oldLessonImage);
-                expect(dbRecord.audio).not.toEqual(oldLessonAudio);
-                expect(dbRecord.image).toEqual(expect.stringMatching(imagePathRegex));
-                expect(dbRecord.audio).toEqual(expect.stringMatching(audioPathRegex));
+                expect(response.json()).toMatchObject(lessonSerializer.serialize(updatedLesson, {ignore: ["addedOn"]}));
+                expect(lessonSerializer.serialize(dbRecord)).toMatchObject(lessonSerializer.serialize(updatedLesson, {ignore: ["addedOn"]}));
                 expect(dbRecord.orderInCourse).toEqual(await newCourse.lessons.loadCount() - 1);
 
                 const parser = parsers["en"];
@@ -1228,12 +1183,11 @@ describe("PUT lessons/:lessonId/", () => {
                 const updatedLesson = context.lessonFactory.makeOne({course: newCourse, image: "", audio: ""});
 
                 const response = await makeRequest(lesson.id, {
-                    data: {
-                        courseId: newCourse.id,
-                        title: updatedLesson.title,
-                        text: updatedLesson.text,
-                    },
-                    files: {image: {value: ""}, audio: {value: ""}}
+                    courseId: newCourse.id,
+                    title: updatedLesson.title,
+                    text: updatedLesson.text,
+                    image: "",
+                    audio: ""
                 }, session.token);
 
                 const dbRecord = await context.lessonRepo.findOneOrFail({id: lesson.id}, {populate: ["course", "course.language", "course.addedBy.user"]});
@@ -1267,11 +1221,9 @@ describe("PUT lessons/:lessonId/", () => {
         const updatedLesson = context.lessonFactory.makeOne({course: course});
 
         const response = await makeRequest(lesson.id, {
-            data: {
-                courseId: newCourse.id,
-                title: updatedLesson.title,
-                text: updatedLesson.text,
-            }
+            courseId: newCourse.id,
+            title: updatedLesson.title,
+            text: updatedLesson.text,
         });
 
         expect(response.statusCode).to.equal(401);
@@ -1287,11 +1239,9 @@ describe("PUT lessons/:lessonId/", () => {
         const updatedLesson = context.lessonFactory.makeOne({course: course});
 
         const response = await makeRequest(lesson.id, {
-            data: {
-                courseId: newCourse.id,
-                title: updatedLesson.title,
-                text: updatedLesson.text,
-            }
+            courseId: newCourse.id,
+            title: updatedLesson.title,
+            text: updatedLesson.text,
         }, session.token);
 
         expect(response.statusCode).to.equal(403);
@@ -1305,11 +1255,9 @@ describe("PUT lessons/:lessonId/", () => {
         const updatedLesson = await context.lessonFactory.makeOne({course: course});
 
         const response = await makeRequest(faker.random.numeric(20), {
-            data: {
-                courseId: newCourse.id,
-                title: updatedLesson.title,
-                text: updatedLesson.text,
-            }
+            courseId: newCourse.id,
+            title: updatedLesson.title,
+            text: updatedLesson.text,
         }, session.token);
 
         expect(response.statusCode).to.equal(404);
@@ -1325,11 +1273,9 @@ describe("PUT lessons/:lessonId/", () => {
         const updatedLesson = await context.lessonFactory.makeOne({course: course});
 
         const response = await makeRequest(lesson.id, {
-            data: {
-                courseId: newCourse.id,
-                title: updatedLesson.title,
-                text: updatedLesson.text,
-            }
+            courseId: newCourse.id,
+            title: updatedLesson.title,
+            text: updatedLesson.text,
         }, session.token);
 
         expect(response.statusCode).to.equal(404);
@@ -1345,11 +1291,9 @@ describe("PUT lessons/:lessonId/", () => {
         const updatedLesson = await context.lessonFactory.makeOne({course: course});
 
         const response = await makeRequest(lesson.id, {
-            data: {
-                courseId: newCourse.id,
-                title: updatedLesson.title,
-                text: updatedLesson.text,
-            }
+            courseId: newCourse.id,
+            title: updatedLesson.title,
+            text: updatedLesson.text,
         }, session.token);
 
         expect(response.statusCode).to.equal(403);
@@ -1366,10 +1310,8 @@ describe("PUT lessons/:lessonId/", () => {
             const updatedLesson = await context.lessonFactory.makeOne({course: course});
 
             const response = await makeRequest(lesson.id, {
-                data: {
-                    courseId: newCourse.id,
-                    text: updatedLesson.text,
-                }
+                courseId: newCourse.id,
+                text: updatedLesson.text,
             }, session.token);
             expect(response.statusCode).to.equal(400);
         });
@@ -1384,10 +1326,8 @@ describe("PUT lessons/:lessonId/", () => {
             const updatedLesson = await context.lessonFactory.makeOne({course: course});
 
             const response = await makeRequest(lesson.id, {
-                data: {
-                    courseId: newCourse.id,
-                    title: updatedLesson.title,
-                }
+                courseId: newCourse.id,
+                title: updatedLesson.title,
             }, session.token);
             expect(response.statusCode).to.equal(400);
         });
@@ -1401,10 +1341,8 @@ describe("PUT lessons/:lessonId/", () => {
             const updatedLesson = await context.lessonFactory.makeOne({course: course});
 
             const response = await makeRequest(lesson.id, {
-                data: {
-                    title: updatedLesson.title,
-                    text: updatedLesson.text,
-                }
+                title: updatedLesson.title,
+                text: updatedLesson.text,
             }, session.token);
             expect(response.statusCode).to.equal(400);
         });
@@ -1419,7 +1357,7 @@ describe("PUT lessons/:lessonId/", () => {
             expect(response.statusCode).to.equal(400);
         });
     });
-    describe("If fields are invalid return 4xx", async () => {
+    describe("If fields are invalid return 400", async () => {
         test<LocalTestContext>("If title is invalid return 400", async (context) => {
             const author = await context.userFactory.createOne();
             const session = await context.sessionFactory.createOne({user: author});
@@ -1431,11 +1369,9 @@ describe("PUT lessons/:lessonId/", () => {
             const updatedLesson = await context.lessonFactory.makeOne({course: course});
 
             const response = await makeRequest(lesson.id, {
-                data: {
-                    courseId: newCourse.id,
-                    title: faker.random.alpha({count: 150}),
-                    text: updatedLesson.text,
-                }
+                courseId: newCourse.id,
+                title: faker.random.alpha({count: 150}),
+                text: updatedLesson.text,
             }, session.token);
             expect(response.statusCode).to.equal(400);
         });
@@ -1450,11 +1386,9 @@ describe("PUT lessons/:lessonId/", () => {
             const updatedLesson = await context.lessonFactory.makeOne({course: course});
 
             const response = await makeRequest(lesson.id, {
-                data: {
-                    courseId: newCourse.id,
-                    title: updatedLesson.title,
-                    text: faker.random.alpha({count: 60_000}),
-                }
+                courseId: newCourse.id,
+                title: updatedLesson.title,
+                text: faker.random.alpha({count: 60_000}),
             }, session.token);
             expect(response.statusCode).to.equal(400);
         });
@@ -1469,11 +1403,9 @@ describe("PUT lessons/:lessonId/", () => {
                 const updatedLesson = await context.lessonFactory.makeOne({course: course});
 
                 const response = await makeRequest(lesson.id, {
-                    data: {
-                        courseId: faker.random.alpha(3),
-                        title: updatedLesson.title,
-                        text: updatedLesson.text,
-                    }
+                    courseId: faker.random.alpha(3),
+                    title: updatedLesson.title,
+                    text: updatedLesson.text,
                 }, session.token);
 
                 expect(response.statusCode).to.equal(400);
@@ -1488,11 +1420,9 @@ describe("PUT lessons/:lessonId/", () => {
                 const updatedLesson = context.lessonFactory.makeOne({course: course});
 
                 const response = await makeRequest(lesson.id, {
-                    data: {
-                        courseId: faker.datatype.number({min: 10000}),
-                        title: updatedLesson.title,
-                        text: updatedLesson.text,
-                    }
+                    courseId: faker.datatype.number({min: 10000}),
+                    title: updatedLesson.title,
+                    text: updatedLesson.text,
                 }, session.token);
 
                 expect(response.statusCode).to.equal(400);
@@ -1509,11 +1439,9 @@ describe("PUT lessons/:lessonId/", () => {
                 const updatedLesson = await context.lessonFactory.makeOne({course: course});
 
                 const response = await makeRequest(lesson.id, {
-                    data: {
-                        courseId: newCourse.id,
-                        title: updatedLesson.title,
-                        text: updatedLesson.text,
-                    }
+                    courseId: newCourse.id,
+                    title: updatedLesson.title,
+                    text: updatedLesson.text,
                 }, session.token);
                 expect(response.statusCode).to.equal(400);
             });
@@ -1529,11 +1457,9 @@ describe("PUT lessons/:lessonId/", () => {
                 const updatedLesson = await context.lessonFactory.makeOne({course: course});
 
                 const response = await makeRequest(lesson.id, {
-                    data: {
-                        courseId: newCourse.id,
-                        title: updatedLesson.title,
-                        text: updatedLesson.text,
-                    }
+                    courseId: newCourse.id,
+                    title: updatedLesson.title,
+                    text: updatedLesson.text,
                 }, session.token);
                 expect(response.statusCode).to.equal(403);
             });
@@ -1558,118 +1484,144 @@ describe("PUT lessons/:lessonId/", () => {
                 expect(response.statusCode).to.equal(400);
             });
         });
-        describe("If image is invalid return 4xx", async () => {
-            test<LocalTestContext>("If image is not a jpeg or png return 415", async (context) => {
+        describe("If image is invalid return 400", async () => {
+            test<LocalTestContext>("If file upload request with key does not exist return 400", async (context) => {
                 const author = await context.userFactory.createOne();
                 const session = await context.sessionFactory.createOne({user: author});
                 const language = await context.languageFactory.createOne();
+
                 const course = await context.courseFactory.createOne({addedBy: author.profile, language: language, lessons: []});
                 const newCourse = await context.courseFactory.createOne({addedBy: author.profile, language: language});
                 let lesson = await context.lessonFactory.createOne({course: course});
-
-                const updatedLesson = await context.lessonFactory.makeOne({course: course});
+                const imageUploadRequest = await context.fileUploadRequestFactory.makeOne({user: author, fileField: "lessonImage"});
+                const audioUploadRequest = await context.fileUploadRequestFactory.createOne({user: author, fileField: "lessonAudio"});
+                const updatedLesson = context.lessonFactory.makeOne({course: newCourse, image: imageUploadRequest.fileUrl, audio: audioUploadRequest.fileUrl});
 
                 const response = await makeRequest(lesson.id, {
-                    data: {
-                        courseId: newCourse.id,
-                        title: updatedLesson.title,
-                        text: updatedLesson.text,
-                    },
-                    files: {image: readSampleFile("images/audio-468_4KB.png")}
+                    courseId: newCourse.id,
+                    title: updatedLesson.title,
+                    text: updatedLesson.text,
+                    image: imageUploadRequest.objectKey,
+                    audio: audioUploadRequest.objectKey
                 }, session.token);
 
-                expect(response.statusCode).to.equal(415);
+                expect(response.statusCode).to.equal(400);
             });
-            // test<LocalTestContext>("If image is corrupted return 415", async (context) => {});
-            test<LocalTestContext>("If the image file is more than 500KB return 413", async (context) => {
+            test<LocalTestContext>("If file upload request with key was not requested by user return 400", async (context) => {
                 const author = await context.userFactory.createOne();
+                const otherUser = await context.userFactory.createOne();
                 const session = await context.sessionFactory.createOne({user: author});
                 const language = await context.languageFactory.createOne();
+
                 const course = await context.courseFactory.createOne({addedBy: author.profile, language: language, lessons: []});
                 const newCourse = await context.courseFactory.createOne({addedBy: author.profile, language: language});
                 let lesson = await context.lessonFactory.createOne({course: course});
-                const updatedLesson = await context.lessonFactory.makeOne({course: course});
-                vi.spyOn(fileValidatorExports, "validateFileFields").mockImplementation(mockValidateFileFields({"image": 510 * 1024}));
+                const imageUploadRequest = await context.fileUploadRequestFactory.createOne({user: otherUser, fileField: "lessonImage"});
+                const audioUploadRequest = await context.fileUploadRequestFactory.createOne({user: author, fileField: "lessonAudio"});
+                const updatedLesson = context.lessonFactory.makeOne({course: newCourse, image: imageUploadRequest.fileUrl, audio: audioUploadRequest.fileUrl});
 
                 const response = await makeRequest(lesson.id, {
-                    data: {
-                        courseId: newCourse.id,
-                        title: updatedLesson.title,
-                        text: updatedLesson.text,
-                    },
-                    files: {image: readSampleFile("images/lorem-ipsum-69_8KB-1_1ratio.png")}
+                    courseId: newCourse.id,
+                    title: updatedLesson.title,
+                    text: updatedLesson.text,
+                    image: imageUploadRequest.objectKey,
+                    audio: audioUploadRequest.objectKey
                 }, session.token);
 
-                expect(response.statusCode).to.equal(413);
+                expect(response.statusCode).to.equal(400);
             });
-            test<LocalTestContext>("If the image is not square return 400", async (context) => {
+            test<LocalTestContext>("If file upload request with key is not for lessonImage field return 400", async (context) => {
                 const author = await context.userFactory.createOne();
                 const session = await context.sessionFactory.createOne({user: author});
                 const language = await context.languageFactory.createOne();
+
                 const course = await context.courseFactory.createOne({addedBy: author.profile, language: language, lessons: []});
                 const newCourse = await context.courseFactory.createOne({addedBy: author.profile, language: language});
                 let lesson = await context.lessonFactory.createOne({course: course});
-
-                const updatedLesson = await context.lessonFactory.makeOne({course: course});
+                const imageUploadRequest = await context.fileUploadRequestFactory.createOne({user: author, fileField: "courseImage"});
+                const audioUploadRequest = await context.fileUploadRequestFactory.createOne({user: author, fileField: "lessonAudio"});
+                const updatedLesson = context.lessonFactory.makeOne({course: newCourse, image: imageUploadRequest.fileUrl, audio: audioUploadRequest.fileUrl});
 
                 const response = await makeRequest(lesson.id, {
-                    data: {
-                        courseId: newCourse.id,
-                        title: updatedLesson.title,
-                        text: updatedLesson.text,
-                    },
-                    files: {image: readSampleFile("images/rectangle-5_2KB-2_1ratio.png")}
+                    courseId: newCourse.id,
+                    title: updatedLesson.title,
+                    text: updatedLesson.text,
+                    image: imageUploadRequest.objectKey,
+                    audio: audioUploadRequest.objectKey
                 }, session.token);
 
                 expect(response.statusCode).to.equal(400);
             });
         });
-        describe("If audio is invalid return 4xx", async () => {
-            test<LocalTestContext>("If audio is not a mpeg or wav or ogg return 415", async (context) => {
+        describe("If audio is invalid return 400", async () => {
+            test<LocalTestContext>("If file upload request with key does not exist return 400", async (context) => {
                 const author = await context.userFactory.createOne();
                 const session = await context.sessionFactory.createOne({user: author});
                 const language = await context.languageFactory.createOne();
+
                 const course = await context.courseFactory.createOne({addedBy: author.profile, language: language, lessons: []});
                 const newCourse = await context.courseFactory.createOne({addedBy: author.profile, language: language});
                 let lesson = await context.lessonFactory.createOne({course: course});
-
-                const updatedLesson = await context.lessonFactory.makeOne({course: course});
+                const imageUploadRequest = await context.fileUploadRequestFactory.createOne({user: author, fileField: "lessonImage"});
+                const audioUploadRequest = await context.fileUploadRequestFactory.makeOne({user: author, fileField: "lessonAudio"});
+                const updatedLesson = context.lessonFactory.makeOne({course: newCourse, image: imageUploadRequest.fileUrl, audio: audioUploadRequest.fileUrl});
 
                 const response = await makeRequest(lesson.id, {
-                    data: {
-                        courseId: newCourse.id,
-                        title: updatedLesson.title,
-                        text: updatedLesson.text,
-                    },
-                    files: {audio: readSampleFile("audio/image-69_8KB.wav")}
+                    courseId: newCourse.id,
+                    title: updatedLesson.title,
+                    text: updatedLesson.text,
+                    image: imageUploadRequest.objectKey,
+                    audio: audioUploadRequest.objectKey
                 }, session.token);
 
-                expect(response.statusCode).to.equal(415);
+                expect(response.statusCode).to.equal(400);
             });
-            // test<LocalTestContext>("If audio is corrupted return 415", async (context) => {});
-            test<LocalTestContext>("If the audio file is more than 100MB return 413", async (context) => {
+            test<LocalTestContext>("If file upload request with key was not requested by user return 400", async (context) => {
+                const author = await context.userFactory.createOne();
+                const otherUser = await context.userFactory.createOne();
+                const session = await context.sessionFactory.createOne({user: author});
+                const language = await context.languageFactory.createOne();
+
+                const course = await context.courseFactory.createOne({addedBy: author.profile, language: language, lessons: []});
+                const newCourse = await context.courseFactory.createOne({addedBy: author.profile, language: language});
+                let lesson = await context.lessonFactory.createOne({course: course});
+                const imageUploadRequest = await context.fileUploadRequestFactory.createOne({user: author, fileField: "lessonImage"});
+                const audioUploadRequest = await context.fileUploadRequestFactory.createOne({user: otherUser, fileField: "lessonAudio"});
+                const updatedLesson = context.lessonFactory.makeOne({course: newCourse, image: imageUploadRequest.fileUrl, audio: audioUploadRequest.fileUrl});
+
+                const response = await makeRequest(lesson.id, {
+                    courseId: newCourse.id,
+                    title: updatedLesson.title,
+                    text: updatedLesson.text,
+                    image: imageUploadRequest.objectKey,
+                    audio: audioUploadRequest.objectKey
+                }, session.token);
+
+                expect(response.statusCode).to.equal(400);
+            });
+            test<LocalTestContext>("If file upload request with key is not for lessonAudio field return 400", async (context) => {
                 const author = await context.userFactory.createOne();
                 const session = await context.sessionFactory.createOne({user: author});
                 const language = await context.languageFactory.createOne();
+
                 const course = await context.courseFactory.createOne({addedBy: author.profile, language: language, lessons: []});
                 const newCourse = await context.courseFactory.createOne({addedBy: author.profile, language: language});
                 let lesson = await context.lessonFactory.createOne({course: course});
-                const updatedLesson = await context.lessonFactory.makeOne({course: course});
-                vi.spyOn(fileValidatorExports, "validateFileFields").mockImplementation(mockValidateFileFields({"audio": 110 * 1024 * 1024}));
+                const imageUploadRequest = await context.fileUploadRequestFactory.createOne({user: author, fileField: "lessonImage"});
+                const audioUploadRequest = await context.fileUploadRequestFactory.createOne({user: author, fileField: "courseAudio"});
+                const updatedLesson = context.lessonFactory.makeOne({course: newCourse, image: imageUploadRequest.fileUrl, audio: audioUploadRequest.fileUrl});
 
                 const response = await makeRequest(lesson.id, {
-                    data: {
-                        courseId: newCourse.id,
-                        title: updatedLesson.title,
-                        text: updatedLesson.text,
-                    },
-                    files: {
-                        audio: readSampleFile("audio/piano-97_9MB.wav")
-                    }
+                    courseId: newCourse.id,
+                    title: updatedLesson.title,
+                    text: updatedLesson.text,
+                    image: imageUploadRequest.objectKey,
+                    audio: audioUploadRequest.objectKey
                 }, session.token);
 
-                expect(response.statusCode).to.equal(413);
+                expect(response.statusCode).to.equal(400);
             });
+
         });
     });
 });
@@ -2464,7 +2416,7 @@ describe("POST users/me/lessons/history/", () => {
 
 /**{@link LessonController#getNextLessonInCourse}*/
 describe("GET courses/:courseId/lessons/:lessonId/next/", () => {
-    const makeRequest = async (courseId: number, lessonId: number | string, authToken?: string) => {
+    const makeRequest = async (courseId: string | number, lessonId: number | string, authToken?: string) => {
         const options: InjectOptions = {
             method: "GET",
             url: `courses/${courseId}/lessons/${lessonId}/next/`,

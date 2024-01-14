@@ -29,4 +29,8 @@ export class LessonFactory extends CustomFactory<Lesson> {
             overrideParameters.pastViewersCount = Array.isArray(overrideParameters?.pastViewers) ? overrideParameters.pastViewers.length : 1;
         return super.makeDefinition(overrideParameters);
     }
+
+    override makeDefinitions(amount: number, overrideParameters?: EntityData<Lesson>): EntityData<Lesson>[] {
+        return [...Array(amount)].map((_, i) => this.makeDefinition({...overrideParameters, orderInCourse: i, isLastInCourse: i == amount - 1}));
+    }
 }

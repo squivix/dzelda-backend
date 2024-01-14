@@ -6,7 +6,7 @@ import {Profile} from "@/src/models/entities/Profile.js";
 import {LanguageFactory} from "@/src/seeders/factories/LanguageFactory.js";
 import {Language} from "@/src/models/entities/Language.js";
 import {orm} from "@/src/server.js";
-import {fetchRequest, fetchWithFiles, mockValidateFileFields, parseUrlQueryString, readSampleFile} from "@/tests/integration/utils.js";
+import {fetchRequest, parseUrlQueryString} from "@/tests/integration/utils.js";
 import {EntityRepository} from "@mikro-orm/core";
 import {InjectOptions} from "light-my-request";
 import {userSerializer} from "@/src/presentation/response/serializers/entities/UserSerializer.js";
@@ -23,14 +23,14 @@ import {EmailConfirmationToken} from "@/src/models/entities/auth/EmailConfirmati
 import {ProfileFactory} from "@/src/seeders/factories/ProfileFactory.js";
 import {profileSerializer} from "@/src/presentation/response/serializers/entities/ProfileSerializer.js";
 import {ProfileSchema} from "dzelda-common";
-import fs from "fs-extra";
-import * as fileValidatorExports from "@/src/validators/fileValidator.js";
+import {FileUploadRequestFactory} from "@/src/seeders/factories/FileUploadRequestFactory.js";
 
 interface LocalTestContext extends TestContext {
     languageRepo: EntityRepository<Language>;
     userRepo: EntityRepository<User>;
     profileRepo: EntityRepository<Profile>;
     languageFactory: LanguageFactory;
+    fileUploadRequestFactory: FileUploadRequestFactory;
 }
 
 beforeEach<LocalTestContext>(async (context) => {
@@ -40,6 +40,7 @@ beforeEach<LocalTestContext>(async (context) => {
     context.userFactory = new UserFactory(context.em);
     context.profileFactory = new ProfileFactory(context.em);
     context.languageFactory = new LanguageFactory(context.em);
+    context.fileUploadRequestFactory = new FileUploadRequestFactory(context.em);
     context.sessionFactory = new SessionFactory(context.em);
     context.languageRepo = context.em.getRepository(Language);
     context.userRepo = context.em.getRepository(User);
@@ -933,29 +934,12 @@ describe("PUT users/me/password/", function () {
 
 /**{@link UserController#updateUserProfile}*/
 describe("PUT users/me/profile/", function () {
-    const makeRequest = async ({data, files = {}}: {
-        data?: object;
-        files?: {
-            [key: string]: {
-                value: "";
-            } | {
-                value: Buffer;
-                fileName?: string,
-                mimeType?: string
-            }
-        };
-    }, authToken?: string) => {
-        return await fetchWithFiles({
-            options: {
-                method: "PUT",
-                url: `users/me/profile/`,
-                body: {
-                    data: data,
-                    files: files
-                },
-            },
-            authToken: authToken
-        });
+    const makeRequest = async (body: object, authToken?: string) => {
+        return await fetchRequest({
+            method: "PUT",
+            url: `users/me/profile/`,
+            body: body,
+        }, authToken);
     };
 
     describe("If user is logged in and all fields are valid update user profile, return 200", async (context) => {
@@ -965,9 +949,7 @@ describe("PUT users/me/profile/", function () {
             const updatedProfile = context.profileFactory.makeOne();
 
             const response = await makeRequest({
-                data: {
-                    bio: updatedProfile.bio
-                }
+                bio: updatedProfile.bio
             }, session.token);
             await context.em.refresh(user.profile);
 
@@ -982,10 +964,8 @@ describe("PUT users/me/profile/", function () {
             const updatedProfile = context.profileFactory.makeOne({profilePicture: ""});
 
             const response = await makeRequest({
-                data: {
-                    bio: updatedProfile.bio
-                },
-                files: {profilePicture: {value: ""}}
+                bio: updatedProfile.bio,
+                profilePicture: ""
             }, session.token);
             await context.em.refresh(user.profile);
 
@@ -997,39 +977,27 @@ describe("PUT users/me/profile/", function () {
         test<LocalTestContext>("If new profile picture is provided, update profile picture", async (context) => {
             const user = await context.userFactory.createOne();
             const session = await context.sessionFactory.createOne({user});
-            const updatedProfile = context.profileFactory.makeOne({});
+            const fileUploadRequest = await context.fileUploadRequestFactory.createOne({user: user, fileField: "profilePicture"});
+            const updatedProfile = context.profileFactory.makeOne({profilePicture: fileUploadRequest.fileUrl});
 
             const response = await makeRequest({
-                data: {
-                    bio: updatedProfile.bio
-                },
-                files: {profilePicture: readSampleFile("images/lorem-ipsum-69_8KB-1_1ratio.png")}
+                bio: updatedProfile.bio,
+                profilePicture: fileUploadRequest.objectKey
             }, session.token);
             await context.em.refresh(user.profile);
 
             expect(response.statusCode).to.equal(200);
             expect(response.json()).toEqual(profileSerializer.serialize(user.profile));
-            expect(fs.existsSync(user.profile.profilePicture)).toBeTruthy();
-            const updatedFields: (keyof ProfileSchema)[] = ["bio"];
+            const updatedFields: (keyof ProfileSchema)[] = ["profilePicture", "bio"];
             expect(profileSerializer.serialize(user.profile, {include: updatedFields})).toEqual(profileSerializer.serialize(updatedProfile, {include: updatedFields}));
         });
     });
     describe("If required fields are missing return 400", async (context) => {
-        test<LocalTestContext>("If data is missing return 400", async (context) => {
-            const user = await context.userFactory.createOne();
-            const session = await context.sessionFactory.createOne({user});
-
-            const response = await makeRequest({}, session.token);
-
-            expect(response.statusCode).to.equal(400);
-        });
         test<LocalTestContext>("If bio is missing return 400", async (context) => {
             const user = await context.userFactory.createOne();
             const session = await context.sessionFactory.createOne({user});
 
-            const response = await makeRequest({
-                data: {}
-            }, session.token);
+            const response = await makeRequest({}, session.token);
 
             expect(response.statusCode).to.equal(400);
         });
@@ -1040,52 +1008,52 @@ describe("PUT users/me/profile/", function () {
             const session = await context.sessionFactory.createOne({user});
 
             const response = await makeRequest({
-                data: {bio: faker.random.alpha(300)}
+                bio: faker.random.alpha(300)
             }, session.token);
 
             expect(response.statusCode).to.equal(400);
         });
-        describe("If profile picture is invalid return 4XX", async (context) => {
-            test<LocalTestContext>("If profile picture is not a jpeg or png return 415", async (context) => {
+        describe("If profile picture is invalid return 400", async (context) => {
+            test<LocalTestContext>("If file upload request with key does not exist return 400", async (context) => {
                 const user = await context.userFactory.createOne();
                 const session = await context.sessionFactory.createOne({user});
-                const updatedProfile = context.profileFactory.makeOne({});
+                const fileUploadRequest = await context.fileUploadRequestFactory.makeOne({user: user, fileField: "profilePicture"});
+                const updatedProfile = context.profileFactory.makeOne({profilePicture: fileUploadRequest.fileUrl});
 
                 const response = await makeRequest({
-                    data: {
-                        bio: updatedProfile.bio
-                    },
-                    files: {profilePicture: readSampleFile("images/audio-468_4KB.png")}
+                    bio: updatedProfile.bio,
+                    profilePicture: fileUploadRequest.objectKey
                 }, session.token);
+                await context.em.refresh(user.profile);
 
-                expect(response.statusCode).to.equal(415);
+                expect(response.statusCode).to.equal(400);
             });
-            test<LocalTestContext>("If the profile picture file is more than 500KB return 413", async (context) => {
+            test<LocalTestContext>("If file upload request with key was not requested by user return 400", async (context) => {
                 const user = await context.userFactory.createOne();
+                const otherUser = await context.userFactory.createOne();
                 const session = await context.sessionFactory.createOne({user});
-                const updatedProfile = context.profileFactory.makeOne({});
+                const fileUploadRequest = await context.fileUploadRequestFactory.createOne({user: otherUser, fileField: "profilePicture"});
+                const updatedProfile = context.profileFactory.makeOne({profilePicture: fileUploadRequest.fileUrl});
 
-                vi.spyOn(fileValidatorExports, "validateFileFields").mockImplementation(mockValidateFileFields({"profilePicture": 510 * 1024}));
                 const response = await makeRequest({
-                    data: {
-                        bio: updatedProfile.bio
-                    },
-                    files: {profilePicture: readSampleFile("images/lorem-ipsum-69_8KB-1_1ratio.png")}
+                    bio: updatedProfile.bio,
+                    profilePicture: fileUploadRequest.objectKey
                 }, session.token);
+                await context.em.refresh(user.profile);
 
-                expect(response.statusCode).to.equal(413);
+                expect(response.statusCode).to.equal(400);
             });
-            test<LocalTestContext>("If the profile picture is not square return 400", async (context) => {
+            test<LocalTestContext>("If file upload request with key is not for profilePicture field return 400", async (context) => {
                 const user = await context.userFactory.createOne();
                 const session = await context.sessionFactory.createOne({user});
-                const updatedProfile = context.profileFactory.makeOne({});
+                const fileUploadRequest = await context.fileUploadRequestFactory.createOne({user: user, fileField: "courseImage"});
+                const updatedProfile = context.profileFactory.makeOne({profilePicture: fileUploadRequest.fileUrl});
 
                 const response = await makeRequest({
-                    data: {
-                        bio: updatedProfile.bio
-                    },
-                    files: {profilePicture: readSampleFile("images/rectangle-5_2KB-2_1ratio.png")}
+                    bio: updatedProfile.bio,
+                    profilePicture: fileUploadRequest.objectKey
                 }, session.token);
+                await context.em.refresh(user.profile);
 
                 expect(response.statusCode).to.equal(400);
             });
@@ -1095,7 +1063,7 @@ describe("PUT users/me/profile/", function () {
         const updatedProfile = context.profileFactory.makeOne();
 
         const response = await makeRequest({
-            data: {bio: updatedProfile.bio}
+            bio: updatedProfile.bio
         });
 
         expect(response.statusCode).to.equal(401);
@@ -1106,9 +1074,14 @@ describe("PUT users/me/profile/", function () {
         const updatedProfile = context.profileFactory.makeOne();
 
         const response = await makeRequest({
-            data: {bio: updatedProfile.bio}
+            bio: updatedProfile.bio
         }, session.token);
 
         expect(response.statusCode).to.equal(403);
     });
+});
+
+/**{@link UserController#generateFileUploadPresignedUrl}*/
+describe.todo("POST file-upload-requests/", function () {
+    test.todo("");
 });

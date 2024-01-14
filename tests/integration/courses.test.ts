@@ -1,13 +1,6 @@
 import {beforeEach, describe, expect, test, TestContext, vi} from "vitest";
 import {orm} from "@/src/server.js";
-import {
-    buildQueryString,
-    createComparator,
-    fetchRequest,
-    fetchWithFiles,
-    mockValidateFileFields,
-    readSampleFile
-} from "@/tests/integration/utils.js";
+import {buildQueryString, createComparator, fetchRequest, readSampleFile} from "@/tests/integration/utils.js";
 import {UserFactory} from "@/src/seeders/factories/UserFactory.js";
 import {SessionFactory} from "@/src/seeders/factories/SessionFactory.js";
 import {ProfileFactory} from "@/src/seeders/factories/ProfileFactory.js";
@@ -19,18 +12,16 @@ import {LanguageFactory} from "@/src/seeders/factories/LanguageFactory.js";
 import {faker} from "@faker-js/faker";
 import {randomCase, randomEnum, randomEnums, shuffleArray} from "@/tests/utils.js";
 import {defaultVocabsByLevel} from "@/src/models/enums/VocabLevel.js";
-import fs from "fs-extra";
 import {LessonFactory} from "@/src/seeders/factories/LessonFactory.js";
 import {LessonRepo} from "@/src/models/repos/LessonRepo.js";
 import {Lesson} from "@/src/models/entities/Lesson.js";
 import {courseSerializer} from "@/src/presentation/response/serializers/entities/CourseSerializer";
 import {CourseSchema, LessonSchema} from "dzelda-common";
-import * as fileValidatorExports from "@/src/validators/fileValidator.js";
 import * as constantExports from "@/src/constants.js";
 import {TEMP_ROOT_FILE_UPLOAD_DIR} from "@/tests/testConstants.js";
-import {escapeRegExp} from "@/src/utils/utils.js";
 import {MapBookmarkerCourse} from "@/src/models/entities/MapBookmarkerCourse.js";
 import {LanguageLevel} from "@/src/models/enums/LanguageLevel.js";
+import {FileUploadRequestFactory} from "@/src/seeders/factories/FileUploadRequestFactory.js";
 
 interface LocalTestContext extends TestContext {
     courseRepo: CourseRepo;
@@ -38,6 +29,7 @@ interface LocalTestContext extends TestContext {
     languageFactory: LanguageFactory;
     courseFactory: CourseFactory;
     lessonFactory: LessonFactory;
+    fileUploadRequestFactory: FileUploadRequestFactory;
 }
 
 beforeEach<LocalTestContext>(async (context) => {
@@ -49,6 +41,7 @@ beforeEach<LocalTestContext>(async (context) => {
     context.sessionFactory = new SessionFactory(context.em);
     context.courseFactory = new CourseFactory(context.em);
     context.lessonFactory = new LessonFactory(context.em);
+    context.fileUploadRequestFactory = new FileUploadRequestFactory(context.em);
     context.languageFactory = new LanguageFactory(context.em);
     context.lessonRepo = context.em.getRepository(Lesson) as LessonRepo;
     context.courseRepo = context.em.getRepository(Course) as CourseRepo;
@@ -576,31 +569,14 @@ describe("GET courses/", function () {
 
 /**{@link CourseController#createCourse}*/
 describe("POST courses/", function () {
-    const makeRequest = async ({data, files = {}}: {
-        data: object;
-        files?: {
-            [key: string]: {
-                value: "";
-            } | {
-                value: Buffer;
-                fileName?: string,
-                mimeType?: string
-            }
-        };
-    }, authToken?: string) => {
-        return await fetchWithFiles({
-            options: {
-                method: "POST",
-                url: "courses/",
-                body: {
-                    data: data,
-                    files: files
-                },
-            },
-            authToken: authToken
-        });
+    const makeRequest = async (body: object, authToken?: string) => {
+        return await fetchRequest({
+            method: "POST",
+            url: "courses/",
+            body: body
+        }, authToken);
     };
-    const imagePathRegex = new RegExp(`^${escapeRegExp(`${TEMP_ROOT_FILE_UPLOAD_DIR}/courses/images/`)}.*-.*\.(png|jpg|jpeg)$`);
+
     describe("If all fields are valid a new course should be created and return 201", () => {
         test<LocalTestContext>("If optional fields are missing use default values", async (context) => {
             const user = await context.userFactory.createOne();
@@ -619,15 +595,13 @@ describe("POST courses/", function () {
             });
 
             const response = await makeRequest({
-                data: {
-                    title: newCourse.title,
-                    languageCode: language.code,
-                },
+                title: newCourse.title,
+                languageCode: language.code,
             }, session.token);
 
             const responseBody = response.json();
             expect(response.statusCode).to.equal(201);
-            expect(responseBody).toMatchObject(courseSerializer.serialize(newCourse));
+            expect(responseBody).toMatchObject(courseSerializer.serialize(newCourse, {ignore: ["addedOn"]}));
 
             const dbRecord = await context.courseRepo.findOne({title: newCourse.title, language}, {populate: ["lessons"]});
             expect(dbRecord).not.toBeNull();
@@ -638,36 +612,33 @@ describe("POST courses/", function () {
             const user = await context.userFactory.createOne();
             const session = await context.sessionFactory.createOne({user: user});
             const language = await context.languageFactory.createOne();
+            const fileUploadRequest = await context.fileUploadRequestFactory.createOne({user: user, fileField: "courseImage"});
 
-            const imageFileName = "lorem-ipsum-69_8KB-1_1ratio.png";
             const newCourse = context.courseFactory.makeOne({
                 addedBy: user.profile,
                 language: language,
                 lessons: [],
                 level: LanguageLevel.BEGINNER_1,
-                image: `${TEMP_ROOT_FILE_UPLOAD_DIR}/courses/images/${imageFileName}`,
+                image: fileUploadRequest.fileUrl,
                 vocabsByLevel: defaultVocabsByLevel()
             });
             const response = await makeRequest({
-                data: {
-                    title: newCourse.title,
-                    description: newCourse.description,
-                    level: newCourse.level,
-                    languageCode: language.code,
-                    isPublic: newCourse.isPublic,
-                },
-                files: {image: readSampleFile(`images/${imageFileName}`)}
+                title: newCourse.title,
+                description: newCourse.description,
+                level: newCourse.level,
+                languageCode: language.code,
+                isPublic: newCourse.isPublic,
+                image: fileUploadRequest.objectKey,
             }, session.token);
 
             const responseBody = response.json();
             expect(response.statusCode).to.equal(201);
-            expect(responseBody).toEqual(expect.objectContaining(courseSerializer.serialize(newCourse, {ignore: ["image"]})));
-            expect(fs.existsSync(responseBody.image)).toBeTruthy();
+            expect(responseBody).toEqual(expect.objectContaining(courseSerializer.serialize(newCourse)));
 
             const dbRecord = await context.courseRepo.findOne({title: newCourse.title, language}, {populate: ["lessons"]});
             expect(dbRecord).not.toBeNull();
             await context.courseRepo.annotateCoursesWithUserData([dbRecord!], user);
-            expect(dbRecord!.image).toEqual(expect.stringMatching(imagePathRegex));
+            expect(courseSerializer.serialize(dbRecord!)).toMatchObject(courseSerializer.serialize(newCourse));
         });
     });
     test<LocalTestContext>("If user not logged in return 401", async (context) => {
@@ -675,10 +646,8 @@ describe("POST courses/", function () {
         const newCourse = context.courseFactory.makeOne({language: language});
 
         const response = await makeRequest({
-            data: {
-                title: newCourse.title,
-                languageCode: language.code,
-            }
+            title: newCourse.title,
+            languageCode: language.code,
         });
 
         expect(response.statusCode).to.equal(401);
@@ -690,10 +659,8 @@ describe("POST courses/", function () {
         const newCourse = context.courseFactory.makeOne({language: language});
 
         const response = await makeRequest({
-            data: {
-                title: newCourse.title,
-                languageCode: language.code,
-            }
+            title: newCourse.title,
+            languageCode: language.code,
         }, session.token);
 
         expect(response.statusCode).to.equal(403);
@@ -705,7 +672,7 @@ describe("POST courses/", function () {
             const language = await context.languageFactory.createOne();
 
             const response = await makeRequest({
-                data: {languageCode: language.code}
+                languageCode: language.code
             }, session.token);
 
             expect(response.statusCode).to.equal(400);
@@ -716,23 +683,21 @@ describe("POST courses/", function () {
 
             const newCourse = context.courseFactory.makeOne();
             const response = await makeRequest({
-                data: {title: newCourse.title}
+                title: newCourse.title
             }, session.token);
 
             expect(response.statusCode).to.equal(400);
         });
     });
-    describe("If fields are invalid return 4xx code", async () => {
+    describe("If fields are invalid return 400", async () => {
         test<LocalTestContext>("If title is invalid return 400", async (context) => {
             const user = await context.userFactory.createOne();
             const session = await context.sessionFactory.createOne({user: user});
             const language = await context.languageFactory.createOne();
 
             const response = await makeRequest({
-                data: {
-                    title: faker.random.alpha(300),
-                    languageCode: language.code,
-                }
+                title: faker.random.alpha(300),
+                languageCode: language.code,
             }, session.token);
             expect(response.statusCode).to.equal(400);
         });
@@ -744,10 +709,8 @@ describe("POST courses/", function () {
                 const newCourse = context.courseFactory.makeOne({language: language});
 
                 const response = await makeRequest({
-                    data: {
-                        title: newCourse.title,
-                        languageCode: faker.random.alphaNumeric(10),
-                    }
+                    title: newCourse.title,
+                    languageCode: faker.random.alphaNumeric(10),
                 }, session.token);
                 expect(response.statusCode).to.equal(400);
             });
@@ -758,10 +721,8 @@ describe("POST courses/", function () {
                 const newCourse = context.courseFactory.makeOne({language: language});
 
                 const response = await makeRequest({
-                    data: {
-                        title: newCourse.title,
-                        languageCode: faker.random.alpha(4),
-                    }
+                    title: newCourse.title,
+                    languageCode: faker.random.alpha(4),
                 }, session.token);
 
                 expect(response.statusCode).to.equal(400);
@@ -773,10 +734,8 @@ describe("POST courses/", function () {
                 const newCourse = context.courseFactory.makeOne({language: language});
 
                 const response = await makeRequest({
-                    data: {
-                        title: newCourse.title,
-                        languageCode: language.code,
-                    }
+                    title: newCourse.title,
+                    languageCode: language.code,
                 }, session.token);
 
                 expect(response.statusCode).to.equal(400);
@@ -789,11 +748,9 @@ describe("POST courses/", function () {
             const newCourse = context.courseFactory.makeOne({language: language});
 
             const response = await makeRequest({
-                data: {
-                    title: newCourse.title,
-                    languageCode: language.code,
-                    description: faker.random.alpha(600)
-                }
+                title: newCourse.title,
+                languageCode: language.code,
+                description: faker.random.alpha(600)
             }, session.token);
 
             expect(response.statusCode).to.equal(400);
@@ -805,68 +762,86 @@ describe("POST courses/", function () {
             const newCourse = context.courseFactory.makeOne({language: language});
 
             const response = await makeRequest({
-                data: {
-                    title: newCourse.title,
-                    languageCode: language.code,
-                    isPublic: "kinda?"
-                }
+                title: newCourse.title,
+                languageCode: language.code,
+                isPublic: "kinda?"
             }, session.token);
             expect(response.statusCode).to.equal(400);
         });
-        describe("If image is invalid return 4xx", () => {
-            test<LocalTestContext>("If image is not a jpeg or png return 415", async (context) => {
+        describe("If image is invalid return 400", () => {
+            test<LocalTestContext>("If file upload request with key does not exist return 400", async (context) => {
                 const user = await context.userFactory.createOne();
                 const session = await context.sessionFactory.createOne({user: user});
                 const language = await context.languageFactory.createOne();
-                const newCourse = context.courseFactory.makeOne({language: language});
+                const fileUploadRequest = await context.fileUploadRequestFactory.makeOne({user: user, fileField: "courseImage"});
 
+                const newCourse = context.courseFactory.makeOne({
+                    addedBy: user.profile,
+                    language: language,
+                    lessons: [],
+                    level: LanguageLevel.BEGINNER_1,
+                    image: fileUploadRequest.fileUrl,
+                    vocabsByLevel: defaultVocabsByLevel()
+                });
                 const response = await makeRequest({
-                    data: {
-                        title: newCourse.title,
-                        languageCode: language.code,
-                    },
-                    files: {
-                        image: readSampleFile("images/audio-468_4KB.png")
-                    }
+                    title: newCourse.title,
+                    description: newCourse.description,
+                    level: newCourse.level,
+                    languageCode: language.code,
+                    isPublic: newCourse.isPublic,
+                    image: fileUploadRequest.objectKey,
                 }, session.token);
-                expect(response.statusCode).to.equal(415);
-            });
-            test<LocalTestContext>("If the image file is more than 500KB return 413", async (context) => {
-                const user = await context.userFactory.createOne();
-                const session = await context.sessionFactory.createOne({user: user});
-                const language = await context.languageFactory.createOne();
-                const newCourse = context.courseFactory.makeOne({language: language});
-                vi.spyOn(fileValidatorExports, "validateFileFields").mockImplementation(mockValidateFileFields({"image": 510 * 1024}));
-
-                const response = await makeRequest({
-                    data: {
-                        title: newCourse.title,
-                        languageCode: language.code,
-                    },
-                    files: {image: readSampleFile("images/lorem-ipsum-69_8KB-1_1ratio.png")}
-                }, session.token);
-
-                expect(response.statusCode).to.equal(413);
-            });
-            test<LocalTestContext>("If the image is not square return 400", async (context) => {
-                const user = await context.userFactory.createOne();
-                const session = await context.sessionFactory.createOne({user: user});
-                const language = await context.languageFactory.createOne();
-                const newCourse = context.courseFactory.makeOne({language: language});
-
-                const response = await makeRequest({
-                    data: {
-                        title: newCourse.title,
-                        languageCode: language.code,
-                    },
-                    files: {
-                        image: readSampleFile("images/rectangle-5_2KB-2_1ratio.png")
-                    }
-                }, session.token);
-
                 expect(response.statusCode).to.equal(400);
             });
-            // test<LocalTestContext>("If image is corrupted return 415", async (context) => {});
+            test<LocalTestContext>("If file upload request with key was not requested by user return 400", async (context) => {
+                const user = await context.userFactory.createOne();
+                const otherUser = await context.userFactory.createOne();
+                const session = await context.sessionFactory.createOne({user: user});
+                const language = await context.languageFactory.createOne();
+                const fileUploadRequest = await context.fileUploadRequestFactory.createOne({user: otherUser, fileField: "courseImage"});
+
+                const newCourse = context.courseFactory.makeOne({
+                    addedBy: user.profile,
+                    language: language,
+                    lessons: [],
+                    level: LanguageLevel.BEGINNER_1,
+                    image: fileUploadRequest.fileUrl,
+                    vocabsByLevel: defaultVocabsByLevel()
+                });
+                const response = await makeRequest({
+                    title: newCourse.title,
+                    description: newCourse.description,
+                    level: newCourse.level,
+                    languageCode: language.code,
+                    isPublic: newCourse.isPublic,
+                    image: fileUploadRequest.objectKey,
+                }, session.token);
+                expect(response.statusCode).to.equal(400);
+            });
+            test<LocalTestContext>("If file upload request with key is not for courseImage field return 400", async (context) => {
+                const user = await context.userFactory.createOne();
+                const session = await context.sessionFactory.createOne({user: user});
+                const language = await context.languageFactory.createOne();
+                const fileUploadRequest = await context.fileUploadRequestFactory.createOne({user: user, fileField: "lessonImage"});
+
+                const newCourse = context.courseFactory.makeOne({
+                    addedBy: user.profile,
+                    language: language,
+                    lessons: [],
+                    level: LanguageLevel.BEGINNER_1,
+                    image: fileUploadRequest.fileUrl,
+                    vocabsByLevel: defaultVocabsByLevel()
+                });
+                const response = await makeRequest({
+                    title: newCourse.title,
+                    description: newCourse.description,
+                    level: newCourse.level,
+                    languageCode: language.code,
+                    isPublic: newCourse.isPublic,
+                    image: fileUploadRequest.objectKey,
+                }, session.token);
+                expect(response.statusCode).to.equal(400);
+            });
         });
     });
 });
@@ -952,29 +927,12 @@ describe("GET courses/:courseId/", function () {
 
 /**{@link CourseController#updateCourse}*/
 describe("PUT courses/:courseId/", function () {
-    const makeRequest = async (courseId: number | string, {data, files = {}}: {
-        data?: object;
-        files?: {
-            [key: string]: {
-                value: "";
-            } | {
-                value: Buffer;
-                fileName?: string,
-                mimeType?: string
-            }
-        };
-    }, authToken?: string) => {
-        return await fetchWithFiles({
-            options: {
-                method: "PUT",
-                url: `courses/${courseId}/`,
-                body: {
-                    data: data,
-                    files: files
-                },
-            },
-            authToken: authToken
-        });
+    const makeRequest = async (courseId: number | string, body: object, authToken?: string) => {
+        return await fetchRequest({
+            method: "PUT",
+            url: `courses/${courseId}/`,
+            body: body
+        }, authToken);
     };
 
     describe("If the course exists, user is logged in as author and all fields are valid, update course and return 200", async () => {
@@ -993,13 +951,11 @@ describe("PUT courses/:courseId/", function () {
             const shuffledLessonIds = shuffleArray(courseLessons).map(l => l.id);
 
             const response = await makeRequest(course.id, {
-                data: {
-                    title: updatedCourse.title,
-                    description: updatedCourse.description,
-                    level: updatedCourse.level,
-                    isPublic: updatedCourse.isPublic,
-                    lessonsOrder: shuffledLessonIds
-                }
+                title: updatedCourse.title,
+                description: updatedCourse.description,
+                level: updatedCourse.level,
+                isPublic: updatedCourse.isPublic,
+                lessonsOrder: shuffledLessonIds
             }, session.token);
             context.em.clear();
             course = await context.courseRepo.findOneOrFail({id: course.id}, {populate: ["language", "addedBy", "addedBy.user", "addedBy.languagesLearning"]});
@@ -1033,14 +989,12 @@ describe("PUT courses/:courseId/", function () {
             const shuffledLessonIds = shuffleArray(courseLessons).map(l => l.id);
 
             const response = await makeRequest(course.id, {
-                data: {
-                    title: updatedCourse.title,
-                    description: updatedCourse.description,
-                    level: updatedCourse.level,
-                    isPublic: updatedCourse.isPublic,
-                    lessonsOrder: shuffledLessonIds
-                },
-                files: {image: {value: ""}}
+                title: updatedCourse.title,
+                description: updatedCourse.description,
+                level: updatedCourse.level,
+                isPublic: updatedCourse.isPublic,
+                lessonsOrder: shuffledLessonIds,
+                image: ""
             }, session.token);
 
             context.em.clear();
@@ -1061,6 +1015,7 @@ describe("PUT courses/:courseId/", function () {
             const session = await context.sessionFactory.createOne({user: author});
             const language = await context.languageFactory.createOne();
             let course = await context.courseFactory.createOne({addedBy: author.profile, language, lessons: [], image: ""});
+            const fileUploadRequest = await context.fileUploadRequestFactory.createOne({user: author, fileField: "courseImage"});
 
             let lessonCounter = 0;
             let courseLessons = await context.lessonFactory.each(l => {
@@ -1070,19 +1025,18 @@ describe("PUT courses/:courseId/", function () {
             const updatedCourse = context.courseFactory.makeOne({
                 addedBy: author.profile,
                 level: LanguageLevel.BEGINNER_1,
-                language: language
+                language: language,
+                image: fileUploadRequest.fileUrl
             });
             const shuffledLessonIds = shuffleArray(courseLessons).map(l => l.id);
 
             const response = await makeRequest(course.id, {
-                data: {
-                    title: updatedCourse.title,
-                    description: updatedCourse.description,
-                    level: updatedCourse.level,
-                    isPublic: updatedCourse.isPublic,
-                    lessonsOrder: shuffledLessonIds
-                },
-                files: {image: readSampleFile("images/lorem-ipsum-69_8KB-1_1ratio.png")}
+                title: updatedCourse.title,
+                description: updatedCourse.description,
+                level: updatedCourse.level,
+                isPublic: updatedCourse.isPublic,
+                lessonsOrder: shuffledLessonIds,
+                image: fileUploadRequest.objectKey
             }, session.token);
 
             context.em.clear();
@@ -1093,9 +1047,8 @@ describe("PUT courses/:courseId/", function () {
 
             expect(response.statusCode).to.equal(200);
             expect(response.json()).toEqual(courseSerializer.serialize(course));
-            expect(fs.existsSync(course.image)).toBeTruthy();
             expect(response.json().lessons.map((l: LessonSchema) => l.id)).toEqual(shuffledLessonIds);
-            const updatedFields: (keyof CourseSchema)[] = ["title", "description", "isPublic", "level"];
+            const updatedFields: (keyof CourseSchema)[] = ["title", "description", "isPublic", "level", "image"];
             expect(courseSerializer.serialize(course, {include: updatedFields})).toEqual(courseSerializer.serialize(updatedCourse, {include: updatedFields}));
         });
     });
@@ -1112,13 +1065,11 @@ describe("PUT courses/:courseId/", function () {
         const updatedCourse = context.courseFactory.makeOne({addedBy: author.profile, language, level: LanguageLevel.BEGINNER_1});
 
         const response = await makeRequest(course.id, {
-            data: {
-                title: updatedCourse.title,
-                description: updatedCourse.description,
-                level: updatedCourse.level,
-                isPublic: updatedCourse.isPublic,
-                lessonsOrder: shuffleArray(courseLessons).map(l => l.id)
-            }
+            title: updatedCourse.title,
+            description: updatedCourse.description,
+            level: updatedCourse.level,
+            isPublic: updatedCourse.isPublic,
+            lessonsOrder: shuffleArray(courseLessons).map(l => l.id)
         });
 
         expect(response.statusCode).to.equal(401);
@@ -1138,13 +1089,11 @@ describe("PUT courses/:courseId/", function () {
         const updatedCourse = await context.courseFactory.makeOne({addedBy: author.profile, language, level: LanguageLevel.BEGINNER_1});
 
         const response = await makeRequest(course.id, {
-            data: {
-                title: updatedCourse.title,
-                description: updatedCourse.description,
-                level: updatedCourse.level,
-                isPublic: updatedCourse.isPublic,
-                lessonsOrder: shuffleArray(courseLessons).map(l => l.id)
-            }
+            title: updatedCourse.title,
+            description: updatedCourse.description,
+            level: updatedCourse.level,
+            isPublic: updatedCourse.isPublic,
+            lessonsOrder: shuffleArray(courseLessons).map(l => l.id)
         }, session.token);
 
         expect(response.statusCode).to.equal(403);
@@ -1156,13 +1105,11 @@ describe("PUT courses/:courseId/", function () {
         const updatedCourse = await context.courseFactory.makeOne({language, level: LanguageLevel.BEGINNER_1});
 
         const response = await makeRequest(faker.random.numeric(20), {
-            data: {
-                title: updatedCourse.title,
-                description: updatedCourse.description,
-                level: updatedCourse.level,
-                isPublic: updatedCourse.isPublic,
-                lessonsOrder: [1, 2, 3]
-            }
+            title: updatedCourse.title,
+            description: updatedCourse.description,
+            level: updatedCourse.level,
+            isPublic: updatedCourse.isPublic,
+            lessonsOrder: [1, 2, 3]
         }, session.token);
 
         expect(response.statusCode).to.equal(404);
@@ -1188,13 +1135,11 @@ describe("PUT courses/:courseId/", function () {
         const updatedCourse = context.courseFactory.makeOne({addedBy: author.profile, language, level: LanguageLevel.BEGINNER_1});
 
         const response = await makeRequest(course.id, {
-            data: {
-                title: updatedCourse.title,
-                description: updatedCourse.description,
-                level: updatedCourse.level,
-                isPublic: updatedCourse.isPublic,
-                lessonsOrder: shuffleArray(courseLessons).map(l => l.id)
-            }
+            title: updatedCourse.title,
+            description: updatedCourse.description,
+            level: updatedCourse.level,
+            isPublic: updatedCourse.isPublic,
+            lessonsOrder: shuffleArray(courseLessons).map(l => l.id)
         }, session.token);
 
         expect(response.statusCode).to.equal(404);
@@ -1220,13 +1165,11 @@ describe("PUT courses/:courseId/", function () {
         const updatedCourse = await context.courseFactory.makeOne({addedBy: author.profile, language, level: LanguageLevel.BEGINNER_1});
 
         const response = await makeRequest(course.id, {
-            data: {
-                title: updatedCourse.title,
-                description: updatedCourse.description,
-                level: updatedCourse.level,
-                isPublic: updatedCourse.isPublic,
-                lessonsOrder: shuffleArray(courseLessons).map(l => l.id)
-            }
+            title: updatedCourse.title,
+            description: updatedCourse.description,
+            level: updatedCourse.level,
+            isPublic: updatedCourse.isPublic,
+            lessonsOrder: shuffleArray(courseLessons).map(l => l.id)
         }, session.token);
 
         expect(response.statusCode).to.equal(403);
@@ -1246,12 +1189,10 @@ describe("PUT courses/:courseId/", function () {
             const updatedCourse = context.courseFactory.makeOne({addedBy: author.profile, language, level: LanguageLevel.BEGINNER_1});
 
             const response = await makeRequest(course.id, {
-                data: {
-                    description: updatedCourse.description,
-                    level: updatedCourse.level,
-                    isPublic: updatedCourse.isPublic,
-                    lessonsOrder: shuffleArray(courseLessons).map(l => l.id)
-                }
+                description: updatedCourse.description,
+                level: updatedCourse.level,
+                isPublic: updatedCourse.isPublic,
+                lessonsOrder: shuffleArray(courseLessons).map(l => l.id)
             }, session.token);
 
             expect(response.statusCode).to.equal(400);
@@ -1270,12 +1211,10 @@ describe("PUT courses/:courseId/", function () {
             const updatedCourse = context.courseFactory.makeOne({addedBy: author.profile, language, level: LanguageLevel.BEGINNER_1});
 
             const response = await makeRequest(course.id, {
-                data: {
-                    title: updatedCourse.title,
-                    level: updatedCourse.level,
-                    isPublic: updatedCourse.isPublic,
-                    lessonsOrder: shuffleArray(courseLessons).map(l => l.id)
-                }
+                title: updatedCourse.title,
+                level: updatedCourse.level,
+                isPublic: updatedCourse.isPublic,
+                lessonsOrder: shuffleArray(courseLessons).map(l => l.id)
             }, session.token);
 
             expect(response.statusCode).to.equal(400);
@@ -1294,12 +1233,10 @@ describe("PUT courses/:courseId/", function () {
             const updatedCourse = context.courseFactory.makeOne({addedBy: author.profile, language, level: LanguageLevel.BEGINNER_1});
 
             const response = await makeRequest(course.id, {
-                data: {
-                    title: updatedCourse.title,
-                    description: updatedCourse.description,
-                    isPublic: updatedCourse.isPublic,
-                    lessonsOrder: shuffleArray(courseLessons).map(l => l.id)
-                }
+                title: updatedCourse.title,
+                description: updatedCourse.description,
+                isPublic: updatedCourse.isPublic,
+                lessonsOrder: shuffleArray(courseLessons).map(l => l.id)
             }, session.token);
 
             expect(response.statusCode).to.equal(400);
@@ -1319,12 +1256,10 @@ describe("PUT courses/:courseId/", function () {
             const updatedCourse = context.courseFactory.makeOne({addedBy: author.profile, language, level: LanguageLevel.BEGINNER_1});
 
             const response = await makeRequest(course.id, {
-                data: {
-                    title: updatedCourse.title,
-                    description: updatedCourse.description,
-                    level: updatedCourse.level,
-                    lessonsOrder: shuffleArray(courseLessons).map(l => l.id)
-                }
+                title: updatedCourse.title,
+                description: updatedCourse.description,
+                level: updatedCourse.level,
+                lessonsOrder: shuffleArray(courseLessons).map(l => l.id)
             }, session.token);
 
             expect(response.statusCode).to.equal(400);
@@ -1343,39 +1278,16 @@ describe("PUT courses/:courseId/", function () {
             const updatedCourse = context.courseFactory.makeOne({addedBy: author.profile, language, level: LanguageLevel.BEGINNER_1});
 
             const response = await makeRequest(course.id, {
-                data: {
-                    title: updatedCourse.title,
-                    description: updatedCourse.description,
-                    level: updatedCourse.level,
-                    isPublic: updatedCourse.isPublic,
-                }
-            }, session.token);
-
-            expect(response.statusCode).to.equal(400);
-        });
-
-        test<LocalTestContext>("If data is missing return 400", async (context) => {
-            const author = await context.userFactory.createOne();
-            const session = await context.sessionFactory.createOne({user: author});
-            const language = await context.languageFactory.createOne();
-            const course = await context.courseFactory.createOne({addedBy: author.profile, language: language, lessons: [], image: ""});
-
-            let lessonCounter = 0;
-            await context.lessonFactory.each(l => {
-                l.orderInCourse = lessonCounter;
-                lessonCounter++;
-            }).create(10, {course: course});
-
-            const response = await makeRequest(course.id, {
-                files: {
-                    image: readSampleFile("images/lorem-ipsum-69_8KB-1_1ratio.png")
-                }
+                title: updatedCourse.title,
+                description: updatedCourse.description,
+                level: updatedCourse.level,
+                isPublic: updatedCourse.isPublic,
             }, session.token);
 
             expect(response.statusCode).to.equal(400);
         });
     });
-    describe("If fields are invalid return 4xx", async () => {
+    describe("If fields are invalid return 400", async () => {
         test<LocalTestContext>("If title is invalid return 400", async (context) => {
             const author = await context.userFactory.createOne();
             const session = await context.sessionFactory.createOne({user: author});
@@ -1390,13 +1302,11 @@ describe("PUT courses/:courseId/", function () {
             const updatedCourse = context.courseFactory.makeOne({addedBy: author.profile, language, level: LanguageLevel.BEGINNER_1});
 
             const response = await makeRequest(course.id, {
-                data: {
-                    title: faker.random.alpha(300),
-                    description: updatedCourse.description,
-                    level: updatedCourse.level,
-                    isPublic: updatedCourse.isPublic,
-                    lessonsOrder: shuffleArray(courseLessons).map(l => l.id)
-                }
+                title: faker.random.alpha(300),
+                description: updatedCourse.description,
+                level: updatedCourse.level,
+                isPublic: updatedCourse.isPublic,
+                lessonsOrder: shuffleArray(courseLessons).map(l => l.id)
             }, session.token);
 
             expect(response.statusCode).to.equal(400);
@@ -1415,13 +1325,11 @@ describe("PUT courses/:courseId/", function () {
             const updatedCourse = context.courseFactory.makeOne({addedBy: author.profile, language, level: LanguageLevel.BEGINNER_1});
 
             const response = await makeRequest(course.id, {
-                data: {
-                    title: updatedCourse.title,
-                    description: faker.random.alpha(600),
-                    level: updatedCourse.level,
-                    isPublic: updatedCourse.isPublic,
-                    lessonsOrder: shuffleArray(courseLessons).map(l => l.id)
-                }
+                title: updatedCourse.title,
+                description: faker.random.alpha(600),
+                level: updatedCourse.level,
+                isPublic: updatedCourse.isPublic,
+                lessonsOrder: shuffleArray(courseLessons).map(l => l.id),
             }, session.token);
 
             expect(response.statusCode).to.equal(400);
@@ -1440,13 +1348,11 @@ describe("PUT courses/:courseId/", function () {
             const updatedCourse = context.courseFactory.makeOne({addedBy: author.profile, language, level: LanguageLevel.BEGINNER_1});
 
             const response = await makeRequest(course.id, {
-                data: {
-                    title: updatedCourse.title,
-                    description: updatedCourse.description,
-                    level: updatedCourse.level,
-                    isPublic: "kinda?",
-                    lessonsOrder: shuffleArray(courseLessons).map(l => l.id)
-                }
+                title: updatedCourse.title,
+                description: updatedCourse.description,
+                level: updatedCourse.level,
+                isPublic: "kinda?",
+                lessonsOrder: shuffleArray(courseLessons).map(l => l.id)
             }, session.token);
 
             expect(response.statusCode).to.equal(400);
@@ -1465,13 +1371,11 @@ describe("PUT courses/:courseId/", function () {
             const updatedCourse = context.courseFactory.makeOne({addedBy: author.profile, language, level: LanguageLevel.BEGINNER_1});
 
             const response = await makeRequest(course.id, {
-                data: {
-                    title: updatedCourse.title,
-                    description: updatedCourse.description,
-                    level: "hard",
-                    isPublic: updatedCourse.isPublic,
-                    lessonsOrder: shuffleArray(courseLessons).map(l => l.id)
-                }
+                title: updatedCourse.title,
+                description: updatedCourse.description,
+                level: "hard",
+                isPublic: updatedCourse.isPublic,
+                lessonsOrder: shuffleArray(courseLessons).map(l => l.id)
             }, session.token);
 
             expect(response.statusCode).to.equal(400);
@@ -1485,13 +1389,11 @@ describe("PUT courses/:courseId/", function () {
                 const updatedCourse = context.courseFactory.makeOne({addedBy: author.profile, language, level: LanguageLevel.BEGINNER_1});
 
                 const response = await makeRequest(course.id, {
-                    data: {
-                        title: updatedCourse.title,
-                        description: updatedCourse.description,
-                        level: updatedCourse.level,
-                        isPublic: updatedCourse.isPublic,
-                        lessonsOrder: [1, 2, 3.5, -1, "42"]
-                    }
+                    title: updatedCourse.title,
+                    description: updatedCourse.description,
+                    level: updatedCourse.level,
+                    isPublic: updatedCourse.isPublic,
+                    lessonsOrder: [1, 2, 3.5, -1, "42"]
                 }, session.token);
 
                 expect(response.statusCode).to.equal(400);
@@ -1520,13 +1422,11 @@ describe("PUT courses/:courseId/", function () {
                     const otherLesson = await context.lessonFactory.createOne({course: await context.courseFactory.createOne({language: language})});
 
                     const response = await makeRequest(course.id, {
-                        data: {
-                            title: updatedCourse.title,
-                            description: updatedCourse.description,
-                            level: updatedCourse.level,
-                            isPublic: updatedCourse.isPublic,
-                            lessonsOrder: [...shuffleArray(courseLessons.map(l => l.id)), otherLesson.id]
-                        }
+                        title: updatedCourse.title,
+                        description: updatedCourse.description,
+                        level: updatedCourse.level,
+                        isPublic: updatedCourse.isPublic,
+                        lessonsOrder: [...shuffleArray(courseLessons.map(l => l.id)), otherLesson.id]
                     }, session.token);
 
                     expect(response.statusCode).to.equal(400);
@@ -1556,13 +1456,11 @@ describe("PUT courses/:courseId/", function () {
                         faker.datatype.number({min: 1, max: courseLessons.length}));
 
                     const response = await makeRequest(course.id, {
-                        data: {
-                            title: updatedCourse.title,
-                            description: updatedCourse.description,
-                            level: updatedCourse.level,
-                            isPublic: updatedCourse.isPublic,
-                            lessonsOrder: lessonOrder
-                        }
+                        title: updatedCourse.title,
+                        description: updatedCourse.description,
+                        level: updatedCourse.level,
+                        isPublic: updatedCourse.isPublic,
+                        lessonsOrder: lessonOrder
                     }, session.token);
 
                     expect(response.statusCode).to.equal(400);
@@ -1587,25 +1485,24 @@ describe("PUT courses/:courseId/", function () {
                     lessonOrder.splice(faker.datatype.number({max: courseLessons.length - 1}), 0, lessonOrder[faker.datatype.number({max: courseLessons.length - 1})]);
 
                     const response = await makeRequest(course.id, {
-                        data: {
-                            title: updatedCourse.title,
-                            description: updatedCourse.description,
-                            level: updatedCourse.level,
-                            isPublic: updatedCourse.isPublic,
-                            lessonsOrder: lessonOrder
-                        }
+                        title: updatedCourse.title,
+                        description: updatedCourse.description,
+                        level: updatedCourse.level,
+                        isPublic: updatedCourse.isPublic,
+                        lessonsOrder: lessonOrder
                     }, session.token);
 
                     expect(response.statusCode).to.equal(400);
                 });
             });
         });
-        describe("If image is invalid return 4xx", () => {
-            test<LocalTestContext>("If image is not a jpeg or png return 415", async (context) => {
+        describe("If image is invalid return 400", () => {
+            test<LocalTestContext>("If file upload request with key does not exist return 400", async (context) => {
                 const author = await context.userFactory.createOne();
                 const session = await context.sessionFactory.createOne({user: author});
                 const language = await context.languageFactory.createOne();
                 const course = await context.courseFactory.createOne({addedBy: author.profile, language: language, lessons: [], image: ""});
+                const fileUploadRequest = await context.fileUploadRequestFactory.makeOne({user: author, fileField: "courseImage"});
 
                 let lessonCounter = 0;
                 let courseLessons = await context.lessonFactory.each(l => {
@@ -1615,72 +1512,67 @@ describe("PUT courses/:courseId/", function () {
                 const updatedCourse = context.courseFactory.makeOne({addedBy: author.profile, language, level: LanguageLevel.BEGINNER_1});
 
                 const response = await makeRequest(course.id, {
-                    data: {
-                        title: faker.random.alpha(300),
-                        description: updatedCourse.description,
-                        level: updatedCourse.level,
-                        isPublic: updatedCourse.isPublic,
-                        lessonsOrder: shuffleArray(courseLessons).map(l => l.id)
-                    },
-                    files: {image: readSampleFile("images/audio-468_4KB.png")}
+                    title: faker.random.alpha(300),
+                    description: updatedCourse.description,
+                    level: updatedCourse.level,
+                    isPublic: updatedCourse.isPublic,
+                    lessonsOrder: shuffleArray(courseLessons).map(l => l.id),
+                    image: fileUploadRequest.objectKey
                 }, session.token);
 
-                expect(response.statusCode).to.equal(415);
-            });
-            test<LocalTestContext>("If the image file is more than 500KB return 413", async (context) => {
-                const author = await context.userFactory.createOne();
-                const session = await context.sessionFactory.createOne({user: author});
-                const language = await context.languageFactory.createOne();
-                const course = await context.courseFactory.createOne({addedBy: author.profile, language: language, lessons: [], image: ""});
-
-                let lessonCounter = 0;
-                let courseLessons = await context.lessonFactory.each(l => {
-                    l.orderInCourse = lessonCounter;
-                    lessonCounter++;
-                }).create(10, {course: course});
-                const updatedCourse = context.courseFactory.makeOne({addedBy: author.profile, language, level: LanguageLevel.BEGINNER_1});
-                const spy = vi.spyOn(fileValidatorExports, "validateFileFields").mockImplementation(mockValidateFileFields({"image": 510 * 1024}));
-
-                const response = await makeRequest(course.id, {
-                    data: {
-                        title: faker.random.alpha(300),
-                        description: updatedCourse.description,
-                        level: updatedCourse.level,
-                        isPublic: updatedCourse.isPublic,
-                        lessonsOrder: shuffleArray(courseLessons).map(l => l.id)
-                    },
-                    files: {
-                        image: readSampleFile("images/lorem-ipsum-69_8KB-1_1ratio.png")
-                    }
-                }, session.token);
-                expect(response.statusCode).to.equal(413);
-            });
-            test<LocalTestContext>("If the image is not square return 400", async (context) => {
-                const author = await context.userFactory.createOne();
-                const session = await context.sessionFactory.createOne({user: author});
-                const language = await context.languageFactory.createOne();
-                const course = await context.courseFactory.createOne({addedBy: author.profile, language: language, lessons: [], image: ""});
-
-                let lessonCounter = 0;
-                let courseLessons = await context.lessonFactory.each(l => {
-                    l.orderInCourse = lessonCounter;
-                    lessonCounter++;
-                }).create(10, {course: course});
-                const updatedCourse = context.courseFactory.makeOne({addedBy: author.profile, language, level: LanguageLevel.BEGINNER_1});
-
-                const response = await makeRequest(course.id, {
-                    data: {
-                        title: faker.random.alpha(300),
-                        description: updatedCourse.description,
-                        level: updatedCourse.level,
-                        isPublic: updatedCourse.isPublic,
-                        lessonsOrder: shuffleArray(courseLessons).map(l => l.id)
-                    },
-                    files: {image: readSampleFile("images/rectangle-5_2KB-2_1ratio.png")}
-                }, session.token);
                 expect(response.statusCode).to.equal(400);
             });
-            // test<LocalTestContext>("If image is corrupted return 415", async (context) => {});
+            test<LocalTestContext>("If file upload request with key was not requested by user return 400", async (context) => {
+                const author = await context.userFactory.createOne();
+                const otherUser = await context.userFactory.createOne();
+                const session = await context.sessionFactory.createOne({user: author});
+                const language = await context.languageFactory.createOne();
+                const course = await context.courseFactory.createOne({addedBy: author.profile, language: language, lessons: [], image: ""});
+                const fileUploadRequest = await context.fileUploadRequestFactory.createOne({user: otherUser, fileField: "courseImage"});
+
+                let lessonCounter = 0;
+                let courseLessons = await context.lessonFactory.each(l => {
+                    l.orderInCourse = lessonCounter;
+                    lessonCounter++;
+                }).create(10, {course: course});
+                const updatedCourse = context.courseFactory.makeOne({addedBy: author.profile, language, level: LanguageLevel.BEGINNER_1});
+
+                const response = await makeRequest(course.id, {
+                    title: faker.random.alpha(300),
+                    description: updatedCourse.description,
+                    level: updatedCourse.level,
+                    isPublic: updatedCourse.isPublic,
+                    lessonsOrder: shuffleArray(courseLessons).map(l => l.id),
+                    image: fileUploadRequest.objectKey
+                }, session.token);
+
+                expect(response.statusCode).to.equal(400);
+            });
+            test<LocalTestContext>("If file upload request with key is not for courseImage field return 400", async (context) => {
+                const author = await context.userFactory.createOne();
+                const session = await context.sessionFactory.createOne({user: author});
+                const language = await context.languageFactory.createOne();
+                const course = await context.courseFactory.createOne({addedBy: author.profile, language: language, lessons: [], image: ""});
+                const fileUploadRequest = await context.fileUploadRequestFactory.createOne({user: author, fileField: "lessonImage"});
+
+                let lessonCounter = 0;
+                let courseLessons = await context.lessonFactory.each(l => {
+                    l.orderInCourse = lessonCounter;
+                    lessonCounter++;
+                }).create(10, {course: course});
+                const updatedCourse = context.courseFactory.makeOne({addedBy: author.profile, language, level: LanguageLevel.BEGINNER_1});
+
+                const response = await makeRequest(course.id, {
+                    title: faker.random.alpha(300),
+                    description: updatedCourse.description,
+                    level: updatedCourse.level,
+                    isPublic: updatedCourse.isPublic,
+                    lessonsOrder: shuffleArray(courseLessons).map(l => l.id),
+                    image: fileUploadRequest.objectKey
+                }, session.token);
+
+                expect(response.statusCode).to.equal(400);
+            });
         });
     });
 });

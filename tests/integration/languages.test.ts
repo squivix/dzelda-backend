@@ -481,7 +481,7 @@ describe("PATCH users/me/languages/:languageCode/", () => {
         const dbRecord = await context.em.findOneOrFail(MapLearnerLanguage, {language, learner: user.profile});
 
         expect(response.statusCode).to.equal(200);
-        expect(responseBody).toMatchObject(learnerLanguageSerializer.serialize(expectedMapping, {ignore: ["addedOn", "lastOpened"]}));
+        expect(responseBody).toMatchObject(learnerLanguageSerializer.serialize(expectedMapping, {ignore: ["startedLearningOn", "lastOpened"]}));
         expect(responseBody).toMatchObject(learnerLanguageSerializer.serialize(dbRecord));
         const {addedOn: newAddedOn, lastOpened: newLastOpened} = responseBody;
         expect(newAddedOn).not.toEqual(oldAddedOn);
