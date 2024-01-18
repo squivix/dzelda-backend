@@ -45,10 +45,11 @@ export class UserSeeder extends Seeder {
                 bio: userData.profile.bio,
                 isPublic: userData.profile.isPublic
             });
-            languageMappings.push(...userData.profile.languagesLearning.map(language => ({
-                learner: userData.profile.id!,
-                language: language
-            })))
+            if (userData.profile.languagesLearning)
+                languageMappings.push(...userData.profile.languagesLearning.map(language => ({
+                    learner: userData.profile.id!,
+                    language: language
+                })));
             return {
                 id: userData.id,
                 username: userData.username,
@@ -56,11 +57,11 @@ export class UserSeeder extends Seeder {
                 password: userData.password,
                 isStaff: userData.isStaff,
                 isAdmin: userData.isAdmin,
-                isEmailConfirmed:userData.isEmailConfirmed,
+                isEmailConfirmed: userData.isEmailConfirmed,
                 accountCreatedAt: userData.accountCreatedAt,
                 lastLogin: userData.lastLogin
             };
-        }))
+        }));
         await em.insertMany(Profile, profiles);
         await em.insertMany(MapLearnerLanguage, languageMappings);
     }

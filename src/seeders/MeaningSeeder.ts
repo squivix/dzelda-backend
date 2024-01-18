@@ -36,7 +36,8 @@ export class MeaningSeeder extends Seeder {
                 language: meaningData.language,
                 addedOn: meaningData.addedOn
             };
-            learnerMappings.push(...meaningData.learners.map(learner => ({learner, meaning: meaningData.id!})));
+            if (meaningData.learners)
+                learnerMappings.push(...meaningData.learners.map(learner => ({learner, meaning: meaningData.id!})));
             return data;
         }));
         await em.insertMany(MapLearnerMeaning, learnerMappings);

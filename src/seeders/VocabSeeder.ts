@@ -17,10 +17,6 @@ export class VocabSeeder extends Seeder {
             console.error(`${vocabsFilePath} not found`);
             return;
         }
-        if (!await fs.exists(mapLearnerVocabsFilePath)) {
-            console.error(`${mapLearnerVocabsFilePath} not found`);
-            return;
-        }
 
         await batchSeed({
             filePath: vocabsFilePath,
@@ -30,6 +26,10 @@ export class VocabSeeder extends Seeder {
             resourceName: "vocab",
         });
 
+        if (!await fs.exists(mapLearnerVocabsFilePath)) {
+            console.error(`${mapLearnerVocabsFilePath} not found`);
+            return;
+        }
         await batchSeed({
             filePath: mapLearnerVocabsFilePath,
             batchSize: context.batchSize,
