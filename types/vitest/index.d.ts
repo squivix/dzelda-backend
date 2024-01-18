@@ -1,7 +1,7 @@
 import {EntityManager} from "@mikro-orm/core";
-import {UserFactory} from "@/src/seeders/factories/UserFactory.js";
-import {ProfileFactory} from "@/src/seeders/factories/ProfileFactory.js";
-import {SessionFactory} from "@/src/seeders/factories/SessionFactory.js";
+import {UserFactory} from "@/devtools/factories/UserFactory.js";
+import {ProfileFactory} from "@/devtools/factories/ProfileFactory.js";
+import {SessionFactory} from "@/devtools/factories/SessionFactory.js";
 
 declare module "vitest" {
     export interface TestContext {

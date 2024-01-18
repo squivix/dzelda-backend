@@ -2,13 +2,14 @@ import {Dictionary, EntityData, EntityManager} from "@mikro-orm/core";
 import {Seeder} from "@mikro-orm/seeder";
 import fs from "fs-extra";
 import {Language} from "@/src/models/entities/Language.js";
-import {batchSeed, syncIdSequence} from "@/src/seeders/utils.js";
+import {batchSeed, syncIdSequence} from "@/devtools/seeders/utils.js";
+import {DATASET_LANGUAGE_FILE_NAME} from "@/devtools/constants.js";
+import path from "path";
 
 export class LanguageSeeder extends Seeder {
-    static readonly FILE_NAME = "languages.jsonl";
 
     async run(em: EntityManager, context: Dictionary): Promise<void> {
-        const languagesFilePath = `${context.databaseDumpPath}/${LanguageSeeder.FILE_NAME}`;
+        const languagesFilePath = path.join(context.databaseDumpPath, DATASET_LANGUAGE_FILE_NAME);
 
         if (!await fs.exists(languagesFilePath)) {
             console.error(`${languagesFilePath} not found`);

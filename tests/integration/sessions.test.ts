@@ -2,11 +2,11 @@ import {beforeEach, describe, expect, test, TestContext} from "vitest";
 import {faker} from "@faker-js/faker";
 import {orm} from "@/src/server.js";
 import {passwordHasher} from "@/src/utils/security/PasswordHasher.js";
-import {UserFactory} from "@/src/seeders/factories/UserFactory.js";
+import {UserFactory} from "@/devtools/factories/UserFactory.js";
 import {Session} from "@/src/models/entities/auth/Session.js";
 import {fetchRequest} from "@/tests/integration/utils.js";
 import {EntityRepository} from "@mikro-orm/core";
-import {SessionFactory} from "@/src/seeders/factories/SessionFactory.js";
+import {SessionFactory} from "@/devtools/factories/SessionFactory.js";
 
 interface LocalTestContext extends TestContext {
     sessionRepo: EntityRepository<Session>;

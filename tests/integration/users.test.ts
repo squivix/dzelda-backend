@@ -1,16 +1,16 @@
 import {beforeEach, describe, expect, test, TestContext, vi} from "vitest";
 import {faker} from "@faker-js/faker";
 import {User} from "@/src/models/entities/auth/User.js";
-import {UserFactory} from "@/src/seeders/factories/UserFactory.js";
+import {UserFactory} from "@/devtools/factories/UserFactory.js";
 import {Profile} from "@/src/models/entities/Profile.js";
-import {LanguageFactory} from "@/src/seeders/factories/LanguageFactory.js";
+import {LanguageFactory} from "@/devtools/factories/LanguageFactory.js";
 import {Language} from "@/src/models/entities/Language.js";
 import {orm} from "@/src/server.js";
 import {fetchRequest, parseUrlQueryString} from "@/tests/integration/utils.js";
 import {EntityRepository} from "@mikro-orm/core";
 import {InjectOptions} from "light-my-request";
 import {userSerializer} from "@/src/presentation/response/serializers/entities/UserSerializer.js";
-import {SessionFactory} from "@/src/seeders/factories/SessionFactory.js";
+import {SessionFactory} from "@/devtools/factories/SessionFactory.js";
 import {BANNED_LITERAL_USERNAMES} from "@/src/validators/userValidator.js";
 import {PasswordResetToken} from "@/src/models/entities/auth/PasswordResetToken.js";
 import {emailTransporter} from "@/src/nodemailer.config.js";
@@ -20,10 +20,10 @@ import {expiringTokenHasher} from "@/src/utils/security/ExpiringTokenHasher.js";
 import {passwordHasher} from "@/src/utils/security/PasswordHasher.js";
 import {Session} from "@/src/models/entities/auth/Session.js";
 import {EmailConfirmationToken} from "@/src/models/entities/auth/EmailConfirmationToken.js";
-import {ProfileFactory} from "@/src/seeders/factories/ProfileFactory.js";
+import {ProfileFactory} from "@/devtools/factories/ProfileFactory.js";
 import {profileSerializer} from "@/src/presentation/response/serializers/entities/ProfileSerializer.js";
 import {ProfileSchema} from "dzelda-common";
-import {FileUploadRequestFactory} from "@/src/seeders/factories/FileUploadRequestFactory.js";
+import {FileUploadRequestFactory} from "@/devtools/factories/FileUploadRequestFactory.js";
 
 interface LocalTestContext extends TestContext {
     languageRepo: EntityRepository<Language>;

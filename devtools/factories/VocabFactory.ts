@@ -1,4 +1,4 @@
-import {CustomFactory} from "@/src/seeders/factories/CustomFactory.js";
+import {CustomFactory} from "@/devtools/factories/CustomFactory.js";
 import {Vocab} from "@/src/models/entities/Vocab.js";
 import {EntityData} from "@mikro-orm/core";
 import {Faker} from "@mikro-orm/seeder";

@@ -18,7 +18,7 @@ export const server = Fastify(
     {logger: {transport: {target: "@fastify/one-line-logger"}}}
 );
 await server.register(cors, {});
-export const orm = await MikroORM.init(options);
+export const orm = await MikroORM.init({...options, debug: false});
 server.register(fastifyStatic, {
     root: path.join(__dirname, "..", "public"),
     prefix: "/public/",

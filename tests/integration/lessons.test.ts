@@ -1,12 +1,12 @@
 import {beforeEach, describe, expect, test, TestContext, vi} from "vitest";
-import {UserFactory} from "@/src/seeders/factories/UserFactory.js";
-import {ProfileFactory} from "@/src/seeders/factories/ProfileFactory.js";
-import {SessionFactory} from "@/src/seeders/factories/SessionFactory.js";
+import {UserFactory} from "@/devtools/factories/UserFactory.js";
+import {ProfileFactory} from "@/devtools/factories/ProfileFactory.js";
+import {SessionFactory} from "@/devtools/factories/SessionFactory.js";
 import {CourseRepo} from "@/src/models/repos/CourseRepo.js";
 import {LessonRepo} from "@/src/models/repos/LessonRepo.js";
-import {LanguageFactory} from "@/src/seeders/factories/LanguageFactory.js";
-import {CourseFactory} from "@/src/seeders/factories/CourseFactory.js";
-import {LessonFactory} from "@/src/seeders/factories/LessonFactory.js";
+import {LanguageFactory} from "@/devtools/factories/LanguageFactory.js";
+import {CourseFactory} from "@/devtools/factories/CourseFactory.js";
+import {LessonFactory} from "@/devtools/factories/LessonFactory.js";
 import {API_ROOT, orm} from "@/src/server.js";
 import {Lesson} from "@/src/models/entities/Lesson.js";
 import {Course} from "@/src/models/entities/Course.js";
@@ -23,7 +23,7 @@ import * as constantExports from "@/src/constants.js";
 import {TEMP_ROOT_FILE_UPLOAD_DIR} from "@/tests/testConstants.js";
 import {parsers} from "dzelda-common";
 import {lessonHistoryEntrySerializer} from "@/src/presentation/response/serializers/mappings/LessonHistoryEntrySerializer.js";
-import {FileUploadRequestFactory} from "@/src/seeders/factories/FileUploadRequestFactory.js";
+import {FileUploadRequestFactory} from "@/devtools/factories/FileUploadRequestFactory.js";
 
 interface LocalTestContext extends TestContext {
     languageFactory: LanguageFactory;

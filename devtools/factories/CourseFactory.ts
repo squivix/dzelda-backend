@@ -1,9 +1,9 @@
 import {Faker} from "@mikro-orm/seeder";
 import {EntityData, EntityManager} from "@mikro-orm/core";
-import {CustomFactory} from "@/src/seeders/factories/CustomFactory.js";
+import {CustomFactory} from "@/devtools/factories/CustomFactory.js";
 import {Course} from "@/src/models/entities/Course.js";
-import {ProfileFactory} from "@/src/seeders/factories/ProfileFactory.js";
-import {UserFactory} from "@/src/seeders/factories/UserFactory.js";
+import {ProfileFactory} from "@/devtools/factories/ProfileFactory.js";
+import {UserFactory} from "@/devtools/factories/UserFactory.js";
 import {LanguageLevel} from "@/src/models/enums/LanguageLevel.js";
 import {Lesson} from "@/src/models/entities/Lesson.js";
 

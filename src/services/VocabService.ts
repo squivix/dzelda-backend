@@ -77,7 +77,7 @@ export class VocabService {
         return await this.vocabRepo.findOne({
             text: vocabData.text,
             language: vocabData.language
-        }, {populate: ["meanings"]});
+        }, {populate: ["meanings", "meanings.addedBy.user"]});
     }
 
     async getPaginatedLearnerVocabs(filters: { languageCode?: string, level?: VocabLevel[], searchQuery?: string },

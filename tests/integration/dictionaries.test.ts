@@ -1,16 +1,16 @@
 import {beforeEach, describe, expect, test, TestContext} from "vitest";
 import {orm} from "@/src/server.js";
-import {UserFactory} from "@/src/seeders/factories/UserFactory.js";
-import {SessionFactory} from "@/src/seeders/factories/SessionFactory.js";
-import {ProfileFactory} from "@/src/seeders/factories/ProfileFactory.js";
+import {UserFactory} from "@/devtools/factories/UserFactory.js";
+import {SessionFactory} from "@/devtools/factories/SessionFactory.js";
+import {ProfileFactory} from "@/devtools/factories/ProfileFactory.js";
 import {EntityRepository} from "@mikro-orm/core";
-import {DictionaryFactory} from "@/src/seeders/factories/DictionaryFactory.js";
+import {DictionaryFactory} from "@/devtools/factories/DictionaryFactory.js";
 import {Dictionary} from "@/src/models/entities/Dictionary.js";
 import {InjectOptions} from "light-my-request";
 import {buildQueryString, createComparator, fetchRequest} from "@/tests/integration/utils.js";
 import {faker} from "@faker-js/faker";
 import {dictionarySerializer} from "@/src/presentation/response/serializers/entities/DictionarySerializer.js";
-import {LanguageFactory} from "@/src/seeders/factories/LanguageFactory.js";
+import {LanguageFactory} from "@/devtools/factories/LanguageFactory.js";
 
 interface LocalTestContext extends TestContext {
     dictionaryRepo: EntityRepository<Dictionary>;

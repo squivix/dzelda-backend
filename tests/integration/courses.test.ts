@@ -1,18 +1,18 @@
 import {beforeEach, describe, expect, test, TestContext, vi} from "vitest";
 import {orm} from "@/src/server.js";
 import {buildQueryString, createComparator, fetchRequest, readSampleFile} from "@/tests/integration/utils.js";
-import {UserFactory} from "@/src/seeders/factories/UserFactory.js";
-import {SessionFactory} from "@/src/seeders/factories/SessionFactory.js";
-import {ProfileFactory} from "@/src/seeders/factories/ProfileFactory.js";
-import {CourseFactory} from "@/src/seeders/factories/CourseFactory.js";
+import {UserFactory} from "@/devtools/factories/UserFactory.js";
+import {SessionFactory} from "@/devtools/factories/SessionFactory.js";
+import {ProfileFactory} from "@/devtools/factories/ProfileFactory.js";
+import {CourseFactory} from "@/devtools/factories/CourseFactory.js";
 import {Course} from "@/src/models/entities/Course.js";
 import {CourseRepo} from "@/src/models/repos/CourseRepo.js";
 import {InjectOptions} from "light-my-request";
-import {LanguageFactory} from "@/src/seeders/factories/LanguageFactory.js";
+import {LanguageFactory} from "@/devtools/factories/LanguageFactory.js";
 import {faker} from "@faker-js/faker";
 import {randomCase, randomEnum, randomEnums, shuffleArray} from "@/tests/utils.js";
 import {defaultVocabsByLevel} from "@/src/models/enums/VocabLevel.js";
-import {LessonFactory} from "@/src/seeders/factories/LessonFactory.js";
+import {LessonFactory} from "@/devtools/factories/LessonFactory.js";
 import {LessonRepo} from "@/src/models/repos/LessonRepo.js";
 import {Lesson} from "@/src/models/entities/Lesson.js";
 import {courseSerializer} from "@/src/presentation/response/serializers/entities/CourseSerializer";
@@ -21,7 +21,7 @@ import * as constantExports from "@/src/constants.js";
 import {TEMP_ROOT_FILE_UPLOAD_DIR} from "@/tests/testConstants.js";
 import {MapBookmarkerCourse} from "@/src/models/entities/MapBookmarkerCourse.js";
 import {LanguageLevel} from "@/src/models/enums/LanguageLevel.js";
-import {FileUploadRequestFactory} from "@/src/seeders/factories/FileUploadRequestFactory.js";
+import {FileUploadRequestFactory} from "@/devtools/factories/FileUploadRequestFactory.js";
 
 interface LocalTestContext extends TestContext {
     courseRepo: CourseRepo;

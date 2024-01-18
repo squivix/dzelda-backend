@@ -2,17 +2,15 @@ import {Dictionary, EntityData, EntityManager} from "@mikro-orm/core";
 import {Seeder} from "@mikro-orm/seeder";
 import fs from "fs-extra";
 import {Lesson} from "@/src/models/entities/Lesson.js";
-import {batchSeed, syncIdSequence} from "@/src/seeders/utils.js";
+import {batchSeed, syncIdSequence} from "@/devtools/seeders/utils.js";
 import {MapLessonVocab} from "@/src/models/entities/MapLessonVocab.js";
+import {DATASET_LESSON_FILE_NAME, DATASET_MAP_LESSON_VOCABS__FILE_NAME} from "@/devtools/constants.js";
+import path from "path";
 
 export class LessonSeeder extends Seeder {
-    static readonly LESSONS_FILE_NAME = "lessons.jsonl";
-    static readonly MAP_LESSON_VOCABS_FILE_NAME = "map_lesson_vocabs.jsonl";
-
-
     async run(em: EntityManager, context: Dictionary): Promise<void> {
-        const lessonsFilePath = `${context.databaseDumpPath}/${LessonSeeder.LESSONS_FILE_NAME}`;
-        const mapLessonVocabsFilePath = `${context.databaseDumpPath}/${LessonSeeder.MAP_LESSON_VOCABS_FILE_NAME}`;
+        const lessonsFilePath = path.join(context.databaseDumpPath, DATASET_LESSON_FILE_NAME);
+        const mapLessonVocabsFilePath = path.join(context.databaseDumpPath, DATASET_MAP_LESSON_VOCABS__FILE_NAME);
 
         if (!await fs.exists(lessonsFilePath)) {
             console.error(`${lessonsFilePath} not found`);

@@ -32,8 +32,8 @@ const devOptions: Options = {
         pathTs: "src/migrations",
     },
     seeder: {
-        path: "build/src/seeders/",
-        pathTs: "src/seeders/",
+        path: "build/devtools/seeders/",
+        pathTs: "devtools/seeders/",
     },
     persistOnCreate: true
 };

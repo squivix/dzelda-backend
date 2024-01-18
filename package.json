@@ -7,7 +7,7 @@
   "scripts": {
     "pretest": "npm run migrate",
     "test": "npx vitest --no-watch",
-    "compile": "npx swc src -d ./build/src &&  npx swc tests -d ./build/tests",
+    "compile": "npx swc src -d ./build/src  &&  npx swc devtools -d ./build/devtools &&  npx swc tests -d ./build/tests",
     "clean": "rm -rf ./build/* && npm run compile",
     "premake-migrations": "npm run clean",
     "make-migrations": "mikro-orm migration:create",
@@ -17,7 +17,7 @@
     "fresh": "mikro-orm migration:fresh --seed",
     "drop": "mikro-orm schema:drop --run",
     "dev": "env-cmd -f ./env/dev.env tsx --watch ./src/main.ts",
-    "temp": "tsx test.ts"
+    "dump": "tsx devtools/dumpers/DatabaseDumper.ts"
   },
   "author": "squivix <devintheamateurdevin@gmail.com> (https://github.com/squivix)",
   "license": "MIT",

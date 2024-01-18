@@ -1,6 +1,6 @@
 import {Faker} from "@mikro-orm/seeder";
 import {EntityData} from "@mikro-orm/core";
-import {CustomFactory} from "@/src/seeders/factories/CustomFactory.js";
+import {CustomFactory} from "@/devtools/factories/CustomFactory.js";
 import {FileUploadRequest} from "@/src/models/entities/FileUploadRequest.js";
 
 export class FileUploadRequestFactory extends CustomFactory<FileUploadRequest> {

@@ -2,24 +2,23 @@ import {readdirSync} from "fs";
 import prompts from "prompts";
 import {Seeder} from "@mikro-orm/seeder";
 import {EntityManager} from "@mikro-orm/core";
-import {UserSeeder} from "@/src/seeders/UserSeeder.js";
-import {LanguageSeeder} from "@/src/seeders/LanguageSeeder.js";
-import {CourseSeeder} from "@/src/seeders/CourseSeeder.js";
-import {LessonSeeder} from "@/src/seeders/LessonSeeder.js";
-import {VocabSeeder} from "@/src/seeders/VocabSeeder.js";
-import {MeaningSeeder} from "@/src/seeders/MeaningSeeder.js";
-import {DictionarySeeder} from "@/src/seeders/DictionarySeeder.js";
-import {FileUploadsSeeder} from "@/src/seeders/FileUploadsSeeder.js";
+import {UserSeeder} from "@/devtools/seeders/UserSeeder.js";
+import {LanguageSeeder} from "@/devtools/seeders/LanguageSeeder.js";
+import {CourseSeeder} from "@/devtools/seeders/CourseSeeder.js";
+import {LessonSeeder} from "@/devtools/seeders/LessonSeeder.js";
+import {VocabSeeder} from "@/devtools/seeders/VocabSeeder.js";
+import {MeaningSeeder} from "@/devtools/seeders/MeaningSeeder.js";
+import {DictionarySeeder} from "@/devtools/seeders/DictionarySeeder.js";
+import {FileUploadsSeeder} from "@/devtools/seeders/FileUploadsSeeder.js";
+import {DATA_DIR, DEFAULT_BATCH_SIZE} from "@/devtools/constants.js";
+import path from "path";
 
 
 export class DatabaseSeeder extends Seeder {
-    static readonly DATA_DIR = "data";
-    static readonly DEFAULT_BATCH_SIZE = 10_000;
-
     async run(em: EntityManager): Promise<void> {
         console.log("Seeding");
 
-        const datasets = readdirSync(DatabaseSeeder.DATA_DIR, {withFileTypes: true})
+        const datasets = readdirSync(DATA_DIR, {withFileTypes: true})
             .filter(dirent => dirent.isDirectory())
             .map(dirent => dirent.name);
         if (datasets.length == 0) {
@@ -32,12 +31,12 @@ export class DatabaseSeeder extends Seeder {
                 instructions: false,
                 name: "dataset",
                 message: "Pick dataset",
-                choices: datasets.map(dataset => ({title: dataset, value: `${DatabaseSeeder.DATA_DIR}/${dataset}`})),
+                choices: datasets.map(dataset => ({title: dataset, value: path.join(DATA_DIR, dataset)})),
             },
             {
                 type: "number",
                 name: "batchSize",
-                message: `Enter batch size? (default=${DatabaseSeeder.DEFAULT_BATCH_SIZE})`,
+                message: `Enter batch size? (default=${DEFAULT_BATCH_SIZE})`,
                 validate: value => value !== "" && Number(value) < 1 ? `Batch size must be positive` : true
             }
         ]);
@@ -60,7 +59,7 @@ export class DatabaseSeeder extends Seeder {
                 datasetPath: response.dataset,
                 databaseDumpPath: `${response.dataset}/database`,
                 uploadsDumpPath: `${response.dataset}/uploads`,
-                batchSize: response.batchSize || DatabaseSeeder.DEFAULT_BATCH_SIZE
+                batchSize: response.batchSize || DEFAULT_BATCH_SIZE
             });
     }
 }

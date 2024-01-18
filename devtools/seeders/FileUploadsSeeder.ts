@@ -6,6 +6,8 @@ export class FileUploadsSeeder extends Seeder {
     static readonly UPLOADS_PATH = "public/uploads";
 
     async run(_: EntityManager, context: Dictionary): Promise<void> {
+        if (!await fs.exists(context.uploadsDumpPath))
+            return
         process.stdout.write("copying uploads...");
         await fs.remove(FileUploadsSeeder.UPLOADS_PATH);
         await fs.copy(context.uploadsDumpPath, FileUploadsSeeder.UPLOADS_PATH);

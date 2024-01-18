@@ -1,14 +1,15 @@
 import {Dictionary, EntityData, EntityManager} from "@mikro-orm/core";
 import fs from "fs-extra";
 import {Course} from "@/src/models/entities/Course.js";
-import {batchSeed, syncIdSequence} from "@/src/seeders/utils.js";
+import {batchSeed, syncIdSequence} from "@/devtools/seeders/utils.js";
 import {Seeder} from "@mikro-orm/seeder";
+import {DATASET_COURSE_FILE_NAME} from "@/devtools/constants.js";
+import path from "path";
 
 export class CourseSeeder extends Seeder {
-    static readonly FILE_NAME = "courses.jsonl";
 
     async run(em: EntityManager, context: Dictionary): Promise<void> {
-        const coursesFilePath = `${context.databaseDumpPath}/${CourseSeeder.FILE_NAME}`;
+        const coursesFilePath = path.join(context.databaseDumpPath, DATASET_COURSE_FILE_NAME);
 
         if (!await fs.exists(coursesFilePath)) {
             console.error(`${coursesFilePath} not found`);
