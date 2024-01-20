@@ -25,7 +25,7 @@ const devOptions: Options = {
     entities: [Course, CustomBaseEntity, Dictionary, Language, Lesson, MapLearnerDictionary,
         MapPastViewerLesson, MapLearnerMeaning, MapLearnerVocab, MapLessonVocab, MapLearnerLanguage, Meaning,
         Profile, Vocab, User, Session, PasswordResetToken, EmailConfirmationToken, FileUploadRequest],
-    loadStrategy: LoadStrategy.JOINED,
+    loadStrategy: LoadStrategy.SELECT_IN,
     debug: true,
     migrations: {
         path: "build/src/migrations",
