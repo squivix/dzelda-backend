@@ -28,8 +28,8 @@ export class Language extends CustomBaseEntity {
     @Property({type: types.string, length: 32, nullable: true, default: null})
     flagEmoji?: string | null = null;
 
-    @Property({type: types.string, length: 32, nullable: true, default: null})
-    color?: string | null = null;
+    @Property({type: types.string, length: 32})
+    color?: string;
 
     @Property({type: types.boolean, default: false})
     isSupported: boolean = false;

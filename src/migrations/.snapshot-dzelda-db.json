@@ -83,9 +83,8 @@
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
-          "nullable": true,
+          "nullable": false,
           "length": 32,
-          "default": "null",
           "mappedType": "string"
         },
         "is_supported": {
