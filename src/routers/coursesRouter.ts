@@ -17,6 +17,11 @@ export const coursesRouter: FastifyPluginCallback = function (fastify, options, 
         handler: courseController.updateCourse,
     });
 
+    fastify.delete(`/courses/:courseId/`, {
+        preHandler: [requiresAuth, requiresEmailConfirmed],
+        handler: courseController.deleteCourse,
+    });
+
     fastify.get(`/users/me/courses/bookmarked/`, {
         preHandler: [requiresAuth, requiresEmailConfirmed],
         handler: courseController.getUserBookmarkedCourses,

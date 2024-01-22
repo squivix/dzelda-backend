@@ -36,7 +36,7 @@ export class Lesson extends CustomBaseEntity {
     @ManyToOne({entity: () => Language, inversedBy: (language) => language.lessons, onDelete: "cascade", onUpdateIntegrity: "cascade"})
     language!: Language;
 
-    @ManyToOne({entity: () => Course, inversedBy: (course) => course.lessons, onDelete: "cascade", onUpdateIntegrity: "cascade", nullable: true, default: null})
+    @ManyToOne({entity: () => Course, inversedBy: (course) => course.lessons, onDelete: "set null", onUpdateIntegrity: "cascade", nullable: true, default: null})
     course: Course | null = null;
 
     @Property({type: types.boolean, default: true})

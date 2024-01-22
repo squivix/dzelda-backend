@@ -114,6 +114,10 @@ export class CourseService {
         return (await this.getCourse(course.id, user))!;
     }
 
+    async deleteCourse(course: Course) {
+        await this.em.nativeDelete(Course, {id: course.id});
+    }
+
     async getNextLessonInCourse(course: Course, lessonId: number, user: User | AnonymousUser | null) {
         const queryBuilder = this.lessonRepo.createQueryBuilder("l0");
         const subQueryBuilder = this.lessonRepo.createQueryBuilder("l1").select("orderInCourse").where({id: lessonId}).getKnexQuery();

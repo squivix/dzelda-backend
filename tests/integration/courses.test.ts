@@ -562,7 +562,7 @@ describe("POST courses/", function () {
             const dbRecord = await context.courseRepo.findOne({title: newCourse.title, language}, {populate: ["lessons"]});
             expect(dbRecord).not.toBeNull();
             await context.courseRepo.annotateCoursesWithUserData([dbRecord!], user);
-            expect(courseSerializer.serialize(dbRecord!)).toMatchObject(courseSerializer.serialize(newCourse, {ignore:["addedBy"]}));
+            expect(courseSerializer.serialize(dbRecord!)).toMatchObject(courseSerializer.serialize(newCourse, {ignore: ["addedBy"]}));
         });
     });
     test<LocalTestContext>("If user not logged in return 401", async (context) => {
@@ -1282,6 +1282,11 @@ describe("PUT courses/:courseId/", function () {
             });
         });
     });
+});
+
+/**{@link CourseController#deleteCourse}*/
+describe.todo("DELETE courses/:courseId/", function () {
+    test.todo<LocalTestContext>("");
 });
 
 /**{@link CourseController#getUserBookmarkedCourses}*/

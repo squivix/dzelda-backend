@@ -128,6 +128,21 @@ class CourseController {
         reply.status(200).send(courseSerializer.serialize(updatedCourse));
     }
 
+    async deleteCourse(request: FastifyRequest, reply: FastifyReply) {
+        const pathParamsValidator = z.object({courseId: numericStringValidator});
+        const pathParams = pathParamsValidator.parse(request.params);
+        const user = request.user as User;
+        const courseService = new CourseService(request.em);
+        const course = await courseService.getCourse(pathParams.courseId, request.user);
+
+        if (!course)
+            throw new NotFoundAPIError("Course");
+        if (course.addedBy !== user.profile)
+            throw new ForbiddenAPIError("User is not author of course");
+        await courseService.deleteCourse(course);
+        reply.status(204).send();
+    }
+
     async getUserBookmarkedCourses(request: FastifyRequest, reply: FastifyReply) {
         const queryParamsValidator = z.object({
             languageCode: languageCodeValidator.optional(),
