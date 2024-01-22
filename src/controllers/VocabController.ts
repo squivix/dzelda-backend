@@ -188,7 +188,7 @@ class VocabController {
         const pathParams = pathParamsValidator.parse(request.params);
         const lessonService = new LessonService(request.em);
         const lesson = await lessonService.findLesson({id: pathParams.lessonId});
-        if (!lesson || (!lesson.course.isPublic && request?.user?.profile !== lesson.course.addedBy))
+        if (!lesson || (!lesson.isPublic && request?.user?.profile !== lesson.addedBy))
             throw new NotFoundAPIError("Lesson");
 
         const vocabService = new VocabService(request.em);

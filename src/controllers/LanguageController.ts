@@ -123,4 +123,4 @@ class LanguageController {
     }
 }
 
-export default new LanguageController();
+export const languageController = new LanguageController();

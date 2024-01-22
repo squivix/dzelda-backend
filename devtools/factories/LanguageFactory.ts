@@ -15,6 +15,7 @@ export class LanguageFactory extends CustomFactory<Language> {
             flagCircular: faker.image.imageUrl(100, 100),
             flagEmoji: faker.internet.emoji(),
             isSupported: true,
+            color: faker.color.rgb(),
             learnersCount: 0,
             levelThresholds: {
                 beginner1: 0,
@@ -30,7 +31,7 @@ export class LanguageFactory extends CustomFactory<Language> {
     override makeDefinition(overrideParameters?: EntityData<Language>): EntityData<Language> {
         if (overrideParameters?.learners !== undefined)
             overrideParameters.learnersCount = Array.isArray(overrideParameters?.learners) ? overrideParameters.learners.length : 1;
-        return super.makeDefinition(overrideParameters)
+        return super.makeDefinition(overrideParameters);
     }
 
 }

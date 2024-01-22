@@ -1,21 +1,21 @@
 import {FastifyPluginCallback} from "fastify/types/plugin.js";
-import LessonController from "@/src/controllers/LessonController.js";
+import {lessonController} from "@/src/controllers/LessonController.js";
 import {requiresAuth} from "@/src/middlewares/requiresAuth.js";
 import {requiresEmailConfirmed} from "@/src/middlewares/requiresEmailConfirmed.js";
 
 export const lessonsRouter: FastifyPluginCallback = function (fastify, options, done) {
-    fastify.get(`/lessons/`, LessonController.getLessons);
+    fastify.get(`/lessons/`, lessonController.getLessons);
     fastify.post(`/lessons/`, {
         preHandler: [requiresAuth, requiresEmailConfirmed],
-        handler: LessonController.createLesson
+        handler: lessonController.createLesson
     });
-    fastify.get(`/lessons/:lessonId/`, LessonController.getLesson);
-    fastify.put(`/lessons/:lessonId/`, {
+    fastify.get(`/lessons/:lessonId/`, lessonController.getLesson);
+    fastify.patch(`/lessons/:lessonId/`, {
         preHandler: [requiresAuth, requiresEmailConfirmed],
-        handler: LessonController.updateLesson
+        handler: lessonController.updateLesson
     });
-    fastify.get(`/courses/:courseId/lessons/:lessonId/next/`, LessonController.getNextLessonInCourse);
-    fastify.get(`/users/me/lessons/history/`, {preHandler: [requiresAuth, requiresEmailConfirmed], handler: LessonController.getUserLessonsHistory});
-    fastify.post(`/users/me/lessons/history/`, {preHandler: [requiresAuth, requiresEmailConfirmed], handler: LessonController.addLessonToUserHistory});
+    fastify.get(`/courses/:courseId/lessons/:lessonId/next/`, lessonController.getNextLessonInCourse);
+    fastify.get(`/users/me/lessons/history/`, {preHandler: [requiresAuth, requiresEmailConfirmed], handler: lessonController.getUserLessonsHistory});
+    fastify.post(`/users/me/lessons/history/`, {preHandler: [requiresAuth, requiresEmailConfirmed], handler: lessonController.addLessonToUserHistory});
     done();
 };

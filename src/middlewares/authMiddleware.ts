@@ -1,7 +1,6 @@
-import {preHandlerAsyncHookHandler, preParsingAsyncHookHandler} from "fastify/types/hooks.js";
+import {preParsingAsyncHookHandler} from "fastify/types/hooks.js";
 import {UserService} from "@/src/services/UserService.js";
 import {AnonymousUser} from "@/src/models/entities/auth/User.js";
-import {UnauthenticatedAPIError} from "@/src/utils/errors/UnauthenticatedAPIError.js";
 
 const BEARER_TOKEN_PREFIX = "Bearer"
 export const authMiddleware: preParsingAsyncHookHandler = async (request) => {

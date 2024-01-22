@@ -7,6 +7,7 @@ import {Dictionary} from "@/src/models/entities/Dictionary.js";
 import {Profile} from "@/src/models/entities/Profile.js";
 import {MapLearnerLanguage} from "@/src/models/entities/MapLearnerLanguage.js";
 import {LanguageRepo} from "@/src/models/repos/LanguageRepo.js";
+import {Lesson} from "@/src/models/entities/Lesson.js";
 
 @Entity({customRepository: () => LanguageRepo})
 export class Language extends CustomBaseEntity {
@@ -46,6 +47,9 @@ export class Language extends CustomBaseEntity {
         advanced1: number;
         advanced2: number;
     };
+
+    @OneToMany({entity: () => Lesson, mappedBy: (lesson: Lesson) => lesson.language, hidden: true})
+    lessons: Collection<Lesson> = new Collection<Lesson>(this);
 
     @OneToMany({entity: () => Course, mappedBy: (course: Course) => course.language, hidden: true})
     courses: Collection<Course> = new Collection<Course>(this);

@@ -1,26 +1,26 @@
 import {FastifyPluginCallback} from "fastify/types/plugin.js";
-import LanguageController from "@/src/controllers/LanguageController.js";
+import {languageController} from "@/src/controllers/LanguageController.js";
 import {requiresAuth} from "@/src/middlewares/requiresAuth.js";
 import {requiresEmailConfirmed} from "@/src/middlewares/requiresEmailConfirmed.js";
 
 export const languageRouter: FastifyPluginCallback = function (fastify, options, done) {
-    fastify.get(`/languages/`, LanguageController.getLanguages);
-    fastify.get(`/users/:username/languages/`, LanguageController.getUserLanguages);
+    fastify.get(`/languages/`, languageController.getLanguages);
+    fastify.get(`/users/:username/languages/`, languageController.getUserLanguages);
     fastify.post(`/users/me/languages/`, {
         preHandler: [requiresAuth, requiresEmailConfirmed],
-        handler: LanguageController.addLanguageToUser
+        handler: languageController.addLanguageToUser
     });
     fastify.patch(`/users/me/languages/:languageCode/`, {
         preHandler: [requiresAuth, requiresEmailConfirmed],
-        handler: LanguageController.updateUserLanguage
+        handler: languageController.updateUserLanguage
     });
     fastify.delete(`/users/me/languages/:languageCode/`, {
         preHandler: [requiresAuth, requiresEmailConfirmed],
-        handler: LanguageController.deleteUserLanguage
+        handler: languageController.deleteUserLanguage
     });
     fastify.delete(`/users/me/languages/:languageCode/progress/`, {
         preHandler: [requiresAuth, requiresEmailConfirmed],
-        handler: LanguageController.resetUserLanguageProgress
+        handler: languageController.resetUserLanguageProgress
     });
     done();
 };

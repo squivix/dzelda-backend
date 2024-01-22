@@ -5,12 +5,7 @@ import {AnonymousUser, User} from "@/src/models/entities/auth/User.js";
 import {languageCodeValidator} from "@/src/validators/languageValidators.js";
 import {usernameValidator} from "@/src/validators/userValidator.js";
 import {UnauthenticatedAPIError} from "@/src/utils/errors/UnauthenticatedAPIError.js";
-import {
-    courseDescriptionValidator,
-    courseLevelsFilterValidator,
-    courseLevelValidator,
-    courseTitleValidator
-} from "@/src/validators/courseValidator.js";
+import {courseDescriptionValidator, courseTitleValidator} from "@/src/validators/courseValidator.js";
 import {NotFoundAPIError} from "@/src/utils/errors/NotFoundAPIError.js";
 import {ForbiddenAPIError} from "@/src/utils/errors/ForbiddenAPIError.js";
 import {ValidationAPIError} from "@/src/utils/errors/ValidationAPIError.js";
@@ -30,7 +25,6 @@ class CourseController {
             searchQuery: z.string().max(256).optional(),
             sortBy: z.union([z.literal("title"), z.literal("createdDate"), z.literal("avgPastViewersCountPerLesson")]).optional().default("title"),
             sortOrder: z.union([z.literal("asc"), z.literal("desc")]).optional().default("asc"),
-            level: courseLevelsFilterValidator.default([]),
             page: z.coerce.number().int().min(1).optional().default(1),
             pageSize: z.coerce.number().int().min(1).max(100).optional().default(10),
         });
@@ -43,7 +37,6 @@ class CourseController {
         const filters = {
             languageCode: queryParams.languageCode,
             addedBy: queryParams.addedBy,
-            level: queryParams.level,
             searchQuery: queryParams.searchQuery,
         };
         const sort = {sortBy: queryParams.sortBy, sortOrder: queryParams.sortOrder};
@@ -63,8 +56,6 @@ class CourseController {
             languageCode: languageCodeValidator,
             title: courseTitleValidator,
             description: courseDescriptionValidator.optional(),
-            level: courseLevelValidator.optional(),
-            isPublic: z.boolean().optional(),
             image: z.string().optional(),
         });
         const body = bodyValidator.parse(request.body);
@@ -83,8 +74,6 @@ class CourseController {
             language: language,
             title: body.title,
             description: body.description,
-            isPublic: body.isPublic,
-            level: body.level,
             image: body.image,
         }, request.user as User);
         reply.status(201).send(courseSerializer.serialize(course));
@@ -97,7 +86,7 @@ class CourseController {
         const courseService = new CourseService(request.em);
         const course = await courseService.getCourse(pathParams.courseId, request.user);
 
-        if (!course || (!course.isPublic && request?.user?.profile !== course.addedBy))
+        if (!course)
             throw new NotFoundAPIError("Course");
         reply.status(200).send(courseSerializer.serialize(course));
     }
@@ -109,21 +98,19 @@ class CourseController {
         const bodyValidator = z.object({
             title: courseTitleValidator,
             description: courseDescriptionValidator,
-            isPublic: z.boolean(),
-            level: courseLevelValidator,
             lessonsOrder: z.array(z.number().int().min(0)).refine(e => new Set(e).size === e.length),
             image: z.string().optional()
         });
         const body = bodyValidator.parse(request.body);
 
         const courseService = new CourseService(request.em);
-        const course = await courseService.findCourse(pathParams.courseId, ["id", "isPublic", "addedBy", "lessons"]);
+        const course = await courseService.findCourse(pathParams.courseId, ["id", "addedBy", "lessons"]);
 
         if (!course)
             throw new NotFoundAPIError("Course");
 
         if (request?.user?.profile !== course.addedBy)
-            throw course.isPublic ? new ForbiddenAPIError() : new NotFoundAPIError("Course");
+            throw new ForbiddenAPIError();
 
         const lessonOrderIdSet = new Set(body.lessonsOrder);
         if (course.lessons.length !== body.lessonsOrder.length || !course.lessons.getItems().map(c => c.id).every(l => lessonOrderIdSet.has(l)))
@@ -135,9 +122,7 @@ class CourseController {
         const updatedCourse = await courseService.updateCourse(course, {
             title: body.title,
             description: body.description,
-            isPublic: body.isPublic,
             image: body.image,
-            level: body.level,
             lessonsOrder: body.lessonsOrder
         }, request.user as User);
         reply.status(200).send(courseSerializer.serialize(updatedCourse));
@@ -148,7 +133,6 @@ class CourseController {
             languageCode: languageCodeValidator.optional(),
             addedBy: usernameValidator.or(z.literal("me")).optional(),
             searchQuery: z.string().max(256).optional(),
-            level: courseLevelsFilterValidator.default([]),
             sortBy: z.union([z.literal("title"), z.literal("createdDate"), z.literal("avgPastViewersCountPerLesson")]).optional().default("title"),
             sortOrder: z.union([z.literal("asc"), z.literal("desc")]).optional().default("asc"),
             page: z.coerce.number().int().min(1).optional().default(1),
@@ -160,7 +144,6 @@ class CourseController {
         const filters = {
             languageCode: queryParams.languageCode,
             addedBy: queryParams.addedBy,
-            level: queryParams.level,
             searchQuery: queryParams.searchQuery,
             isBookmarked: true
         };
@@ -183,7 +166,7 @@ class CourseController {
 
         const courseService = new CourseService(request.em);
         const course = await courseService.getCourse(body.courseId, request.user);
-        if (!course || (!course.isPublic && request?.user?.profile !== course.addedBy))
+        if (!course)
             throw new ValidationAPIError({course: "Not found"});
         if (!(request.user as User).profile.languagesLearning.contains(course.language))
             throw new ValidationAPIError({course: "not in a language the user is learning"});
@@ -203,7 +186,7 @@ class CourseController {
 
         const courseService = new CourseService(request.em);
         const course = await courseService.getCourse(pathParams.courseId, request.user);
-        if (!course || (!course.isPublic && request?.user?.profile !== course.addedBy))
+        if (!course)
             throw new NotFoundAPIError("Course");
         const existingCourseMapping = await courseService.findBookMarkerCourseMapping({course: course, bookmarker: user.profile});
         if (!existingCourseMapping)
@@ -213,4 +196,4 @@ class CourseController {
     }
 }
 
-export default new CourseController();
+export const courseController = new CourseController();

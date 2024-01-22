@@ -14,8 +14,6 @@ const isFastifyError = (error: Error): error is FastifyError => {
 
 export const errorHandler = (error: Error, request: FastifyRequest, reply: FastifyReply) => {
     let apiError: APIError | undefined;
-    if (process.env.NODE_ENV == "dev")
-        console.log(error);
     if (error instanceof APIError)
         apiError = error;
     else if (error instanceof ZodError) {
@@ -42,6 +40,9 @@ export const errorHandler = (error: Error, request: FastifyRequest, reply: Fasti
 
     if (apiError)
         reply.status(apiError.statusCode).send(apiError.toJSON());
-    else
+    else {
+        if (process.env.NODE_ENV == "dev" || process.env.NODE_ENV == "test")
+            console.log(error);
         reply.status(500).send("Something went wrong");
+    }
 };

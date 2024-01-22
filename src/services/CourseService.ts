@@ -1,4 +1,4 @@
-import {EntityManager, FilterQuery} from "@mikro-orm/core";
+import {EntityManager, FilterQuery, PopulateHint} from "@mikro-orm/core";
 import {Course} from "@/src/models/entities/Course.js";
 import {CourseRepo} from "@/src/models/repos/CourseRepo.js";
 import {AnonymousUser, User} from "@/src/models/entities/auth/User.js";
@@ -9,7 +9,6 @@ import {LessonRepo} from "@/src/models/repos/LessonRepo.js";
 import {QueryOrderMap} from "@mikro-orm/core/enums.js";
 import {EntityField} from "@mikro-orm/core/drivers/IDatabaseDriver.js";
 import {MapBookmarkerCourse} from "@/src/models/entities/MapBookmarkerCourse.js";
-import {LanguageLevel} from "@/src/models/enums/LanguageLevel.js";
 
 export class CourseService {
     em: EntityManager;
@@ -23,8 +22,7 @@ export class CourseService {
     }
 
     async getPaginatedCourses(filters: {
-        languageCode?: string, addedBy?: string,
-        level?: LanguageLevel[], searchQuery?: string, isBookmarked?: boolean
+        languageCode?: string, addedBy?: string, searchQuery?: string, isBookmarked?: boolean
     }, sort: {
         sortBy: "title" | "createdDate" | "avgPastViewersCountPerLesson",
         sortOrder: "asc" | "desc"
@@ -32,20 +30,15 @@ export class CourseService {
         const dbFilters: FilterQuery<Course> = {$and: []};
 
         if (user && user instanceof User) {
-            dbFilters.$and!.push({$or: [{isPublic: true}, {addedBy: (user as User).profile}]});
             if (filters.isBookmarked)
                 dbFilters.$and!.push({bookmarkers: user.profile});
-        } else
-            dbFilters.$and!.push({isPublic: true});
-
+        }
         if (filters.languageCode !== undefined)
             dbFilters.$and!.push({language: {code: filters.languageCode}});
         if (filters.addedBy !== undefined)
             dbFilters.$and!.push({addedBy: {user: {username: filters.addedBy}}});
         if (filters.searchQuery !== undefined && filters.searchQuery !== "")
             dbFilters.$and!.push({$or: [{title: {$ilike: `%${filters.searchQuery}%`}}, {description: {$ilike: `%${filters.searchQuery}%`}}]});
-        if (filters.level !== undefined)
-            dbFilters.$and!.push({$or: filters.level.map(level => ({level}))});
 
         const dbOrderBy: QueryOrderMap<Course>[] = [];
         if (sort.sortBy == "title")
@@ -69,16 +62,14 @@ export class CourseService {
     }
 
     async createCourse(fields: {
-        language: Language, title: string, description?: string, level?: LanguageLevel, isPublic?: boolean, image?: string
+        language: Language, title: string, description?: string, image?: string
     }, user: User) {
         const newCourse = this.courseRepo.create({
             title: fields.title,
             addedBy: user.profile,
-            level: fields.level,
             language: fields.language,
             description: fields.description,
             image: fields.image,
-            isPublic: fields.isPublic,
         });
         newCourse.vocabsByLevel = defaultVocabsByLevel();
         await this.em.flush();
@@ -88,7 +79,8 @@ export class CourseService {
     async getCourse(courseId: number, user: User | AnonymousUser | null) {
         const course = await this.courseRepo.findOne({id: courseId}, {populate: ["language", "addedBy", "addedBy.user"]});
         if (course) {
-            await this.em.populate(course, ["lessons"], {orderBy: {lessons: {orderInCourse: "asc"}}, refresh: true});
+            const privateFilter: FilterQuery<Lesson> = user instanceof User ? {$or: [{isPublic: true}, {addedBy: user.profile}]} : {isPublic: true};
+            await course.lessons.init({where: privateFilter, orderBy: {orderInCourse: "asc"}});
             if (user && !(user instanceof AnonymousUser)) {
                 await this.courseRepo.annotateCoursesWithUserData([course], user);
                 await this.lessonRepo.annotateLessonsWithUserData(course.lessons.getItems(), user);
@@ -100,15 +92,11 @@ export class CourseService {
     async updateCourse(course: Course, updatedCourseData: {
         title: string;
         description: string;
-        isPublic: boolean;
-        level: LanguageLevel
         image?: string;
         lessonsOrder: number[]
     }, user: User) {
         course.title = updatedCourseData.title;
         course.description = updatedCourseData.description;
-        course.isPublic = updatedCourseData.isPublic;
-        course.level = updatedCourseData.level;
 
         if (updatedCourseData.image !== undefined)
             course.image = updatedCourseData.image;
@@ -126,16 +114,21 @@ export class CourseService {
         return (await this.getCourse(course.id, user))!;
     }
 
-    async getNextLessonInCourse(course: Course, lessonId: number) {
+    async getNextLessonInCourse(course: Course, lessonId: number, user: User | AnonymousUser | null) {
         const queryBuilder = this.lessonRepo.createQueryBuilder("l0");
         const subQueryBuilder = this.lessonRepo.createQueryBuilder("l1").select("orderInCourse").where({id: lessonId}).getKnexQuery();
-        return await queryBuilder.select(["id", "orderInCourse"])
+        const privateFilter: FilterQuery<Lesson> = user instanceof User ? {$or: [{isPublic: true}, {addedBy: user.profile}]} : {isPublic: true};
+
+        return await queryBuilder.select("*")
             .where({course: course.id})
-            .andWhere({'orderInCourse': queryBuilder.raw(`(${subQueryBuilder}) + 1`)})
-            .execute("get")
+            .andWhere({"orderInCourse": {$gt: queryBuilder.raw(`(${subQueryBuilder})`)}})
+            .andWhere(privateFilter)
+            .orderBy({orderInCourse: "asc"})
+            .limit(1)
+            .execute("get");
     }
 
-    async findCourse(where: FilterQuery<Course>, fields: EntityField<Course>[] = ["id", "isPublic", "addedBy"]) {
+    async findCourse(where: FilterQuery<Course>, fields: EntityField<Course>[] = ["id", "addedBy"]) {
         return await this.courseRepo.findOne(where, {fields});
     }
 

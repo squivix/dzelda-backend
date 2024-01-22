@@ -1,5 +1,5 @@
 import {CustomBaseEntity} from "@/src/models/entities/CustomBaseEntity.js";
-import {Collection, Entity, Formula, Index, ManyToMany, ManyToOne, OptionalProps, Property, types} from "@mikro-orm/core";
+import {Collection, Entity, Enum, Formula, Index, ManyToMany, ManyToOne, OptionalProps, Property, types} from "@mikro-orm/core";
 import {Course} from "@/src/models/entities/Course.js";
 import {Vocab} from "@/src/models/entities/Vocab.js";
 import {MapLessonVocab} from "@/src/models/entities/MapLessonVocab.js";
@@ -7,6 +7,8 @@ import {Profile} from "@/src/models/entities/Profile.js";
 import {MapPastViewerLesson} from "@/src/models/entities/MapPastViewerLesson.js";
 import {LessonRepo} from "@/src/models/repos/LessonRepo.js";
 import {VocabLevel} from "@/src/models/enums/VocabLevel.js";
+import {LanguageLevel} from "@/src/models/enums/LanguageLevel.js";
+import {Language} from "@/src/models/entities/Language.js";
 
 @Entity({customRepository: () => LessonRepo})
 @Index({properties: ["course"]})
@@ -31,11 +33,23 @@ export class Lesson extends CustomBaseEntity {
     @Property({type: types.string, length: 500, default: ""})
     image: string = "";
 
-    @ManyToOne({entity: () => Course, inversedBy: (course) => course.lessons, onDelete: "cascade", onUpdateIntegrity: "cascade"})
-    course!: Course;
+    @ManyToOne({entity: () => Language, inversedBy: (language) => language.lessons, onDelete: "cascade", onUpdateIntegrity: "cascade"})
+    language!: Language;
 
-    @Property({type: types.integer, default: 0})
-    orderInCourse: number = 0;
+    @ManyToOne({entity: () => Course, inversedBy: (course) => course.lessons, onDelete: "cascade", onUpdateIntegrity: "cascade", nullable: true, default: null})
+    course: Course | null = null;
+
+    @Property({type: types.boolean, default: true})
+    isPublic: boolean = true;
+
+    @ManyToOne({entity: () => Profile, inversedBy: (profile) => profile.lessonsAdded, onDelete: "cascade", onUpdateIntegrity: "cascade"})
+    addedBy!: Profile;
+
+    @Enum({items: () => LanguageLevel, type: types.enum, default: LanguageLevel.ADVANCED_1})
+    level: LanguageLevel = LanguageLevel.ADVANCED_1;
+
+    @Property({type: types.integer, nullable: true, default: null})
+    orderInCourse: number | null = null;
 
     @Property({type: types.datetime, defaultRaw: "now()"})
     addedOn!: Date;
@@ -56,7 +70,7 @@ export class Lesson extends CustomBaseEntity {
     })
     pastViewers: Collection<Profile> = new Collection<Profile>(this);
 
-    [OptionalProps]?: "image" | "audio" | "addedOn" | "pastViewersCount" | "parsedText" | "parsedTitle" | "isLastInCourse";
+    [OptionalProps]?: "image" | "audio" | "addedOn" | "level" | "orderInCourse" | "pastViewersCount" | "parsedText" | "parsedTitle" | "isLastInCourse";
 
     //annotated properties
     @Property({persist: false, type: types.json})
@@ -70,7 +84,7 @@ export class Lesson extends CustomBaseEntity {
     @Formula((alias: string) => `(SELECT ${alias}.order_in_course = MAX(order_in_course) from lesson WHERE course_id = ${alias}.course_id)`, {
         type: "boolean"
     })
-    isLastInCourse!: boolean;
+    isLastInCourse: boolean | null = null;
 
     //TODO add field for keeping track of which parser last parsed lesson (to reparse on demand if parser was updated)
 }

@@ -555,7 +555,11 @@ describe("DELETE users/me/languages/:languageCode/", () => {
         const language = await context.languageFactory.createOne({learners: user.profile});
 
         const courses = await context.courseFactory.create(3, {language});
-        const lessons = [...await context.lessonFactory.create(3, {course: courses[0]}), ...await context.lessonFactory.create(3, {course: courses[1]}), ...await context.lessonFactory.create(3, {course: courses[2]})];
+        const lessons = [
+            ...await context.lessonFactory.create(3, {language, course: courses[0]}),
+            ...await context.lessonFactory.create(3, {language, course: courses[1]}),
+            ...await context.lessonFactory.create(3, {language, course: courses[2]})
+        ];
         await context.em.insertMany(MapPastViewerLesson, lessons.map(l => ({lesson: l, pastViewer: user.profile})));
         const dictionaries = await context.dictionaryFactory.create(3, {language});
         await context.em.insertMany(MapLearnerDictionary, dictionaries.map(d => ({dictionary: d, learner: user.profile})));
@@ -625,5 +629,5 @@ describe("DELETE users/me/languages/:languageCode/", () => {
 
 
 /**{@link LanguageController#resetUserLanguageProgress}*/
-describe.todo("DELETE users/me/languages/:languageCode/", () => {
+describe.todo("DELETE users/me/languages/:languageCode/progress", () => {
 });

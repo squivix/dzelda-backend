@@ -1,5 +1,5 @@
 import {Lesson} from "@/src/models/entities/Lesson.js";
-import {CourseSchema, LessonSchema, LanguageLevelSchema} from "dzelda-common";
+import {CourseSchema, LessonSchema} from "dzelda-common";
 import {courseSerializer} from "@/src/presentation/response/serializers/entities/CourseSerializer.js";
 import {CustomCallbackObject, CustomEntitySerializer} from "@/src/presentation/response/serializers/CustomEntitySerializer.js";
 
@@ -14,11 +14,14 @@ export class LessonSerializer extends CustomEntitySerializer<Lesson, LessonSchem
             parsedText: () => lesson.parsedText,
             audio: () => lesson.audio,
             image: () => lesson.image,
-            // @ts-ignore
-            course: () => courseSerializer.serialize(lesson.course, {ignore: ["lessons"]}) as Omit<CourseSchema, "lessons">,
-            orderInCourse: () => lesson.orderInCourse,
-            isLastInCourse: () => lesson.isLastInCourse,
+            //@ts-ignore
+            course: () => lesson.course ? courseSerializer.serialize(lesson.course, {ignore: ["lessons"]}) as Omit<CourseSchema, "lessons"> : null,
+            orderInCourse: () => lesson.orderInCourse ?? undefined,
+            isLastInCourse: () => lesson.isLastInCourse ?? undefined,
             addedOn: () => lesson.addedOn.toISOString(),
+            isPublic: () => lesson.isPublic,
+            level: () => lesson.level,
+            language: () => lesson.language.code,
             vocabsByLevel: () => lesson.vocabsByLevel,
             pastViewersCount: () => Number(lesson.pastViewersCount)
         };

@@ -1,10 +1,5 @@
 import {API_ROOT, server} from "@/src/server.js";
 import {InjectOptions} from "light-my-request";
-import http from "http";
-import FormData from "form-data";
-import fs from "fs-extra";
-import path from "path";
-import {File, Files} from "fastify-formidable/lib/mjs/index.js";
 import {EntityClass} from "@mikro-orm/core/typings.js";
 import {EntityData} from "@mikro-orm/core";
 
@@ -42,54 +37,6 @@ export function parseUrlQueryString(url: string) {
     return Object.fromEntries(new URL(url).searchParams.entries());
 }
 
-export function readSampleFile(filePath: string, fileName?: string, mimeType?: string): { value: ""; } | {
-    value: Buffer;
-    fileName?: string,
-    mimeType?: string
-} {
-    return {value: fs.readFileSync(`tests/integration/sample-files/${filePath}`), fileName: fileName ?? path.basename(filePath), mimeType};
-}
-
-export async function fetchWithFiles(
-    {options, authToken}: {
-        options: {
-            method: string; url: string;
-            headers?: http.IncomingHttpHeaders | http.OutgoingHttpHeaders;
-            body: { data?: object, files?: { [key: string]: { value: ""; } | { value: Buffer; fileName?: string, mimeType?: string } }; }
-        }, authToken?: string
-    }) {
-    const formData = new FormData();
-    if (options.body.data)
-        formData.append("data", JSON.stringify(options.body.data));
-    if (!options.body.files)
-        options.body.files = {};
-    for (let [fileKey, file] of Object.entries(options.body.files)) {
-        formData.append(fileKey, file.value, file.value === "" ? undefined : {
-            filename: `${file.fileName ?? "untitled"}`,
-            contentType: file.mimeType
-        });
-    }
-    options = {
-        ...options,
-        // @ts-ignore
-        payload: formData,
-        headers: formData.getHeaders()
-    };
-    return await fetchRequest(options as InjectOptions, authToken);
-}
-
-export function mockValidateFileFields(fakeFieldFileSizes: { [fieldName: string]: number }) {
-    return async (fields: {
-        [fieldName: string]: { path: string, validate: (file?: File) => Promise<void> }
-    }, files: Files): Promise<void> => {
-        await Promise.all(Object.entries(fields).map(([fieldName, field]) => {
-            const file = files[fieldName] as File;
-            if (fieldName in fakeFieldFileSizes)
-                file.size = fakeFieldFileSizes[fieldName];
-            return field.validate(file);
-        }));
-    };
-}
 
 export function createComparator<T>(entityName: EntityClass<T>,
                                     properties: {

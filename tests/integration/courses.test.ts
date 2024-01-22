@@ -1,6 +1,6 @@
 import {beforeEach, describe, expect, test, TestContext, vi} from "vitest";
 import {orm} from "@/src/server.js";
-import {buildQueryString, createComparator, fetchRequest, readSampleFile} from "@/tests/integration/utils.js";
+import {buildQueryString, createComparator, fetchRequest} from "@/tests/integration/utils.js";
 import {UserFactory} from "@/devtools/factories/UserFactory.js";
 import {SessionFactory} from "@/devtools/factories/SessionFactory.js";
 import {ProfileFactory} from "@/devtools/factories/ProfileFactory.js";
@@ -10,7 +10,7 @@ import {CourseRepo} from "@/src/models/repos/CourseRepo.js";
 import {InjectOptions} from "light-my-request";
 import {LanguageFactory} from "@/devtools/factories/LanguageFactory.js";
 import {faker} from "@faker-js/faker";
-import {randomCase, randomEnum, randomEnums, shuffleArray} from "@/tests/utils.js";
+import {randomCase, shuffleArray} from "@/tests/utils.js";
 import {defaultVocabsByLevel} from "@/src/models/enums/VocabLevel.js";
 import {LessonFactory} from "@/devtools/factories/LessonFactory.js";
 import {LessonRepo} from "@/src/models/repos/LessonRepo.js";
@@ -20,7 +20,6 @@ import {CourseSchema, LessonSchema} from "dzelda-common";
 import * as constantExports from "@/src/constants.js";
 import {TEMP_ROOT_FILE_UPLOAD_DIR} from "@/tests/testConstants.js";
 import {MapBookmarkerCourse} from "@/src/models/entities/MapBookmarkerCourse.js";
-import {LanguageLevel} from "@/src/models/enums/LanguageLevel.js";
 import {FileUploadRequestFactory} from "@/devtools/factories/FileUploadRequestFactory.js";
 
 interface LocalTestContext extends TestContext {
@@ -62,10 +61,9 @@ describe("GET courses/", function () {
         {property: "title", order: "asc"},
         {property: "id", order: "asc"}]
     );
-    test<LocalTestContext>("If there are no filters return all public courses", async (context) => {
+    test<LocalTestContext>("If there are no filters return all courses", async (context) => {
         const language = await context.languageFactory.createOne();
-        const expectedCourses = await context.courseFactory.create(5, {language, isPublic: true});
-        await context.courseFactory.create(5, {language, isPublic: false});
+        const expectedCourses = await context.courseFactory.create(5, {language});
         expectedCourses.sort(defaultSortComparator);
         const recordsCount = expectedCourses.length;
 
@@ -83,9 +81,8 @@ describe("GET courses/", function () {
         test<LocalTestContext>("If language filter is valid and language exists only return public courses in that language", async (context) => {
             const language1 = await context.languageFactory.createOne();
             const language2 = await context.languageFactory.createOne();
-            const expectedCourses = await context.courseFactory.create(3, {language: language1, isPublic: true});
-            await context.courseFactory.create(3, {language: language2, isPublic: true});
-            await context.courseFactory.create(3, {language: language1, isPublic: false});
+            const expectedCourses = await context.courseFactory.create(3, {language: language1});
+            await context.courseFactory.create(3, {language: language2});
             expectedCourses.sort(defaultSortComparator);
             const recordsCount = expectedCourses.length;
 
@@ -120,9 +117,8 @@ describe("GET courses/", function () {
         test<LocalTestContext>("If addedBy filter is valid and user exists only return public courses added by that user", async (context) => {
             const user1 = await context.userFactory.createOne();
             const language = await context.languageFactory.createOne();
-            const expectedCourses = await context.courseFactory.create(3, {language, addedBy: user1.profile, isPublic: true});
+            const expectedCourses = await context.courseFactory.create(3, {language, addedBy: user1.profile});
             await context.courseFactory.create(3, {language});
-            await context.courseFactory.create(3, {language, addedBy: user1.profile, isPublic: false});
             expectedCourses.sort(defaultSortComparator);
             const recordsCount = expectedCourses.length;
 
@@ -140,10 +136,7 @@ describe("GET courses/", function () {
             const user = await context.userFactory.createOne();
             const session = await context.sessionFactory.createOne({user: user});
             const language = await context.languageFactory.createOne();
-            const expectedCourses = [
-                ...await context.courseFactory.create(3, {language, addedBy: user.profile, isPublic: true}),
-                ...await context.courseFactory.create(3, {language, addedBy: user.profile, isPublic: false})
-            ];
+            const expectedCourses = await context.courseFactory.create(6, {language, addedBy: user.profile});
             await context.courseRepo.annotateCoursesWithUserData(expectedCourses, user);
             await context.courseFactory.create(3, {language});
 
@@ -186,16 +179,8 @@ describe("GET courses/", function () {
             const language = await context.languageFactory.createOne();
             const searchQuery = "search query";
             const expectedCourses = [
-                await context.courseFactory.createOne({
-                    language,
-                    isPublic: true,
-                    title: `title ${randomCase(searchQuery)} ${faker.random.alphaNumeric(10)}`
-                }),
-                await context.courseFactory.createOne({
-                    language,
-                    isPublic: true,
-                    description: `description ${randomCase(searchQuery)} ${faker.random.alphaNumeric(10)}`
-                })
+                await context.courseFactory.createOne({language, title: `title ${randomCase(searchQuery)} ${faker.random.alphaNumeric(10)}`}),
+                await context.courseFactory.createOne({language, description: `description ${randomCase(searchQuery)} ${faker.random.alphaNumeric(10)}`})
             ];
             await context.courseFactory.create(3, {language: language});
             expectedCourses.sort(defaultSortComparator);
@@ -217,7 +202,7 @@ describe("GET courses/", function () {
             expect(response.statusCode).to.equal(400);
         });
         test<LocalTestContext>("If no courses match search query return empty list", async (context) => {
-            await context.courseFactory.create(3, {language: await context.languageFactory.createOne(), isPublic: true});
+            await context.courseFactory.create(3, {language: await context.languageFactory.createOne()});
 
             const response = await makeRequest({searchQuery: faker.random.alpha({count: 200})});
 
@@ -230,57 +215,13 @@ describe("GET courses/", function () {
             });
         });
     });
-    describe("test level filter", () => {
-        test<LocalTestContext>("If the level is valid return courses in that level", async (context) => {
-            const level = randomEnum(LanguageLevel);
-            const language = await context.languageFactory.createOne();
-            const expectedCourses = await context.courseFactory.create(3, {language, level});
-            await context.courseFactory.create(3, {language, level: randomEnum(LanguageLevel, [level])});
-            expectedCourses.sort(defaultSortComparator);
-            const recordsCount = expectedCourses.length;
-
-            const response = await makeRequest({level: level});
-
-            expect(response.statusCode).to.equal(200);
-            expect(response.json()).toEqual({
-                page: queryDefaults.pagination.page,
-                pageSize: queryDefaults.pagination.pageSize,
-                pageCount: Math.ceil(recordsCount / queryDefaults.pagination.pageSize),
-                data: courseSerializer.serializeList(expectedCourses)
-            });
-        });
-        test<LocalTestContext>("If multiple levels are sent return courses in any of those levels", async (context) => {
-            const levels = randomEnums(2, LanguageLevel);
-            const language = await context.languageFactory.createOne();
-
-            const expectedCourses = (await Promise.all(levels.map(level => context.courseFactory.create(3, {language, level})))).flat();
-            await context.courseFactory.create(3, {language, level: randomEnum(LanguageLevel, levels)});
-            expectedCourses.sort(defaultSortComparator);
-            const recordsCount = expectedCourses.length;
-
-            const response = await makeRequest({level: levels});
-
-            expect(response.statusCode).to.equal(200);
-            expect(response.json()).toEqual({
-                page: queryDefaults.pagination.page,
-                pageSize: queryDefaults.pagination.pageSize,
-                pageCount: Math.ceil(recordsCount / queryDefaults.pagination.pageSize),
-                data: courseSerializer.serializeList(expectedCourses)
-            });
-        });
-        test<LocalTestContext>("If the level is invalid return 400", async () => {
-            const response = await makeRequest({level: "hard"});
-
-            expect(response.statusCode).to.equal(400);
-        });
-    });
     describe("test sort", () => {
         describe("test sortBy", () => {
             test<LocalTestContext>("test sortBy title", async (context) => {
                 const language = await context.languageFactory.createOne();
                 const expectedCourses = [
-                    await context.courseFactory.createOne({title: "abc", isPublic: true, language}),
-                    await context.courseFactory.createOne({title: "def", isPublic: true, language})
+                    await context.courseFactory.createOne({title: "abc", language}),
+                    await context.courseFactory.createOne({title: "def", language})
                 ];
                 const recordsCount = expectedCourses.length;
 
@@ -297,8 +238,8 @@ describe("GET courses/", function () {
             test<LocalTestContext>("test sortBy createdDate", async (context) => {
                 const language = await context.languageFactory.createOne();
                 const expectedCourses = [
-                    await context.courseFactory.createOne({addedOn: new Date("2018-07-22T10:30:45.000Z"), isPublic: true, language}),
-                    await context.courseFactory.createOne({addedOn: new Date("2023-03-15T20:29:42.000Z"), isPublic: true, language}),
+                    await context.courseFactory.createOne({addedOn: new Date("2018-07-22T10:30:45.000Z"), language}),
+                    await context.courseFactory.createOne({addedOn: new Date("2023-03-15T20:29:42.000Z"), language}),
                 ];
                 const recordsCount = expectedCourses.length;
 
@@ -318,23 +259,15 @@ describe("GET courses/", function () {
 
                 const language = await context.languageFactory.createOne();
                 const expectedCourses = [
+                    await context.courseFactory.createOne({language, lessons: []}),
+                    await context.courseFactory.createOne({language, lessons: [context.lessonFactory.makeOne({language, pastViewers: []})]}),
                     await context.courseFactory.createOne({
                         language,
-                        isPublic: true,
-                        lessons: []
+                        lessons: [context.lessonFactory.makeOne({language, pastViewers: [user1.profile]})]
                     }),
                     await context.courseFactory.createOne({
                         language,
-                        isPublic: true,
-                        lessons: [context.lessonFactory.makeOne({pastViewers: []})]
-                    }),
-                    await context.courseFactory.createOne({
-                        language, isPublic: true,
-                        lessons: [context.lessonFactory.makeOne({pastViewers: [user1.profile]})]
-                    }),
-                    await context.courseFactory.createOne({
-                        language, isPublic: true,
-                        lessons: [context.lessonFactory.makeOne({pastViewers: [user1.profile, user2.profile]})]
+                        lessons: [context.lessonFactory.makeOne({language, pastViewers: [user1.profile, user2.profile]})]
                     }),
                 ];
                 const recordsCount = expectedCourses.length;
@@ -358,8 +291,8 @@ describe("GET courses/", function () {
             test<LocalTestContext>("test sortOrder ascending", async (context) => {
                 const language = await context.languageFactory.createOne();
                 const expectedCourses = [
-                    await context.courseFactory.createOne({title: "abc", isPublic: true, language}),
-                    await context.courseFactory.createOne({title: "def", isPublic: true, language})
+                    await context.courseFactory.createOne({title: "abc", language}),
+                    await context.courseFactory.createOne({title: "def", language})
                 ];
                 const recordsCount = expectedCourses.length;
 
@@ -376,8 +309,8 @@ describe("GET courses/", function () {
             test<LocalTestContext>("test sortOrder descending", async (context) => {
                 const language = await context.languageFactory.createOne();
                 const expectedCourses = [
-                    await context.courseFactory.createOne({title: "def", isPublic: true, language}),
-                    await context.courseFactory.createOne({title: "abc", isPublic: true, language}),
+                    await context.courseFactory.createOne({title: "def", language}),
+                    await context.courseFactory.createOne({title: "abc", language}),
                 ];
                 const recordsCount = expectedCourses.length;
 
@@ -520,13 +453,11 @@ describe("GET courses/", function () {
             });
         });
     });
-
     test<LocalTestContext>("If logged in return courses with vocab levels for user", async (context) => {
         const user = await context.userFactory.createOne();
         const session = await context.sessionFactory.createOne({user: user});
         const language = await context.languageFactory.createOne();
-        const expectedCourses = await context.courseFactory.create(5, {language, isPublic: true});
-        await context.courseFactory.create(5, {language, isPublic: false});
+        const expectedCourses = await context.courseFactory.create(5, {language});
         expectedCourses.sort(defaultSortComparator);
         await context.courseRepo.annotateCoursesWithUserData(expectedCourses, user);
         const recordsCount = expectedCourses.length;
@@ -546,10 +477,9 @@ describe("GET courses/", function () {
         const session = await context.sessionFactory.createOne({user: user});
         const language = await context.languageFactory.createOne();
         const expectedCourses = [
-            ...await context.courseFactory.create(5, {language, isPublic: true}),
-            ...await context.courseFactory.create(5, {language, isPublic: false, addedBy: user.profile}),
+            ...await context.courseFactory.create(5, {language,}),
+            ...await context.courseFactory.create(5, {language, addedBy: user.profile}),
         ];
-        await context.courseFactory.create(5, {language, isPublic: false});
         expectedCourses.sort(defaultSortComparator);
         await context.courseRepo.annotateCoursesWithUserData(expectedCourses, user);
         const recordsCount = expectedCourses.length;
@@ -564,7 +494,6 @@ describe("GET courses/", function () {
             data: courseSerializer.serializeList(expectedCourses)
         });
     });
-
 });
 
 /**{@link CourseController#createCourse}*/
@@ -585,11 +514,9 @@ describe("POST courses/", function () {
 
             const newCourse = context.courseFactory.makeOne({
                 description: "",
-                isPublic: true,
                 lessons: [],
                 addedBy: user.profile,
                 language: language,
-                level: LanguageLevel.ADVANCED_1,
                 image: "",
                 vocabsByLevel: defaultVocabsByLevel()
             });
@@ -606,7 +533,7 @@ describe("POST courses/", function () {
             const dbRecord = await context.courseRepo.findOne({title: newCourse.title, language}, {populate: ["lessons"]});
             expect(dbRecord).not.toBeNull();
             await context.courseRepo.annotateCoursesWithUserData([dbRecord!], user);
-            expect(courseSerializer.serialize(dbRecord!)).toMatchObject(courseSerializer.serialize(newCourse));
+            expect(courseSerializer.serialize(dbRecord!)).toMatchObject(courseSerializer.serialize(newCourse, {ignore: ["addedOn"]}));
         });
         test<LocalTestContext>("If optional fields are provided use provided values", async (context) => {
             const user = await context.userFactory.createOne();
@@ -618,16 +545,13 @@ describe("POST courses/", function () {
                 addedBy: user.profile,
                 language: language,
                 lessons: [],
-                level: LanguageLevel.BEGINNER_1,
                 image: fileUploadRequest.fileUrl,
                 vocabsByLevel: defaultVocabsByLevel()
             });
             const response = await makeRequest({
                 title: newCourse.title,
                 description: newCourse.description,
-                level: newCourse.level,
                 languageCode: language.code,
-                isPublic: newCourse.isPublic,
                 image: fileUploadRequest.objectKey,
             }, session.token);
 
@@ -638,12 +562,12 @@ describe("POST courses/", function () {
             const dbRecord = await context.courseRepo.findOne({title: newCourse.title, language}, {populate: ["lessons"]});
             expect(dbRecord).not.toBeNull();
             await context.courseRepo.annotateCoursesWithUserData([dbRecord!], user);
-            expect(courseSerializer.serialize(dbRecord!)).toMatchObject(courseSerializer.serialize(newCourse));
+            expect(courseSerializer.serialize(dbRecord!)).toMatchObject(courseSerializer.serialize(newCourse, {ignore:["addedBy"]}));
         });
     });
     test<LocalTestContext>("If user not logged in return 401", async (context) => {
         const language = await context.languageFactory.createOne();
-        const newCourse = context.courseFactory.makeOne({language: language});
+        const newCourse = context.courseFactory.makeOne({language});
 
         const response = await makeRequest({
             title: newCourse.title,
@@ -656,7 +580,7 @@ describe("POST courses/", function () {
         const user = await context.userFactory.createOne({isEmailConfirmed: false});
         const session = await context.sessionFactory.createOne({user});
         const language = await context.languageFactory.createOne();
-        const newCourse = context.courseFactory.makeOne({language: language});
+        const newCourse = context.courseFactory.makeOne({language});
 
         const response = await makeRequest({
             title: newCourse.title,
@@ -731,7 +655,7 @@ describe("POST courses/", function () {
                 const user = await context.userFactory.createOne();
                 const session = await context.sessionFactory.createOne({user: user});
                 const language = await context.languageFactory.createOne({isSupported: false});
-                const newCourse = context.courseFactory.makeOne({language: language});
+                const newCourse = context.courseFactory.makeOne({language});
 
                 const response = await makeRequest({
                     title: newCourse.title,
@@ -755,19 +679,6 @@ describe("POST courses/", function () {
 
             expect(response.statusCode).to.equal(400);
         });
-        test<LocalTestContext>("If isPublic is invalid return 400", async (context) => {
-            const user = await context.userFactory.createOne();
-            const session = await context.sessionFactory.createOne({user: user});
-            const language = await context.languageFactory.createOne();
-            const newCourse = context.courseFactory.makeOne({language: language});
-
-            const response = await makeRequest({
-                title: newCourse.title,
-                languageCode: language.code,
-                isPublic: "kinda?"
-            }, session.token);
-            expect(response.statusCode).to.equal(400);
-        });
         describe("If image is invalid return 400", () => {
             test<LocalTestContext>("If file upload request with key does not exist return 400", async (context) => {
                 const user = await context.userFactory.createOne();
@@ -779,16 +690,13 @@ describe("POST courses/", function () {
                     addedBy: user.profile,
                     language: language,
                     lessons: [],
-                    level: LanguageLevel.BEGINNER_1,
                     image: fileUploadRequest.fileUrl,
                     vocabsByLevel: defaultVocabsByLevel()
                 });
                 const response = await makeRequest({
                     title: newCourse.title,
                     description: newCourse.description,
-                    level: newCourse.level,
                     languageCode: language.code,
-                    isPublic: newCourse.isPublic,
                     image: fileUploadRequest.objectKey,
                 }, session.token);
                 expect(response.statusCode).to.equal(400);
@@ -804,16 +712,13 @@ describe("POST courses/", function () {
                     addedBy: user.profile,
                     language: language,
                     lessons: [],
-                    level: LanguageLevel.BEGINNER_1,
                     image: fileUploadRequest.fileUrl,
                     vocabsByLevel: defaultVocabsByLevel()
                 });
                 const response = await makeRequest({
                     title: newCourse.title,
                     description: newCourse.description,
-                    level: newCourse.level,
                     languageCode: language.code,
-                    isPublic: newCourse.isPublic,
                     image: fileUploadRequest.objectKey,
                 }, session.token);
                 expect(response.statusCode).to.equal(400);
@@ -828,16 +733,13 @@ describe("POST courses/", function () {
                     addedBy: user.profile,
                     language: language,
                     lessons: [],
-                    level: LanguageLevel.BEGINNER_1,
                     image: fileUploadRequest.fileUrl,
                     vocabsByLevel: defaultVocabsByLevel()
                 });
                 const response = await makeRequest({
                     title: newCourse.title,
                     description: newCourse.description,
-                    level: newCourse.level,
                     languageCode: language.code,
-                    isPublic: newCourse.isPublic,
                     image: fileUploadRequest.objectKey,
                 }, session.token);
                 expect(response.statusCode).to.equal(400);
@@ -856,9 +758,9 @@ describe("GET courses/:courseId/", function () {
         return await fetchRequest(options, authToken);
     };
 
-    describe("If the course exists and is public return the course", () => {
+    describe("If the course exists return the course", () => {
         test<LocalTestContext>("If the user is not logged in return course and lessons without vocab levels", async (context) => {
-            const course = await context.courseFactory.createOne({isPublic: true, language: await context.languageFactory.createOne()});
+            const course = await context.courseFactory.createOne({language: await context.languageFactory.createOne()});
 
             const response = await makeRequest(course.id);
 
@@ -868,10 +770,28 @@ describe("GET courses/:courseId/", function () {
         test<LocalTestContext>("If the user is logged in return course and lessons with vocab levels", async (context) => {
             const user = await context.userFactory.createOne();
             const session = await context.sessionFactory.createOne({user: user});
-            const course = await context.courseFactory.createOne({isPublic: true, language: await context.languageFactory.createOne()});
+            const course = await context.courseFactory.createOne({language: await context.languageFactory.createOne()});
             await context.courseRepo.annotateCoursesWithUserData([course], user);
 
             const response = await makeRequest(course.id, session.token);
+
+            expect(response.statusCode).to.equal(200);
+            expect(response.json()).toEqual(courseSerializer.serialize(course));
+        });
+        test<LocalTestContext>("If the user is not author of hide private lessons in course", async (context) => {
+            const user = await context.userFactory.createOne();
+            const author = await context.userFactory.createOne();
+            const session = await context.sessionFactory.createOne({user: user});
+            const language = await context.languageFactory.createOne();
+            const course = await context.courseFactory.createOne({
+                language, lessons: context.lessonFactory.makeDefinitions(3, {addedBy: author.profile, language, isPublic: true, isLastInCourse: false}),
+            });
+            await Promise.all(Array.from({length: 3}).map((_, i) => context.lessonFactory.createOne({
+                course, language, addedBy: author.profile, isPublic: false,
+                orderInCourse: course.lessons.length + i
+            })));
+            const response = await makeRequest(course.id);
+
 
             expect(response.statusCode).to.equal(200);
             expect(response.json()).toEqual(courseSerializer.serialize(course));
@@ -884,44 +804,6 @@ describe("GET courses/:courseId/", function () {
     test<LocalTestContext>("If course id is invalid return 400", async () => {
         const response = await makeRequest(faker.random.alpha(8));
         expect(response.statusCode).to.equal(400);
-    });
-    test<LocalTestContext>("If the course is not public and the user is not logged in return 404", async (context) => {
-        const course = await context.courseFactory.createOne({isPublic: false, language: await context.languageFactory.createOne()});
-
-        const response = await makeRequest(course.id);
-
-        expect(response.statusCode).to.equal(404);
-    });
-    test<LocalTestContext>("If the course is not public and the user is logged in as a non-author return 404", async (context) => {
-        const author = await context.userFactory.createOne();
-        const course = await context.courseFactory.createOne({
-            isPublic: false,
-            addedBy: author.profile,
-            language: await context.languageFactory.createOne()
-        });
-        const otherUser = await context.userFactory.createOne();
-        const session = await context.sessionFactory.createOne({user: otherUser});
-
-        const response = await makeRequest(course.id, session.token);
-
-        expect(response.statusCode).to.equal(404);
-    });
-    test<LocalTestContext>("If the course is not public and the user is logged in as author return course with vocabs by level", async (context) => {
-        const author = await context.userFactory.createOne();
-        const course = await context.courseFactory.createOne({
-            isPublic: false,
-            addedBy: author.profile,
-            language: await context.languageFactory.createOne(),
-            lessons: context.lessonFactory.makeDefinitions(3)
-        });
-        await context.courseRepo.annotateCoursesWithUserData([course], author);
-        await context.lessonRepo.annotateLessonsWithUserData(course.lessons.getItems(), author);
-        const session = await context.sessionFactory.createOne({user: author});
-
-        const response = await makeRequest(course.id, session.token);
-
-        expect(response.statusCode).to.equal(200);
-        expect(response.json()).toEqual(courseSerializer.serialize(course));
     });
 });
 
@@ -946,15 +828,13 @@ describe("PUT courses/:courseId/", function () {
             let courseLessons = await context.lessonFactory.each(l => {
                 l.orderInCourse = lessonCounter;
                 lessonCounter++;
-            }).create(10, {course: course});
-            const updatedCourse = context.courseFactory.makeOne({addedBy: author.profile, language, level: LanguageLevel.BEGINNER_1});
+            }).create(10, {course, language, addedBy: author.profile});
+            const updatedCourse = context.courseFactory.makeOne({addedBy: author.profile, language});
             const shuffledLessonIds = shuffleArray(courseLessons).map(l => l.id);
 
             const response = await makeRequest(course.id, {
                 title: updatedCourse.title,
                 description: updatedCourse.description,
-                level: updatedCourse.level,
-                isPublic: updatedCourse.isPublic,
                 lessonsOrder: shuffledLessonIds
             }, session.token);
             context.em.clear();
@@ -966,33 +846,26 @@ describe("PUT courses/:courseId/", function () {
             expect(response.statusCode).to.equal(200);
             expect(response.json()).toEqual(courseSerializer.serialize(course));
             expect(response.json().lessons.map((l: LessonSchema) => l.id)).toEqual(shuffledLessonIds);
-            const updatedFields: (keyof CourseSchema)[] = ["title", "description", "isPublic", "level"];
+            const updatedFields: (keyof CourseSchema)[] = ["title", "description"];
             expect(courseSerializer.serialize(course, {include: updatedFields})).toEqual(courseSerializer.serialize(updatedCourse, {include: updatedFields}));
         });
         test<LocalTestContext>("If new image is blank clear course image", async (context) => {
             const author = await context.userFactory.createOne();
             const session = await context.sessionFactory.createOne({user: author});
             const language = await context.languageFactory.createOne();
-            let course = await context.courseFactory.createOne({addedBy: author.profile, language: language, lessons: []});
+            let course = await context.courseFactory.createOne({addedBy: author.profile, language, lessons: []});
 
             let lessonCounter = 0;
             let courseLessons = await context.lessonFactory.each(l => {
                 l.orderInCourse = lessonCounter;
                 lessonCounter++;
-            }).create(10, {course: course});
-            const updatedCourse = context.courseFactory.makeOne({
-                addedBy: author.profile,
-                language: language,
-                level: LanguageLevel.BEGINNER_1,
-                image: ""
-            });
+            }).create(10, {course, language, addedBy: author.profile});
+            const updatedCourse = context.courseFactory.makeOne({addedBy: author.profile, language, image: ""});
             const shuffledLessonIds = shuffleArray(courseLessons).map(l => l.id);
 
             const response = await makeRequest(course.id, {
                 title: updatedCourse.title,
                 description: updatedCourse.description,
-                level: updatedCourse.level,
-                isPublic: updatedCourse.isPublic,
                 lessonsOrder: shuffledLessonIds,
                 image: ""
             }, session.token);
@@ -1007,7 +880,7 @@ describe("PUT courses/:courseId/", function () {
             expect(response.json()).toEqual(courseSerializer.serialize(course));
             expect(course.image).toEqual("");
             expect(response.json().lessons.map((l: LessonSchema) => l.id)).toEqual(shuffledLessonIds);
-            const updatedFields: (keyof CourseSchema)[] = ["title", "description", "isPublic", "image", "level"];
+            const updatedFields: (keyof CourseSchema)[] = ["title", "description", "image"];
             expect(courseSerializer.serialize(course, {include: updatedFields})).toEqual(courseSerializer.serialize(updatedCourse, {include: updatedFields}));
         });
         test<LocalTestContext>("If new image is provided, update course image", async (context) => {
@@ -1021,10 +894,9 @@ describe("PUT courses/:courseId/", function () {
             let courseLessons = await context.lessonFactory.each(l => {
                 l.orderInCourse = lessonCounter;
                 lessonCounter++;
-            }).create(10, {course: course});
+            }).create(10, {course, language, addedBy: author.profile});
             const updatedCourse = context.courseFactory.makeOne({
                 addedBy: author.profile,
-                level: LanguageLevel.BEGINNER_1,
                 language: language,
                 image: fileUploadRequest.fileUrl
             });
@@ -1033,8 +905,6 @@ describe("PUT courses/:courseId/", function () {
             const response = await makeRequest(course.id, {
                 title: updatedCourse.title,
                 description: updatedCourse.description,
-                level: updatedCourse.level,
-                isPublic: updatedCourse.isPublic,
                 lessonsOrder: shuffledLessonIds,
                 image: fileUploadRequest.objectKey
             }, session.token);
@@ -1048,7 +918,7 @@ describe("PUT courses/:courseId/", function () {
             expect(response.statusCode).to.equal(200);
             expect(response.json()).toEqual(courseSerializer.serialize(course));
             expect(response.json().lessons.map((l: LessonSchema) => l.id)).toEqual(shuffledLessonIds);
-            const updatedFields: (keyof CourseSchema)[] = ["title", "description", "isPublic", "level", "image"];
+            const updatedFields: (keyof CourseSchema)[] = ["title", "description", "image"];
             expect(courseSerializer.serialize(course, {include: updatedFields})).toEqual(courseSerializer.serialize(updatedCourse, {include: updatedFields}));
         });
     });
@@ -1058,17 +928,15 @@ describe("PUT courses/:courseId/", function () {
         const course = await context.courseFactory.createOne({addedBy: author.profile, language: language, lessons: [], image: ""});
 
         let lessonCounter = 0;
-        let courseLessons = await context.lessonFactory.each(l => {
+        const courseLessons = await context.lessonFactory.each(l => {
             l.orderInCourse = lessonCounter;
             lessonCounter++;
-        }).create(10, {course: course});
-        const updatedCourse = context.courseFactory.makeOne({addedBy: author.profile, language, level: LanguageLevel.BEGINNER_1});
+        }).create(10, {course, language, addedBy: author.profile});
+        const updatedCourse = context.courseFactory.makeOne({addedBy: author.profile, language});
 
         const response = await makeRequest(course.id, {
             title: updatedCourse.title,
             description: updatedCourse.description,
-            level: updatedCourse.level,
-            isPublic: updatedCourse.isPublic,
             lessonsOrder: shuffleArray(courseLessons).map(l => l.id)
         });
 
@@ -1085,14 +953,12 @@ describe("PUT courses/:courseId/", function () {
         let courseLessons = await context.lessonFactory.each(l => {
             l.orderInCourse = lessonCounter;
             lessonCounter++;
-        }).create(10, {course: course});
-        const updatedCourse = await context.courseFactory.makeOne({addedBy: author.profile, language, level: LanguageLevel.BEGINNER_1});
+        }).create(10, {course, language, addedBy: author.profile});
+        const updatedCourse = await context.courseFactory.makeOne({addedBy: author.profile, language});
 
         const response = await makeRequest(course.id, {
             title: updatedCourse.title,
             description: updatedCourse.description,
-            level: updatedCourse.level,
-            isPublic: updatedCourse.isPublic,
             lessonsOrder: shuffleArray(courseLessons).map(l => l.id)
         }, session.token);
 
@@ -1102,27 +968,23 @@ describe("PUT courses/:courseId/", function () {
         const user = await context.userFactory.createOne();
         const session = await context.sessionFactory.createOne({user: user});
         const language = await context.languageFactory.createOne();
-        const updatedCourse = await context.courseFactory.makeOne({language, level: LanguageLevel.BEGINNER_1});
+        const updatedCourse = await context.courseFactory.makeOne({language});
 
         const response = await makeRequest(faker.random.numeric(20), {
             title: updatedCourse.title,
             description: updatedCourse.description,
-            level: updatedCourse.level,
-            isPublic: updatedCourse.isPublic,
             lessonsOrder: [1, 2, 3]
         }, session.token);
 
         expect(response.statusCode).to.equal(404);
     });
-    test<LocalTestContext>("If course is not public and user is not author return 404", async (context) => {
+    test<LocalTestContext>("If user is not author of course return 403", async (context) => {
         const author = await context.userFactory.createOne();
         const otherUser = await context.userFactory.createOne();
         const session = await context.sessionFactory.createOne({user: otherUser});
         const language = await context.languageFactory.createOne();
         const course = await context.courseFactory.createOne({
-            addedBy: author.profile,
-            isPublic: false,
-            language: language,
+            language, addedBy: author.profile,
             lessons: [],
             image: ""
         });
@@ -1131,44 +993,12 @@ describe("PUT courses/:courseId/", function () {
         let courseLessons = await context.lessonFactory.each(l => {
             l.orderInCourse = lessonCounter;
             lessonCounter++;
-        }).create(10, {course: course});
-        const updatedCourse = context.courseFactory.makeOne({addedBy: author.profile, language, level: LanguageLevel.BEGINNER_1});
+        }).create(10, {course, language, addedBy: author.profile});
+        const updatedCourse = await context.courseFactory.makeOne({addedBy: author.profile, language});
 
         const response = await makeRequest(course.id, {
             title: updatedCourse.title,
             description: updatedCourse.description,
-            level: updatedCourse.level,
-            isPublic: updatedCourse.isPublic,
-            lessonsOrder: shuffleArray(courseLessons).map(l => l.id)
-        }, session.token);
-
-        expect(response.statusCode).to.equal(404);
-    });
-    test<LocalTestContext>("If course is public but user is not author of course return 403", async (context) => {
-        const author = await context.userFactory.createOne();
-        const otherUser = await context.userFactory.createOne();
-        const session = await context.sessionFactory.createOne({user: otherUser});
-        const language = await context.languageFactory.createOne();
-        const course = await context.courseFactory.createOne({
-            addedBy: author.profile,
-            isPublic: true,
-            language: language,
-            lessons: [],
-            image: ""
-        });
-
-        let lessonCounter = 0;
-        let courseLessons = await context.lessonFactory.each(l => {
-            l.orderInCourse = lessonCounter;
-            lessonCounter++;
-        }).create(10, {course: course});
-        const updatedCourse = await context.courseFactory.makeOne({addedBy: author.profile, language, level: LanguageLevel.BEGINNER_1});
-
-        const response = await makeRequest(course.id, {
-            title: updatedCourse.title,
-            description: updatedCourse.description,
-            level: updatedCourse.level,
-            isPublic: updatedCourse.isPublic,
             lessonsOrder: shuffleArray(courseLessons).map(l => l.id)
         }, session.token);
 
@@ -1185,13 +1015,11 @@ describe("PUT courses/:courseId/", function () {
             let courseLessons = await context.lessonFactory.each(l => {
                 l.orderInCourse = lessonCounter;
                 lessonCounter++;
-            }).create(10, {course: course});
-            const updatedCourse = context.courseFactory.makeOne({addedBy: author.profile, language, level: LanguageLevel.BEGINNER_1});
+            }).create(10, {course, language, addedBy: author.profile});
+            const updatedCourse = context.courseFactory.makeOne({addedBy: author.profile, language});
 
             const response = await makeRequest(course.id, {
                 description: updatedCourse.description,
-                level: updatedCourse.level,
-                isPublic: updatedCourse.isPublic,
                 lessonsOrder: shuffleArray(courseLessons).map(l => l.id)
             }, session.token);
 
@@ -1207,58 +1035,11 @@ describe("PUT courses/:courseId/", function () {
             let courseLessons = await context.lessonFactory.each(l => {
                 l.orderInCourse = lessonCounter;
                 lessonCounter++;
-            }).create(10, {course: course});
-            const updatedCourse = context.courseFactory.makeOne({addedBy: author.profile, language, level: LanguageLevel.BEGINNER_1});
+            }).create(10, {course, language, addedBy: author.profile});
+            const updatedCourse = context.courseFactory.makeOne({addedBy: author.profile, language});
 
             const response = await makeRequest(course.id, {
                 title: updatedCourse.title,
-                level: updatedCourse.level,
-                isPublic: updatedCourse.isPublic,
-                lessonsOrder: shuffleArray(courseLessons).map(l => l.id)
-            }, session.token);
-
-            expect(response.statusCode).to.equal(400);
-        });
-        test<LocalTestContext>("If level is missing return 400", async (context) => {
-            const author = await context.userFactory.createOne();
-            const session = await context.sessionFactory.createOne({user: author});
-            const language = await context.languageFactory.createOne();
-            const course = await context.courseFactory.createOne({addedBy: author.profile, language: language, lessons: [], image: ""});
-
-            let lessonCounter = 0;
-            let courseLessons = await context.lessonFactory.each(l => {
-                l.orderInCourse = lessonCounter;
-                lessonCounter++;
-            }).create(10, {course: course});
-            const updatedCourse = context.courseFactory.makeOne({addedBy: author.profile, language, level: LanguageLevel.BEGINNER_1});
-
-            const response = await makeRequest(course.id, {
-                title: updatedCourse.title,
-                description: updatedCourse.description,
-                isPublic: updatedCourse.isPublic,
-                lessonsOrder: shuffleArray(courseLessons).map(l => l.id)
-            }, session.token);
-
-            expect(response.statusCode).to.equal(400);
-        });
-        test<LocalTestContext>("If isPublic is missing return 400", async (context) => {
-
-            const author = await context.userFactory.createOne();
-            const session = await context.sessionFactory.createOne({user: author});
-            const language = await context.languageFactory.createOne();
-            const course = await context.courseFactory.createOne({addedBy: author.profile, language: language, lessons: [], image: ""});
-
-            let lessonCounter = 0;
-            let courseLessons = await context.lessonFactory.each(l => {
-                l.orderInCourse = lessonCounter;
-                lessonCounter++;
-            }).create(10, {course: course});
-            const updatedCourse = context.courseFactory.makeOne({addedBy: author.profile, language, level: LanguageLevel.BEGINNER_1});
-
-            const response = await makeRequest(course.id, {
-                title: updatedCourse.title,
-                description: updatedCourse.description,
-                level: updatedCourse.level,
                 lessonsOrder: shuffleArray(courseLessons).map(l => l.id)
             }, session.token);
 
@@ -1274,14 +1055,12 @@ describe("PUT courses/:courseId/", function () {
             await context.lessonFactory.each(l => {
                 l.orderInCourse = lessonCounter;
                 lessonCounter++;
-            }).create(10, {course: course});
-            const updatedCourse = context.courseFactory.makeOne({addedBy: author.profile, language, level: LanguageLevel.BEGINNER_1});
+            }).create(10, {course, language, addedBy: author.profile});
+            const updatedCourse = context.courseFactory.makeOne({addedBy: author.profile, language});
 
             const response = await makeRequest(course.id, {
                 title: updatedCourse.title,
                 description: updatedCourse.description,
-                level: updatedCourse.level,
-                isPublic: updatedCourse.isPublic,
             }, session.token);
 
             expect(response.statusCode).to.equal(400);
@@ -1298,14 +1077,12 @@ describe("PUT courses/:courseId/", function () {
             let courseLessons = await context.lessonFactory.each(l => {
                 l.orderInCourse = lessonCounter;
                 lessonCounter++;
-            }).create(10, {course: course});
-            const updatedCourse = context.courseFactory.makeOne({addedBy: author.profile, language, level: LanguageLevel.BEGINNER_1});
+            }).create(10, {course, language, addedBy: author.profile});
+            const updatedCourse = context.courseFactory.makeOne({addedBy: author.profile, language});
 
             const response = await makeRequest(course.id, {
                 title: faker.random.alpha(300),
                 description: updatedCourse.description,
-                level: updatedCourse.level,
-                isPublic: updatedCourse.isPublic,
                 lessonsOrder: shuffleArray(courseLessons).map(l => l.id)
             }, session.token);
 
@@ -1321,61 +1098,13 @@ describe("PUT courses/:courseId/", function () {
             let courseLessons = await context.lessonFactory.each(l => {
                 l.orderInCourse = lessonCounter;
                 lessonCounter++;
-            }).create(10, {course: course});
-            const updatedCourse = context.courseFactory.makeOne({addedBy: author.profile, language, level: LanguageLevel.BEGINNER_1});
+            }).create(10, {course, language, addedBy: author.profile});
+            const updatedCourse = context.courseFactory.makeOne({addedBy: author.profile, language});
 
             const response = await makeRequest(course.id, {
                 title: updatedCourse.title,
                 description: faker.random.alpha(600),
-                level: updatedCourse.level,
-                isPublic: updatedCourse.isPublic,
                 lessonsOrder: shuffleArray(courseLessons).map(l => l.id),
-            }, session.token);
-
-            expect(response.statusCode).to.equal(400);
-        });
-        test<LocalTestContext>("If isPublic is invalid return 400", async (context) => {
-            const author = await context.userFactory.createOne();
-            const session = await context.sessionFactory.createOne({user: author});
-            const language = await context.languageFactory.createOne();
-            const course = await context.courseFactory.createOne({addedBy: author.profile, language: language, lessons: [], image: ""});
-
-            let lessonCounter = 0;
-            let courseLessons = await context.lessonFactory.each(l => {
-                l.orderInCourse = lessonCounter;
-                lessonCounter++;
-            }).create(10, {course: course});
-            const updatedCourse = context.courseFactory.makeOne({addedBy: author.profile, language, level: LanguageLevel.BEGINNER_1});
-
-            const response = await makeRequest(course.id, {
-                title: updatedCourse.title,
-                description: updatedCourse.description,
-                level: updatedCourse.level,
-                isPublic: "kinda?",
-                lessonsOrder: shuffleArray(courseLessons).map(l => l.id)
-            }, session.token);
-
-            expect(response.statusCode).to.equal(400);
-        });
-        test<LocalTestContext>("If level is invalid return 400", async (context) => {
-            const author = await context.userFactory.createOne();
-            const session = await context.sessionFactory.createOne({user: author});
-            const language = await context.languageFactory.createOne();
-            const course = await context.courseFactory.createOne({addedBy: author.profile, language: language, lessons: [], image: ""});
-
-            let lessonCounter = 0;
-            let courseLessons = await context.lessonFactory.each(l => {
-                l.orderInCourse = lessonCounter;
-                lessonCounter++;
-            }).create(10, {course: course});
-            const updatedCourse = context.courseFactory.makeOne({addedBy: author.profile, language, level: LanguageLevel.BEGINNER_1});
-
-            const response = await makeRequest(course.id, {
-                title: updatedCourse.title,
-                description: updatedCourse.description,
-                level: "hard",
-                isPublic: updatedCourse.isPublic,
-                lessonsOrder: shuffleArray(courseLessons).map(l => l.id)
             }, session.token);
 
             expect(response.statusCode).to.equal(400);
@@ -1386,13 +1115,11 @@ describe("PUT courses/:courseId/", function () {
                 const session = await context.sessionFactory.createOne({user: author});
                 const language = await context.languageFactory.createOne();
                 const course = await context.courseFactory.createOne({addedBy: author.profile, language: language, lessons: [], image: ""});
-                const updatedCourse = context.courseFactory.makeOne({addedBy: author.profile, language, level: LanguageLevel.BEGINNER_1});
+                const updatedCourse = context.courseFactory.makeOne({addedBy: author.profile, language});
 
                 const response = await makeRequest(course.id, {
                     title: updatedCourse.title,
                     description: updatedCourse.description,
-                    level: updatedCourse.level,
-                    isPublic: updatedCourse.isPublic,
                     lessonsOrder: [1, 2, 3.5, -1, "42"]
                 }, session.token);
 
@@ -1413,19 +1140,13 @@ describe("PUT courses/:courseId/", function () {
                     let courseLessons = await context.lessonFactory.each(l => {
                         l.orderInCourse = lessonCounter;
                         lessonCounter++;
-                    }).create(10, {course: course});
-                    const updatedCourse = context.courseFactory.makeOne({
-                        addedBy: author.profile,
-                        language,
-                        level: LanguageLevel.BEGINNER_1
-                    });
-                    const otherLesson = await context.lessonFactory.createOne({course: await context.courseFactory.createOne({language: language})});
+                    }).create(10, {course, language, addedBy: author.profile});
+                    const updatedCourse = context.courseFactory.makeOne({addedBy: author.profile, language});
+                    const otherLesson = await context.lessonFactory.createOne({course: await context.courseFactory.createOne({language: language}), language: language});
 
                     const response = await makeRequest(course.id, {
                         title: updatedCourse.title,
                         description: updatedCourse.description,
-                        level: updatedCourse.level,
-                        isPublic: updatedCourse.isPublic,
                         lessonsOrder: [...shuffleArray(courseLessons.map(l => l.id)), otherLesson.id]
                     }, session.token);
 
@@ -1445,12 +1166,8 @@ describe("PUT courses/:courseId/", function () {
                     let courseLessons = await context.lessonFactory.each(l => {
                         l.orderInCourse = lessonCounter;
                         lessonCounter++;
-                    }).create(10, {course: course});
-                    const updatedCourse = context.courseFactory.makeOne({
-                        addedBy: author.profile,
-                        language,
-                        level: LanguageLevel.BEGINNER_1
-                    });
+                    }).create(10, {course, language, addedBy: author.profile});
+                    const updatedCourse = context.courseFactory.makeOne({addedBy: author.profile, language,});
                     const lessonOrder = shuffleArray(courseLessons).map(l => l.id);
                     lessonOrder.splice(faker.datatype.number({max: courseLessons.length - 1}),
                         faker.datatype.number({min: 1, max: courseLessons.length}));
@@ -1458,8 +1175,6 @@ describe("PUT courses/:courseId/", function () {
                     const response = await makeRequest(course.id, {
                         title: updatedCourse.title,
                         description: updatedCourse.description,
-                        level: updatedCourse.level,
-                        isPublic: updatedCourse.isPublic,
                         lessonsOrder: lessonOrder
                     }, session.token);
 
@@ -1479,7 +1194,7 @@ describe("PUT courses/:courseId/", function () {
                     let courseLessons = await context.lessonFactory.each(l => {
                         l.orderInCourse = lessonCounter;
                         lessonCounter++;
-                    }).create(10, {course: course});
+                    }).create(10, {course, language, addedBy: author.profile});
                     const updatedCourse = context.courseFactory.makeOne({addedBy: author.profile, language});
                     const lessonOrder = shuffleArray(courseLessons).map(l => l.id);
                     lessonOrder.splice(faker.datatype.number({max: courseLessons.length - 1}), 0, lessonOrder[faker.datatype.number({max: courseLessons.length - 1})]);
@@ -1487,8 +1202,6 @@ describe("PUT courses/:courseId/", function () {
                     const response = await makeRequest(course.id, {
                         title: updatedCourse.title,
                         description: updatedCourse.description,
-                        level: updatedCourse.level,
-                        isPublic: updatedCourse.isPublic,
                         lessonsOrder: lessonOrder
                     }, session.token);
 
@@ -1508,14 +1221,12 @@ describe("PUT courses/:courseId/", function () {
                 let courseLessons = await context.lessonFactory.each(l => {
                     l.orderInCourse = lessonCounter;
                     lessonCounter++;
-                }).create(10, {course: course});
-                const updatedCourse = context.courseFactory.makeOne({addedBy: author.profile, language, level: LanguageLevel.BEGINNER_1});
+                }).create(10, {course, language, addedBy: author.profile});
+                const updatedCourse = context.courseFactory.makeOne({addedBy: author.profile, language});
 
                 const response = await makeRequest(course.id, {
                     title: faker.random.alpha(300),
                     description: updatedCourse.description,
-                    level: updatedCourse.level,
-                    isPublic: updatedCourse.isPublic,
                     lessonsOrder: shuffleArray(courseLessons).map(l => l.id),
                     image: fileUploadRequest.objectKey
                 }, session.token);
@@ -1534,14 +1245,12 @@ describe("PUT courses/:courseId/", function () {
                 let courseLessons = await context.lessonFactory.each(l => {
                     l.orderInCourse = lessonCounter;
                     lessonCounter++;
-                }).create(10, {course: course});
-                const updatedCourse = context.courseFactory.makeOne({addedBy: author.profile, language, level: LanguageLevel.BEGINNER_1});
+                }).create(10, {course, language, addedBy: author.profile});
+                const updatedCourse = context.courseFactory.makeOne({addedBy: author.profile, language});
 
                 const response = await makeRequest(course.id, {
                     title: faker.random.alpha(300),
                     description: updatedCourse.description,
-                    level: updatedCourse.level,
-                    isPublic: updatedCourse.isPublic,
                     lessonsOrder: shuffleArray(courseLessons).map(l => l.id),
                     image: fileUploadRequest.objectKey
                 }, session.token);
@@ -1559,14 +1268,12 @@ describe("PUT courses/:courseId/", function () {
                 let courseLessons = await context.lessonFactory.each(l => {
                     l.orderInCourse = lessonCounter;
                     lessonCounter++;
-                }).create(10, {course: course});
-                const updatedCourse = context.courseFactory.makeOne({addedBy: author.profile, language, level: LanguageLevel.BEGINNER_1});
+                }).create(10, {course, language, addedBy: author.profile});
+                const updatedCourse = context.courseFactory.makeOne({addedBy: author.profile, language});
 
                 const response = await makeRequest(course.id, {
                     title: faker.random.alpha(300),
                     description: updatedCourse.description,
-                    level: updatedCourse.level,
-                    isPublic: updatedCourse.isPublic,
                     lessonsOrder: shuffleArray(courseLessons).map(l => l.id),
                     image: fileUploadRequest.objectKey
                 }, session.token);
@@ -1790,61 +1497,6 @@ describe("GET users/me/courses/bookmarked/", function () {
             });
         });
     });
-    describe("test level filter", () => {
-        test<LocalTestContext>("If the level is valid return courses in that level", async (context) => {
-            const user = await context.userFactory.createOne();
-            const session = await context.sessionFactory.createOne({user});
-            const level = randomEnum(LanguageLevel);
-            const language = await context.languageFactory.createOne();
-            const expectedCourses = await context.courseFactory.create(3, {language, level, bookmarkers: user.profile});
-            await context.courseFactory.create(3, {language, level: randomEnum(LanguageLevel, [level]), bookmarkers: user.profile});
-            await context.courseFactory.create(3, {language, level});
-            await context.courseRepo.annotateCoursesWithUserData(expectedCourses, user);
-            expectedCourses.sort(defaultSortComparator);
-            const recordsCount = expectedCourses.length;
-
-            const response = await makeRequest({level: level}, session.token);
-
-            expect(response.statusCode).to.equal(200);
-            expect(response.json()).toEqual({
-                page: queryDefaults.pagination.page,
-                pageSize: queryDefaults.pagination.pageSize,
-                pageCount: Math.ceil(recordsCount / queryDefaults.pagination.pageSize),
-                data: courseSerializer.serializeList(expectedCourses)
-            });
-        });
-        test<LocalTestContext>("If multiple levels are sent return courses in any of those levels", async (context) => {
-            const user = await context.userFactory.createOne();
-            const session = await context.sessionFactory.createOne({user});
-            const levels = randomEnums(2, LanguageLevel);
-            const language = await context.languageFactory.createOne();
-
-            const expectedCourses = (await Promise.all(levels.map(level =>
-                context.courseFactory.create(3, {language, level, bookmarkers: user.profile})))).flat();
-            await context.courseFactory.create(3, {language, level: randomEnum(LanguageLevel, levels), bookmarkers: user.profile});
-            await Promise.all(levels.map(level => context.courseFactory.create(3, {language, level})));
-            await context.courseRepo.annotateCoursesWithUserData(expectedCourses, user);
-            expectedCourses.sort(defaultSortComparator);
-            const recordsCount = expectedCourses.length;
-
-            const response = await makeRequest({level: levels}, session.token);
-
-            expect(response.statusCode).to.equal(200);
-            expect(response.json()).toEqual({
-                page: queryDefaults.pagination.page,
-                pageSize: queryDefaults.pagination.pageSize,
-                pageCount: Math.ceil(recordsCount / queryDefaults.pagination.pageSize),
-                data: courseSerializer.serializeList(expectedCourses)
-            });
-        });
-        test<LocalTestContext>("If the level is invalid return 400", async (context) => {
-            const user = await context.userFactory.createOne();
-            const session = await context.sessionFactory.createOne({user});
-            const response = await makeRequest({level: "hard"}, session.token);
-
-            expect(response.statusCode).to.equal(400);
-        });
-    });
     describe("test sort", () => {
         describe("test sortBy", () => {
             test<LocalTestContext>("test sortBy title", async (context) => {
@@ -1909,17 +1561,17 @@ describe("GET users/me/courses/bookmarked/", function () {
                     await context.courseFactory.createOne({
                         language,
                         bookmarkers: user.profile,
-                        lessons: [context.lessonFactory.makeOne({pastViewers: []})]
+                        lessons: [context.lessonFactory.makeOne({language, pastViewers: []})]
                     }),
                     await context.courseFactory.createOne({
                         language,
                         bookmarkers: user.profile,
-                        lessons: [context.lessonFactory.makeOne({pastViewers: [user1.profile]})]
+                        lessons: [context.lessonFactory.makeOne({language, pastViewers: [user1.profile]})]
                     }),
                     await context.courseFactory.createOne({
                         language,
                         bookmarkers: user.profile,
-                        lessons: [context.lessonFactory.makeOne({pastViewers: [user1.profile, user2.profile]})]
+                        lessons: [context.lessonFactory.makeOne({language, pastViewers: [user1.profile, user2.profile]})]
                     }),
                 ];
                 await context.courseRepo.annotateCoursesWithUserData(expectedCourses, user);
@@ -2158,27 +1810,11 @@ describe("POST users/me/courses/bookmarked/", function () {
         return await fetchRequest(options, authToken);
     };
 
-    test<LocalTestContext>("If the course exists and is public add lesson to user's bookmarked courses", async (context) => {
+    test<LocalTestContext>("If the course exists add lesson to user's bookmarked courses", async (context) => {
         const user = await context.userFactory.createOne();
         const session = await context.sessionFactory.createOne({user});
         const language = await context.languageFactory.createOne({learners: user.profile});
-        const expectedCourse = await context.courseFactory.createOne({language, isPublic: true});
-        await context.courseRepo.annotateCoursesWithUserData([expectedCourse], user);
-
-        const response = await makeRequest({courseId: expectedCourse.id}, session.token);
-
-        expectedCourse.isBookmarked = true;
-        expect(response.statusCode).to.equal(201);
-        expect(response.json()).toEqual(courseSerializer.serialize(expectedCourse));
-        const dbRecord = await context.em.findOne(MapBookmarkerCourse, {bookmarker: user.profile, course: expectedCourse});
-        expect(dbRecord).not.toBeNull();
-        expect(courseSerializer.serialize(dbRecord!.course)).toEqual(courseSerializer.serialize(expectedCourse));
-    });
-    test<LocalTestContext>("If the course is not public but user is course author add course to user's bookmarked courses", async (context) => {
-        const user = await context.userFactory.createOne();
-        const session = await context.sessionFactory.createOne({user});
-        const language = await context.languageFactory.createOne({learners: user.profile});
-        const expectedCourse = await context.courseFactory.createOne({language, isPublic: false, addedBy: user.profile});
+        const expectedCourse = await context.courseFactory.createOne({language});
         await context.courseRepo.annotateCoursesWithUserData([expectedCourse], user);
 
         const response = await makeRequest({courseId: expectedCourse.id}, session.token);
@@ -2215,22 +1851,11 @@ describe("POST users/me/courses/bookmarked/", function () {
                 const response = await makeRequest({courseId: faker.datatype.number({min: 100000})}, session.token);
                 expect(response.statusCode).to.equal(400);
             });
-            test<LocalTestContext>("If the course is not public and the user is logged in as author return 400", async (context) => {
-                const user = await context.userFactory.createOne();
-                const session = await context.sessionFactory.createOne({user});
-                const author = await context.userFactory.createOne();
-                const language = await context.languageFactory.createOne({learners: user.profile});
-                const course = await context.courseFactory.createOne({language, isPublic: false, addedBy: author.profile});
-
-                const response = await makeRequest({courseId: course.id}, session.token);
-
-                expect(response.statusCode).to.equal(400);
-            });
             test<LocalTestContext>("If the course is not in a language the user is learning return 400", async (context) => {
                 const user = await context.userFactory.createOne();
                 const session = await context.sessionFactory.createOne({user});
                 const language = await context.languageFactory.createOne();
-                const course = await context.courseFactory.createOne({language, isPublic: true});
+                const course = await context.courseFactory.createOne({language});
 
                 const response = await makeRequest({courseId: course.id}, session.token);
 
@@ -2246,10 +1871,9 @@ describe("POST users/me/courses/bookmarked/", function () {
         const user = await context.userFactory.createOne({isEmailConfirmed: false});
         const session = await context.sessionFactory.createOne({user});
         const language = await context.languageFactory.createOne();
-        const course = await context.courseFactory.createOne({language, isPublic: true});
-        const lesson = await context.lessonFactory.createOne({course});
+        const course = await context.courseFactory.createOne({language});
 
-        const response = await makeRequest({courseId: lesson.id}, session.token);
+        const response = await makeRequest({courseId: course.id}, session.token);
         expect(response.statusCode).to.equal(403);
     });
 });

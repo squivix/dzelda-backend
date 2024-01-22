@@ -27,17 +27,11 @@ export class Course extends CustomBaseEntity {
     @Property({type: types.string, length: 500, default: ""})
     image: string = "";
 
-    @Property({type: types.boolean, default: true})
-    isPublic: boolean = true;
-
     @ManyToOne({entity: () => Profile, inversedBy: (profile) => profile.coursesAdded, onDelete: "cascade", onUpdateIntegrity: "cascade"})
     addedBy!: Profile;
 
     @Property({type: types.datetime, defaultRaw: "now()"})
     addedOn!: Date;
-
-    @Enum({items: () => LanguageLevel, type: types.enum, default: LanguageLevel.ADVANCED_1})
-    level: LanguageLevel = LanguageLevel.ADVANCED_1;
 
     @OneToMany({entity: () => Lesson, mappedBy: (lesson) => lesson.course})
     lessons: Collection<Lesson> = new Collection<Lesson>(this);

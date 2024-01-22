@@ -821,16 +821,6 @@
           "default": "''",
           "mappedType": "string"
         },
-        "is_public": {
-          "name": "is_public",
-          "type": "boolean",
-          "unsigned": false,
-          "autoincrement": false,
-          "primary": false,
-          "nullable": false,
-          "default": "true",
-          "mappedType": "boolean"
-        },
         "added_by_id": {
           "name": "added_by_id",
           "type": "int",
@@ -850,24 +840,6 @@
           "length": 6,
           "default": "now()",
           "mappedType": "datetime"
-        },
-        "level": {
-          "name": "level",
-          "type": "text",
-          "unsigned": false,
-          "autoincrement": false,
-          "primary": false,
-          "nullable": false,
-          "default": "'advanced1'",
-          "enumItems": [
-            "beginner1",
-            "beginner2",
-            "intermediate1",
-            "intermediate2",
-            "advanced1",
-            "advanced2"
-          ],
-          "mappedType": "enum"
         }
       },
       "name": "course",
@@ -1123,8 +1095,8 @@
           "default": "''",
           "mappedType": "string"
         },
-        "course_id": {
-          "name": "course_id",
+        "language_id": {
+          "name": "language_id",
           "type": "int",
           "unsigned": false,
           "autoincrement": false,
@@ -1132,14 +1104,61 @@
           "nullable": false,
           "mappedType": "integer"
         },
+        "course_id": {
+          "name": "course_id",
+          "type": "int",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "default": "null",
+          "mappedType": "integer"
+        },
+        "is_public": {
+          "name": "is_public",
+          "type": "boolean",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "default": "true",
+          "mappedType": "boolean"
+        },
+        "added_by_id": {
+          "name": "added_by_id",
+          "type": "int",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "mappedType": "integer"
+        },
+        "level": {
+          "name": "level",
+          "type": "text",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "default": "'advanced1'",
+          "enumItems": [
+            "beginner1",
+            "beginner2",
+            "intermediate1",
+            "intermediate2",
+            "advanced1",
+            "advanced2"
+          ],
+          "mappedType": "enum"
+        },
         "order_in_course": {
           "name": "order_in_course",
           "type": "int",
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
-          "nullable": false,
-          "default": "0",
+          "nullable": true,
+          "default": "null",
           "mappedType": "integer"
         },
         "added_on": {
@@ -1196,6 +1215,19 @@
       ],
       "checks": [],
       "foreignKeys": {
+        "lesson_language_id_foreign": {
+          "constraintName": "lesson_language_id_foreign",
+          "columnNames": [
+            "language_id"
+          ],
+          "localTableName": "public.lesson",
+          "referencedColumnNames": [
+            "id"
+          ],
+          "referencedTableName": "public.language",
+          "deleteRule": "cascade",
+          "updateRule": "cascade"
+        },
         "lesson_course_id_foreign": {
           "constraintName": "lesson_course_id_foreign",
           "columnNames": [
@@ -1206,6 +1238,19 @@
             "id"
           ],
           "referencedTableName": "public.course",
+          "deleteRule": "cascade",
+          "updateRule": "cascade"
+        },
+        "lesson_added_by_id_foreign": {
+          "constraintName": "lesson_added_by_id_foreign",
+          "columnNames": [
+            "added_by_id"
+          ],
+          "localTableName": "public.lesson",
+          "referencedColumnNames": [
+            "id"
+          ],
+          "referencedTableName": "public.profile",
           "deleteRule": "cascade",
           "updateRule": "cascade"
         }
@@ -1687,12 +1732,12 @@
         },
         "text": {
           "name": "text",
-          "type": "varchar(1000)",
+          "type": "varchar(500)",
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
           "nullable": false,
-          "length": 1000,
+          "length": 500,
           "mappedType": "string"
         },
         "vocab_id": {

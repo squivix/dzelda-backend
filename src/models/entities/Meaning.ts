@@ -11,7 +11,7 @@ import {MapLearnerMeaning} from "@/src/models/entities/MapLearnerMeaning.js";
 @Index({properties: ["language"]})
 @Index({properties: ["addedBy"]})
 export class Meaning extends CustomBaseEntity {
-    @Property({type: types.string, length: 1000})
+    @Property({type: types.string, length: 500})
     text!: string;
 
     @ManyToOne({entity: () => Vocab, inversedBy: (vocab) => vocab.meanings, onDelete: "cascade", onUpdateIntegrity: "cascade"})

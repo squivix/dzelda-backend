@@ -29,7 +29,6 @@ export class CourseSeeder extends Seeder {
         await em.insertMany(Course, batch.map(courseData => ({
             id: courseData.id,
             title: courseData.title,
-            isPublic: courseData.isPublic,
             description: courseData.description,
             language: courseData.language,
             addedBy: courseData.addedBy,

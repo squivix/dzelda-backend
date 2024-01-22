@@ -208,10 +208,9 @@ describe("GET vocabs/", () => {
                 });
             });
             test<LocalTestContext>("test sortBy lessonsCount", async (context) => {
-                const course = await context.courseFactory.createOne({language: await context.languageFactory.createOne()});
-                const lesson1 = await context.lessonFactory.createOne({course});
-                const lesson2 = await context.lessonFactory.createOne({course});
                 const language = await context.languageFactory.createOne();
+                const lesson1 = await context.lessonFactory.createOne({language});
+                const lesson2 = await context.lessonFactory.createOne({language});
                 const expectedVocabs = [
                     await context.vocabFactory.createOne({language, lessonsAppearingIn: [lesson1]}),
                     await context.vocabFactory.createOne({language, lessonsAppearingIn: [lesson1, lesson2]}),
@@ -871,9 +870,8 @@ describe("GET users/me/vocabs/", () => {
                 const user = await context.userFactory.createOne();
                 const session = await context.sessionFactory.createOne({user: user});
                 const language = await context.languageFactory.createOne();
-                const course = await context.courseFactory.createOne({language});
-                const lesson1 = await context.lessonFactory.createOne({course});
-                const lesson2 = await context.lessonFactory.createOne({course});
+                const lesson1 = await context.lessonFactory.createOne({language});
+                const lesson2 = await context.lessonFactory.createOne({language});
 
                 const expectedVocabs = [
                     await context.vocabFactory.createOne({language, lessonsAppearingIn: [lesson1]}),
@@ -1508,12 +1506,11 @@ describe("GET lessons/:lessonId/vocabs/", () => {
     //  This test failed and still fails to catch 2 HUGE logical errors with SQL bad queries:
     //  1) non-null-safe != for map_learner_vocab.learner_id
     //  2) if user1 is learning vocab and user2 is not learning vocab just filtering by learner_id != user2_id won't detect new vocabs for user2 because user1 records will survive the filter
-    test<LocalTestContext>("If user is logged in, lesson exists return vocabs in lesson", async (context) => {
+    test<LocalTestContext>("If user is logged in, lesson exists and is public return vocabs in lesson", async (context) => {
         const user = await context.userFactory.createOne();
         const session = await context.sessionFactory.createOne({user: user});
         const language = await context.languageFactory.createOne();
-        const course = await context.courseFactory.createOne({language, isPublic: true});
-        const lesson = await context.lessonFactory.createOne({course});
+        const lesson = await context.lessonFactory.createOne({language, isPublic: true});
         const expectedNewVocabs = await context.vocabFactory.create(3, {language, lessonsAppearingIn: lesson});
         const expectedExistingVocabs = await context.vocabFactory.create(3, {language, lessonsAppearingIn: lesson});
         const expectedExistingMappings = [];
@@ -1530,13 +1527,11 @@ describe("GET lessons/:lessonId/vocabs/", () => {
         //ignore order
         expect(responseBody.length).toEqual(expectedBody.length);
         expect(responseBody).toEqual(expect.arrayContaining(expectedBody));
-
     });
     test<LocalTestContext>("If user is not logged in return 401", async (context) => {
         const user = await context.userFactory.createOne();
         const language = await context.languageFactory.createOne({learners: user.profile});
-        const course = await context.courseFactory.createOne({language});
-        const lesson = await context.lessonFactory.createOne({course});
+        const lesson = await context.lessonFactory.createOne({language});
 
         const response = await makeRequest(lesson.id);
 
@@ -1546,8 +1541,7 @@ describe("GET lessons/:lessonId/vocabs/", () => {
         const user = await context.userFactory.createOne({isEmailConfirmed: false});
         const session = await context.sessionFactory.createOne({user: user});
         const language = await context.languageFactory.createOne({learners: user.profile});
-        const course = await context.courseFactory.createOne({language});
-        const lesson = await context.lessonFactory.createOne({course});
+        const lesson = await context.lessonFactory.createOne({language});
 
         const response = await makeRequest(lesson.id, session.token);
 
@@ -1565,8 +1559,7 @@ describe("GET lessons/:lessonId/vocabs/", () => {
         const user = await context.userFactory.createOne();
         const session = await context.sessionFactory.createOne({user: user});
         const language = await context.languageFactory.createOne();
-        const course = await context.courseFactory.createOne({language, isPublic: false});
-        const lesson = await context.lessonFactory.createOne({course});
+        const lesson = await context.lessonFactory.createOne({language, isPublic: false});
 
         const response = await makeRequest(lesson.id, session.token);
 
@@ -1576,8 +1569,7 @@ describe("GET lessons/:lessonId/vocabs/", () => {
         const user = await context.userFactory.createOne();
         const session = await context.sessionFactory.createOne({user: user});
         const language = await context.languageFactory.createOne();
-        const course = await context.courseFactory.createOne({language, isPublic: false, addedBy: user.profile});
-        const lesson = await context.lessonFactory.createOne({course});
+        const lesson = await context.lessonFactory.createOne({language, isPublic: false, addedBy: user.profile});
         const expectedNewVocabs = await context.vocabFactory.create(3, {language, lessonsAppearingIn: lesson});
         const expectedExistingVocabs = await context.vocabFactory.create(3, {language, lessonsAppearingIn: lesson});
         const expectedExistingMappings = [];

@@ -1,9 +1,9 @@
 import { Migration } from '@mikro-orm/migrations';
 
-export class Migration20231102082109 extends Migration {
+export class Migration20240121173419 extends Migration {
 
   async up(): Promise<void> {
-    this.addSql('create table "language" ("id" serial primary key, "code" varchar(255) not null, "name" varchar(255) not null, "greeting" varchar(255) not null, "flag" varchar(500) null default null, "flag_circular" varchar(500) null default null, "flag_emoji" varchar(32) null default null, "is_supported" boolean not null default false, "level_thresholds" jsonb not null default \'{"beginner1": 0,"beginner2": 1000,"intermediate1": 5000,"intermediate2": 12000,"advanced1": 20000,"advanced2": 30000}\');');
+    this.addSql('create table "language" ("id" serial primary key, "code" varchar(255) not null, "name" varchar(255) not null, "greeting" varchar(255) not null, "flag" varchar(500) null default null, "flag_circular" varchar(500) null default null, "flag_emoji" varchar(32) null default null, "color" varchar(32) not null, "is_supported" boolean not null default false, "level_thresholds" jsonb not null default \'{"beginner1": 0,"beginner2": 1000,"intermediate1": 5000,"intermediate2": 12000,"advanced1": 20000,"advanced2": 30000}\');');
     this.addSql('alter table "language" add constraint "language_code_unique" unique ("code");');
 
     this.addSql('create table "dictionary" ("id" serial primary key, "language_id" int not null, "name" varchar(255) not null, "lookup_link" varchar(500) not null, "dictionary_link" varchar(500) not null, "is_default" boolean not null default false);');
@@ -19,7 +19,7 @@ export class Migration20231102082109 extends Migration {
     this.addSql('create table "profile" ("id" serial primary key, "user_id" int not null, "profile_picture" varchar(500) not null default \'\', "bio" text not null default \'\', "is_public" boolean not null default true);');
     this.addSql('alter table "profile" add constraint "profile_user_id_unique" unique ("user_id");');
 
-    this.addSql('create table "map_learner_language" ("id" serial primary key, "language_id" int not null, "learner_id" int not null, "added_on" timestamptz(0) not null default now(), "last_opened" timestamptz(0) not null default now());');
+    this.addSql('create table "map_learner_language" ("id" serial primary key, "language_id" int not null, "learner_id" int not null, "started_learning_on" timestamptz(0) not null default now(), "last_opened" timestamptz(0) not null default now());');
     this.addSql('create index "map_learner_language_language_id_index" on "map_learner_language" ("language_id");');
     this.addSql('create index "map_learner_language_learner_id_index" on "map_learner_language" ("learner_id");');
     this.addSql('alter table "map_learner_language" add constraint "map_learner_language_language_id_learner_id_unique" unique ("language_id", "learner_id");');
@@ -29,7 +29,7 @@ export class Migration20231102082109 extends Migration {
     this.addSql('create index "map_learner_dictionary_dictionary_id_index" on "map_learner_dictionary" ("dictionary_id");');
     this.addSql('alter table "map_learner_dictionary" add constraint "map_learner_dictionary_dictionary_id_learner_id_unique" unique ("dictionary_id", "learner_id");');
 
-    this.addSql('create table "course" ("id" serial primary key, "title" varchar(255) not null, "description" varchar(500) not null default \'\', "language_id" int not null, "image" varchar(500) not null default \'\', "is_public" boolean not null default true, "added_by_id" int not null, "added_on" timestamptz(0) not null default now(), "level" text check ("level" in (\'beginner1\', \'beginner2\', \'intermediate1\', \'intermediate2\', \'advanced1\', \'advanced2\')) not null default \'advanced1\');');
+    this.addSql('create table "course" ("id" serial primary key, "title" varchar(255) not null, "description" varchar(500) not null default \'\', "language_id" int not null, "image" varchar(500) not null default \'\', "added_by_id" int not null, "added_on" timestamptz(0) not null default now());');
     this.addSql('create index "course_added_on_index" on "course" ("added_on");');
     this.addSql('create index "course_title_index" on "course" ("title");');
     this.addSql('create index "course_added_by_id_index" on "course" ("added_by_id");');
@@ -40,7 +40,7 @@ export class Migration20231102082109 extends Migration {
     this.addSql('create index "map_bookmarker_course_course_id_index" on "map_bookmarker_course" ("course_id");');
     this.addSql('alter table "map_bookmarker_course" add constraint "map_bookmarker_course_course_id_bookmarker_id_unique" unique ("course_id", "bookmarker_id");');
 
-    this.addSql('create table "lesson" ("id" serial primary key, "title" varchar(124) not null, "text" text not null, "parsed_text" text null, "audio" varchar(500) not null default \'\', "image" varchar(500) not null default \'\', "course_id" int not null, "order_in_course" int not null default 0, "added_on" timestamptz(0) not null default now());');
+    this.addSql('create table "lesson" ("id" serial primary key, "title" varchar(124) not null, "text" text not null, "parsed_title" varchar(248) null, "parsed_text" text null, "audio" varchar(500) not null default \'\', "image" varchar(500) not null default \'\', "language_id" int not null, "course_id" int null default null, "is_public" boolean not null default true, "added_by_id" int not null, "level" text check ("level" in (\'beginner1\', \'beginner2\', \'intermediate1\', \'intermediate2\', \'advanced1\', \'advanced2\')) not null default \'advanced1\', "order_in_course" int null default null, "added_on" timestamptz(0) not null default now());');
     this.addSql('create index "lesson_added_on_index" on "lesson" ("added_on");');
     this.addSql('create index "lesson_title_index" on "lesson" ("title");');
     this.addSql('create index "lesson_course_id_index" on "lesson" ("course_id");');
@@ -53,6 +53,8 @@ export class Migration20231102082109 extends Migration {
     this.addSql('create table "password_reset_token" ("id" serial primary key, "token" varchar(255) not null, "expires_on" timestamptz(0) not null default now() + interval \'1 hour\', "user_id" int not null);');
     this.addSql('alter table "password_reset_token" add constraint "password_reset_token_user_id_unique" unique ("user_id");');
 
+    this.addSql('create table "file_upload_request" ("id" serial primary key, "file_field" varchar(255) not null, "user_id" int not null, "file_url" varchar(255) not null, "object_key" varchar(255) not null, "expires_on" timestamptz(0) not null default now() + interval \'5 minutes\');');
+
     this.addSql('create table "email_confirmation_token" ("id" serial primary key, "token" varchar(255) not null, "expires_on" timestamptz(0) not null default now() + interval \'24 hours\', "user_id" int not null, "email" varchar(255) not null);');
     this.addSql('alter table "email_confirmation_token" add constraint "email_confirmation_token_user_id_unique" unique ("user_id");');
 
@@ -60,7 +62,7 @@ export class Migration20231102082109 extends Migration {
     this.addSql('create index "vocab_language_id_index" on "vocab" ("language_id");');
     this.addSql('alter table "vocab" add constraint "vocab_language_id_text_unique" unique ("language_id", "text");');
 
-    this.addSql('create table "meaning" ("id" serial primary key, "text" varchar(1000) not null, "vocab_id" int not null, "added_by_id" int null, "added_on" timestamptz(0) not null default now(), "language_id" int not null);');
+    this.addSql('create table "meaning" ("id" serial primary key, "text" varchar(500) not null, "vocab_id" int not null, "added_by_id" int null, "added_on" timestamptz(0) not null default now(), "language_id" int not null);');
     this.addSql('create index "meaning_added_by_id_index" on "meaning" ("added_by_id");');
     this.addSql('create index "meaning_language_id_index" on "meaning" ("language_id");');
     this.addSql('create index "meaning_vocab_id_index" on "meaning" ("vocab_id");');
@@ -99,12 +101,16 @@ export class Migration20231102082109 extends Migration {
     this.addSql('alter table "map_bookmarker_course" add constraint "map_bookmarker_course_course_id_foreign" foreign key ("course_id") references "course" ("id") on update cascade on delete cascade;');
     this.addSql('alter table "map_bookmarker_course" add constraint "map_bookmarker_course_bookmarker_id_foreign" foreign key ("bookmarker_id") references "profile" ("id") on update cascade on delete cascade;');
 
+    this.addSql('alter table "lesson" add constraint "lesson_language_id_foreign" foreign key ("language_id") references "language" ("id") on update cascade on delete cascade;');
     this.addSql('alter table "lesson" add constraint "lesson_course_id_foreign" foreign key ("course_id") references "course" ("id") on update cascade on delete cascade;');
+    this.addSql('alter table "lesson" add constraint "lesson_added_by_id_foreign" foreign key ("added_by_id") references "profile" ("id") on update cascade on delete cascade;');
 
     this.addSql('alter table "map_past_viewer_lesson" add constraint "map_past_viewer_lesson_lesson_id_foreign" foreign key ("lesson_id") references "lesson" ("id") on update cascade on delete cascade;');
     this.addSql('alter table "map_past_viewer_lesson" add constraint "map_past_viewer_lesson_past_viewer_id_foreign" foreign key ("past_viewer_id") references "profile" ("id") on update cascade on delete set null;');
 
     this.addSql('alter table "password_reset_token" add constraint "password_reset_token_user_id_foreign" foreign key ("user_id") references "user" ("id") on update cascade on delete cascade;');
+
+    this.addSql('alter table "file_upload_request" add constraint "file_upload_request_user_id_foreign" foreign key ("user_id") references "user" ("id") on update cascade on delete cascade;');
 
     this.addSql('alter table "email_confirmation_token" add constraint "email_confirmation_token_user_id_foreign" foreign key ("user_id") references "user" ("id") on update cascade on delete cascade;');
 
@@ -122,6 +128,8 @@ export class Migration20231102082109 extends Migration {
 
     this.addSql('alter table "map_learner_vocab" add constraint "map_learner_vocab_vocab_id_foreign" foreign key ("vocab_id") references "vocab" ("id") on update cascade on delete cascade;');
     this.addSql('alter table "map_learner_vocab" add constraint "map_learner_vocab_learner_id_foreign" foreign key ("learner_id") references "profile" ("id") on update cascade on delete cascade;');
+
+    this.addSql('drop table if exists "map_learner_lesson" cascade;');
   }
 
   async down(): Promise<void> {
@@ -130,6 +138,8 @@ export class Migration20231102082109 extends Migration {
     this.addSql('alter table "map_learner_language" drop constraint "map_learner_language_language_id_foreign";');
 
     this.addSql('alter table "course" drop constraint "course_language_id_foreign";');
+
+    this.addSql('alter table "lesson" drop constraint "lesson_language_id_foreign";');
 
     this.addSql('alter table "vocab" drop constraint "vocab_language_id_foreign";');
 
@@ -143,6 +153,8 @@ export class Migration20231102082109 extends Migration {
 
     this.addSql('alter table "password_reset_token" drop constraint "password_reset_token_user_id_foreign";');
 
+    this.addSql('alter table "file_upload_request" drop constraint "file_upload_request_user_id_foreign";');
+
     this.addSql('alter table "email_confirmation_token" drop constraint "email_confirmation_token_user_id_foreign";');
 
     this.addSql('alter table "map_learner_language" drop constraint "map_learner_language_learner_id_foreign";');
@@ -152,6 +164,8 @@ export class Migration20231102082109 extends Migration {
     this.addSql('alter table "course" drop constraint "course_added_by_id_foreign";');
 
     this.addSql('alter table "map_bookmarker_course" drop constraint "map_bookmarker_course_bookmarker_id_foreign";');
+
+    this.addSql('alter table "lesson" drop constraint "lesson_added_by_id_foreign";');
 
     this.addSql('alter table "map_past_viewer_lesson" drop constraint "map_past_viewer_lesson_past_viewer_id_foreign";');
 
@@ -177,6 +191,9 @@ export class Migration20231102082109 extends Migration {
 
     this.addSql('alter table "map_learner_meaning" drop constraint "map_learner_meaning_meaning_id_foreign";');
 
+    this.addSql('create table "map_learner_lesson" ("id" serial primary key, "lesson_id" int4 not null default null, "learner_id" int4 not null default null);');
+    this.addSql('alter table "map_learner_lesson" add constraint "map_learner_lesson_lesson_id_learner_id_unique" unique ("lesson_id", "learner_id");');
+
     this.addSql('drop table if exists "language" cascade;');
 
     this.addSql('drop table if exists "dictionary" cascade;');
@@ -200,6 +217,8 @@ export class Migration20231102082109 extends Migration {
     this.addSql('drop table if exists "map_past_viewer_lesson" cascade;');
 
     this.addSql('drop table if exists "password_reset_token" cascade;');
+
+    this.addSql('drop table if exists "file_upload_request" cascade;');
 
     this.addSql('drop table if exists "email_confirmation_token" cascade;');
 

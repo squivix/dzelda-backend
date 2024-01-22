@@ -18,7 +18,7 @@ export class LessonHistoryEntrySerializer extends CustomEntitySerializer<MapPast
             parsedText: () => lessonHistoryEntry.lesson.parsedText,
             audio: () => lessonHistoryEntry.lesson.audio,
             image: () => lessonHistoryEntry.lesson.image,
-            course: () => courseSerializer.serialize(lessonHistoryEntry.lesson.course, {ignore: ["lessons"]}) as Omit<CourseSchema, "lessons">,
+            course: () => lessonHistoryEntry.lesson.course ? courseSerializer.serialize(lessonHistoryEntry.lesson.course, {ignore: ["lessons"]}) as Omit<CourseSchema, "lessons"> : null,
             orderInCourse: () => lessonHistoryEntry.lesson.orderInCourse,
             isLastInCourse: () => lessonHistoryEntry.lesson.isLastInCourse,
             addedOn: () => lessonHistoryEntry.lesson.addedOn.toISOString(),

@@ -91,6 +91,9 @@ export class Profile extends CustomBaseEntity {
     @OneToMany({entity: () => Course, mappedBy: (course: Course) => course.addedBy, hidden: true})
     coursesAdded: Collection<Course> = new Collection<Course>(this);
 
+    @OneToMany({entity: () => Lesson, mappedBy: (lesson: Lesson) => lesson.addedBy, hidden: true})
+    lessonsAdded: Collection<Lesson> = new Collection<Lesson>(this);
+
     @OneToMany({entity: () => Meaning, mappedBy: (meaning: Meaning) => meaning.addedBy, hidden: true})
     meaningsAdded: Collection<Meaning> = new Collection<Meaning>(this);
 
