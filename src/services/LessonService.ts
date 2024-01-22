@@ -242,6 +242,10 @@ export class LessonService {
         return lesson;
     }
 
+    async deleteLesson(lesson: Lesson) {
+        await this.em.nativeDelete(Lesson, {id: lesson.id});
+    }
+
     async addLessonToUserHistory(lesson: Lesson, user: User) {
         const mapping = this.em.create(MapPastViewerLesson, {pastViewer: user.profile, lesson: lesson});
         await this.em.flush();

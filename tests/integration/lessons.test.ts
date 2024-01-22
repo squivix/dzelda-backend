@@ -1625,6 +1625,11 @@ describe("PATCH lessons/:lessonId/", () => {
     });
 });
 
+/**{@link LessonController#deleteLesson}*/
+describe.todo("DELETE lessons/:lessonId/", function () {
+    test.todo<LocalTestContext>("");
+});
+
 /**{@link LessonController#getUserLessonsHistory}*/
 describe("GET users/me/lessons/history/", () => {
     const makeRequest = async (queryParams: object = {}, authToken?: string) => {

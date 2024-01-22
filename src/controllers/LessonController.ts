@@ -174,6 +174,22 @@ class LessonController {
         reply.status(200).send(lessonSerializer.serialize(updatedLesson));
     }
 
+    async deleteLesson(request: FastifyRequest, reply: FastifyReply) {
+        const pathParamsValidator = z.object({lessonId: numericStringValidator});
+        const pathParams = pathParamsValidator.parse(request.params);
+
+        const lessonService = new LessonService(request.em);
+        const lesson = await lessonService.getLesson(pathParams.lessonId, request.user);
+        const user = request.user as User;
+
+        if (!lesson || (!lesson.isPublic && request?.user?.profile !== lesson.addedBy))
+            throw new NotFoundAPIError("Lesson");
+        if (lesson.addedBy !== user.profile)
+            throw new ForbiddenAPIError("User is not authorized to delete lesson");
+        await lessonService.deleteLesson(lesson);
+        reply.status(204).send();
+    }
+
     //TODO show deleted and privated lessons as deleted and privated lessons instead of hiding them. Do this with bookmarked courses as well
     async getUserLessonsHistory(request: FastifyRequest, reply: FastifyReply) {
         const user = request.user as User;

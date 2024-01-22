@@ -138,7 +138,7 @@ class CourseController {
         if (!course)
             throw new NotFoundAPIError("Course");
         if (course.addedBy !== user.profile)
-            throw new ForbiddenAPIError("User is not author of course");
+            throw new ForbiddenAPIError("User is not authorized to delete course");
         await courseService.deleteCourse(course);
         reply.status(204).send();
     }
