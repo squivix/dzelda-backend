@@ -557,7 +557,7 @@ describe("POST courses/", function () {
 
             const responseBody = response.json();
             expect(response.statusCode).to.equal(201);
-            expect(responseBody).toEqual(expect.objectContaining(courseSerializer.serialize(newCourse)));
+            expect(responseBody).toEqual(expect.objectContaining(courseSerializer.serialize(newCourse, {ignore: ["addedOn"]})));
 
             const dbRecord = await context.courseRepo.findOne({title: newCourse.title, language}, {populate: ["lessons"]});
             expect(dbRecord).not.toBeNull();

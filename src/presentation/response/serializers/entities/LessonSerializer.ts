@@ -19,6 +19,7 @@ export class LessonSerializer extends CustomEntitySerializer<Lesson, LessonSchem
             orderInCourse: () => lesson.orderInCourse ?? undefined,
             isLastInCourse: () => lesson.isLastInCourse ?? undefined,
             addedOn: () => lesson.addedOn.toISOString(),
+            addedBy: () => lesson.addedBy.user.username,
             isPublic: () => lesson.isPublic,
             level: () => lesson.level,
             language: () => lesson.language.code,

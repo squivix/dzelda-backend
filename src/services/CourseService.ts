@@ -80,7 +80,7 @@ export class CourseService {
         const course = await this.courseRepo.findOne({id: courseId}, {populate: ["language", "addedBy", "addedBy.user"]});
         if (course) {
             const privateFilter: FilterQuery<Lesson> = user instanceof User ? {$or: [{isPublic: true}, {addedBy: user.profile}]} : {isPublic: true};
-            await course.lessons.init({where: privateFilter, orderBy: {orderInCourse: "asc"}});
+            await course.lessons.init({where: privateFilter, orderBy: {orderInCourse: "asc"}, populate:["addedBy.user"]});
             if (user && !(user instanceof AnonymousUser)) {
                 await this.courseRepo.annotateCoursesWithUserData([course], user);
                 await this.lessonRepo.annotateLessonsWithUserData(course.lessons.getItems(), user);

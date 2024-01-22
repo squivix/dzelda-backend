@@ -238,7 +238,7 @@ class UserController {
     async generateFileUploadPresignedUrl(request: FastifyRequest, reply: FastifyReply) {
         const bodyValidator = z.object({
             fileField: z.string().refine(f => fileFieldsKeys.includes(f), {message: "Unexpected file field"}).transform(f => f as keyof FileFieldType),
-            fileExtension: z.string().min(1).max(20).regex(/^[^.\s\x00-\x1f/\\:*?"<>|]+$/).toLowerCase(),
+            fileExtension: z.string().min(1).max(20).regex(/^\.[^.\s\x00-\x1f/\\:*?"<>|]+$/).toLowerCase(),
         });
         const body = bodyValidator.parse(request.body);
         const fieldMetaData = fileFields[body.fileField];

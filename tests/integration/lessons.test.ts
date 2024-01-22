@@ -669,7 +669,7 @@ describe("POST lessons/", () => {
             }, session.token);
 
             expect(response.statusCode).to.equal(201);
-            const dbRecord = await context.lessonRepo.findOne({language: language, title: newLesson.title}, {populate: ["course", "course.language", "course.addedBy.user", "addedBy.user"]});
+            const dbRecord = await context.lessonRepo.findOne({language, title: newLesson.title}, {populate: ["language", "addedBy.user", "course.language", "course.addedBy.user"]});
             expect(dbRecord).not.toBeNull();
             if (!dbRecord) return;
             await context.lessonRepo.annotateLessonsWithUserData([dbRecord], user);
@@ -713,7 +713,7 @@ describe("POST lessons/", () => {
             }, session.token);
 
             expect(response.statusCode).to.equal(201);
-            const dbRecord = await context.lessonRepo.findOne({course: course, title: newLesson.title}, {populate: ["course", "course.language", "course.addedBy.user", "language", "addedBy.user"]});
+            const dbRecord = await context.lessonRepo.findOne({course: course, title: newLesson.title}, {populate: ["language", "addedBy.user", "course.language", "course.addedBy.user"]});
             expect(dbRecord).not.toBeNull();
             if (!dbRecord) return;
             await context.lessonRepo.annotateLessonsWithUserData([dbRecord], user);
@@ -1112,7 +1112,7 @@ describe("PATCH lessons/:lessonId/", () => {
                 text: updatedLesson.text
             }, session.token);
 
-            const dbRecord = await context.lessonRepo.findOneOrFail({id: lesson.id}, {populate: ["course", "course.language", "course.addedBy.user"]});
+            const dbRecord = await context.lessonRepo.findOneOrFail({id: lesson.id}, {populate: ["language", "addedBy.user", "course.language", "course.addedBy.user"]});
             await context.lessonRepo.annotateLessonsWithUserData([dbRecord], author);
             await context.courseRepo.annotateCoursesWithUserData([dbRecord.course!], author);
 
@@ -1150,7 +1150,7 @@ describe("PATCH lessons/:lessonId/", () => {
                     audio: audioUploadRequest.objectKey,
                 }, session.token);
 
-                const dbRecord = await context.lessonRepo.findOneOrFail({id: lesson.id}, {populate: ["course", "course.language", "course.addedBy.user"]});
+                const dbRecord = await context.lessonRepo.findOneOrFail({id: lesson.id}, {populate: ["language", "addedBy.user", "course.language", "course.addedBy.user"]});
                 await context.em.populate(dbRecord, ["course"]);
                 await context.lessonRepo.annotateLessonsWithUserData([dbRecord], author);
                 await context.courseRepo.annotateCoursesWithUserData([updatedLesson.course!], author);
@@ -1186,7 +1186,7 @@ describe("PATCH lessons/:lessonId/", () => {
                     audio: ""
                 }, session.token);
 
-                const dbRecord = await context.lessonRepo.findOneOrFail({id: lesson.id}, {populate: ["course", "course.language", "course.addedBy.user"]});
+                const dbRecord = await context.lessonRepo.findOneOrFail({id: lesson.id}, {populate: ["language", "addedBy.user", "course", "course.language", "course.addedBy.user"]});
                 await context.em.populate(dbRecord, ["course"]);
                 await context.lessonRepo.annotateLessonsWithUserData([dbRecord], author);
                 await context.courseRepo.annotateCoursesWithUserData([dbRecord.course!], author);
@@ -1223,7 +1223,7 @@ describe("PATCH lessons/:lessonId/", () => {
                     level: updatedLesson.level,
                 }, session.token);
 
-                const dbRecord = await context.lessonRepo.findOneOrFail({id: lesson.id}, {populate: ["course", "course.language", "course.addedBy.user"]});
+                const dbRecord = await context.lessonRepo.findOneOrFail({id: lesson.id}, {populate: ["language", "addedBy.user", "course", "course.language", "course.addedBy.user"]});
                 await context.em.populate(dbRecord, ["course"]);
                 await context.lessonRepo.annotateLessonsWithUserData([dbRecord], author);
                 await context.courseRepo.annotateCoursesWithUserData([updatedLesson.course!], author);
@@ -1259,7 +1259,7 @@ describe("PATCH lessons/:lessonId/", () => {
                     level: updatedLesson.level,
                 }, session.token);
 
-                const dbRecord = await context.lessonRepo.findOneOrFail({id: lesson.id}, {populate: ["course", "course.language", "course.addedBy.user"]});
+                const dbRecord = await context.lessonRepo.findOneOrFail({id: lesson.id}, {populate: ["language", "addedBy.user", "course", "course.language", "course.addedBy.user"]});
                 await context.em.populate(dbRecord, ["course"]);
                 await context.lessonRepo.annotateLessonsWithUserData([dbRecord], author);
 

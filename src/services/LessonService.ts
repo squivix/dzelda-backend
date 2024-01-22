@@ -62,7 +62,7 @@ export class LessonService {
         dbOrderBy.push({id: "asc"});
 
         let [lessons, totalCount] = await this.lessonRepo.findAndCount(dbFilters, {
-            populate: ["course", "course.language", "course.addedBy.user"],
+            populate: ["language", "addedBy.user", "course", "course.language", "course.addedBy.user"],
             orderBy: dbOrderBy,
             limit: pagination.pageSize,
             offset: pagination.pageSize * (pagination.page - 1),
@@ -113,7 +113,7 @@ export class LessonService {
         dbOrderBy.push({lesson: {id: "asc"}});
 
         let [lessonHistoryEntries, totalCount] = await this.em.findAndCount(MapPastViewerLesson, dbFilters, {
-            populate: ["lesson.course", "lesson.course.language", "lesson.course.addedBy.user"],
+            populate: ["lesson.language", "lesson.addedBy.user", "lesson.course", "lesson.course.language", "lesson.course.addedBy.user"],
             orderBy: dbOrderBy,
             limit: pagination.pageSize,
             offset: pagination.pageSize * (pagination.page - 1),
@@ -128,12 +128,12 @@ export class LessonService {
         title: string;
         text: string;
         language: Language;
-        course?: Course;
+        course: Course | null;
         isPublic: boolean,
         level?: LanguageLevel,
         image?: string;
         audio?: string;
-    }, user: User) {
+    }, user: User):Promise<Lesson> {
         const parser = getParser(fields.language.code);
         const lessonParsedTitle = parser.parseText(fields.title);
         const lessonParsedText = parser.parseText(fields.text);
@@ -167,11 +167,12 @@ export class LessonService {
         await this.lessonRepo.annotateLessonsWithUserData([newLesson], user);
         if (newLesson.course)
             await this.courseRepo.annotateCoursesWithUserData([newLesson.course], user);
+        await this.em.refresh(newLesson, {populate: ["addedBy.user", "language", "course.language", "course.addedBy.user"]})
         return newLesson;
     }
 
     async getLesson(lessonId: number, user: User | AnonymousUser | null) {
-        let lesson = await this.lessonRepo.findOne({id: lessonId}, {populate: ["course", "course.language", "course.addedBy.user"]});
+        let lesson = await this.lessonRepo.findOne({id: lessonId}, {populate: ["language", "addedBy.user", "course", "course.language", "course.addedBy.user"]});
         if (lesson) {
             if (user && !(user instanceof AnonymousUser)) {
                 await this.lessonRepo.annotateLessonsWithUserData([lesson], user);
@@ -249,7 +250,7 @@ export class LessonService {
     async addLessonToUserHistory(lesson: Lesson, user: User) {
         const mapping = this.em.create(MapPastViewerLesson, {pastViewer: user.profile, lesson: lesson});
         await this.em.flush();
-        await this.em.refresh(mapping.lesson);
+        await this.em.refresh(mapping.lesson, {populate: ["addedBy.user"]});
         return mapping;
     }
 

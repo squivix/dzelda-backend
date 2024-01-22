@@ -67,7 +67,7 @@ class LessonController {
             text: lessonTextValidator,
             isPublic: z.boolean().optional().default(true),
             level: courseLevelValidator.optional(),
-            courseId: z.number().min(0).optional(),
+            courseId: z.number().min(0).or(z.literal(null)).optional().default(null),
             image: z.string().optional(),
             audio: z.string().optional(),
         });
@@ -78,7 +78,7 @@ class LessonController {
         const language = await languageService.findLanguage({code: body.languageCode});
         if (!language)
             throw new NotFoundAPIError("Language");
-        let course;
+        let course: Course | null = null;
         if (body.courseId) {
             course = await courseService.getCourse(body.courseId, request.user);
 
