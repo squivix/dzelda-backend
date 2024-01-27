@@ -44,6 +44,15 @@
           "length": 255,
           "mappedType": "string"
         },
+        "second_speakers_count": {
+          "name": "second_speakers_count",
+          "type": "int",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "mappedType": "integer"
+        },
         "flag": {
           "name": "flag",
           "type": "varchar(500)",
@@ -1238,7 +1247,7 @@
             "id"
           ],
           "referencedTableName": "public.course",
-          "deleteRule": "cascade",
+          "deleteRule": "set null",
           "updateRule": "cascade"
         },
         "lesson_added_by_id_foreign": {

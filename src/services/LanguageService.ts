@@ -18,7 +18,7 @@ export class LanguageService {
         this.languageRepo = this.em.getRepository(Language);
     }
 
-    async getLanguages(filters: { isSupported?: boolean }, sort: { sortBy: "name" | "learnersCount", sortOrder: "asc" | "desc" }) {
+    async getLanguages(filters: { isSupported?: boolean }, sort: { sortBy: "name" | "learnersCount" | "secondSpeakersCount", sortOrder: "asc" | "desc" }) {
         const dbFilters: FilterQuery<Language> = {$and: []};
         if (filters.isSupported !== undefined)
             dbFilters.$and!.push({isSupported: filters.isSupported});
@@ -28,6 +28,8 @@ export class LanguageService {
             dbOrderBy.push({name: sort.sortOrder});
         else if (sort.sortBy == "learnersCount")
             dbOrderBy.push({learnersCount: sort.sortOrder});
+        else if (sort.sortBy == "secondSpeakersCount")
+            dbOrderBy.push({secondSpeakersCount: sort.sortOrder});
 
         dbOrderBy.push({code: "asc"});
         dbOrderBy.push({id: "asc"});

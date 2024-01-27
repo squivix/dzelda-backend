@@ -18,9 +18,10 @@ export async function dumpLanguages({em, batchSize, dataPath}: { em: EntityManag
             code: language.code,
             flagCircular: language.flagCircular,
             flagEmoji: language.flagEmoji,
-            isSupported: language.isSupported
+            isSupported: language.isSupported,
+            secondSpeakersCount: language.secondSpeakersCount,
         })
-    })
+    });
 
     await batchDump({
         em, batchSize,
@@ -31,5 +32,5 @@ export async function dumpLanguages({em, batchSize, dataPath}: { em: EntityManag
             learner: mapping.learner.id,
             language: mapping.language.id,
         })
-    })
+    });
 }

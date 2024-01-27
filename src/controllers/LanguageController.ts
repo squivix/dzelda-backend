@@ -17,7 +17,7 @@ class LanguageController {
     async getLanguages(request: FastifyRequest, reply: FastifyReply) {
         const queryParamsValidator = z.object({
             isSupported: z.string().regex(/(true|false)/ig).transform(v => v.toLowerCase() == "true").optional(),
-            sortBy: z.union([z.literal("name"), z.literal("learnersCount")]).optional().default("name"),
+            sortBy: z.union([z.literal("name"), z.literal("learnersCount"), z.literal("secondSpeakersCount")]).optional().default("name"),
             sortOrder: z.union([z.literal("asc"), z.literal("desc")]).optional().default("asc"),
         });
         const queryParams = queryParamsValidator.parse(request.query);

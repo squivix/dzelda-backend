@@ -141,6 +141,7 @@ describe("GET languages/", function () {
                 expect(response.statusCode).to.equal(200);
                 expect(response.json()).toEqual(languageSerializer.serializeList(expectedLanguages));
             });
+            // TODO test sort by secondSpeakersCount
             test<LocalTestContext>("if sortBy is invalid return 400", async (context) => {
                 const response = await makeRequest({sortBy: "flag"});
                 expect(response.statusCode).to.equal(400);

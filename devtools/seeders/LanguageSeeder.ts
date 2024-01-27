@@ -35,6 +35,7 @@ export class LanguageSeeder extends Seeder {
             flag: languageData.flag,
             flagEmoji: languageData.flagEmoji,
             color: languageData.color,
+            secondSpeakersCount: languageData.secondSpeakersCount,
             isSupported: languageData.isSupported
         })));
     }

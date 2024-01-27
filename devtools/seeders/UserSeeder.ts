@@ -19,7 +19,7 @@ export class UserSeeder extends Seeder {
             console.error(`${usersFilePath} not found`);
             return;
         }
-        // profile: EntityData<Profile>
+
         await batchSeed({
             filePath: usersFilePath,
             batchSize: context.batchSize,
@@ -28,6 +28,11 @@ export class UserSeeder extends Seeder {
             resourceName: "user",
         });
 
+        if (!await fs.exists(profilesFilePath)) {
+            console.error(`${profilesFilePath} not found`);
+            return;
+        }
+
         await batchSeed({
             filePath: profilesFilePath,
             batchSize: context.batchSize,
@@ -35,6 +40,11 @@ export class UserSeeder extends Seeder {
             postSeed: async () => await syncIdSequence(em, "profile"),
             resourceName: "profile",
         });
+
+        if (!await fs.exists(mapLearnerLanguageFilePath)) {
+            console.error(`${mapLearnerLanguageFilePath} not found`);
+            return;
+        }
 
         await batchSeed({
             filePath: mapLearnerLanguageFilePath,
@@ -73,7 +83,7 @@ export class UserSeeder extends Seeder {
         await em.insertMany(MapLearnerLanguage, batch.map(mappingData => ({
             learner: mappingData.learner,
             language: mappingData.language
-        })))
+        })));
 
     }
 }

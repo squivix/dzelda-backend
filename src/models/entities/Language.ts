@@ -1,4 +1,4 @@
-import {Collection, Entity, Formula, ManyToMany, OneToMany, Property, types} from "@mikro-orm/core";
+import {Collection, Entity, Formula, ManyToMany, OneToMany, PrimaryKey, Property, types} from "@mikro-orm/core";
 import {CustomBaseEntity} from "@/src/models/entities/CustomBaseEntity.js";
 import {Course} from "@/src/models/entities/Course.js";
 import {Vocab} from "@/src/models/entities/Vocab.js";
@@ -19,6 +19,9 @@ export class Language extends CustomBaseEntity {
 
     @Property({type: types.string, length: 255})
     greeting!: string;
+
+    @Property({type: types.integer})
+    secondSpeakersCount!: number;
 
     @Property({type: types.string, length: 500, nullable: true, default: null})
     flag: string | null = null;
