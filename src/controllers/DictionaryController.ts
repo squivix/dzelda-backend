@@ -48,7 +48,7 @@ class DictionaryController {
             if (dictionary.language.code != pathParams.languageCode)
                 throw new ValidationAPIError({dictionaryIds: `Dictionary with id ${dictionary.id} is not in language ${pathParams.languageCode}`});
         }
-        await dictionaryService.updateUserLanguageDictionaries(dictionaries, user);
+        await dictionaryService.updateUserLanguageDictionaries(body.dictionaryIds, user);
         reply.status(204).send();
     }
 }
