@@ -39,7 +39,7 @@ class DictionaryController {
     async updateUserLanguageDictionaries(request: FastifyRequest, reply: FastifyReply) {
         const pathParamsValidator = z.object({languageCode: languageCodeValidator});
         const pathParams = pathParamsValidator.parse(request.params);
-        const bodyValidator = z.object({dictionaryIds: z.array(numericStringValidator)});
+        const bodyValidator = z.object({dictionaryIds: z.array(z.number().min(0))});
         const body = bodyValidator.parse(request.body);
         const user = request.user as User;
         const dictionaryService = new DictionaryService(request.em);
