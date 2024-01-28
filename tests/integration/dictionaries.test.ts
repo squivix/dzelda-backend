@@ -91,6 +91,7 @@ describe("GET users/me/dictionaries/", function () {
         };
         return await fetchRequest(options, authToken);
     };
+    //TODO test dictionary order for learner
     const defaultSortComparator = createComparator(Dictionary, [
         {property: "name", order: "asc"},
         {property: "id", order: "asc"}]
@@ -155,4 +156,9 @@ describe("GET users/me/dictionaries/", function () {
         const response = await makeRequest({}, session.token);
         expect(response.statusCode).to.equal(403);
     });
+});
+
+/**{@link DictionaryController#updateUserLanguageDictionaries}*/
+describe("PUT users/me/dictionaries/", function () {
+    test.todo("");
 });

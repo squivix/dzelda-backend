@@ -18,6 +18,8 @@ import {FastifyReply, FastifyRequest} from "fastify";
 import {extractFieldFromUniqueConstraintError} from "@/src/utils/utils.js";
 import {FileFieldType} from "@/src/validators/fileValidator.js";
 import {FileUploadRequest} from "@/src/models/entities/FileUploadRequest.js";
+import {Dictionary} from "@/src/models/entities/Dictionary.js";
+import {MapLearnerDictionary} from "@/src/models/entities/MapLearnerDictionary.js";
 
 
 export class UserService {
@@ -50,7 +52,9 @@ export class UserService {
             }
             throw error;
         }
-
+        //TODO test this
+        const defaultDictionaries = await this.em.find(Dictionary, {isDefault: true}, {orderBy: [{name: "asc"}, {id: "asc"}]});
+        await this.em.insertMany(MapLearnerDictionary, defaultDictionaries.map((d, i) => ({learner: newProfile.id, dictionary: d.id, order: i})));
         return newUser;
     }
 

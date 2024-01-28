@@ -9,5 +9,9 @@ export const dictionaryRouter: FastifyPluginCallback = function (fastify, option
         preHandler: [requiresAuth, requiresEmailConfirmed],
         handler: dictionaryController.getUserDictionaries
     });
+    fastify.put(`/users/me/languages/:languageCode/dictionaries/`, {
+        preHandler: [requiresAuth, requiresEmailConfirmed],
+        handler: dictionaryController.updateUserLanguageDictionaries
+    });
     done();
 };

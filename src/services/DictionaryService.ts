@@ -3,6 +3,9 @@ import {Dictionary} from "@/src/models/entities/Dictionary.js";
 import {AnonymousUser, User} from "@/src/models/entities/auth/User.js";
 import {QueryOrderMap} from "@mikro-orm/core/enums.js";
 import {Course} from "@/src/models/entities/Course.js";
+import {MapLearnerDictionary} from "@/src/models/entities/MapLearnerDictionary.js";
+import {Lesson} from "@/src/models/entities/Lesson.js";
+import {EntityField} from "@mikro-orm/core/drivers/IDatabaseDriver.js";
 
 export class DictionaryService {
 
@@ -13,6 +16,7 @@ export class DictionaryService {
         this.em = em;
         this.dictionaryRepo = this.em.getRepository(Dictionary);
     }
+
 
     async getDictionaries(filters: { languageCode?: string, isLearning?: boolean }, sort: {
         sortBy: "name",
@@ -29,5 +33,27 @@ export class DictionaryService {
             dbOrderBy.push({name: sort.sortOrder});
         dbOrderBy.push({id: "asc"});
         return await this.dictionaryRepo.find(dbFilters, {populate: ["language"], orderBy: dbOrderBy});
+    }
+
+    async getLearnerDictionaries(filters: { languageCode?: string, isLearning?: boolean }, user: User) {
+        const dbFilters: FilterQuery<MapLearnerDictionary> = {$and: []};
+
+        dbFilters.$and!.push({learner: user.profile});
+        if (filters.languageCode !== undefined)
+            dbFilters.$and!.push({dictionary: {language: {code: filters.languageCode}}});
+
+        return await this.em.find(MapLearnerDictionary, dbFilters, {
+            populate: ["dictionary", "dictionary.language"],
+            orderBy: [{order: "asc"}, {dictionary: {name: "asc"}, id: "asc"}]
+        });
+    }
+
+    async updateUserLanguageDictionaries(dictionaries: Dictionary[], user: User) {
+        await this.em.nativeDelete(MapLearnerDictionary, {learner: user.profile});
+        await this.em.insertMany(MapLearnerDictionary, dictionaries.map((d, i) => ({learner: user.profile, dictionary: d, order: i})));
+    }
+
+    async findDictionaries(where: FilterQuery<Dictionary>, fields: EntityField<Dictionary>[] = ["id", "language"]) {
+        return await this.em.find(Dictionary, where, {fields: fields});
     }
 }
