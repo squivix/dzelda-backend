@@ -1,6 +1,6 @@
 import { Migration } from '@mikro-orm/migrations';
 
-export class Migration20240127134724 extends Migration {
+export class Migration20240130115327 extends Migration {
 
   async up(): Promise<void> {
     this.addSql('create table "language" ("id" serial primary key, "code" varchar(255) not null, "name" varchar(255) not null, "greeting" varchar(255) not null, "second_speakers_count" int not null, "flag" varchar(500) null default null, "flag_circular" varchar(500) null default null, "flag_emoji" varchar(32) null default null, "color" varchar(32) not null, "is_supported" boolean not null default false, "level_thresholds" jsonb not null default \'{"beginner1": 0,"beginner2": 1000,"intermediate1": 5000,"intermediate2": 12000,"advanced1": 20000,"advanced2": 30000}\');');
@@ -24,7 +24,7 @@ export class Migration20240127134724 extends Migration {
     this.addSql('create index "map_learner_language_learner_id_index" on "map_learner_language" ("learner_id");');
     this.addSql('alter table "map_learner_language" add constraint "map_learner_language_language_id_learner_id_unique" unique ("language_id", "learner_id");');
 
-    this.addSql('create table "map_learner_dictionary" ("id" serial primary key, "dictionary_id" int not null, "learner_id" int not null);');
+    this.addSql('create table "map_learner_dictionary" ("id" serial primary key, "dictionary_id" int not null, "learner_id" int not null, "order" int not null default 0);');
     this.addSql('create index "map_learner_dictionary_learner_id_index" on "map_learner_dictionary" ("learner_id");');
     this.addSql('create index "map_learner_dictionary_dictionary_id_index" on "map_learner_dictionary" ("dictionary_id");');
     this.addSql('alter table "map_learner_dictionary" add constraint "map_learner_dictionary_dictionary_id_learner_id_unique" unique ("dictionary_id", "learner_id");');
@@ -62,7 +62,7 @@ export class Migration20240127134724 extends Migration {
     this.addSql('create index "vocab_language_id_index" on "vocab" ("language_id");');
     this.addSql('alter table "vocab" add constraint "vocab_language_id_text_unique" unique ("language_id", "text");');
 
-    this.addSql('create table "meaning" ("id" serial primary key, "text" varchar(500) not null, "vocab_id" int not null, "added_by_id" int null, "added_on" timestamptz(0) not null default now(), "language_id" int not null);');
+    this.addSql('create table "meaning" ("id" serial primary key, "text" varchar(500) not null, "vocab_id" int not null, "added_by_id" int null, "added_on" timestamptz(0) not null default now(), "attribution_markdown_text" varchar(255) null default null, "attribution_logo" varchar(500) null default null, "language_id" int not null);');
     this.addSql('create index "meaning_added_by_id_index" on "meaning" ("added_by_id");');
     this.addSql('create index "meaning_language_id_index" on "meaning" ("language_id");');
     this.addSql('create index "meaning_vocab_id_index" on "meaning" ("vocab_id");');

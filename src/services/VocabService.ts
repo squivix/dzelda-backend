@@ -172,14 +172,10 @@ export class VocabService {
             learner: user.profile
         }, {
             populate: ["vocab.language", "vocab.meanings.language", "vocab.meanings.addedBy.user"],
-            fields: ["vocab.id", "vocab.text", "vocab.isPhrase", "level", "notes", "vocab.language.code", "vocab.meanings.id", "vocab.meanings.text",
-                "vocab.meanings.learnersCount", "vocab.meanings.addedBy.user.username", "vocab.meanings.language.code", "vocab.meanings.addedOn",]
         });
 
         await this.em.populate(existingMappings, ["vocab.learnerMeanings", "vocab.learnerMeanings.language", "vocab.learnerMeanings.addedBy.user"], {
             where: {vocab: {learnerMeanings: {learners: user.profile}}},
-            fields: ["vocab.learnerMeanings.id", "vocab.learnerMeanings.text", "vocab.learnerMeanings.learnersCount", "vocab.learnerMeanings.addedBy.user.username",
-                "vocab.learnerMeanings.language.code", "vocab.learnerMeanings.addedOn",]
         });
 
         const newVocabs = await this.em.find(Vocab, {
@@ -187,9 +183,6 @@ export class VocabService {
             $nin: existingMappings.map(m => m.vocab)
         }, {
             populate: ["language", "meanings", "meanings.language", "meanings.addedBy.user"],
-            fields: ["id", "text", "isPhrase", "language.code", "meanings.id",
-                "meanings.text", "meanings.learnersCount", "meanings.addedBy.user.username", "meanings.language.code", "meanings.addedOn"
-            ]
         });
 
         return [...existingMappings, ...newVocabs];

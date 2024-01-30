@@ -29,6 +29,12 @@ export class Meaning extends CustomBaseEntity {
     @Property({type: types.datetime, defaultRaw: "now()"})
     addedOn!: Date;
 
+    @Property({type: types.string, nullable: true, default: null})
+    attributionMarkdownText!: string;
+
+    @Property({type: types.string, length: 500, nullable: true, default: null})
+    attributionLogo!: string;
+
     @ManyToOne({entity: () => Language, inversedBy: (language) => language.meaningsSavedIn, onDelete: "cascade", onUpdateIntegrity: "cascade"})
     language!: Language;
 

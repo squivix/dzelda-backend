@@ -19,8 +19,10 @@ export async function dumpMeanings({em, batchSize, dataPath}: { em: EntityManage
             addedBy: meaning.addedBy?.id,
             language: meaning.language.id,
             addedOn: meaning.addedOn,
+            attributionMarkdownText: meaning.attributionMarkdownText,
+            attributionLogo: meaning.attributionLogo,
         })
-    })
+    });
 
     await batchDump({
         em, batchSize,
@@ -31,5 +33,5 @@ export async function dumpMeanings({em, batchSize, dataPath}: { em: EntityManage
             learner: mapping.learner.id,
             meaning: mapping.meaning.id,
         })
-    })
+    });
 }

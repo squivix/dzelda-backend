@@ -1788,6 +1788,27 @@
           "default": "now()",
           "mappedType": "datetime"
         },
+        "attribution_markdown_text": {
+          "name": "attribution_markdown_text",
+          "type": "varchar(255)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "default": "null",
+          "mappedType": "string"
+        },
+        "attribution_logo": {
+          "name": "attribution_logo",
+          "type": "varchar(500)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "length": 500,
+          "default": "null",
+          "mappedType": "string"
+        },
         "language_id": {
           "name": "language_id",
           "type": "int",
