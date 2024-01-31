@@ -1,4 +1,4 @@
-import {Collection, Entity, Formula, ManyToMany, OneToMany, PrimaryKey, Property, types} from "@mikro-orm/core";
+import {Collection, Entity, Formula, ManyToMany, OneToMany, Property, types} from "@mikro-orm/core";
 import {CustomBaseEntity} from "@/src/models/entities/CustomBaseEntity.js";
 import {Course} from "@/src/models/entities/Course.js";
 import {Vocab} from "@/src/models/entities/Vocab.js";
@@ -8,6 +8,7 @@ import {Profile} from "@/src/models/entities/Profile.js";
 import {MapLearnerLanguage} from "@/src/models/entities/MapLearnerLanguage.js";
 import {LanguageRepo} from "@/src/models/repos/LanguageRepo.js";
 import {Lesson} from "@/src/models/entities/Lesson.js";
+import {TTSVoice} from "@/src/models/entities/TTSVoice.js";
 
 @Entity({customRepository: () => LanguageRepo})
 export class Language extends CustomBaseEntity {
@@ -62,6 +63,9 @@ export class Language extends CustomBaseEntity {
 
     @OneToMany({entity: () => Vocab, mappedBy: (vocab) => vocab.language, hidden: true})
     vocabs: Collection<Vocab> = new Collection<Vocab>(this);
+
+    @OneToMany({entity: () => TTSVoice, mappedBy: (ttsVoice) => ttsVoice.language})
+    ttsVoices: Collection<TTSVoice> = new Collection<TTSVoice>(this);
 
     @OneToMany({entity: () => Meaning, mappedBy: (meaning) => meaning.language, hidden: true})
     meaningsSavedIn: Collection<Meaning> = new Collection<Meaning>(this);

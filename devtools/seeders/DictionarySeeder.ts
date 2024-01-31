@@ -4,14 +4,14 @@ import {Seeder} from "@mikro-orm/seeder";
 import fs from "fs-extra";
 import {batchSeed, syncIdSequence} from "@/devtools/seeders/utils.js";
 import {MapLearnerDictionary} from "@/src/models/entities/MapLearnerDictionary.js";
-import {DATASET_DICTIONARY_FILE_NAME, DATASET_MAP_LEARNER_DICTIONARY_FILE_NAME} from "@/devtools/constants.js";
 import path from "path";
+import {DATASET_FILES} from "@/devtools/constants.js";
 
 export class DictionarySeeder extends Seeder {
 
     async run(em: EntityManager, context: MikroORMDictionary): Promise<void> {
-        const dictionariesFilePath = path.join(context.databaseDumpPath, DATASET_DICTIONARY_FILE_NAME);
-        const mapLearnerDictionaryFilePath = path.join(context.databaseDumpPath, DATASET_MAP_LEARNER_DICTIONARY_FILE_NAME);
+        const dictionariesFilePath = path.join(context.databaseDumpPath, DATASET_FILES.dictionary);
+        const mapLearnerDictionaryFilePath = path.join(context.databaseDumpPath, DATASET_FILES.mapLearnerDictionary);
 
         if (!await fs.exists(dictionariesFilePath)) {
             console.error(`${dictionariesFilePath} not found`);

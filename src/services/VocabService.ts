@@ -12,7 +12,6 @@ import {EntityField} from "@mikro-orm/core/drivers/IDatabaseDriver.js";
 import {Profile} from "@/src/models/entities/Profile.js";
 import {MapLessonVocab} from "@/src/models/entities/MapLessonVocab.js";
 import {escapeRegExp} from "@/src/utils/utils.js";
-import {ZodEffects, ZodLiteral, ZodNativeEnum, ZodUnion} from "zod";
 
 export class VocabService {
     em: EntityManager;
@@ -102,7 +101,7 @@ export class VocabService {
         dbOrderBy.push({vocab: {id: "asc"}});
 
         const [mappings, totalCount] = await this.em.findAndCount(MapLearnerVocab, dbFilters, {
-            populate: ["vocab", "vocab.language", "vocab.meanings", "vocab.meanings.addedBy.user"],
+            populate: ["vocab", "vocab.language", "vocab.meanings", "vocab.meanings.addedBy.user", "vocab.ttsPronunciations", "vocab.ttsPronunciations.voice", "vocab.humanPronunciations"],
             orderBy: dbOrderBy,
             limit: pagination.pageSize,
             offset: pagination.pageSize * (pagination.page - 1),
@@ -110,6 +109,7 @@ export class VocabService {
         await this.em.populate(mappings, ["vocab.learnerMeanings", "vocab.learnerMeanings.addedBy.user"], {
             where: {vocab: {learnerMeanings: {learners: user.profile}}}
         });
+
         return [mappings, totalCount];
     }
 
@@ -127,7 +127,7 @@ export class VocabService {
         const mapping = await this.em.findOne(MapLearnerVocab, {
             vocab: vocabId,
             learner
-        }, {populate: ["vocab.meanings.learnersCount", "vocab.meanings.addedBy.user"], refresh: true});
+        }, {populate: ["vocab.meanings.learnersCount", "vocab.meanings.addedBy.user", "vocab.ttsPronunciations", "vocab.ttsPronunciations.voice", "vocab.humanPronunciations"], refresh: true});
         if (mapping) {
             await this.em.populate(mapping, ["vocab.learnerMeanings", "vocab.learnerMeanings.addedBy.user"], {where: {vocab: {learnerMeanings: {learners: learner}}}});
         }
@@ -166,12 +166,11 @@ export class VocabService {
     }
 
     async getLessonVocabs(lesson: Lesson, user: User) {
-        //TODO only fetch columns89 you need, everywhere. This endpoint had performance problems when fetching everything
         const existingMappings = await this.em.find(MapLearnerVocab, {
             vocab: {lessonsAppearingIn: lesson},
             learner: user.profile
         }, {
-            populate: ["vocab.language", "vocab.meanings.language", "vocab.meanings.addedBy.user"],
+            populate: ["vocab.language", "vocab.meanings.language", "vocab.meanings.addedBy.user", "vocab.ttsPronunciations", "vocab.ttsPronunciations.voice", "vocab.humanPronunciations"],
         });
 
         await this.em.populate(existingMappings, ["vocab.learnerMeanings", "vocab.learnerMeanings.language", "vocab.learnerMeanings.addedBy.user"], {
@@ -182,7 +181,7 @@ export class VocabService {
             lessonsAppearingIn: lesson,
             $nin: existingMappings.map(m => m.vocab)
         }, {
-            populate: ["language", "meanings", "meanings.language", "meanings.addedBy.user"],
+            populate: ["language", "meanings", "meanings.language", "meanings.addedBy.user", "ttsPronunciations", "ttsPronunciations.voice", "humanPronunciations"],
         });
 
         return [...existingMappings, ...newVocabs];

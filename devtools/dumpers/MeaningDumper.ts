@@ -1,15 +1,14 @@
 import {EntityManager} from "@mikro-orm/core";
 import {batchDump} from "@/devtools/dumpers/utils.js";
 import path from "path";
-import {DATASET_MAP_LEARNER_MEANING_FILE_NAME, DATASET_MAP_LEARNER_VOCABS_FILE_NAME, DATASET_MEANING_FILE_NAME} from "@/devtools/constants.js";
 import {Meaning} from "@/src/models/entities/Meaning.js";
-import {MapLearnerVocab} from "@/src/models/entities/MapLearnerVocab.js";
 import {MapLearnerMeaning} from "@/src/models/entities/MapLearnerMeaning.js";
+import {DATASET_FILES} from "@/devtools/constants.js";
 
 export async function dumpMeanings({em, batchSize, dataPath}: { em: EntityManager, batchSize: number, dataPath: string }) {
     await batchDump({
         em, batchSize,
-        filePath: path.join(dataPath, DATASET_MEANING_FILE_NAME),
+        filePath: path.join(dataPath, DATASET_FILES.meaning),
         entityClass: Meaning,
         resourceName: "meaning",
         writeEntity: (meaning: Meaning) => ({
@@ -26,7 +25,7 @@ export async function dumpMeanings({em, batchSize, dataPath}: { em: EntityManage
 
     await batchDump({
         em, batchSize,
-        filePath: path.join(dataPath, DATASET_MAP_LEARNER_MEANING_FILE_NAME),
+        filePath: path.join(dataPath, DATASET_FILES.mapLearnerMeaning),
         entityClass: MapLearnerMeaning,
         resourceName: "learner-meaning mappings",
         writeEntity: (mapping: MapLearnerMeaning) => ({

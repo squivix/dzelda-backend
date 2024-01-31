@@ -53,15 +53,16 @@ export class LanguageService {
 
         dbOrderBy.push({language: {code: "asc"}});
         dbOrderBy.push({language: {id: "asc"}});
-        return await this.em.find(MapLearnerLanguage, dbFilters, {orderBy: dbOrderBy});
+        return await this.em.find(MapLearnerLanguage, dbFilters, {orderBy: dbOrderBy, populate: ["preferredTtsVoice"]});
     }
 
     async getUserLanguage(code: string, user: User) {
-        return await this.em.findOne(MapLearnerLanguage, {language: {code}, learner: user.profile});
+        return await this.em.findOne(MapLearnerLanguage, {language: {code}, learner: user.profile}, {populate: ["preferredTtsVoice"]});
     }
 
     async updateUserLanguage(languageMapping: MapLearnerLanguage) {
-        return await this.languageRepo.updateUserLanguageTimeStamp(languageMapping);
+        await this.languageRepo.updateUserLanguageTimeStamp(languageMapping);
+        return (await this.em.refresh(languageMapping, {populate: ["preferredTtsVoice"]}))!;
     }
 
 

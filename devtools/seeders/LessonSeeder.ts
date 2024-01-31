@@ -4,13 +4,13 @@ import fs from "fs-extra";
 import {Lesson} from "@/src/models/entities/Lesson.js";
 import {batchSeed, syncIdSequence} from "@/devtools/seeders/utils.js";
 import {MapLessonVocab} from "@/src/models/entities/MapLessonVocab.js";
-import {DATASET_LESSON_FILE_NAME, DATASET_MAP_LESSON_VOCABS__FILE_NAME} from "@/devtools/constants.js";
 import path from "path";
+import {DATASET_FILES} from "@/devtools/constants.js";
 
 export class LessonSeeder extends Seeder {
     async run(em: EntityManager, context: Dictionary): Promise<void> {
-        const lessonsFilePath = path.join(context.databaseDumpPath, DATASET_LESSON_FILE_NAME);
-        const mapLessonVocabsFilePath = path.join(context.databaseDumpPath, DATASET_MAP_LESSON_VOCABS__FILE_NAME);
+        const lessonsFilePath = path.join(context.databaseDumpPath, DATASET_FILES.lesson);
+        const mapLessonVocabsFilePath = path.join(context.databaseDumpPath, DATASET_FILES.mapLessonVocab);
 
         if (!await fs.exists(lessonsFilePath)) {
             console.error(`${lessonsFilePath} not found`);

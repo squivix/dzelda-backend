@@ -262,6 +262,112 @@
           "nullable": false,
           "mappedType": "integer"
         },
+        "code": {
+          "name": "code",
+          "type": "varchar(255)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "mappedType": "string"
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar(255)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "mappedType": "string"
+        },
+        "gender": {
+          "name": "gender",
+          "type": "varchar(255)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "mappedType": "string"
+        },
+        "provider": {
+          "name": "provider",
+          "type": "varchar(255)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "mappedType": "string"
+        },
+        "accent": {
+          "name": "accent",
+          "type": "varchar(255)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "mappedType": "string"
+        },
+        "is_default": {
+          "name": "is_default",
+          "type": "boolean",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "default": "false",
+          "mappedType": "boolean"
+        },
+        "language_id": {
+          "name": "language_id",
+          "type": "int",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "mappedType": "integer"
+        }
+      },
+      "name": "tts_voice",
+      "schema": "public",
+      "indexes": [
+        {
+          "keyName": "tts_voice_pkey",
+          "columnNames": [
+            "id"
+          ],
+          "composite": false,
+          "primary": true,
+          "unique": true
+        }
+      ],
+      "checks": [],
+      "foreignKeys": {
+        "tts_voice_language_id_foreign": {
+          "constraintName": "tts_voice_language_id_foreign",
+          "columnNames": [
+            "language_id"
+          ],
+          "localTableName": "public.tts_voice",
+          "referencedColumnNames": [
+            "id"
+          ],
+          "referencedTableName": "public.language",
+          "deleteRule": "cascade",
+          "updateRule": "cascade"
+        }
+      }
+    },
+    {
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "int",
+          "unsigned": true,
+          "autoincrement": true,
+          "primary": true,
+          "nullable": false,
+          "mappedType": "integer"
+        },
         "username": {
           "name": "username",
           "type": "varchar(20)",
@@ -329,7 +435,7 @@
           "autoincrement": false,
           "primary": false,
           "nullable": false,
-          "length": 6,
+          "length": 0,
           "default": "now()",
           "mappedType": "datetime"
         },
@@ -340,7 +446,7 @@
           "autoincrement": false,
           "primary": false,
           "nullable": true,
-          "length": 6,
+          "length": 0,
           "default": "null",
           "mappedType": "datetime"
         }
@@ -416,7 +522,7 @@
           "autoincrement": false,
           "primary": false,
           "nullable": false,
-          "length": 6,
+          "length": 0,
           "default": "now()",
           "mappedType": "datetime"
         },
@@ -427,7 +533,7 @@
           "autoincrement": false,
           "primary": false,
           "nullable": false,
-          "length": 6,
+          "length": 0,
           "default": "now() + interval '1 month'",
           "mappedType": "datetime"
         }
@@ -590,7 +696,7 @@
           "autoincrement": false,
           "primary": false,
           "nullable": false,
-          "length": 6,
+          "length": 0,
           "default": "now()",
           "mappedType": "datetime"
         },
@@ -601,9 +707,19 @@
           "autoincrement": false,
           "primary": false,
           "nullable": false,
-          "length": 6,
+          "length": 0,
           "default": "now()",
           "mappedType": "datetime"
+        },
+        "preferred_tts_voice_id": {
+          "name": "preferred_tts_voice_id",
+          "type": "int",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "default": "null",
+          "mappedType": "integer"
         }
       },
       "name": "map_learner_language",
@@ -673,6 +789,19 @@
           ],
           "referencedTableName": "public.profile",
           "deleteRule": "cascade",
+          "updateRule": "cascade"
+        },
+        "map_learner_language_preferred_tts_voice_id_foreign": {
+          "constraintName": "map_learner_language_preferred_tts_voice_id_foreign",
+          "columnNames": [
+            "preferred_tts_voice_id"
+          ],
+          "localTableName": "public.map_learner_language",
+          "referencedColumnNames": [
+            "id"
+          ],
+          "referencedTableName": "public.tts_voice",
+          "deleteRule": "set null",
           "updateRule": "cascade"
         }
       }
@@ -856,7 +985,7 @@
           "autoincrement": false,
           "primary": false,
           "nullable": false,
-          "length": 6,
+          "length": 0,
           "default": "now()",
           "mappedType": "datetime"
         }
@@ -1187,7 +1316,7 @@
           "autoincrement": false,
           "primary": false,
           "nullable": false,
-          "length": 6,
+          "length": 0,
           "default": "now()",
           "mappedType": "datetime"
         }
@@ -1311,7 +1440,7 @@
           "autoincrement": false,
           "primary": false,
           "nullable": false,
-          "length": 6,
+          "length": 0,
           "default": "now()",
           "mappedType": "datetime"
         }
@@ -1415,7 +1544,7 @@
           "autoincrement": false,
           "primary": false,
           "nullable": false,
-          "length": 6,
+          "length": 0,
           "default": "now() + interval '1 hour'",
           "mappedType": "datetime"
         },
@@ -1522,7 +1651,7 @@
           "autoincrement": false,
           "primary": false,
           "nullable": false,
-          "length": 6,
+          "length": 0,
           "default": "now() + interval '5 minutes'",
           "mappedType": "datetime"
         }
@@ -1585,7 +1714,7 @@
           "autoincrement": false,
           "primary": false,
           "nullable": false,
-          "length": 6,
+          "length": 0,
           "default": "now() + interval '24 hours'",
           "mappedType": "datetime"
         },
@@ -1749,6 +1878,101 @@
           "nullable": false,
           "mappedType": "integer"
         },
+        "url": {
+          "name": "url",
+          "type": "varchar(500)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "length": 500,
+          "default": "''",
+          "mappedType": "string"
+        },
+        "added_on": {
+          "name": "added_on",
+          "type": "timestamptz(0)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "length": 0,
+          "default": "now()",
+          "mappedType": "datetime"
+        },
+        "voice_id": {
+          "name": "voice_id",
+          "type": "int",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "mappedType": "integer"
+        },
+        "vocab_id": {
+          "name": "vocab_id",
+          "type": "int",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "mappedType": "integer"
+        }
+      },
+      "name": "tts_pronunciation",
+      "schema": "public",
+      "indexes": [
+        {
+          "keyName": "tts_pronunciation_pkey",
+          "columnNames": [
+            "id"
+          ],
+          "composite": false,
+          "primary": true,
+          "unique": true
+        }
+      ],
+      "checks": [],
+      "foreignKeys": {
+        "tts_pronunciation_voice_id_foreign": {
+          "constraintName": "tts_pronunciation_voice_id_foreign",
+          "columnNames": [
+            "voice_id"
+          ],
+          "localTableName": "public.tts_pronunciation",
+          "referencedColumnNames": [
+            "id"
+          ],
+          "referencedTableName": "public.tts_voice",
+          "deleteRule": "restrict",
+          "updateRule": "cascade"
+        },
+        "tts_pronunciation_vocab_id_foreign": {
+          "constraintName": "tts_pronunciation_vocab_id_foreign",
+          "columnNames": [
+            "vocab_id"
+          ],
+          "localTableName": "public.tts_pronunciation",
+          "referencedColumnNames": [
+            "id"
+          ],
+          "referencedTableName": "public.vocab",
+          "deleteRule": "cascade",
+          "updateRule": "cascade"
+        }
+      }
+    },
+    {
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "int",
+          "unsigned": true,
+          "autoincrement": true,
+          "primary": true,
+          "nullable": false,
+          "mappedType": "integer"
+        },
         "text": {
           "name": "text",
           "type": "varchar(500)",
@@ -1784,7 +2008,7 @@
           "autoincrement": false,
           "primary": false,
           "nullable": false,
-          "length": 6,
+          "length": 0,
           "default": "now()",
           "mappedType": "datetime"
         },
@@ -2172,7 +2396,7 @@
           "autoincrement": false,
           "primary": false,
           "nullable": false,
-          "length": 6,
+          "length": 0,
           "default": "now()",
           "mappedType": "datetime"
         }
@@ -2243,6 +2467,105 @@
             "id"
           ],
           "referencedTableName": "public.profile",
+          "deleteRule": "cascade",
+          "updateRule": "cascade"
+        }
+      }
+    },
+    {
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "int",
+          "unsigned": true,
+          "autoincrement": true,
+          "primary": true,
+          "nullable": false,
+          "mappedType": "integer"
+        },
+        "url": {
+          "name": "url",
+          "type": "varchar(500)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "length": 500,
+          "default": "''",
+          "mappedType": "string"
+        },
+        "accent": {
+          "name": "accent",
+          "type": "varchar(255)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "default": "null",
+          "mappedType": "string"
+        },
+        "source": {
+          "name": "source",
+          "type": "varchar(255)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "mappedType": "string"
+        },
+        "attribution_logo": {
+          "name": "attribution_logo",
+          "type": "varchar(255)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "mappedType": "string"
+        },
+        "attribution_markdown_text": {
+          "name": "attribution_markdown_text",
+          "type": "varchar(255)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "mappedType": "string"
+        },
+        "vocab_id": {
+          "name": "vocab_id",
+          "type": "int",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "mappedType": "integer"
+        }
+      },
+      "name": "human_pronunciation",
+      "schema": "public",
+      "indexes": [
+        {
+          "keyName": "human_pronunciation_pkey",
+          "columnNames": [
+            "id"
+          ],
+          "composite": false,
+          "primary": true,
+          "unique": true
+        }
+      ],
+      "checks": [],
+      "foreignKeys": {
+        "human_pronunciation_vocab_id_foreign": {
+          "constraintName": "human_pronunciation_vocab_id_foreign",
+          "columnNames": [
+            "vocab_id"
+          ],
+          "localTableName": "public.human_pronunciation",
+          "referencedColumnNames": [
+            "id"
+          ],
+          "referencedTableName": "public.vocab",
           "deleteRule": "cascade",
           "updateRule": "cascade"
         }

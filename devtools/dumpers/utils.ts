@@ -1,4 +1,4 @@
-import {EntityData, EntityManager, EntityName} from "@mikro-orm/core";
+import {EntityData, EntityManager} from "@mikro-orm/core";
 import fs from "fs-extra";
 import * as cliProgress from "cli-progress";
 import {EntityClass} from "@mikro-orm/core/typings.js";

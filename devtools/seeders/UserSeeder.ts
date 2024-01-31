@@ -5,15 +5,15 @@ import {User} from "@/src/models/entities/auth/User.js";
 import {batchSeed, syncIdSequence} from "@/devtools/seeders/utils.js";
 import {MapLearnerLanguage} from "@/src/models/entities/MapLearnerLanguage.js";
 import {Profile} from "@/src/models/entities/Profile.js";
-import {DATASET_MAP_LEARNER_LANGUAGE_FILE_NAME, DATASET_PROFILE_FILE_NAME, DATASET_USER_FILE_NAME} from "@/devtools/constants.js";
 import path from "path";
+import {DATASET_FILES} from "@/devtools/constants.js";
 
 export class UserSeeder extends Seeder {
 
     async run(em: EntityManager, context: Dictionary): Promise<void> {
-        const usersFilePath = path.join(context.databaseDumpPath, DATASET_USER_FILE_NAME);
-        const profilesFilePath = path.join(context.databaseDumpPath, DATASET_PROFILE_FILE_NAME);
-        const mapLearnerLanguageFilePath = path.join(context.databaseDumpPath, DATASET_MAP_LEARNER_LANGUAGE_FILE_NAME);
+        const usersFilePath = path.join(context.databaseDumpPath, DATASET_FILES.user);
+        const profilesFilePath = path.join(context.databaseDumpPath, DATASET_FILES.profile);
+        const mapLearnerLanguageFilePath = path.join(context.databaseDumpPath, DATASET_FILES.mapLearnerLanguage);
 
         if (!await fs.exists(usersFilePath)) {
             console.error(`${usersFilePath} not found`);

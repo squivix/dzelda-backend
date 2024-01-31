@@ -1,17 +1,5 @@
 import {Lesson} from "@/src/models/entities/Lesson.js";
-import {
-    Collection,
-    Entity,
-    Formula,
-    Index,
-    ManyToMany,
-    ManyToOne,
-    OneToMany,
-    OptionalProps,
-    Property,
-    types,
-    Unique
-} from "@mikro-orm/core";
+import {Collection, Entity, Formula, Index, ManyToMany, ManyToOne, OneToMany, OptionalProps, Property, types, Unique} from "@mikro-orm/core";
 import {MapLessonVocab} from "@/src/models/entities/MapLessonVocab.js";
 import {CustomBaseEntity} from "@/src/models/entities/CustomBaseEntity.js";
 import {Language} from "@/src/models/entities/Language.js";
@@ -20,6 +8,8 @@ import {Profile} from "@/src/models/entities/Profile.js";
 import {MapLearnerVocab} from "@/src/models/entities/MapLearnerVocab.js";
 import {VocabRepo} from "@/src/models/repos/VocabRepo.js";
 import {VocabLevel} from "@/src/models/enums/VocabLevel.js";
+import {TTSPronunciation} from "@/src/models/entities/TTSPronunciation.js";
+import {HumanPronunciation} from "@/src/models/entities/HumanPronunciation.js";
 
 @Entity({customRepository: () => VocabRepo})
 @Unique({properties: ["language", "text"]})
@@ -64,6 +54,12 @@ export class Vocab extends CustomBaseEntity {
         inverseJoinColumn: "learner_id",
     })
     learners: Collection<Profile> = new Collection<Profile>(this);
+
+    @OneToMany({entity: () => TTSPronunciation, mappedBy: (ttsPronunciation: TTSPronunciation) => ttsPronunciation.vocab})
+    ttsPronunciations: Collection<TTSPronunciation> = new Collection<TTSPronunciation>(this);
+
+    @OneToMany({entity: () => HumanPronunciation, mappedBy: (humanPronunciation: HumanPronunciation) => humanPronunciation.vocab})
+    humanPronunciations: Collection<HumanPronunciation> = new Collection<HumanPronunciation>(this);
 
     [OptionalProps]?: "isPhrase";
 

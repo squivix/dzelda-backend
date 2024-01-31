@@ -18,13 +18,16 @@ import {MapLearnerLanguage} from "@/src/models/entities/MapLearnerLanguage.js";
 import {PasswordResetToken} from "@/src/models/entities/auth/PasswordResetToken.js";
 import {EmailConfirmationToken} from "@/src/models/entities/auth/EmailConfirmationToken.js";
 import {FileUploadRequest} from "@/src/models/entities/FileUploadRequest.js";
+import {TTSVoice} from "@/src/models/entities/TTSVoice.js";
+import {TTSPronunciation} from "@/src/models/entities/TTSPronunciation.js";
+import {HumanPronunciation} from "@/src/models/entities/HumanPronunciation.js";
 
 
 const devOptions: Options = {
     type: "postgresql",
     entities: [Course, CustomBaseEntity, Dictionary, Language, Lesson, MapLearnerDictionary,
         MapPastViewerLesson, MapLearnerMeaning, MapLearnerVocab, MapLessonVocab, MapLearnerLanguage, Meaning,
-        Profile, Vocab, User, Session, PasswordResetToken, EmailConfirmationToken, FileUploadRequest],
+        Profile, Vocab, User, Session, PasswordResetToken, EmailConfirmationToken, FileUploadRequest, TTSVoice, TTSPronunciation, HumanPronunciation],
     loadStrategy: LoadStrategy.SELECT_IN,
     debug: true,
     migrations: {

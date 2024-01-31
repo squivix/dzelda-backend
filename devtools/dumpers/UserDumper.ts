@@ -1,14 +1,14 @@
 import {EntityManager} from "@mikro-orm/core";
 import {batchDump} from "@/devtools/dumpers/utils.js";
 import path from "path";
-import {DATASET_PROFILE_FILE_NAME, DATASET_USER_FILE_NAME} from "@/devtools/constants.js";
 import {User} from "@/src/models/entities/auth/User.js";
 import {Profile} from "@/src/models/entities/Profile.js";
+import {DATASET_FILES} from "@/devtools/constants.js";
 
 export async function dumpUsers({em, batchSize, dataPath}: { em: EntityManager, batchSize: number, dataPath: string }) {
     await batchDump({
         em, batchSize,
-        filePath: path.join(dataPath, DATASET_USER_FILE_NAME),
+        filePath: path.join(dataPath, DATASET_FILES.user),
         entityClass: User,
         resourceName: "user",
         writeEntity: (user: User) => ({
@@ -26,7 +26,7 @@ export async function dumpUsers({em, batchSize, dataPath}: { em: EntityManager, 
 
     await batchDump({
         em, batchSize,
-        filePath: path.join(dataPath, DATASET_PROFILE_FILE_NAME),
+        filePath: path.join(dataPath, DATASET_FILES.profile),
         entityClass: Profile,
         resourceName: "profile",
         writeEntity: (profile: Profile) => ({

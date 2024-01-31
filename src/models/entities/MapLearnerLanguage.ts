@@ -2,6 +2,7 @@ import {Entity, Index, ManyToOne, OptionalProps, Property, types, Unique} from "
 import {CustomBaseEntity} from "@/src/models/entities/CustomBaseEntity.js";
 import {Profile} from "@/src/models/entities/Profile.js";
 import {Language} from "@/src/models/entities/Language.js";
+import {TTSVoice} from "@/src/models/entities/TTSVoice.js";
 
 @Entity()
 @Unique({properties: ["language", "learner"]})
@@ -25,6 +26,9 @@ export class MapLearnerLanguage extends CustomBaseEntity {
 
     @Property({type: types.datetime, defaultRaw: "now()", hidden: true})
     lastOpened!: Date;
+
+    @ManyToOne({entity: () => TTSVoice, inversedBy: (ttsVoice) => ttsVoice.prefererLanguageMappings, onDelete: "set null", onUpdateIntegrity: "cascade", nullable: true, default: null})
+    preferredTtsVoice!: TTSVoice | null;
 
     [OptionalProps]?: "startedLearningOn" | "lastOpened";
 }

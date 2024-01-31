@@ -3,13 +3,13 @@ import fs from "fs-extra";
 import {Course} from "@/src/models/entities/Course.js";
 import {batchSeed, syncIdSequence} from "@/devtools/seeders/utils.js";
 import {Seeder} from "@mikro-orm/seeder";
-import {DATASET_COURSE_FILE_NAME} from "@/devtools/constants.js";
 import path from "path";
+import {DATASET_FILES} from "@/devtools/constants.js";
 
 export class CourseSeeder extends Seeder {
 
     async run(em: EntityManager, context: Dictionary): Promise<void> {
-        const coursesFilePath = path.join(context.databaseDumpPath, DATASET_COURSE_FILE_NAME);
+        const coursesFilePath = path.join(context.databaseDumpPath, DATASET_FILES.course);
 
         if (!await fs.exists(coursesFilePath)) {
             console.error(`${coursesFilePath} not found`);

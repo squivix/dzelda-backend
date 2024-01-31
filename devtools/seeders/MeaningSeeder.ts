@@ -4,14 +4,14 @@ import fs from "fs-extra";
 import {Meaning} from "@/src/models/entities/Meaning.js";
 import {batchSeed, syncIdSequence} from "@/devtools/seeders/utils.js";
 import {MapLearnerMeaning} from "@/src/models/entities/MapLearnerMeaning.js";
-import {DATASET_MAP_LEARNER_MEANING_FILE_NAME, DATASET_MEANING_FILE_NAME} from "@/devtools/constants.js";
 import path from "path";
+import {DATASET_FILES} from "@/devtools/constants.js";
 
 export class MeaningSeeder extends Seeder {
 
     async run(em: EntityManager, context: Dictionary): Promise<void> {
-        const meaningsFilePath = path.join(context.databaseDumpPath, DATASET_MEANING_FILE_NAME);
-        const mapLearnerMeaningsFilePath = path.join(context.databaseDumpPath, DATASET_MAP_LEARNER_MEANING_FILE_NAME);
+        const meaningsFilePath = path.join(context.databaseDumpPath, DATASET_FILES.meaning);
+        const mapLearnerMeaningsFilePath = path.join(context.databaseDumpPath, DATASET_FILES.mapLearnerMeaning);
 
         if (!await fs.exists(meaningsFilePath)) {
             console.error(`${meaningsFilePath} not found`);
