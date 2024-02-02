@@ -1,11 +1,10 @@
 import {CustomCallbackObject, CustomEntitySerializer} from "@/src/presentation/response/serializers/CustomEntitySerializer.js";
 import {MapLearnerVocab} from "@/src/models/entities/MapLearnerVocab.js";
 import {Vocab} from "@/src/models/entities/Vocab.js";
-import {HumanPronunciationSchema, LearnerVocabSchema, MeaningSchema, TTSPronunciationSchema} from "dzelda-common";
+import {LearnerVocabSchema, MeaningSchema, TTSPronunciationSchema} from "dzelda-common";
 import {meaningSerializer} from "@/src/presentation/response/serializers/entities/MeaningSerializer.js";
 import {VocabLevel} from "@/src/models/enums/VocabLevel.js";
 import {ttsPronunciationSerializer} from "@/src/presentation/response/serializers/entities/TTSPronunciationSerializer.js";
-import {humanPronunciationSerializer} from "@/src/presentation/response/serializers/entities/HumanPronunciationSerializer.js";
 
 export class LearnerVocabSerializer extends CustomEntitySerializer<Vocab | MapLearnerVocab, LearnerVocabSchema> {
     definition(vocabOrMapping: Vocab | MapLearnerVocab): CustomCallbackObject<Partial<LearnerVocabSchema>> {
@@ -23,7 +22,6 @@ export class LearnerVocabSerializer extends CustomEntitySerializer<Vocab | MapLe
                 // @ts-ignore
                 meanings: () => meaningSerializer.serializeList(vocabOrMapping.meanings.getItems(), {ignore: ["vocab"]}) as Omit<MeaningSchema, "vocab">[],
                 ttsPronunciations: () => ttsPronunciationSerializer.serializeList(vocabOrMapping.ttsPronunciations.getItems()) as TTSPronunciationSchema[],
-                humanPronunciations: () => humanPronunciationSerializer.serializeList(vocabOrMapping.humanPronunciations.getItems(), {ignore: ["vocab"]}) as HumanPronunciationSchema[]
             };
         } else {
             return {
@@ -38,7 +36,6 @@ export class LearnerVocabSerializer extends CustomEntitySerializer<Vocab | MapLe
                 // @ts-ignore
                 meanings: () => meaningSerializer.serializeList(vocabOrMapping.vocab.meanings.getItems(), {ignore: ["vocab"]}) as Omit<MeaningSchema, "vocab">[],
                 ttsPronunciations: () => ttsPronunciationSerializer.serializeList(vocabOrMapping.vocab.ttsPronunciations.getItems(), {ignore: ["vocab"]}) as TTSPronunciationSchema[],
-                humanPronunciations: () => humanPronunciationSerializer.serializeList(vocabOrMapping.vocab.humanPronunciations.getItems(), {ignore: ["vocab"]}) as HumanPronunciationSchema[]
             };
         }
     }

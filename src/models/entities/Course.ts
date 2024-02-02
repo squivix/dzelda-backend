@@ -1,4 +1,4 @@
-import {Collection, Entity, Enum, Formula, Index, ManyToMany, ManyToOne, OneToMany, OptionalProps, Property, types} from "@mikro-orm/core";
+import {Collection, Entity, Formula, Index, ManyToMany, ManyToOne, OneToMany, OptionalProps, Property, types} from "@mikro-orm/core";
 import {CustomBaseEntity} from "@/src/models/entities/CustomBaseEntity.js";
 import {Language} from "@/src/models/entities/Language.js";
 import {Profile} from "@/src/models/entities/Profile.js";
@@ -6,7 +6,6 @@ import {Lesson} from "@/src/models/entities/Lesson.js";
 import {VocabLevel} from "@/src/models/enums/VocabLevel.js";
 import {CourseRepo} from "@/src/models/repos/CourseRepo.js";
 import {MapBookmarkerCourse} from "@/src/models/entities/MapBookmarkerCourse.js";
-import {LanguageLevel} from "@/src/models/enums/LanguageLevel.js";
 
 @Entity({customRepository: () => CourseRepo})
 @Index({properties: ["language"]})
@@ -38,7 +37,7 @@ export class Course extends CustomBaseEntity {
 
     @ManyToMany({
         entity: () => Profile,
-        inversedBy: (user: Profile) => user.coursesBookmarked,
+        inversedBy: (bookmarker: Profile) => bookmarker.coursesBookmarked,
         pivotEntity: () => MapBookmarkerCourse,
         joinColumn: "course_id",
         inverseJoinColumn: "bookmarker_id"

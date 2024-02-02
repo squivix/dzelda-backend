@@ -7,10 +7,7 @@ import {ValidationAPIError} from "@/src/utils/errors/ValidationAPIError.js";
 import {VocabService} from "@/src/services/VocabService.js";
 import {MeaningService} from "@/src/services/MeaningService.js";
 import {User} from "@/src/models/entities/auth/User.js";
-import {usernameValidator} from "@/src/validators/userValidator.js";
-import {UserService} from "@/src/services/UserService.js";
 import {NotFoundAPIError} from "@/src/utils/errors/NotFoundAPIError.js";
-import {ForbiddenAPIError} from "@/src/utils/errors/ForbiddenAPIError.js";
 import {numericStringValidator} from "@/src/validators/utilValidators.js";
 import {meaningSerializer} from "@/src/presentation/response/serializers/entities/MeaningSerializer.js";
 

@@ -1,11 +1,4 @@
-import {File} from "fastify-formidable";
-import {FilesTooLargeAPIError} from "@/src/utils/errors/FilesTooLargeAPIError.js";
 import {kibiBytes, mebiBytes} from "@/tests/integration/utils.js";
-
-export function validateFileSize(file: File, fieldName: string, sizeInBytes: number) {
-    if (file.size > sizeInBytes)
-        throw new FilesTooLargeAPIError({field: fieldName, maxSizeInBytes: sizeInBytes});
-}
 
 
 const fileMimeTypes = {

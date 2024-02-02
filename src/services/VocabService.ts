@@ -101,7 +101,7 @@ export class VocabService {
         dbOrderBy.push({vocab: {id: "asc"}});
 
         const [mappings, totalCount] = await this.em.findAndCount(MapLearnerVocab, dbFilters, {
-            populate: ["vocab", "vocab.language", "vocab.meanings", "vocab.meanings.addedBy.user", "vocab.ttsPronunciations", "vocab.ttsPronunciations.voice", "vocab.humanPronunciations"],
+            populate: ["vocab", "vocab.language", "vocab.meanings", "vocab.meanings.addedBy.user", "vocab.ttsPronunciations", "vocab.ttsPronunciations.voice"],
             orderBy: dbOrderBy,
             limit: pagination.pageSize,
             offset: pagination.pageSize * (pagination.page - 1),
@@ -127,7 +127,7 @@ export class VocabService {
         const mapping = await this.em.findOne(MapLearnerVocab, {
             vocab: vocabId,
             learner
-        }, {populate: ["vocab.meanings.learnersCount", "vocab.meanings.addedBy.user", "vocab.ttsPronunciations", "vocab.ttsPronunciations.voice", "vocab.humanPronunciations"], refresh: true});
+        }, {populate: ["vocab.meanings.learnersCount", "vocab.meanings.addedBy.user", "vocab.ttsPronunciations", "vocab.ttsPronunciations.voice"], refresh: true});
         if (mapping) {
             await this.em.populate(mapping, ["vocab.learnerMeanings", "vocab.learnerMeanings.addedBy.user"], {where: {vocab: {learnerMeanings: {learners: learner}}}});
         }
@@ -170,7 +170,7 @@ export class VocabService {
             vocab: {lessonsAppearingIn: lesson},
             learner: user.profile
         }, {
-            populate: ["vocab.language", "vocab.meanings.language", "vocab.meanings.addedBy.user", "vocab.ttsPronunciations", "vocab.ttsPronunciations.voice", "vocab.humanPronunciations"],
+            populate: ["vocab.language", "vocab.meanings.language", "vocab.meanings.addedBy.user", "vocab.ttsPronunciations", "vocab.ttsPronunciations.voice"],
         });
 
         await this.em.populate(existingMappings, ["vocab.learnerMeanings", "vocab.learnerMeanings.language", "vocab.learnerMeanings.addedBy.user"], {
@@ -181,13 +181,13 @@ export class VocabService {
             lessonsAppearingIn: lesson,
             $nin: existingMappings.map(m => m.vocab)
         }, {
-            populate: ["language", "meanings", "meanings.language", "meanings.addedBy.user", "ttsPronunciations", "ttsPronunciations.voice", "humanPronunciations"],
+            populate: ["language", "meanings", "meanings.language", "meanings.addedBy.user", "ttsPronunciations", "ttsPronunciations.voice"],
         });
 
         return [...existingMappings, ...newVocabs];
     }
 
-    async findVocab(where: FilterQuery<Vocab>, fields: EntityField<Vocab>[] = ["id", "language"]) {
+    async findVocab(where: FilterQuery<Vocab>, fields: EntityField<Vocab>[] = ["*", "language"]) {
         return await this.vocabRepo.findOne(where, {fields});
     }
 

@@ -1599,3 +1599,8 @@ describe.todo("GET /users/:username/vocabs/saved/count/", () => {
 describe.todo("GET /users/:username/vocabs/saved/count/time-series", () => {
     test.todo("");
 });
+
+/**{@link VocabController#getVocabHumanPronunciations}*/
+describe.todo("GET /vocabs/:vocabId/human-pronunciations/", () => {
+    test.todo("");
+});

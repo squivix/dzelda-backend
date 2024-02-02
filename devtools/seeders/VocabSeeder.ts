@@ -1,4 +1,4 @@
-import {Dictionary, EntityData, EntityManager, ManyToOne, Property, types} from "@mikro-orm/core";
+import {Dictionary, EntityData, EntityManager} from "@mikro-orm/core";
 import {Seeder} from "@mikro-orm/seeder";
 import fs from "fs-extra";
 import {Vocab} from "@/src/models/entities/Vocab.js";
@@ -125,11 +125,12 @@ export class VocabSeeder extends Seeder {
         await em.insertMany(HumanPronunciation, batch.map((humanPronunciationData) => ({
             id: humanPronunciationData.id,
             url: humanPronunciationData.url,
+            text: humanPronunciationData.text,
+            language: humanPronunciationData.language,
             accent: humanPronunciationData.accent,
             source: humanPronunciationData.source,
             attributionLogo: humanPronunciationData.attributionLogo,
             attributionMarkdownText: humanPronunciationData.attributionMarkdownText,
-            vocab: humanPronunciationData.vocab,
         })));
     }
 }

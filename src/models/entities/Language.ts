@@ -9,6 +9,7 @@ import {MapLearnerLanguage} from "@/src/models/entities/MapLearnerLanguage.js";
 import {LanguageRepo} from "@/src/models/repos/LanguageRepo.js";
 import {Lesson} from "@/src/models/entities/Lesson.js";
 import {TTSVoice} from "@/src/models/entities/TTSVoice.js";
+import {HumanPronunciation} from "@/src/models/entities/HumanPronunciation.js";
 
 @Entity({customRepository: () => LanguageRepo})
 export class Language extends CustomBaseEntity {
@@ -79,6 +80,9 @@ export class Language extends CustomBaseEntity {
         hidden: true
     })
     learners: Collection<Profile> = new Collection<Profile>(this);
+
+    @OneToMany({entity: () => HumanPronunciation, mappedBy: (humanPronunciation: HumanPronunciation) => humanPronunciation.language})
+    humanPronunciations: Collection<HumanPronunciation> = new Collection<HumanPronunciation>(this);
 
 
     @Formula((alias: string) => `(SELECT COUNT(learner_id) FROM map_learner_language WHERE language_id=${alias}.id)`, {

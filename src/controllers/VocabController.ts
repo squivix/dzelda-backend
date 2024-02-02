@@ -16,6 +16,8 @@ import {vocabSerializer} from "@/src/presentation/response/serializers/entities/
 import {learnerVocabSerializer} from "@/src/presentation/response/serializers/mappings/LearnerVocabSerializer.js";
 import {APIError} from "@/src/utils/errors/APIError.js";
 import {StatusCodes} from "http-status-codes";
+import {PronunciationService} from "@/src/services/PronunciationService.js";
+import {humanPronunciationSerializer} from "@/src/presentation/response/serializers/entities/HumanPronunciationSerializer.js";
 
 class VocabController {
 
@@ -255,6 +257,22 @@ class VocabController {
             groupBy: queryParams.groupBy,
         });
         reply.send(stats);
+    }
+
+    async getVocabHumanPronunciations(request: FastifyRequest, reply: FastifyReply) {
+        const pathParamsValidator = z.object({
+            vocabId: numericStringValidator
+        });
+        const pathParams = pathParamsValidator.parse(request.params);
+
+        const vocabService = new VocabService(request.em);
+        const vocab = await vocabService.findVocab({id: pathParams.vocabId});
+        if (!vocab)
+            throw new NotFoundAPIError("vocab");
+
+        const pronunciationService = new PronunciationService(request.em);
+        const humanPronunciations = await pronunciationService.getHumanPronunciations(vocab.text, vocab.language);
+        reply.send(humanPronunciationSerializer.serializeList(humanPronunciations));
     }
 }
 
