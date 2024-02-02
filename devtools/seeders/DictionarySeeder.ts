@@ -48,6 +48,7 @@ export class DictionarySeeder extends Seeder {
                 lookupLink: dictionaryData.lookupLink,
                 dictionaryLink: dictionaryData.dictionaryLink,
                 isDefault: dictionaryData.isDefault,
+                isPronunciation: dictionaryData.isPronunciation,
             };
         }));
     }

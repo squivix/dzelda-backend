@@ -23,6 +23,9 @@ export class Dictionary extends CustomBaseEntity {
     @Property({type: types.boolean, default: false})
     isDefault: boolean = false;
 
+    @Property({type: types.boolean, default: false})
+    isPronunciation: boolean = false;
+
     @ManyToMany({
         entity: () => Profile,
         inversedBy: (user: Profile) => user.dictionariesSaved,

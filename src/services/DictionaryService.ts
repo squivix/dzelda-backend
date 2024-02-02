@@ -1,10 +1,8 @@
 import {EntityManager, EntityRepository, FilterQuery} from "@mikro-orm/core";
 import {Dictionary} from "@/src/models/entities/Dictionary.js";
-import {AnonymousUser, User} from "@/src/models/entities/auth/User.js";
+import {User} from "@/src/models/entities/auth/User.js";
 import {QueryOrderMap} from "@mikro-orm/core/enums.js";
-import {Course} from "@/src/models/entities/Course.js";
 import {MapLearnerDictionary} from "@/src/models/entities/MapLearnerDictionary.js";
-import {Lesson} from "@/src/models/entities/Lesson.js";
 import {EntityField} from "@mikro-orm/core/drivers/IDatabaseDriver.js";
 
 export class DictionaryService {
@@ -18,15 +16,15 @@ export class DictionaryService {
     }
 
 
-    async getDictionaries(filters: { languageCode?: string, isLearning?: boolean }, sort: {
+    async getDictionaries(filters: { languageCode?: string, isPronunciation?: boolean }, sort: {
         sortBy: "name",
         sortOrder: "asc" | "desc"
-    }, user?: User | AnonymousUser | null) {
+    }) {
         const dbFilters: FilterQuery<Dictionary> = {$and: []};
-        if (user && user instanceof User && filters.isLearning)
-            dbFilters.$and!.push({learners: user.profile});
         if (filters.languageCode !== undefined)
             dbFilters.$and!.push({language: {code: filters.languageCode}});
+        if (filters.isPronunciation !== undefined)
+            dbFilters.$and!.push({isPronunciation: filters.isPronunciation});
 
         const dbOrderBy: QueryOrderMap<Dictionary>[] = [];
         if (sort.sortBy == "name")
@@ -35,12 +33,14 @@ export class DictionaryService {
         return await this.dictionaryRepo.find(dbFilters, {populate: ["language"], orderBy: dbOrderBy});
     }
 
-    async getLearnerDictionaries(filters: { languageCode?: string, isLearning?: boolean }, user: User) {
+    async getLearnerDictionaries(filters: { languageCode?: string, isPronunciation?: boolean }, user: User) {
         const dbFilters: FilterQuery<MapLearnerDictionary> = {$and: []};
 
         dbFilters.$and!.push({learner: user.profile});
         if (filters.languageCode !== undefined)
             dbFilters.$and!.push({dictionary: {language: {code: filters.languageCode}}});
+        if (filters.isPronunciation !== undefined)
+            dbFilters.$and!.push({dictionary: {isPronunciation: filters.isPronunciation}});
 
         return await this.em.find(MapLearnerDictionary, dbFilters, {
             populate: ["dictionary", "dictionary.language"],

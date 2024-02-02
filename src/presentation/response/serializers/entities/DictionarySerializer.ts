@@ -12,6 +12,7 @@ export class DictionarySerializer extends CustomEntitySerializer<Dictionary | Ma
             lookupLink: () => dictionary.lookupLink,
             dictionaryLink: () => dictionary.dictionaryLink,
             language: () => dictionary.language.code,
+            isPronunciation: () => dictionary.isPronunciation,
         };
     }
 
