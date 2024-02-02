@@ -18,8 +18,9 @@ export async function dumpDictionaries({em, batchSize, dataPath}: { em: EntityMa
             lookupLink: dictionary.lookupLink,
             dictionaryLink: dictionary.dictionaryLink,
             isDefault: dictionary.isDefault,
+            isPronunciation: dictionary.isPronunciation
         })
-    })
+    });
 
     await batchDump({
         em, batchSize,
@@ -30,5 +31,5 @@ export async function dumpDictionaries({em, batchSize, dataPath}: { em: EntityMa
             learner: mapping.learner.id,
             dictionary: mapping.dictionary.id,
         })
-    })
+    });
 }

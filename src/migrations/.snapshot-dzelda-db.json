@@ -310,6 +310,16 @@
           "nullable": false,
           "default": "false",
           "mappedType": "boolean"
+        },
+        "is_pronunciation": {
+          "name": "is_pronunciation",
+          "type": "boolean",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "default": "false",
+          "mappedType": "boolean"
         }
       },
       "name": "dictionary",
