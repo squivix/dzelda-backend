@@ -1,18 +1,20 @@
 import { Migration } from '@mikro-orm/migrations';
 
-export class Migration20240202154013 extends Migration {
+export class Migration20240212121632 extends Migration {
 
   async up(): Promise<void> {
     this.addSql('create table "language" ("id" serial primary key, "code" varchar(255) not null, "name" varchar(255) not null, "greeting" varchar(255) not null, "second_speakers_count" int not null, "flag" varchar(500) null default null, "flag_circular" varchar(500) null default null, "flag_emoji" varchar(32) null default null, "color" varchar(32) not null, "is_supported" boolean not null default false, "level_thresholds" jsonb not null default \'{"beginner1": 0,"beginner2": 1000,"intermediate1": 5000,"intermediate2": 12000,"advanced1": 20000,"advanced2": 30000}\');');
     this.addSql('alter table "language" add constraint "language_code_unique" unique ("code");');
 
-    this.addSql('create table "human_pronunciation" ("id" serial primary key, "url" varchar(500) not null default \'\', "text" varchar(255) not null, "language_id" int not null, "accent" varchar(255) null default null, "source" varchar(255) not null, "attribution_logo" varchar(255) null default null, "attribution_markdown_text" varchar(255) not null);');
+    this.addSql('create table "human_pronunciation" ("id" serial primary key, "url" varchar(500) not null default \'\', "text" varchar(255) not null, "parsed_text" varchar(255) not null, "language_id" int not null, "speaker_country_code" varchar(255) null default null, "speaker_region" varchar(255) null default null, "attribution" jsonb null);');
+    this.addSql('create index "human_pronunciation_parsed_text_index" on "human_pronunciation" ("parsed_text");');
 
-    this.addSql('create table "dictionary" ("id" serial primary key, "language_id" int not null, "name" varchar(255) not null, "lookup_link" varchar(500) not null, "dictionary_link" varchar(500) not null, "is_default" boolean not null default false);');
+    this.addSql('create table "dictionary" ("id" serial primary key, "language_id" int not null, "name" varchar(255) not null, "lookup_link" varchar(500) not null, "dictionary_link" varchar(500) not null, "is_default" boolean not null default false, "is_pronunciation" boolean not null default false);');
+    this.addSql('create index "dictionary_is_pronunciation_index" on "dictionary" ("is_pronunciation");');
     this.addSql('create index "dictionary_name_index" on "dictionary" ("name");');
     this.addSql('create index "dictionary_language_id_index" on "dictionary" ("language_id");');
 
-    this.addSql('create table "tts_voice" ("id" serial primary key, "code" varchar(255) not null, "name" varchar(255) not null, "gender" varchar(255) not null, "provider" varchar(255) not null, "accent" varchar(255) not null, "is_default" boolean not null default false, "language_id" int not null);');
+    this.addSql('create table "tts_voice" ("id" serial primary key, "code" varchar(255) not null, "name" varchar(255) not null, "gender" varchar(255) not null, "provider" varchar(255) not null, "accent_country_code" varchar(255) not null, "is_default" boolean not null default false, "language_id" int not null);');
 
     this.addSql('create table "user" ("id" serial primary key, "username" varchar(20) not null, "email" varchar(255) not null, "is_email_confirmed" boolean not null default false, "password" varchar(255) not null, "is_staff" boolean not null default false, "is_admin" boolean not null default false, "account_created_at" timestamptz(0) not null default now(), "last_login" timestamptz(0) null default null);');
     this.addSql('alter table "user" add constraint "user_username_unique" unique ("username");');
@@ -68,7 +70,7 @@ export class Migration20240202154013 extends Migration {
 
     this.addSql('create table "tts_pronunciation" ("id" serial primary key, "url" varchar(500) not null default \'\', "added_on" timestamptz(0) not null default now(), "voice_id" int not null, "vocab_id" int not null);');
 
-    this.addSql('create table "meaning" ("id" serial primary key, "text" varchar(500) not null, "vocab_id" int not null, "added_by_id" int null, "added_on" timestamptz(0) not null default now(), "attribution_markdown_text" varchar(255) null default null, "attribution_logo" varchar(500) null default null, "language_id" int not null);');
+    this.addSql('create table "meaning" ("id" serial primary key, "text" varchar(500) not null, "vocab_id" int not null, "added_by_id" int null, "added_on" timestamptz(0) not null default now(), "attribution" jsonb null, "language_id" int not null);');
     this.addSql('create index "meaning_added_by_id_index" on "meaning" ("added_by_id");');
     this.addSql('create index "meaning_language_id_index" on "meaning" ("language_id");');
     this.addSql('create index "meaning_vocab_id_index" on "meaning" ("vocab_id");');
@@ -142,8 +144,6 @@ export class Migration20240202154013 extends Migration {
 
     this.addSql('alter table "map_learner_vocab" add constraint "map_learner_vocab_vocab_id_foreign" foreign key ("vocab_id") references "vocab" ("id") on update cascade on delete cascade;');
     this.addSql('alter table "map_learner_vocab" add constraint "map_learner_vocab_learner_id_foreign" foreign key ("learner_id") references "profile" ("id") on update cascade on delete cascade;');
-
-    this.addSql('drop table if exists "course_bookmarkers" cascade;');
   }
 
   async down(): Promise<void> {
@@ -214,8 +214,6 @@ export class Migration20240202154013 extends Migration {
     this.addSql('alter table "map_learner_vocab" drop constraint "map_learner_vocab_vocab_id_foreign";');
 
     this.addSql('alter table "map_learner_meaning" drop constraint "map_learner_meaning_meaning_id_foreign";');
-
-    this.addSql('create table "course_bookmarkers" ("course_id" int4 not null default null, "bookmarker_id" int4 not null default null, constraint "course_bookmarkers_pkey" primary key ("course_id", "bookmarker_id"));');
 
     this.addSql('drop table if exists "language" cascade;');
 

@@ -53,8 +53,6 @@ export class UserService {
             throw error;
         }
         //TODO move to create language and test
-        const defaultDictionaries = await this.em.find(Dictionary, {isDefault: true}, {orderBy: [{name: "asc"}, {id: "asc"}]});
-        await this.em.insertMany(MapLearnerDictionary, defaultDictionaries.map((d, i) => ({learner: newProfile.id, dictionary: d.id, order: i})));
         return newUser;
     }
 

@@ -173,6 +173,15 @@
           "nullable": false,
           "mappedType": "string"
         },
+        "parsed_text": {
+          "name": "parsed_text",
+          "type": "varchar(255)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "mappedType": "string"
+        },
         "language_id": {
           "name": "language_id",
           "type": "int",
@@ -182,8 +191,8 @@
           "nullable": false,
           "mappedType": "integer"
         },
-        "accent": {
-          "name": "accent",
+        "speaker_country_code": {
+          "name": "speaker_country_code",
           "type": "varchar(255)",
           "unsigned": false,
           "autoincrement": false,
@@ -192,17 +201,8 @@
           "default": "null",
           "mappedType": "string"
         },
-        "source": {
-          "name": "source",
-          "type": "varchar(255)",
-          "unsigned": false,
-          "autoincrement": false,
-          "primary": false,
-          "nullable": false,
-          "mappedType": "string"
-        },
-        "attribution_logo": {
-          "name": "attribution_logo",
+        "speaker_region": {
+          "name": "speaker_region",
           "type": "varchar(255)",
           "unsigned": false,
           "autoincrement": false,
@@ -211,19 +211,28 @@
           "default": "null",
           "mappedType": "string"
         },
-        "attribution_markdown_text": {
-          "name": "attribution_markdown_text",
-          "type": "varchar(255)",
+        "attribution": {
+          "name": "attribution",
+          "type": "jsonb",
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
-          "nullable": false,
-          "mappedType": "string"
+          "nullable": true,
+          "mappedType": "json"
         }
       },
       "name": "human_pronunciation",
       "schema": "public",
       "indexes": [
+        {
+          "keyName": "human_pronunciation_parsed_text_index",
+          "columnNames": [
+            "parsed_text"
+          ],
+          "composite": false,
+          "primary": false,
+          "unique": false
+        },
         {
           "keyName": "human_pronunciation_pkey",
           "columnNames": [
@@ -326,6 +335,15 @@
       "schema": "public",
       "indexes": [
         {
+          "keyName": "dictionary_is_pronunciation_index",
+          "columnNames": [
+            "is_pronunciation"
+          ],
+          "composite": false,
+          "primary": false,
+          "unique": false
+        },
+        {
           "keyName": "dictionary_name_index",
           "columnNames": [
             "name"
@@ -417,8 +435,8 @@
           "nullable": false,
           "mappedType": "string"
         },
-        "accent": {
-          "name": "accent",
+        "accent_country_code": {
+          "name": "accent_country_code",
           "type": "varchar(255)",
           "unsigned": false,
           "autoincrement": false,
@@ -2131,26 +2149,14 @@
           "default": "now()",
           "mappedType": "datetime"
         },
-        "attribution_markdown_text": {
-          "name": "attribution_markdown_text",
-          "type": "varchar(255)",
+        "attribution": {
+          "name": "attribution",
+          "type": "jsonb",
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
           "nullable": true,
-          "default": "null",
-          "mappedType": "string"
-        },
-        "attribution_logo": {
-          "name": "attribution_logo",
-          "type": "varchar(500)",
-          "unsigned": false,
-          "autoincrement": false,
-          "primary": false,
-          "nullable": true,
-          "length": 500,
-          "default": "null",
-          "mappedType": "string"
+          "mappedType": "json"
         },
         "language_id": {
           "name": "language_id",

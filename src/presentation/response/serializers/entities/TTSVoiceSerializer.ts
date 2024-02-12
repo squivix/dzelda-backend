@@ -12,7 +12,7 @@ class TTSVoiceSerializer extends CustomEntitySerializer<TTSVoice, TTSVoiceSchema
             name: () => ttsVoice.name,
             gender: () => ttsVoice.gender,
             provider: () => ttsVoice.provider,
-            accent: () => ttsVoice.accent,
+            accentCountryCode: () => ttsVoice.accentCountryCode,
             language: () => ttsVoice.language.code,
             isDefault: () => ttsVoice.isDefault,
         };

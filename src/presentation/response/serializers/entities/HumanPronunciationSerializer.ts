@@ -10,11 +10,11 @@ class HumanPronunciationSerializer extends CustomEntitySerializer<HumanPronuncia
             id: () => humanPronunciation.id,
             url: () => humanPronunciation.url,
             text: () => humanPronunciation.text,
+            parsedText: () => humanPronunciation.parsedText,
             language: () => humanPronunciation.language.code,
-            accent: () => humanPronunciation.accent,
-            source: () => humanPronunciation.source,
-            attributionLogo: () => humanPronunciation.attributionLogo,
-            attributionMarkdownText: () => humanPronunciation.attributionMarkdownText,
+            speakerCountryCode: () => humanPronunciation.speakerCountryCode,
+            speakerRegion: () => humanPronunciation.speakerRegion,
+            attribution: () => humanPronunciation.attribution,
         };
     }
 

@@ -48,7 +48,7 @@ export async function dumpVocabs({em, batchSize, dataPath}: { em: EntityManager,
             name: voice.name,
             gender: voice.gender,
             provider: voice.provider,
-            accent: voice.accent,
+            accentCountryCode: voice.accentCountryCode,
             language: voice.language,
             isDefault: voice.isDefault,
         })
@@ -77,12 +77,12 @@ export async function dumpVocabs({em, batchSize, dataPath}: { em: EntityManager,
         writeEntity: (humanPronunciation: HumanPronunciation) => ({
             id: humanPronunciation.id,
             text: humanPronunciation.text,
+            parsedText: humanPronunciation.parsedText,
             language: humanPronunciation.language.id,
             url: humanPronunciation.url,
-            accent: humanPronunciation.accent,
-            source: humanPronunciation.source,
-            attributionMarkdownText: humanPronunciation.attributionMarkdownText,
-            attributionLogo: humanPronunciation.attributionLogo,
+            speakerCountryCode: humanPronunciation.speakerCountryCode,
+            speakerRegion: humanPronunciation.speakerRegion,
+            attribution: humanPronunciation.attribution,
         })
     });
 }

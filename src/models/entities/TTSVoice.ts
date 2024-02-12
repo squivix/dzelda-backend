@@ -19,7 +19,7 @@ export class TTSVoice extends CustomBaseEntity {
     provider!: string;
 
     @Property({type: types.string})
-    accent!: string;
+    accentCountryCode!: string;
 
     @Property({type: types.boolean, default: false})
     isDefault!: boolean;

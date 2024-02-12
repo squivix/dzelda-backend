@@ -154,7 +154,6 @@ export class VocabService {
         return (await this.getUserVocab(mapping.vocab.id, mapping.learner))!;
     }
 
-
     async deleteUserVocab(mapping: MapLearnerVocab) {
         const meaningMappings = await this.em.find(MapLearnerMeaning, {
             learner: mapping.learner,
@@ -172,18 +171,15 @@ export class VocabService {
         }, {
             populate: ["vocab.language", "vocab.meanings.language", "vocab.meanings.addedBy.user", "vocab.ttsPronunciations", "vocab.ttsPronunciations.voice"],
         });
-
         await this.em.populate(existingMappings, ["vocab.learnerMeanings", "vocab.learnerMeanings.language", "vocab.learnerMeanings.addedBy.user"], {
             where: {vocab: {learnerMeanings: {learners: user.profile}}},
         });
-
         const newVocabs = await this.em.find(Vocab, {
             lessonsAppearingIn: lesson,
             $nin: existingMappings.map(m => m.vocab)
         }, {
             populate: ["language", "meanings", "meanings.language", "meanings.addedBy.user", "ttsPronunciations", "ttsPronunciations.voice"],
         });
-
         return [...existingMappings, ...newVocabs];
     }
 

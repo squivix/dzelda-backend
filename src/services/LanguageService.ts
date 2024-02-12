@@ -8,6 +8,7 @@ import {MapLearnerVocab} from "@/src/models/entities/MapLearnerVocab.js";
 import {MapLearnerMeaning} from "@/src/models/entities/MapLearnerMeaning.js";
 import {EntityField} from "@mikro-orm/core/drivers/IDatabaseDriver.js";
 import {QueryOrderMap} from "@mikro-orm/core/enums.js";
+import {Dictionary} from "@/src/models/entities/Dictionary.js";
 
 export class LanguageService {
     em: EntityManager;
@@ -69,6 +70,8 @@ export class LanguageService {
     async addLanguageToUser(user: User, language: Language) {
         const mapping = this.em.create(MapLearnerLanguage, {learner: user.profile, language: language});
         await this.em.flush();
+        const defaultDictionaries = await this.em.find(Dictionary, {isDefault: true, language: language}, {orderBy: [{name: "asc"}, {id: "asc"}]});
+        await this.em.insertMany(MapLearnerDictionary, defaultDictionaries.map((d, i) => ({learner: user.profile.id, dictionary: d.id, order: i})));
         await this.em.refresh(mapping.language);
         return mapping;
     }

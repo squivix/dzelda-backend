@@ -18,65 +18,64 @@ export class VocabSeeder extends Seeder {
         const ttsPronunciationFilePath = path.join(context.databaseDumpPath, DATASET_FILES.ttsPronunciation);
         const humanPronunciationFilePath = path.join(context.databaseDumpPath, DATASET_FILES.humanPronunciation);
 
-        if (!await fs.exists(vocabsFilePath)) {
+        if (!await fs.exists(vocabsFilePath))
             console.error(`${vocabsFilePath} not found`);
-            return;
+        else {
+            await batchSeed({
+                filePath: vocabsFilePath,
+                batchSize: context.batchSize,
+                insertBatch: (batch) => this.insertVocabsBatch(em, batch),
+                postSeed: async () => await syncIdSequence(em, "vocab"),
+                resourceName: "vocab",
+            });
         }
-        await batchSeed({
-            filePath: vocabsFilePath,
-            batchSize: context.batchSize,
-            insertBatch: (batch) => this.insertVocabsBatch(em, batch),
-            postSeed: async () => await syncIdSequence(em, "vocab"),
-            resourceName: "vocab",
-        });
-
-        if (!await fs.exists(mapLearnerVocabsFilePath)) {
+        if (!await fs.exists(mapLearnerVocabsFilePath))
             console.error(`${mapLearnerVocabsFilePath} not found`);
-            return;
+        else {
+            await batchSeed({
+                filePath: mapLearnerVocabsFilePath,
+                batchSize: context.batchSize,
+                insertBatch: (batch) => this.insertMapLearnerVocabsBatch(em, batch),
+                postSeed: async () => await syncIdSequence(em, "map_learner_vocab"),
+                resourceName: "learner-vocab mapping",
+            });
         }
-        await batchSeed({
-            filePath: mapLearnerVocabsFilePath,
-            batchSize: context.batchSize,
-            insertBatch: (batch) => this.insertMapLearnerVocabsBatch(em, batch),
-            postSeed: async () => await syncIdSequence(em, "map_learner_vocab"),
-            resourceName: "learner-vocab mapping",
-        });
 
-        if (!await fs.exists(ttsVoicesFilePath)) {
+        if (!await fs.exists(ttsVoicesFilePath))
             console.error(`${ttsVoicesFilePath} not found`);
-            return;
+        else {
+            await batchSeed({
+                filePath: ttsVoicesFilePath,
+                batchSize: context.batchSize,
+                insertBatch: (batch) => this.insertTTSVoicesBatch(em, batch),
+                postSeed: async () => await syncIdSequence(em, "tts_voice"),
+                resourceName: "TTS Voice",
+            });
         }
-        await batchSeed({
-            filePath: ttsVoicesFilePath,
-            batchSize: context.batchSize,
-            insertBatch: (batch) => this.insertTTSVoicesBatch(em, batch),
-            postSeed: async () => await syncIdSequence(em, "tts_voice"),
-            resourceName: "TTS Voice",
-        });
 
-        if (!await fs.exists(ttsPronunciationFilePath)) {
+        if (!await fs.exists(ttsPronunciationFilePath))
             console.error(`${ttsPronunciationFilePath} not found`);
-            return;
+        else {
+            await batchSeed({
+                filePath: ttsPronunciationFilePath,
+                batchSize: context.batchSize,
+                insertBatch: (batch) => this.insertTTSPronunciationsBatch(em, batch),
+                postSeed: async () => await syncIdSequence(em, "tts_pronunciation"),
+                resourceName: "TTS Pronunciation",
+            });
         }
-        await batchSeed({
-            filePath: ttsPronunciationFilePath,
-            batchSize: context.batchSize,
-            insertBatch: (batch) => this.insertTTSPronunciationsBatch(em, batch),
-            postSeed: async () => await syncIdSequence(em, "tts_pronunciation"),
-            resourceName: "TTS Pronunciation",
-        });
 
-        if (!await fs.exists(humanPronunciationFilePath)) {
+        if (!await fs.exists(humanPronunciationFilePath))
             console.error(`${humanPronunciationFilePath} not found`);
-            return;
+        else {
+            await batchSeed({
+                filePath: humanPronunciationFilePath,
+                batchSize: context.batchSize,
+                insertBatch: (batch) => this.insertHumanPronunciationsBatch(em, batch),
+                postSeed: async () => await syncIdSequence(em, "human_pronunciation"),
+                resourceName: "Human Pronunciation",
+            });
         }
-        await batchSeed({
-            filePath: humanPronunciationFilePath,
-            batchSize: context.batchSize,
-            insertBatch: (batch) => this.insertHumanPronunciationsBatch(em, batch),
-            postSeed: async () => await syncIdSequence(em, "human_pronunciation"),
-            resourceName: "Human Pronunciation",
-        });
     }
 
     private async insertVocabsBatch(em: EntityManager, batch: EntityData<Vocab>[]) {
@@ -105,7 +104,7 @@ export class VocabSeeder extends Seeder {
             name: ttsVoiceData.name,
             gender: ttsVoiceData.gender,
             provider: ttsVoiceData.provider,
-            accent: ttsVoiceData.accent,
+            accentCountryCode: ttsVoiceData.accentCountryCode,
             language: ttsVoiceData.language,
             isDefault: ttsVoiceData.isDefault
         })));
@@ -126,11 +125,11 @@ export class VocabSeeder extends Seeder {
             id: humanPronunciationData.id,
             url: humanPronunciationData.url,
             text: humanPronunciationData.text,
+            parsedText: humanPronunciationData.parsedText,
             language: humanPronunciationData.language,
-            accent: humanPronunciationData.accent,
-            source: humanPronunciationData.source,
-            attributionLogo: humanPronunciationData.attributionLogo,
-            attributionMarkdownText: humanPronunciationData.attributionMarkdownText,
+            speakerCountryCode: humanPronunciationData.speakerCountryCode,
+            speakerRegion: humanPronunciationData.speakerRegion,
+            attribution: humanPronunciationData.attribution,
         })));
     }
 }

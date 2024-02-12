@@ -17,7 +17,7 @@ export class PronunciationService {
         if (filters.languageCode !== undefined)
             dbFilters.$and!.push({language: {code: filters.languageCode}});
         if (filters.text !== undefined)
-            dbFilters.$and!.push({text: {$ilike: `%${filters.text}%`}});
+            dbFilters.$and!.push({parsedText: {$ilike: filters.text}});
 
         return await this.em.findAndCount(HumanPronunciation, dbFilters, {
             populate: ["language"],
@@ -29,7 +29,7 @@ export class PronunciationService {
 
     async getHumanPronunciations(text: string, language: Language) {
         return await this.em.find(HumanPronunciation, {
-            text: {$ilike: `%${text}%`},
+            parsedText: {$ilike: text},
             language: language
         });
     }

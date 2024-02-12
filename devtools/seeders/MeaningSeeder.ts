@@ -48,8 +48,7 @@ export class MeaningSeeder extends Seeder {
             addedBy: meaningData.addedBy,
             language: meaningData.language,
             addedOn: meaningData.addedOn,
-            attributionMarkdownText: meaningData.attributionMarkdownText,
-            attributionLogo: meaningData.attributionLogo,
+            attribution: meaningData.attribution,
         })));
     }
 
