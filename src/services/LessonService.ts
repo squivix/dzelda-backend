@@ -133,7 +133,7 @@ export class LessonService {
         level?: LanguageLevel,
         image?: string;
         audio?: string;
-    }, user: User):Promise<Lesson> {
+    }, user: User): Promise<Lesson> {
         const parser = getParser(fields.language.code);
         const lessonParsedTitle = parser.parseText(fields.title);
         const lessonParsedText = parser.parseText(fields.text);
@@ -167,7 +167,7 @@ export class LessonService {
         await this.lessonRepo.annotateLessonsWithUserData([newLesson], user);
         if (newLesson.course)
             await this.courseRepo.annotateCoursesWithUserData([newLesson.course], user);
-        await this.em.refresh(newLesson, {populate: ["addedBy.user", "language", "course.language", "course.addedBy.user"]})
+        await this.em.refresh(newLesson, {populate: ["addedBy.user", "language", "course.language", "course.addedBy.user"]});
         return newLesson;
     }
 
@@ -208,7 +208,7 @@ export class LessonService {
 
             await this.em.nativeDelete(MapLessonVocab, {lesson: lesson, vocab: {text: {$nin: lessonWords}}});
             await this.em.upsertMany(Vocab, lessonWords.map(word => ({text: word, language: lesson.language.id})));
-            const lessonVocabs = await this.em.createQueryBuilder(Vocab).select(["id"]).where(`? ~ text`, [` ${lessonParsedTitle} ${lessonParsedText} `]);
+            const lessonVocabs = await this.em.createQueryBuilder(Vocab).select(["id"]).where(`? ~ text`, [` ${lessonParsedTitle} ${lessonParsedText} `]).andWhere({language: lesson.language});
             await this.em.upsertMany(MapLessonVocab, lessonVocabs.map(vocab => ({lesson: lesson.id, vocab: vocab.id})));
         }
         if (updatedLessonData.course !== undefined) {
