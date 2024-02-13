@@ -70,6 +70,7 @@ export class LanguageService {
     async addLanguageToUser(user: User, language: Language) {
         const mapping = this.em.create(MapLearnerLanguage, {learner: user.profile, language: language});
         await this.em.flush();
+        //TODO test this
         const defaultDictionaries = await this.em.find(Dictionary, {isDefault: true, language: language}, {orderBy: [{name: "asc"}, {id: "asc"}]});
         await this.em.insertMany(MapLearnerDictionary, defaultDictionaries.map((d, i) => ({learner: user.profile.id, dictionary: d.id, order: i})));
         await this.em.refresh(mapping.language);

@@ -52,7 +52,6 @@ export class UserService {
             }
             throw error;
         }
-        //TODO move to create language and test
         return newUser;
     }
 

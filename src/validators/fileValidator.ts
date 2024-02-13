@@ -1,12 +1,5 @@
 import {kibiBytes, mebiBytes} from "@/tests/integration/utils.js";
 
-
-const fileMimeTypes = {
-    image: ["image/jpeg", "image/png"],
-
-    audio: ["audio/wav", "audio/wave", "audio/vnd.wave", "audio/mpeg", "application/ogg"]
-};
-
 export const fileFields = {
     courseImage: {
         path: "uploads/courses/images",

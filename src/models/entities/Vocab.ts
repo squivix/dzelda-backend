@@ -1,5 +1,5 @@
 import {Lesson} from "@/src/models/entities/Lesson.js";
-import {Collection, Entity, Formula, Index, ManyToMany, ManyToOne, OneToMany, OptionalProps, Property, types, Unique} from "@mikro-orm/core";
+import {Collection, Entity, expr, Formula, Index, ManyToMany, ManyToOne, OneToMany, OptionalProps, Property, types, Unique} from "@mikro-orm/core";
 import {MapLessonVocab} from "@/src/models/entities/MapLessonVocab.js";
 import {CustomBaseEntity} from "@/src/models/entities/CustomBaseEntity.js";
 import {Language} from "@/src/models/entities/Language.js";
@@ -28,7 +28,7 @@ export class Vocab extends CustomBaseEntity {
     @Property({type: types.boolean, default: false})
     isPhrase: boolean = false;
 
-    @OneToMany({entity: () => Meaning, mappedBy: (meaning: Meaning) => meaning.vocab, orderBy: {learnersCount: "desc", text: "asc"}})
+    @OneToMany({entity: () => Meaning, mappedBy: (meaning: Meaning) => meaning.vocab, orderBy: {learnersCount: "desc", [expr("length(text)")]: "asc"}})
     meanings: Collection<Meaning> = new Collection<Meaning>(this);
 
     @OneToMany({

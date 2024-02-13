@@ -100,7 +100,7 @@ class UserController {
         const user = request.user as User;
 
         if (user.email == body.newEmail)
-            throw new ValidationAPIError({email: "New email address is the same as existing email address"});
+            throw new ValidationAPIError({newEmail: "New email address is the same as existing email address"});
 
         const token = await userService.generateEmailConfirmToken({
             user: user,

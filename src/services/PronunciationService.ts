@@ -16,6 +16,8 @@ export class PronunciationService {
         const dbFilters: FilterQuery<HumanPronunciation> = {$and: []};
         if (filters.languageCode !== undefined)
             dbFilters.$and!.push({language: {code: filters.languageCode}});
+
+        //TODO replace with full text search and allow for non exact matches
         if (filters.text !== undefined)
             dbFilters.$and!.push({parsedText: {$ilike: filters.text}});
 
