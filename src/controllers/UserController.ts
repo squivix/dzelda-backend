@@ -21,6 +21,10 @@ import * as process from "process";
 import mime from "mime-types";
 import {fileFields, fileFieldsKeys, FileFieldType} from "@/src/validators/fileValidator.js";
 import {validateFileObjectKey} from "@/src/controllers/ControllerUtils.js";
+import {confirmEmailChangeTemplate} from "@/src/presentation/response/templates/email/confirmEmailChangeTemplate.js";
+import {passwordChangedNotificationTemplate} from "@/src/presentation/response/templates/email/passwordChangedNotificationTemplate.js";
+import {confirmEmailTemplate} from "@/src/presentation/response/templates/email/confirmEmailTemplate.js";
+import {passwordResetTemplate} from "@/src/presentation/response/templates/email/passwordResetTemplate.js";
 
 class UserController {
     async signUp(request: FastifyRequest, reply: FastifyReply) {
@@ -33,13 +37,7 @@ class UserController {
         const userService = new UserService(request.em);
         const newUser = await userService.createUser(body.username, body.email, body.password);
         const token = await userService.generateEmailConfirmToken({user: newUser, email: newUser.email});
-        await emailTransporter.sendMail({
-            from: `Dzelda <security@${DOMAIN_NAME}>`,
-            to: newUser.email,
-            subject: "Confirm Email",
-            text: `Confirm Email Here: https://${DOMAIN_NAME}/confirm-email?token=${token}`,
-            html: `<b>Confirm Email Here: https://${DOMAIN_NAME}/confirm-email?token=${token}</b>`,
-        });
+        await emailTransporter.sendMail(confirmEmailTemplate(newUser.email, {token}));
         reply.status(201).send(userSerializer.serialize(newUser, {ignore: ["profile"]}));
     }
 
@@ -71,7 +69,7 @@ class UserController {
         const userService = new UserService(request.em);
         const user = request.user as User;
 
-        if (user.isEmailConfirmed)
+        if (user.isEmailConfirmed && !user.isPendingEmailChange)
             throw new APIError(StatusCodes.BAD_REQUEST, "Email is already confirmed");
 
         const email = body.email ?? user.email;
@@ -80,13 +78,7 @@ class UserController {
             user: user,
             email: email
         });
-        await emailTransporter.sendMail({
-            from: `Dzelda <security@${DOMAIN_NAME}>`,
-            to: email,
-            subject: "Confirm Email",
-            text: `Confirm Email Here: https://${DOMAIN_NAME}/confirm-email?token=${token}`,
-            html: `<b>Confirm Email Here: https://${DOMAIN_NAME}/confirm-email?token=${token}</b>`,
-        });
+        await emailTransporter.sendMail(confirmEmailTemplate(email, {token}));
         reply.status(204).send();
     }
 
@@ -106,13 +98,7 @@ class UserController {
             user: user,
             email: body.newEmail
         });
-        await emailTransporter.sendMail({
-            from: `Dzelda <security@${DOMAIN_NAME}>`,
-            to: body.newEmail,
-            subject: "Confirm New Email",
-            text: `Confirm New Email Here: https://${DOMAIN_NAME}/confirm-email?token=${token}`,
-            html: `<b>Confirm New Email Here: https://${DOMAIN_NAME}/confirm-email?token=${token}</b>`,
-        });
+        await emailTransporter.sendMail(confirmEmailChangeTemplate(body.newEmail, {token}));
         reply.status(204).send();
     }
 
@@ -148,13 +134,7 @@ class UserController {
         const user = await userService.findUser({username: body.username, email: body.email, isEmailConfirmed: true});
         if (user != null) {
             const token = await userService.generatePasswordResetToken(user);
-            await emailTransporter.sendMail({
-                from: `Dzelda <security@${DOMAIN_NAME}>`,
-                to: user.email,
-                subject: "Password Reset Link",
-                text: `Password Reset Here: https://${DOMAIN_NAME}/reset-password?token=${token}`,
-                html: `<b>Password Reset Here: https://${DOMAIN_NAME}/reset-password?token=${token}</b>`,
-            });
+            await emailTransporter.sendMail(passwordResetTemplate(user.email, {token}));
         }
         reply.status(204).send();     // do not disclose whether user exists or not
     }
@@ -181,13 +161,7 @@ class UserController {
         const user = await userService.resetPassword(body.token, body.newPassword);
         if (user === null)
             throw new APIError(StatusCodes.UNAUTHORIZED, "Password reset token is invalid or expired");
-        await emailTransporter.sendMail({
-            from: `Dzelda <security@${DOMAIN_NAME}>`,
-            to: user.email,
-            subject: "Your password was changed",
-            text: `Your password was recently changed. If this wasn't you please reset it here: https://${DOMAIN_NAME}/forgot-password/`,
-            html: `<b>Your password was recently changed. If this wasn't you please reset it here: https://${DOMAIN_NAME}/forgot-password/</b>`,
-        });
+        await emailTransporter.sendMail(passwordChangedNotificationTemplate(user.email));
         reply.status(204).send();
     }
 
@@ -202,13 +176,7 @@ class UserController {
         const user = request.user as User;
 
         await userService.changeUserPassword(user, session, body.oldPassword, body.newPassword);
-        await emailTransporter.sendMail({
-            from: `Dzelda <security@${DOMAIN_NAME}>`,
-            to: user.email,
-            subject: "Your password was changed",
-            text: `Your password was recently changed. If this wasn't you please reset it here: https://${DOMAIN_NAME}/forgot-password/`,
-            html: `<b>Your password was recently changed. If this wasn't you please reset it here: https://${DOMAIN_NAME}/forgot-password/</b>`,
-        });
+        await emailTransporter.sendMail(passwordChangedNotificationTemplate(user.email));
         reply.status(204).send();
     }
 
