@@ -13,3 +13,4 @@ specs/schema.ts
 .directory
 .run
 tests/temp
+secret

@@ -1,10 +1,11 @@
-import {Collection, Entity, ManyToOne, OneToMany, Property, types} from "@mikro-orm/core";
+import {Collection, Entity, Enum, ManyToOne, OneToMany, Property, types, Unique} from "@mikro-orm/core";
 import {CustomBaseEntity} from "@/src/models/entities/CustomBaseEntity.js";
 import {Language} from "@/src/models/entities/Language.js";
 import {MapLearnerLanguage} from "@/src/models/entities/MapLearnerLanguage.js";
-import {Profile} from "@/src/models/entities/Profile.js";
+import {TTSProvider} from "@/src/models/enums/TTSProvider.js";
 
 @Entity({tableName: "tts_voice"})
+@Unique({properties: ["language", "code"]})
 export class TTSVoice extends CustomBaseEntity {
     @Property({type: types.string})
     code!: string;
@@ -15,8 +16,8 @@ export class TTSVoice extends CustomBaseEntity {
     @Property({type: types.string})
     gender!: string;
 
-    @Property({type: types.string})
-    provider!: string;
+    @Enum({type: types.enum, items: () => TTSProvider})
+    provider!: TTSProvider;
 
     @Property({type: types.string})
     accentCountryCode!: string;
@@ -29,4 +30,7 @@ export class TTSVoice extends CustomBaseEntity {
 
     @OneToMany({entity: () => MapLearnerLanguage, mappedBy: (prefererLanguageMapping: MapLearnerLanguage) => prefererLanguageMapping.preferredTtsVoice, hidden: true})
     prefererLanguageMappings: Collection<MapLearnerLanguage> = new Collection<MapLearnerLanguage>(this);
+
+    @Property({type: types.json, nullable: true})
+    synthesizeParams!: Record<string, any>;
 }

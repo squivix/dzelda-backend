@@ -1,6 +1,6 @@
 import { Migration } from '@mikro-orm/migrations';
 
-export class Migration20240212121632 extends Migration {
+export class Migration20240214171032 extends Migration {
 
   async up(): Promise<void> {
     this.addSql('create table "language" ("id" serial primary key, "code" varchar(255) not null, "name" varchar(255) not null, "greeting" varchar(255) not null, "second_speakers_count" int not null, "flag" varchar(500) null default null, "flag_circular" varchar(500) null default null, "flag_emoji" varchar(32) null default null, "color" varchar(32) not null, "is_supported" boolean not null default false, "level_thresholds" jsonb not null default \'{"beginner1": 0,"beginner2": 1000,"intermediate1": 5000,"intermediate2": 12000,"advanced1": 20000,"advanced2": 30000}\');');
@@ -14,7 +14,8 @@ export class Migration20240212121632 extends Migration {
     this.addSql('create index "dictionary_name_index" on "dictionary" ("name");');
     this.addSql('create index "dictionary_language_id_index" on "dictionary" ("language_id");');
 
-    this.addSql('create table "tts_voice" ("id" serial primary key, "code" varchar(255) not null, "name" varchar(255) not null, "gender" varchar(255) not null, "provider" varchar(255) not null, "accent_country_code" varchar(255) not null, "is_default" boolean not null default false, "language_id" int not null);');
+    this.addSql('create table "tts_voice" ("id" serial primary key, "code" varchar(255) not null, "name" varchar(255) not null, "gender" varchar(255) not null, "provider" text check ("provider" in (\'Google Cloud TTS\')) not null, "accent_country_code" varchar(255) not null, "is_default" boolean not null default false, "language_id" int not null, "synthesize_params" jsonb null);');
+    this.addSql('alter table "tts_voice" add constraint "tts_voice_language_id_code_unique" unique ("language_id", "code");');
 
     this.addSql('create table "user" ("id" serial primary key, "username" varchar(20) not null, "email" varchar(255) not null, "is_email_confirmed" boolean not null default false, "password" varchar(255) not null, "is_staff" boolean not null default false, "is_admin" boolean not null default false, "account_created_at" timestamptz(0) not null default now(), "last_login" timestamptz(0) null default null);');
     this.addSql('alter table "user" add constraint "user_username_unique" unique ("username");');

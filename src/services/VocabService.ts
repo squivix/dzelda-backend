@@ -12,6 +12,16 @@ import {EntityField} from "@mikro-orm/core/drivers/IDatabaseDriver.js";
 import {Profile} from "@/src/models/entities/Profile.js";
 import {MapLessonVocab} from "@/src/models/entities/MapLessonVocab.js";
 import {escapeRegExp} from "@/src/utils/utils.js";
+import {TTSVoice} from "@/src/models/entities/TTSVoice.js";
+import textToSpeech from "@google-cloud/text-to-speech";
+import {TTSProvider} from "@/src/models/enums/TTSProvider.js";
+import {GoogleTTSSynthesizeParams} from "@/src/models/interfaces/TTSSynthesizerParams.js";
+import {s3Client} from "@/src/storageClient.js";
+import process from "process";
+import {TTSPronunciation} from "@/src/models/entities/TTSPronunciation.js";
+import urlJoin from "url-join";
+import {util} from "zod";
+import objectKeys = util.objectKeys;
 
 export class VocabService {
     em: EntityManager;
@@ -69,7 +79,7 @@ export class VocabService {
     async getVocab(vocabId: number) {
         return await this.vocabRepo.findOne({
             id: vocabId
-        }, {populate: ["meanings"]});
+        }, {populate: ["meanings", "ttsPronunciations", "ttsPronunciations.voice"]});
     }
 
     async getVocabByText(vocabData: { text: string; language: Language }) {
@@ -183,14 +193,6 @@ export class VocabService {
         return [...existingMappings, ...newVocabs];
     }
 
-    async findVocab(where: FilterQuery<Vocab>, fields: EntityField<Vocab>[] = ["*", "language"]) {
-        return await this.vocabRepo.findOne(where, {fields});
-    }
-
-    async findLearnerVocab(where: FilterQuery<MapLearnerVocab>, fields?: EntityField<MapLearnerVocab>[]) {
-        return await this.em.findOne(MapLearnerVocab, where, {fields});
-    }
-
     async getUserSavedVocabsCount(user: User, options: {
         groupBy?: "language",
         filters: { savedOnFrom?: Date, savedOnTo?: Date, levels?: VocabLevel[], isPhrase?: boolean }
@@ -211,5 +213,54 @@ export class VocabService {
         return await this.vocabRepo.countSavedVocabsTimeSeries(user.profile, options);
     }
 
+    async createVocabTTSPronunciation(vocab: Vocab, voice: TTSVoice) {
+        //TODO move to separate synthesize speech function which selects for provider
+        if (voice.provider !== TTSProvider.GOOGLE_CLOUD)
+            throw new Error("Unidentified TTS voice provider");
 
+        const ttsClient = new textToSpeech.TextToSpeechClient();
+        const voiceParams = voice.synthesizeParams as GoogleTTSSynthesizeParams;
+        const [response] = await ttsClient.synthesizeSpeech({
+            input: {text: vocab.text},
+            voice: {languageCode: voiceParams.languageCode, name: voiceParams.voiceName},
+            audioConfig: {audioEncoding: "MP3"},
+        });
+        const bucket = process.env.SPACES_BUCKET!;
+        if (!response.audioContent)
+            throw new Error("Error generating TTS");
+        const newTTSPronunciations = this.em.create(TTSPronunciation, {
+            url: "",
+            vocab: vocab,
+            voice: voice,
+        });
+        await this.em.flush();
+        try {
+            const objectKey = `pronunciations/tts/${vocab.language.code}/${voice.code}/tts_${newTTSPronunciations.id}.mp3`;
+            await s3Client.putObject({
+                Bucket: bucket,
+                Key: objectKey,
+                Body: response.audioContent,
+                ACL: "public-read"
+            });
+            newTTSPronunciations.url = urlJoin(process.env.SPACES_CDN_ENDPOINT!, objectKey);
+            await this.em.flush();
+            return newTTSPronunciations;
+        } catch (e) {
+            this.em.remove(newTTSPronunciations);
+            await this.em.flush();
+            throw e;
+        }
+    }
+
+    async findVocab(where: FilterQuery<Vocab>, fields: EntityField<Vocab>[] = ["*", "language"]) {
+        return await this.vocabRepo.findOne(where, {fields});
+    }
+
+    async findLearnerVocab(where: FilterQuery<MapLearnerVocab>, fields?: EntityField<MapLearnerVocab>[]) {
+        return await this.em.findOne(MapLearnerVocab, where, {fields});
+    }
+
+    async findTTSVoice(where: FilterQuery<TTSVoice>, fields?: EntityField<TTSVoice>[]) {
+        return await this.em.findOne(TTSVoice, where, {fields});
+    }
 }

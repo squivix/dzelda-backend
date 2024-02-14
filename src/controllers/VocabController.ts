@@ -18,6 +18,8 @@ import {APIError} from "@/src/utils/errors/APIError.js";
 import {StatusCodes} from "http-status-codes";
 import {PronunciationService} from "@/src/services/PronunciationService.js";
 import {humanPronunciationSerializer} from "@/src/presentation/response/serializers/entities/HumanPronunciationSerializer.js";
+import {ttsPronunciationSerializer} from "@/src/presentation/response/serializers/entities/TTSPronunciationSerializer.js";
+import {enableTTSSynthesize} from "@/src/constants.js";
 
 class VocabController {
 
@@ -273,6 +275,31 @@ class VocabController {
         const pronunciationService = new PronunciationService(request.em);
         const humanPronunciations = await pronunciationService.getHumanPronunciations(vocab.text, vocab.language);
         reply.send(humanPronunciationSerializer.serializeList(humanPronunciations));
+    }
+
+    async synthesizeTTSPronunciation(request: FastifyRequest, reply: FastifyReply) {
+        if (!enableTTSSynthesize)
+            reply.status(503).send();
+        const bodyValidator = z.object({
+            vocabId: z.number().min(0),
+            voiceCode: z.string().min(1).optional()
+        });
+        const body = bodyValidator.parse(request.body);
+        const vocabService = new VocabService(request.em);
+        const vocab = await vocabService.getVocab(body.vocabId);
+        if (!vocab)
+            throw new ValidationAPIError({vocab: "Not found"});
+        const voice = await vocabService.findTTSVoice({$or: [{code: body.voiceCode}, {isDefault: true}], language: vocab.language});
+        if (!voice)
+            throw new ValidationAPIError({voice: "Not found"});
+
+        const existingPronunciation = vocab.ttsPronunciations.find(p => p.voice == voice);
+        if (existingPronunciation) {
+            reply.status(200).send(ttsPronunciationSerializer.serialize(existingPronunciation));
+            return;
+        }
+        const newPronunciation = await vocabService.createVocabTTSPronunciation(vocab, voice);
+        reply.status(200).send(ttsPronunciationSerializer.serialize(newPronunciation));
     }
 }
 

@@ -9,8 +9,10 @@ declare global {
             SPACES_ACCESS_KEY?: string;
             SPACES_SECRET_KEY?: string;
             SPACES_ENDPOINT?: string;
+            SPACES_CDN_ENDPOINT?: string;
             SPACES_BUCKET?: string;
             SPACES_REGION?: string;
+            EMAIL_AES_KEY_BASE_64?: string;
         }
     }
 }

@@ -51,6 +51,7 @@ export async function dumpVocabs({em, batchSize, dataPath}: { em: EntityManager,
             accentCountryCode: voice.accentCountryCode,
             language: voice.language,
             isDefault: voice.isDefault,
+            synthesizeParams: voice.synthesizeParams,
         })
     });
 

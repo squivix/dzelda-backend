@@ -19,8 +19,6 @@ import {Vocab} from "@/src/models/entities/Vocab.js";
 import {EntityRepository} from "@mikro-orm/core";
 import {MapLessonVocab} from "@/src/models/entities/MapLessonVocab.js";
 import {MapPastViewerLesson} from "@/src/models/entities/MapPastViewerLesson.js";
-import * as constantExports from "@/src/constants.js";
-import {TEMP_ROOT_FILE_UPLOAD_DIR} from "@/tests/testConstants.js";
 import {parsers} from "dzelda-common";
 import {lessonHistoryEntrySerializer} from "@/src/presentation/response/serializers/mappings/LessonHistoryEntrySerializer.js";
 import {FileUploadRequestFactory} from "@/devtools/factories/FileUploadRequestFactory.js";
@@ -57,7 +55,6 @@ beforeEach<LocalTestContext>(async (context) => {
     context.vocabRepo = context.em.getRepository(Vocab);
     context.lessonRepo = context.em.getRepository(Lesson) as LessonRepo;
     context.courseRepo = context.em.getRepository(Course) as CourseRepo;
-    vi.spyOn(constantExports, "ROOT_UPLOAD_DIR", "get").mockReturnValue(TEMP_ROOT_FILE_UPLOAD_DIR);
 });
 
 /**{@link LessonController#getLessons}*/

@@ -106,7 +106,8 @@ export class VocabSeeder extends Seeder {
             provider: ttsVoiceData.provider,
             accentCountryCode: ttsVoiceData.accentCountryCode,
             language: ttsVoiceData.language,
-            isDefault: ttsVoiceData.isDefault
+            isDefault: ttsVoiceData.isDefault,
+            synthesizeParams: ttsVoiceData.synthesizeParams,
         })));
     }
 

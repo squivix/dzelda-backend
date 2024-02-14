@@ -6,7 +6,7 @@ import {Language} from "@/src/models/entities/Language.js";
 import {Session} from "@/src/models/entities/auth/Session.js";
 import {StatusCodes} from "http-status-codes";
 import {APIError} from "@/src/utils/errors/APIError.js";
-import {EntityManager, EntityRepository, FilterQuery, ManyToOne, Property, types, UniqueConstraintViolationException} from "@mikro-orm/core";
+import {EntityManager, EntityRepository, FilterQuery, UniqueConstraintViolationException} from "@mikro-orm/core";
 import {UnauthenticatedAPIError} from "@/src/utils/errors/UnauthenticatedAPIError.js";
 import {AUTH_TOKEN_LENGTH, EMAIL_CONFIRM_TOKEN_LENGTH, PASSWORD_RESET_TOKEN_LENGTH} from "@/src/constants.js";
 import {EntityField} from "@mikro-orm/core/drivers/IDatabaseDriver.js";
@@ -14,12 +14,9 @@ import {PasswordResetToken} from "@/src/models/entities/auth/PasswordResetToken.
 import {expiringTokenHasher} from "@/src/utils/security/ExpiringTokenHasher.js";
 import {EmailConfirmationToken} from "@/src/models/entities/auth/EmailConfirmationToken.js";
 import {ValidationAPIError} from "@/src/utils/errors/ValidationAPIError.js";
-import {FastifyReply, FastifyRequest} from "fastify";
 import {extractFieldFromUniqueConstraintError} from "@/src/utils/utils.js";
 import {FileFieldType} from "@/src/validators/fileValidator.js";
 import {FileUploadRequest} from "@/src/models/entities/FileUploadRequest.js";
-import {Dictionary} from "@/src/models/entities/Dictionary.js";
-import {MapLearnerDictionary} from "@/src/models/entities/MapLearnerDictionary.js";
 
 
 export class UserService {
@@ -36,6 +33,7 @@ export class UserService {
     }
 
     async createUser(username: string, email: string, password: string) {
+        // emailEncrypter.encrypt(email)
         const newUser = new User(username, email, await passwordHasher.hash(password), false);
         const newProfile = new Profile(newUser);
         this.em.persist(newUser);
@@ -81,7 +79,6 @@ export class UserService {
             user = authenticatedUser;
         } else
             user = await this.em.findOne(User, {username: username}, {populate: ["profile", "profile.languagesLearning"]});
-
         return user;
     }
 
@@ -194,6 +191,7 @@ export class UserService {
     async changeUserEmail(user: User, newEmail: string) {
         if (user.email == newEmail)
             return;
+        // emailEncrypter.encrypt
         user.email = newEmail;
         user.isEmailConfirmed = false;
         await this.em.flush();

@@ -428,12 +428,15 @@
         },
         "provider": {
           "name": "provider",
-          "type": "varchar(255)",
+          "type": "text",
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
           "nullable": false,
-          "mappedType": "string"
+          "enumItems": [
+            "Google Cloud TTS"
+          ],
+          "mappedType": "enum"
         },
         "accent_country_code": {
           "name": "accent_country_code",
@@ -462,11 +465,30 @@
           "primary": false,
           "nullable": false,
           "mappedType": "integer"
+        },
+        "synthesize_params": {
+          "name": "synthesize_params",
+          "type": "jsonb",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "mappedType": "json"
         }
       },
       "name": "tts_voice",
       "schema": "public",
       "indexes": [
+        {
+          "keyName": "tts_voice_language_id_code_unique",
+          "columnNames": [
+            "language_id",
+            "code"
+          ],
+          "composite": true,
+          "primary": false,
+          "unique": true
+        },
         {
           "keyName": "tts_voice_pkey",
           "columnNames": [

@@ -34,5 +34,10 @@ export const vocabRouter: FastifyPluginCallback = function (fastify, options, do
         preHandler: [requiresAuth, requiresEmailConfirmed],
         handler: vocabController.getLessonVocabs
     });
+
+    fastify.post(`/tts-pronunciations/`, {
+        preHandler: [requiresAuth, requiresEmailConfirmed],
+        handler: vocabController.synthesizeTTSPronunciation
+    });
     done();
 };

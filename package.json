@@ -28,6 +28,7 @@
     "@aws-sdk/s3-presigned-post": "^3.489.0",
     "@fastify/cors": "^8.3.0",
     "@fastify/one-line-logger": "^1.0.0",
+    "@google-cloud/text-to-speech": "^5.1.0",
     "@mikro-orm/core": "5.9.7",
     "@mikro-orm/postgresql": "5.9.7",
     "aws-sdk": "^2.1533.0",
@@ -39,6 +40,7 @@
     "mime-types": "^2.1.35",
     "nodemailer": "^6.9.4",
     "pretty-bytes": "^6.1.1",
+    "url-join": "^5.0.0",
     "zod": "^3.19.1"
   },
   "devDependencies": {

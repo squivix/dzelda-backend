@@ -1,4 +1,4 @@
-import {beforeEach, describe, expect, test, TestContext, vi} from "vitest";
+import {beforeEach, describe, expect, test, TestContext} from "vitest";
 import {orm} from "@/src/server.js";
 import {buildQueryString, createComparator, fetchRequest} from "@/tests/integration/utils.js";
 import {UserFactory} from "@/devtools/factories/UserFactory.js";
@@ -17,8 +17,6 @@ import {LessonRepo} from "@/src/models/repos/LessonRepo.js";
 import {Lesson} from "@/src/models/entities/Lesson.js";
 import {courseSerializer} from "@/src/presentation/response/serializers/entities/CourseSerializer";
 import {CourseSchema, LessonSchema} from "dzelda-common";
-import * as constantExports from "@/src/constants.js";
-import {TEMP_ROOT_FILE_UPLOAD_DIR} from "@/tests/testConstants.js";
 import {MapBookmarkerCourse} from "@/src/models/entities/MapBookmarkerCourse.js";
 import {FileUploadRequestFactory} from "@/devtools/factories/FileUploadRequestFactory.js";
 
@@ -44,7 +42,6 @@ beforeEach<LocalTestContext>(async (context) => {
     context.languageFactory = new LanguageFactory(context.em);
     context.lessonRepo = context.em.getRepository(Lesson) as LessonRepo;
     context.courseRepo = context.em.getRepository(Course) as CourseRepo;
-    vi.spyOn(constantExports, "ROOT_UPLOAD_DIR", "get").mockReturnValue(TEMP_ROOT_FILE_UPLOAD_DIR);
 });
 
 /**{@link CourseController#getCourses}*/

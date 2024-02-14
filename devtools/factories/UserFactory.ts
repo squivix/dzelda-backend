@@ -11,6 +11,7 @@ export class UserFactory extends CustomFactory<User> {
     protected definition(faker: Faker): EntityData<User> {
         const em = (this as any).em as EntityManager;
         const profileFactory = new ProfileFactory(em);
+        // emailEncrypter.encrypt
         return {
             username: faker.random.alpha({count: 20}),
             email: `${faker.random.alpha({count: 10})}_${faker.internet.email()}`,

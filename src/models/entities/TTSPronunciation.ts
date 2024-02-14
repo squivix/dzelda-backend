@@ -1,4 +1,4 @@
-import {Entity, ManyToOne, Property, types} from "@mikro-orm/core";
+import {Entity, ManyToOne, OptionalProps, Property, types} from "@mikro-orm/core";
 import {CustomBaseEntity} from "@/src/models/entities/CustomBaseEntity.js";
 import {TTSVoice} from "@/src/models/entities/TTSVoice.js";
 import {Vocab} from "@/src/models/entities/Vocab.js";
@@ -16,4 +16,6 @@ export class TTSPronunciation extends CustomBaseEntity {
 
     @ManyToOne({entity: () => Vocab, onDelete: "cascade", onUpdateIntegrity: "cascade"})
     vocab!: Vocab;
+
+    [OptionalProps]?: "addedOn"
 }

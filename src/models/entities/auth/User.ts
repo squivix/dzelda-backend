@@ -24,6 +24,16 @@ export class User extends CustomBaseEntity {
     @Unique()
     email!: string;
 
+    // get email() {
+    //     if (!this.decryptedEmail)
+    //         this.decryptedEmail = emailEncrypter.decrypt(this.encryptedEmail);
+    //     return this.decryptedEmail;
+    // }
+
+    @Property({type: types.string, persist: false})
+    decryptedEmail?: string;
+
+
     @Property({type: types.boolean, default: false})
     isEmailConfirmed!: boolean;
 
