@@ -1,6 +1,6 @@
 import {orm} from "@/src/server.js";
 
-export async function globalSetup() {
+export async function setup() {
     await orm.getSchemaGenerator().clearDatabase();
 }
 

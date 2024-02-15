@@ -36,6 +36,8 @@ export const errorHandler = (error: Error, request: FastifyRequest, reply: Fasti
     } else if (isFastifyError(error)) {
         if (error.statusCode && error.statusCode < 500)
             apiError = new APIError(error.statusCode, error.message);
+    } else if ("statusCode" in error && error.statusCode == 429) {
+        apiError = new APIError(429, error.message);
     }
 
     if (apiError)
