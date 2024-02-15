@@ -1149,11 +1149,11 @@
           "mappedType": "datetime"
         }
       },
-      "name": "course",
+      "name": "collection",
       "schema": "public",
       "indexes": [
         {
-          "keyName": "course_added_on_index",
+          "keyName": "collection_added_on_index",
           "columnNames": [
             "added_on"
           ],
@@ -1162,7 +1162,7 @@
           "unique": false
         },
         {
-          "keyName": "course_title_index",
+          "keyName": "collection_title_index",
           "columnNames": [
             "title"
           ],
@@ -1171,7 +1171,7 @@
           "unique": false
         },
         {
-          "keyName": "course_added_by_id_index",
+          "keyName": "collection_added_by_id_index",
           "columnNames": [
             "added_by_id"
           ],
@@ -1180,7 +1180,7 @@
           "unique": false
         },
         {
-          "keyName": "course_language_id_index",
+          "keyName": "collection_language_id_index",
           "columnNames": [
             "language_id"
           ],
@@ -1189,7 +1189,7 @@
           "unique": false
         },
         {
-          "keyName": "course_pkey",
+          "keyName": "collection_pkey",
           "columnNames": [
             "id"
           ],
@@ -1200,12 +1200,12 @@
       ],
       "checks": [],
       "foreignKeys": {
-        "course_language_id_foreign": {
-          "constraintName": "course_language_id_foreign",
+        "collection_language_id_foreign": {
+          "constraintName": "collection_language_id_foreign",
           "columnNames": [
             "language_id"
           ],
-          "localTableName": "public.course",
+          "localTableName": "public.collection",
           "referencedColumnNames": [
             "id"
           ],
@@ -1213,12 +1213,12 @@
           "deleteRule": "cascade",
           "updateRule": "cascade"
         },
-        "course_added_by_id_foreign": {
-          "constraintName": "course_added_by_id_foreign",
+        "collection_added_by_id_foreign": {
+          "constraintName": "collection_added_by_id_foreign",
           "columnNames": [
             "added_by_id"
           ],
-          "localTableName": "public.course",
+          "localTableName": "public.collection",
           "referencedColumnNames": [
             "id"
           ],
@@ -1239,8 +1239,8 @@
           "nullable": false,
           "mappedType": "integer"
         },
-        "course_id": {
-          "name": "course_id",
+        "collection_id": {
+          "name": "collection_id",
           "type": "int",
           "unsigned": false,
           "autoincrement": false,
@@ -1258,11 +1258,11 @@
           "mappedType": "integer"
         }
       },
-      "name": "map_bookmarker_course",
+      "name": "map_bookmarker_collection",
       "schema": "public",
       "indexes": [
         {
-          "keyName": "map_bookmarker_course_bookmarker_id_index",
+          "keyName": "map_bookmarker_collection_bookmarker_id_index",
           "columnNames": [
             "bookmarker_id"
           ],
@@ -1271,18 +1271,18 @@
           "unique": false
         },
         {
-          "keyName": "map_bookmarker_course_course_id_index",
+          "keyName": "map_bookmarker_collection_collection_id_index",
           "columnNames": [
-            "course_id"
+            "collection_id"
           ],
           "composite": false,
           "primary": false,
           "unique": false
         },
         {
-          "keyName": "map_bookmarker_course_course_id_bookmarker_id_unique",
+          "keyName": "map_bookmarker_collection_collection_id_bookmarker_id_unique",
           "columnNames": [
-            "course_id",
+            "collection_id",
             "bookmarker_id"
           ],
           "composite": true,
@@ -1290,7 +1290,7 @@
           "unique": true
         },
         {
-          "keyName": "map_bookmarker_course_pkey",
+          "keyName": "map_bookmarker_collection_pkey",
           "columnNames": [
             "id"
           ],
@@ -1301,25 +1301,25 @@
       ],
       "checks": [],
       "foreignKeys": {
-        "map_bookmarker_course_course_id_foreign": {
-          "constraintName": "map_bookmarker_course_course_id_foreign",
+        "map_bookmarker_collection_collection_id_foreign": {
+          "constraintName": "map_bookmarker_collection_collection_id_foreign",
           "columnNames": [
-            "course_id"
+            "collection_id"
           ],
-          "localTableName": "public.map_bookmarker_course",
+          "localTableName": "public.map_bookmarker_collection",
           "referencedColumnNames": [
             "id"
           ],
-          "referencedTableName": "public.course",
+          "referencedTableName": "public.collection",
           "deleteRule": "cascade",
           "updateRule": "cascade"
         },
-        "map_bookmarker_course_bookmarker_id_foreign": {
-          "constraintName": "map_bookmarker_course_bookmarker_id_foreign",
+        "map_bookmarker_collection_bookmarker_id_foreign": {
+          "constraintName": "map_bookmarker_collection_bookmarker_id_foreign",
           "columnNames": [
             "bookmarker_id"
           ],
-          "localTableName": "public.map_bookmarker_course",
+          "localTableName": "public.map_bookmarker_collection",
           "referencedColumnNames": [
             "id"
           ],
@@ -1411,8 +1411,8 @@
           "nullable": false,
           "mappedType": "integer"
         },
-        "course_id": {
-          "name": "course_id",
+        "collection_id": {
+          "name": "collection_id",
           "type": "int",
           "unsigned": false,
           "autoincrement": false,
@@ -1458,8 +1458,8 @@
           ],
           "mappedType": "enum"
         },
-        "order_in_course": {
-          "name": "order_in_course",
+        "order_in_collection": {
+          "name": "order_in_collection",
           "type": "int",
           "unsigned": false,
           "autoincrement": false,
@@ -1502,9 +1502,9 @@
           "unique": false
         },
         {
-          "keyName": "lesson_course_id_index",
+          "keyName": "lesson_collection_id_index",
           "columnNames": [
-            "course_id"
+            "collection_id"
           ],
           "composite": false,
           "primary": false,
@@ -1535,16 +1535,16 @@
           "deleteRule": "cascade",
           "updateRule": "cascade"
         },
-        "lesson_course_id_foreign": {
-          "constraintName": "lesson_course_id_foreign",
+        "lesson_collection_id_foreign": {
+          "constraintName": "lesson_collection_id_foreign",
           "columnNames": [
-            "course_id"
+            "collection_id"
           ],
           "localTableName": "public.lesson",
           "referencedColumnNames": [
             "id"
           ],
-          "referencedTableName": "public.course",
+          "referencedTableName": "public.collection",
           "deleteRule": "set null",
           "updateRule": "cascade"
         },

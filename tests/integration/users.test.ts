@@ -1046,7 +1046,7 @@ describe("PUT users/me/profile/", function () {
             test<LocalTestContext>("If file upload request with key is not for profilePicture field return 400", async (context) => {
                 const user = await context.userFactory.createOne();
                 const session = await context.sessionFactory.createOne({user});
-                const fileUploadRequest = await context.fileUploadRequestFactory.createOne({user: user, fileField: "courseImage"});
+                const fileUploadRequest = await context.fileUploadRequestFactory.createOne({user: user, fileField: "collectionImage"});
                 const updatedProfile = context.profileFactory.makeOne({profilePicture: fileUploadRequest.fileUrl});
 
                 const response = await makeRequest({

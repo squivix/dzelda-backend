@@ -4,7 +4,7 @@ export const DATASET_FILES = {
     language: "languages.jsonl",
     user: "users.jsonl",
     dictionary: "dictionaries.jsonl",
-    course: "courses.jsonl",
+    collections: "collections.jsonl",
     lesson: "lessons.jsonl",
     vocab: "vocabs.jsonl",
     meaning: "meanings.jsonl",

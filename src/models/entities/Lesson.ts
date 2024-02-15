@@ -1,6 +1,6 @@
 import {CustomBaseEntity} from "@/src/models/entities/CustomBaseEntity.js";
-import {Collection, Entity, Enum, Formula, Index, ManyToMany, ManyToOne, OptionalProps, Property, types} from "@mikro-orm/core";
-import {Course} from "@/src/models/entities/Course.js";
+import {Collection as MikroORMCollection, Entity, Enum, Formula, Index, ManyToMany, ManyToOne, OptionalProps, Property, types} from "@mikro-orm/core";
+import {Collection} from "@/src/models/entities/Collection.js";
 import {Vocab} from "@/src/models/entities/Vocab.js";
 import {MapLessonVocab} from "@/src/models/entities/MapLessonVocab.js";
 import {Profile} from "@/src/models/entities/Profile.js";
@@ -11,7 +11,7 @@ import {LanguageLevel} from "@/src/models/enums/LanguageLevel.js";
 import {Language} from "@/src/models/entities/Language.js";
 
 @Entity({customRepository: () => LessonRepo})
-@Index({properties: ["course"]})
+@Index({properties: ["collection"]})
 @Index({properties: ["title"]})
 @Index({properties: ["addedOn"]})
 export class Lesson extends CustomBaseEntity {
@@ -36,8 +36,8 @@ export class Lesson extends CustomBaseEntity {
     @ManyToOne({entity: () => Language, inversedBy: (language) => language.lessons, onDelete: "cascade", onUpdateIntegrity: "cascade"})
     language!: Language;
 
-    @ManyToOne({entity: () => Course, inversedBy: (course) => course.lessons, onDelete: "set null", onUpdateIntegrity: "cascade", nullable: true, default: null})
-    course: Course | null = null;
+    @ManyToOne({entity: () => Collection, inversedBy: (collection) => collection.lessons, onDelete: "set null", onUpdateIntegrity: "cascade", nullable: true, default: null})
+    collection: Collection | null = null;
 
     @Property({type: types.boolean, default: true})
     isPublic: boolean = true;
@@ -49,7 +49,7 @@ export class Lesson extends CustomBaseEntity {
     level: LanguageLevel = LanguageLevel.ADVANCED_1;
 
     @Property({type: types.integer, nullable: true, default: null})
-    orderInCourse: number | null = null;
+    orderInCollection: number | null = null;
 
     @Property({type: types.datetime, defaultRaw: "now()"})
     addedOn!: Date;
@@ -59,7 +59,7 @@ export class Lesson extends CustomBaseEntity {
         mappedBy: (vocab) => vocab.lessonsAppearingIn,
         pivotEntity: () => MapLessonVocab
     })
-    vocabs: Collection<Vocab> = new Collection<Vocab>(this);
+    vocabs: MikroORMCollection<Vocab> = new MikroORMCollection<Vocab>(this);
 
     @ManyToMany({
         entity: () => Profile,
@@ -68,9 +68,9 @@ export class Lesson extends CustomBaseEntity {
         joinColumn: "lesson_id",
         inverseJoinColumn: "past_viewer_id",
     })
-    pastViewers: Collection<Profile> = new Collection<Profile>(this);
+    pastViewers: MikroORMCollection<Profile> = new MikroORMCollection<Profile>(this);
 
-    [OptionalProps]?: "image" | "audio" | "addedOn" | "level" | "orderInCourse" | "pastViewersCount" | "parsedText" | "parsedTitle" | "isLastInCourse";
+    [OptionalProps]?: "image" | "audio" | "addedOn" | "level" | "orderInCollection" | "pastViewersCount" | "parsedText" | "parsedTitle" | "isLastInCollection";
 
     //annotated properties
     @Property({persist: false, type: types.json})
@@ -81,10 +81,10 @@ export class Lesson extends CustomBaseEntity {
     })
     pastViewersCount!: number;
 
-    @Formula((alias: string) => `(SELECT ${alias}.order_in_course = MAX(order_in_course) from lesson WHERE course_id = ${alias}.course_id)`, {
+    @Formula((alias: string) => `(SELECT ${alias}.order_in_collection = MAX(order_in_collection) from lesson WHERE collection_id = ${alias}.collection_id)`, {
         type: "boolean"
     })
-    isLastInCourse: boolean | null = null;
+    isLastInCollection: boolean | null = null;
 
     //TODO add field for keeping track of which parser last parsed lesson (to reparse on demand if parser was updated)
 }

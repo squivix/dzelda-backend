@@ -4,7 +4,7 @@ import {Seeder} from "@mikro-orm/seeder";
 import {EntityManager} from "@mikro-orm/core";
 import {UserSeeder} from "@/devtools/seeders/UserSeeder.js";
 import {LanguageSeeder} from "@/devtools/seeders/LanguageSeeder.js";
-import {CourseSeeder} from "@/devtools/seeders/CourseSeeder.js";
+import {CollectionSeeder} from "@/devtools/seeders/CollectionSeeder.js";
 import {LessonSeeder} from "@/devtools/seeders/LessonSeeder.js";
 import {VocabSeeder} from "@/devtools/seeders/VocabSeeder.js";
 import {MeaningSeeder} from "@/devtools/seeders/MeaningSeeder.js";
@@ -49,7 +49,7 @@ export class DatabaseSeeder extends Seeder {
                 LanguageSeeder,
                 UserSeeder,
                 DictionarySeeder,
-                CourseSeeder,
+                CollectionSeeder,
                 VocabSeeder,
                 LessonSeeder,
                 MeaningSeeder,

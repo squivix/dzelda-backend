@@ -4,11 +4,11 @@ import {Language} from "@/src/models/entities/Language.js";
 import {SqlEntityManager} from "@mikro-orm/postgresql";
 import {LessonRepo} from "@/src/models/repos/LessonRepo.js";
 import {AnonymousUser, User} from "@/src/models/entities/auth/User.js";
-import {Course} from "@/src/models/entities/Course.js";
+import {Collection} from "@/src/models/entities/Collection.js";
 import {getParser} from "dzelda-common";
 import {Vocab} from "@/src/models/entities/Vocab.js";
 import {MapLessonVocab} from "@/src/models/entities/MapLessonVocab.js";
-import {CourseRepo} from "@/src/models/repos/CourseRepo.js";
+import {CollectionRepo} from "@/src/models/repos/CollectionRepo.js";
 import {MapPastViewerLesson} from "@/src/models/entities/MapPastViewerLesson.js";
 import {QueryOrderMap} from "@mikro-orm/core/enums.js";
 import {EntityField} from "@mikro-orm/core/drivers/IDatabaseDriver.js";
@@ -17,12 +17,12 @@ import {LanguageLevel} from "@/src/models/enums/LanguageLevel.js";
 export class LessonService {
     em: SqlEntityManager;
     lessonRepo: LessonRepo;
-    courseRepo: CourseRepo;
+    collectionRepo: CollectionRepo;
 
     constructor(em: EntityManager) {
         this.em = em as SqlEntityManager;
         this.lessonRepo = this.em.getRepository(Lesson) as LessonRepo;
-        this.courseRepo = this.em.getRepository(Course) as CourseRepo;
+        this.collectionRepo = this.em.getRepository(Collection) as CollectionRepo;
     }
 
     async getPaginatedLessons(filters: {
@@ -62,7 +62,7 @@ export class LessonService {
         dbOrderBy.push({id: "asc"});
 
         let [lessons, totalCount] = await this.lessonRepo.findAndCount(dbFilters, {
-            populate: ["language", "addedBy.user", "course", "course.language", "course.addedBy.user"],
+            populate: ["language", "addedBy.user", "collection", "collection.language", "collection.addedBy.user"],
             orderBy: dbOrderBy,
             limit: pagination.pageSize,
             offset: pagination.pageSize * (pagination.page - 1),
@@ -113,7 +113,7 @@ export class LessonService {
         dbOrderBy.push({lesson: {id: "asc"}});
 
         let [lessonHistoryEntries, totalCount] = await this.em.findAndCount(MapPastViewerLesson, dbFilters, {
-            populate: ["lesson.language", "lesson.addedBy.user", "lesson.course", "lesson.course.language", "lesson.course.addedBy.user"],
+            populate: ["lesson.language", "lesson.addedBy.user", "lesson.collection", "lesson.collection.language", "lesson.collection.addedBy.user"],
             orderBy: dbOrderBy,
             limit: pagination.pageSize,
             offset: pagination.pageSize * (pagination.page - 1),
@@ -128,7 +128,7 @@ export class LessonService {
         title: string;
         text: string;
         language: Language;
-        course: Course | null;
+        collection: Collection | null;
         isPublic: boolean,
         level?: LanguageLevel,
         image?: string;
@@ -151,11 +151,11 @@ export class LessonService {
             parsedTitle: lessonParsedTitle,
             image: fields.image,
             audio: fields.audio,
-            course: fields.course,
+            collection: fields.collection,
             isPublic: fields.isPublic,
             level: fields.level,
-            orderInCourse: fields.course?.lessons?.count(),
-            isLastInCourse: true,
+            orderInCollection: fields.collection?.lessons?.count(),
+            isLastInCollection: true,
             pastViewersCount: 0
         });
         await this.em.flush();
@@ -165,19 +165,19 @@ export class LessonService {
         await this.em.insertMany(MapLessonVocab, lessonVocabs.map(vocab => ({lesson: newLesson.id, vocab: vocab.id})));
 
         await this.lessonRepo.annotateLessonsWithUserData([newLesson], user);
-        if (newLesson.course)
-            await this.courseRepo.annotateCoursesWithUserData([newLesson.course], user);
-        await this.em.refresh(newLesson, {populate: ["addedBy.user", "language", "course.language", "course.addedBy.user"]});
+        if (newLesson.collection)
+            await this.collectionRepo.annotateCollectionsWithUserData([newLesson.collection], user);
+        await this.em.refresh(newLesson, {populate: ["addedBy.user", "language", "collection.language", "collection.addedBy.user"]});
         return newLesson;
     }
 
     async getLesson(lessonId: number, user: User | AnonymousUser | null) {
-        let lesson = await this.lessonRepo.findOne({id: lessonId}, {populate: ["language", "addedBy.user", "course", "course.language", "course.addedBy.user"]});
+        let lesson = await this.lessonRepo.findOne({id: lessonId}, {populate: ["language", "addedBy.user", "collection", "collection.language", "collection.addedBy.user"]});
         if (lesson) {
             if (user && !(user instanceof AnonymousUser)) {
                 await this.lessonRepo.annotateLessonsWithUserData([lesson], user);
-                if (lesson.course)
-                    await this.courseRepo.annotateCoursesWithUserData([lesson.course], user);
+                if (lesson.collection)
+                    await this.collectionRepo.annotateCollectionsWithUserData([lesson.collection], user);
             }
         }
         return lesson;
@@ -186,7 +186,7 @@ export class LessonService {
     async updateLesson(lesson: Lesson, updatedLessonData: {
         title: string;
         text: string;
-        course?: Course | null,
+        collection?: Collection | null,
         level?: LanguageLevel,
         isPublic?: boolean,
         image?: string;
@@ -211,13 +211,13 @@ export class LessonService {
             const lessonVocabs = await this.em.createQueryBuilder(Vocab).select(["id"]).where(`? ~ text`, [` ${lessonParsedTitle} ${lessonParsedText} `]).andWhere({language: lesson.language});
             await this.em.upsertMany(MapLessonVocab, lessonVocabs.map(vocab => ({lesson: lesson.id, vocab: vocab.id})));
         }
-        if (updatedLessonData.course !== undefined) {
-            if (updatedLessonData.course == null) {
-                lesson.course = null;
-                lesson.orderInCourse = null;
-            } else if (lesson.course?.id !== updatedLessonData.course.id) {
-                lesson.course = updatedLessonData.course;
-                lesson.orderInCourse = await updatedLessonData.course.lessons.loadCount(true);
+        if (updatedLessonData.collection !== undefined) {
+            if (updatedLessonData.collection == null) {
+                lesson.collection = null;
+                lesson.orderInCollection = null;
+            } else if (lesson.collection?.id !== updatedLessonData.collection.id) {
+                lesson.collection = updatedLessonData.collection;
+                lesson.orderInCollection = await updatedLessonData.collection.lessons.loadCount(true);
             }
         }
         if (updatedLessonData.isPublic !== undefined)
@@ -237,8 +237,8 @@ export class LessonService {
 
         if (user && !(user instanceof AnonymousUser)) {
             await this.lessonRepo.annotateLessonsWithUserData([lesson], user);
-            if (lesson.course)
-                await this.courseRepo.annotateCoursesWithUserData([lesson.course], user);
+            if (lesson.collection)
+                await this.collectionRepo.annotateCollectionsWithUserData([lesson.collection], user);
         }
         return lesson;
     }
@@ -254,7 +254,7 @@ export class LessonService {
         return mapping;
     }
 
-    async findLesson(where: FilterQuery<Lesson>, fields: EntityField<Lesson>[] = ["id", "course", "isPublic", "addedBy"]) {
+    async findLesson(where: FilterQuery<Lesson>, fields: EntityField<Lesson>[] = ["id", "collection", "isPublic", "addedBy"]) {
         return await this.lessonRepo.findOne(where, {fields});
     }
 }

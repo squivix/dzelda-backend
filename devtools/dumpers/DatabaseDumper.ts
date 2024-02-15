@@ -2,7 +2,7 @@ import {readdirSync} from "fs";
 import prompts from "prompts";
 import fs from "fs-extra";
 import {DATA_DIR, DEFAULT_BATCH_SIZE} from "@/devtools/constants.js";
-import {dumpCourses} from "@/devtools/dumpers/CourseDumper.js";
+import {dumpCollections} from "@/devtools/dumpers/CollectionDumper.js";
 import {MikroORM} from "@mikro-orm/postgresql";
 import options from "@/src/mikro-orm.config.js";
 import path from "path";
@@ -79,7 +79,7 @@ async function dumpDatabase() {
     const em = orm.em.fork();
     await dumpUsers({em, batchSize, dataPath})
     await dumpLanguages({em, batchSize, dataPath})
-    await dumpCourses({em, batchSize, dataPath});
+    await dumpCollections({em, batchSize, dataPath});
     await dumpLessons({em, batchSize, dataPath})
     await dumpDictionaries({em, batchSize, dataPath});
     await dumpVocabs({em, batchSize, dataPath})

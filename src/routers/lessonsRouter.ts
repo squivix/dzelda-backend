@@ -18,7 +18,7 @@ export const lessonsRouter: FastifyPluginCallback = function (fastify, options, 
         preHandler: [requiresAuth, requiresEmailConfirmed],
         handler: lessonController.deleteLesson
     });
-    fastify.get(`/courses/:courseId/lessons/:lessonId/next/`, lessonController.getNextLessonInCourse);
+    fastify.get(`/collections/:collectionId/lessons/:lessonId/next/`, lessonController.getNextLessonInCollection);
     fastify.get(`/users/me/lessons/history/`, {preHandler: [requiresAuth, requiresEmailConfirmed], handler: lessonController.getUserLessonsHistory});
     fastify.post(`/users/me/lessons/history/`, {preHandler: [requiresAuth, requiresEmailConfirmed], handler: lessonController.addLessonToUserHistory});
     done();

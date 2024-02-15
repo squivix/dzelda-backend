@@ -1,8 +1,8 @@
 import {kibiBytes, mebiBytes} from "@/tests/integration/utils.js";
 
 export const fileFields = {
-    courseImage: {
-        path: "uploads/courses/images",
+    collectionImage: {
+        path: "uploads/collections/images",
         extensions: [".jpg", ".jpeg", ".png"],
         minSize: 1,
         maxSize: kibiBytes(500)

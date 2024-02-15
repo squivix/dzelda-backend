@@ -16,7 +16,7 @@ import {randomCase, randomEnum, randomEnums} from "@/tests/utils.js";
 import {VocabLevel} from "@/src/models/enums/VocabLevel.js";
 import {learnerVocabSerializer} from "@/src/presentation/response/serializers/mappings/LearnerVocabSerializer.js";
 import {LessonFactory} from "@/devtools/factories/LessonFactory.js";
-import {CourseFactory} from "@/devtools/factories/CourseFactory.js";
+import {CollectionFactory} from "@/devtools/factories/CollectionFactory.js";
 import {MeaningFactory} from "@/devtools/factories/MeaningFactory.js";
 import {MapLearnerMeaning} from "@/src/models/entities/MapLearnerMeaning.js";
 import {Meaning} from "@/src/models/entities/Meaning.js";
@@ -27,7 +27,6 @@ interface LocalTestContext extends TestContext {
     vocabFactory: VocabFactory;
     vocabRepo: VocabRepo;
     lessonFactory: LessonFactory;
-    courseFactory: CourseFactory;
     meaningFactory: MeaningFactory;
 }
 
@@ -47,7 +46,6 @@ beforeEach<LocalTestContext>(async (context) => {
     context.languageFactory = new LanguageFactory(context.em);
     context.vocabFactory = new VocabFactory(context.em);
     context.lessonFactory = new LessonFactory(context.em);
-    context.courseFactory = new CourseFactory(context.em);
     context.meaningFactory = new MeaningFactory(context.em);
 
     context.vocabRepo = context.em.getRepository(Vocab);

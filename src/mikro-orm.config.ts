@@ -1,7 +1,7 @@
 import {LoadStrategy, Options} from "@mikro-orm/core";
 import {User} from "@/src/models/entities/auth/User.js";
 import {Profile} from "@/src/models/entities/Profile.js";
-import {Course} from "@/src/models/entities/Course.js";
+import {Collection} from "@/src/models/entities/Collection.js";
 import {CustomBaseEntity} from "@/src/models/entities/CustomBaseEntity.js";
 import {Meaning} from "@/src/models/entities/Meaning.js";
 import {Dictionary} from "@/src/models/entities/Dictionary.js";
@@ -21,12 +21,12 @@ import {FileUploadRequest} from "@/src/models/entities/FileUploadRequest.js";
 import {TTSVoice} from "@/src/models/entities/TTSVoice.js";
 import {TTSPronunciation} from "@/src/models/entities/TTSPronunciation.js";
 import {HumanPronunciation} from "@/src/models/entities/HumanPronunciation.js";
-import {MapBookmarkerCourse} from "@/src/models/entities/MapBookmarkerCourse.js";
+import {MapBookmarkerCollection} from "@/src/models/entities/MapBookmarkerCollection.js";
 
 
 const devOptions: Options = {
     type: "postgresql",
-    entities: [Course, CustomBaseEntity, Dictionary, Language, Lesson, MapLearnerDictionary, MapBookmarkerCourse,
+    entities: [Collection, CustomBaseEntity, Dictionary, Language, Lesson, MapLearnerDictionary, MapBookmarkerCollection,
         MapPastViewerLesson, MapLearnerMeaning, MapLearnerVocab, MapLessonVocab, MapLearnerLanguage, Meaning,
         Profile, Vocab, User, Session, PasswordResetToken, EmailConfirmationToken, FileUploadRequest, TTSVoice, TTSPronunciation, HumanPronunciation],
     loadStrategy: LoadStrategy.SELECT_IN,

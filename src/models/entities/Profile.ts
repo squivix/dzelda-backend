@@ -1,7 +1,7 @@
-import {Collection, Entity, ManyToMany, OneToMany, OneToOne, OptionalProps, Property, types} from "@mikro-orm/core";
+import {Collection as MikroORMCollection, Entity, ManyToMany, OneToMany, OneToOne, OptionalProps, Property, types} from "@mikro-orm/core";
 import {User} from "@/src/models/entities/auth/User.js";
 import {CustomBaseEntity} from "@/src/models/entities/CustomBaseEntity.js";
-import {Course} from "@/src/models/entities/Course.js";
+import {Collection} from "@/src/models/entities/Collection.js";
 import {Meaning} from "@/src/models/entities/Meaning.js";
 import {Lesson} from "@/src/models/entities/Lesson.js";
 import {MapPastViewerLesson} from "@/src/models/entities/MapPastViewerLesson.js";
@@ -12,7 +12,7 @@ import {Dictionary} from "@/src/models/entities/Dictionary.js";
 import {MapLearnerDictionary} from "@/src/models/entities/MapLearnerDictionary.js";
 import {Language} from "@/src/models/entities/Language.js";
 import {MapLearnerLanguage} from "@/src/models/entities/MapLearnerLanguage.js";
-import {MapBookmarkerCourse} from "@/src/models/entities/MapBookmarkerCourse.js";
+import {MapBookmarkerCollection} from "@/src/models/entities/MapBookmarkerCollection.js";
 
 @Entity()
 export class Profile extends CustomBaseEntity {
@@ -46,7 +46,7 @@ export class Profile extends CustomBaseEntity {
         pivotEntity: () => MapLearnerLanguage,
         hidden: true
     })
-    languagesLearning: Collection<Language> = new Collection<Language>(this);
+    languagesLearning: MikroORMCollection<Language> = new MikroORMCollection<Language>(this);
 
     @ManyToMany({
         entity: () => Lesson,
@@ -54,7 +54,7 @@ export class Profile extends CustomBaseEntity {
         pivotEntity: () => MapPastViewerLesson,
         hidden: true
     })
-    lessonHistory: Collection<Lesson> = new Collection<Lesson>(this);
+    lessonHistory: MikroORMCollection<Lesson> = new MikroORMCollection<Lesson>(this);
 
     @ManyToMany({
         entity: () => Vocab,
@@ -62,7 +62,7 @@ export class Profile extends CustomBaseEntity {
         pivotEntity: () => MapLearnerVocab,
         hidden: true
     })
-    vocabsLearning: Collection<Vocab> = new Collection<Vocab>(this);
+    vocabsLearning: MikroORMCollection<Vocab> = new MikroORMCollection<Vocab>(this);
 
     @ManyToMany({
         entity: () => Meaning,
@@ -70,7 +70,7 @@ export class Profile extends CustomBaseEntity {
         pivotEntity: () => MapLearnerMeaning,
         hidden: true
     })
-    meaningsLearning: Collection<Meaning> = new Collection<Meaning>(this);
+    meaningsLearning: MikroORMCollection<Meaning> = new MikroORMCollection<Meaning>(this);
 
     @ManyToMany({
         entity: () => Dictionary,
@@ -78,24 +78,24 @@ export class Profile extends CustomBaseEntity {
         pivotEntity: () => MapLearnerDictionary,
         hidden: true
     })
-    dictionariesSaved: Collection<Dictionary> = new Collection<Dictionary>(this);
+    dictionariesSaved: MikroORMCollection<Dictionary> = new MikroORMCollection<Dictionary>(this);
 
     @ManyToMany({
-        entity: () => Course,
-        mappedBy: (course: Course) => course.bookmarkers,
-        pivotEntity: () => MapBookmarkerCourse,
+        entity: () => Collection,
+        mappedBy: (collection: Collection) => collection.bookmarkers,
+        pivotEntity: () => MapBookmarkerCollection,
         hidden: true
     })
-    coursesBookmarked: Collection<Course> = new Collection<Course>(this);
+    collectionsBookmarked:MikroORMCollection<Collection> = new MikroORMCollection<Collection>(this);
 
-    @OneToMany({entity: () => Course, mappedBy: (course: Course) => course.addedBy, hidden: true})
-    coursesAdded: Collection<Course> = new Collection<Course>(this);
+    @OneToMany({entity: () => Collection, mappedBy: (collection: Collection) => collection.addedBy, hidden: true})
+    collectionsAdded: MikroORMCollection<Collection> = new MikroORMCollection<Collection>(this);
 
     @OneToMany({entity: () => Lesson, mappedBy: (lesson: Lesson) => lesson.addedBy, hidden: true})
-    lessonsAdded: Collection<Lesson> = new Collection<Lesson>(this);
+    lessonsAdded: MikroORMCollection<Lesson> = new MikroORMCollection<Lesson>(this);
 
     @OneToMany({entity: () => Meaning, mappedBy: (meaning: Meaning) => meaning.addedBy, hidden: true})
-    meaningsAdded: Collection<Meaning> = new Collection<Meaning>(this);
+    meaningsAdded: MikroORMCollection<Meaning> = new MikroORMCollection<Meaning>(this);
 
     [OptionalProps]?: "profilePicture" | "bio" | "isPublic";
 }

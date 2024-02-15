@@ -1,16 +1,16 @@
 import {Faker} from "@mikro-orm/seeder";
 import {EntityData, EntityManager} from "@mikro-orm/core";
 import {CustomFactory} from "@/devtools/factories/CustomFactory.js";
-import {Course} from "@/src/models/entities/Course.js";
+import {Collection} from "@/src/models/entities/Collection.js";
 import {ProfileFactory} from "@/devtools/factories/ProfileFactory.js";
 import {UserFactory} from "@/devtools/factories/UserFactory.js";
 import {LanguageLevel} from "@/src/models/enums/LanguageLevel.js";
 import {Lesson} from "@/src/models/entities/Lesson.js";
 
-export class CourseFactory extends CustomFactory<Course> {
-    readonly model = Course;
+export class CollectionFactory extends CustomFactory<Collection> {
+    readonly model = Collection;
 
-    protected definition(faker: Faker): EntityData<Course> {
+    protected definition(faker: Faker): EntityData<Collection> {
         const em = (this as any).em as EntityManager;
         const userFactory = new UserFactory(em);
         const profileFactory = new ProfileFactory(em);
@@ -24,9 +24,9 @@ export class CourseFactory extends CustomFactory<Course> {
         };
     }
 
-    override makeDefinition(overrideParameters?: EntityData<Course>): EntityData<Course> {
+    override makeDefinition(overrideParameters?: EntityData<Collection>): EntityData<Collection> {
         if (Array.isArray(overrideParameters?.lessons))
-            (overrideParameters!.lessons as EntityData<Lesson>[]).forEach((l, i) => l.orderInCourse = i + 1);
+            (overrideParameters!.lessons as EntityData<Lesson>[]).forEach((l, i) => l.orderInCollection = i + 1);
         return super.makeDefinition(overrideParameters);
     }
 }

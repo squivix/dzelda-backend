@@ -1,6 +1,6 @@
 import {Lesson} from "@/src/models/entities/Lesson.js";
-import {CourseSchema, LessonSchema} from "dzelda-common";
-import {courseSerializer} from "@/src/presentation/response/serializers/entities/CourseSerializer.js";
+import {CollectionSchema, LessonSchema} from "dzelda-common";
+import {collectionSerializer} from "@/src/presentation/response/serializers/entities/CollectionSerializer.js";
 import {CustomCallbackObject, CustomEntitySerializer} from "@/src/presentation/response/serializers/CustomEntitySerializer.js";
 
 export class LessonSerializer extends CustomEntitySerializer<Lesson, LessonSchema> {
@@ -15,9 +15,9 @@ export class LessonSerializer extends CustomEntitySerializer<Lesson, LessonSchem
             audio: () => lesson.audio,
             image: () => lesson.image,
             //@ts-ignore
-            course: () => lesson.course ? courseSerializer.serialize(lesson.course, {ignore: ["lessons"]}) as Omit<CourseSchema, "lessons"> : null,
-            orderInCourse: () => lesson.orderInCourse ?? undefined,
-            isLastInCourse: () => lesson.isLastInCourse ?? undefined,
+            collection: () => lesson.collection ? collectionSerializer.serialize(lesson.collection, {ignore: ["lessons"]}) as Omit<CollectionSchema, "lessons"> : null,
+            orderInCollection: () => lesson.orderInCollection ?? undefined,
+            isLastInCollection: () => lesson.isLastInCollection ?? undefined,
             addedOn: () => lesson.addedOn.toISOString(),
             addedBy: () => lesson.addedBy.user.username,
             isPublic: () => lesson.isPublic,

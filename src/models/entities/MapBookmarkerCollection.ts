@@ -1,15 +1,15 @@
 import {Entity, Index, ManyToOne, Unique} from "@mikro-orm/core";
 import {CustomBaseEntity} from "@/src/models/entities/CustomBaseEntity.js";
 import {Profile} from "@/src/models/entities/Profile.js";
-import {Course} from "@/src/models/entities/Course.js";
+import {Collection} from "@/src/models/entities/Collection.js";
 
 @Entity()
-@Unique({properties: ["course", "bookmarker"]})
-@Index({properties: ["course"]})
+@Unique({properties: ["collection", "bookmarker"]})
+@Index({properties: ["collection"]})
 @Index({properties: ["bookmarker"]})
-export class MapBookmarkerCourse extends CustomBaseEntity {
-    @ManyToOne({entity: () => Course, onDelete: "cascade", onUpdateIntegrity: "cascade"})
-    course!: Course;
+export class MapBookmarkerCollection extends CustomBaseEntity {
+    @ManyToOne({entity: () => Collection, onDelete: "cascade", onUpdateIntegrity: "cascade"})
+    collection!: Collection;
 
     @ManyToOne({entity: () => Profile, onDelete: "cascade", onUpdateIntegrity: "cascade"})
     bookmarker!: Profile;

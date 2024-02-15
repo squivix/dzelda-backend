@@ -1,24 +1,24 @@
 import {FastifyReply, FastifyRequest} from "fastify";
 import {z} from "zod";
-import {CourseService} from "@/src/services/CourseService.js";
+import {CollectionService} from "@/src/services/CollectionService.js";
 import {AnonymousUser, User} from "@/src/models/entities/auth/User.js";
 import {languageCodeValidator} from "@/src/validators/languageValidators.js";
 import {usernameValidator} from "@/src/validators/userValidator.js";
 import {UnauthenticatedAPIError} from "@/src/utils/errors/UnauthenticatedAPIError.js";
-import {courseDescriptionValidator, courseTitleValidator} from "@/src/validators/courseValidator.js";
+import {collectionDescriptionValidator, collectionTitleValidator} from "@/src/validators/collectionValidator.js";
 import {NotFoundAPIError} from "@/src/utils/errors/NotFoundAPIError.js";
 import {ForbiddenAPIError} from "@/src/utils/errors/ForbiddenAPIError.js";
 import {ValidationAPIError} from "@/src/utils/errors/ValidationAPIError.js";
 import {LanguageService} from "@/src/services/LanguageService.js";
 import {numericStringValidator} from "@/src/validators/utilValidators.js";
-import {courseSerializer} from "@/src/presentation/response/serializers/entities/CourseSerializer.js";
+import {collectionSerializer} from "@/src/presentation/response/serializers/entities/CollectionSerializer.js";
 import {APIError} from "@/src/utils/errors/APIError.js";
 import {StatusCodes} from "http-status-codes";
 import {UserService} from "@/src/services/UserService.js";
 import {validateFileObjectKey} from "@/src/controllers/ControllerUtils.js";
 
-class CourseController {
-    async getCourses(request: FastifyRequest, reply: FastifyReply) {
+class CollectionController {
+    async getCollections(request: FastifyRequest, reply: FastifyReply) {
         const queryParamsValidator = z.object({
             languageCode: languageCodeValidator.optional(),
             addedBy: usernameValidator.or(z.literal("me")).optional(),
@@ -41,21 +41,21 @@ class CourseController {
         };
         const sort = {sortBy: queryParams.sortBy, sortOrder: queryParams.sortOrder};
         const pagination = {page: queryParams.page, pageSize: queryParams.pageSize};
-        const courseService = new CourseService(request.em);
-        const [courses, recordsCount] = await courseService.getPaginatedCourses(filters, sort, pagination, request.user);
+        const collectionService = new CollectionService(request.em);
+        const [collections, recordsCount] = await collectionService.getPaginatedCollections(filters, sort, pagination, request.user);
         reply.send({
             page: pagination.page,
             pageSize: pagination.pageSize,
             pageCount: Math.ceil(recordsCount / pagination.pageSize),
-            data: courseSerializer.serializeList(courses)
+            data: collectionSerializer.serializeList(collections)
         });
     }
 
-    async createCourse(request: FastifyRequest, reply: FastifyReply) {
+    async createCollection(request: FastifyRequest, reply: FastifyReply) {
         const bodyValidator = z.object({
             languageCode: languageCodeValidator,
-            title: courseTitleValidator,
-            description: courseDescriptionValidator.optional(),
+            title: collectionTitleValidator,
+            description: collectionDescriptionValidator.optional(),
             image: z.string().optional(),
         });
         const body = bodyValidator.parse(request.body);
@@ -68,82 +68,82 @@ class CourseController {
             throw new ValidationAPIError({language: "not supported"});
         const userService = new UserService(request.em);
         if (body.image)
-            body.image = await validateFileObjectKey(userService, request.user as User, body.image, "courseImage", "image");
-        const courseService = new CourseService(request.em);
-        const course = await courseService.createCourse({
+            body.image = await validateFileObjectKey(userService, request.user as User, body.image, "collectionImage", "image");
+        const collectionService = new CollectionService(request.em);
+        const collection = await collectionService.createCollection({
             language: language,
             title: body.title,
             description: body.description,
             image: body.image,
         }, request.user as User);
-        reply.status(201).send(courseSerializer.serialize(course));
+        reply.status(201).send(collectionSerializer.serialize(collection));
     }
 
-    async getCourse(request: FastifyRequest, reply: FastifyReply) {
-        const pathParamsValidator = z.object({courseId: numericStringValidator});
+    async getCollection(request: FastifyRequest, reply: FastifyReply) {
+        const pathParamsValidator = z.object({collectionId: numericStringValidator});
         const pathParams = pathParamsValidator.parse(request.params);
 
-        const courseService = new CourseService(request.em);
-        const course = await courseService.getCourse(pathParams.courseId, request.user);
+        const collectionService = new CollectionService(request.em);
+        const collection = await collectionService.getCollection(pathParams.collectionId, request.user);
 
-        if (!course)
-            throw new NotFoundAPIError("Course");
-        reply.status(200).send(courseSerializer.serialize(course));
+        if (!collection)
+            throw new NotFoundAPIError("Collection");
+        reply.status(200).send(collectionSerializer.serialize(collection));
     }
 
-    async updateCourse(request: FastifyRequest, reply: FastifyReply) {
-        const pathParamsValidator = z.object({courseId: numericStringValidator});
+    async updateCollection(request: FastifyRequest, reply: FastifyReply) {
+        const pathParamsValidator = z.object({collectionId: numericStringValidator});
         const pathParams = pathParamsValidator.parse(request.params);
 
         const bodyValidator = z.object({
-            title: courseTitleValidator,
-            description: courseDescriptionValidator,
+            title: collectionTitleValidator,
+            description: collectionDescriptionValidator,
             lessonsOrder: z.array(z.number().int().min(0)).refine(e => new Set(e).size === e.length),
             image: z.string().optional()
         });
         const body = bodyValidator.parse(request.body);
 
-        const courseService = new CourseService(request.em);
-        const course = await courseService.findCourse(pathParams.courseId, ["id", "addedBy", "lessons"]);
+        const collectionService = new CollectionService(request.em);
+        const collection = await collectionService.findCollection(pathParams.collectionId, ["id", "addedBy", "lessons"]);
 
-        if (!course)
-            throw new NotFoundAPIError("Course");
+        if (!collection)
+            throw new NotFoundAPIError("Collection");
 
-        if (request?.user?.profile !== course.addedBy)
+        if (request?.user?.profile !== collection.addedBy)
             throw new ForbiddenAPIError();
 
         const lessonOrderIdSet = new Set(body.lessonsOrder);
-        if (course.lessons.length !== body.lessonsOrder.length || !course.lessons.getItems().map(c => c.id).every(l => lessonOrderIdSet.has(l)))
-            throw new ValidationAPIError({lessonsOrder: "ids don't match course lessons: cannot add or remove lessons through this endpoint, only reorder"});
+        if (collection.lessons.length !== body.lessonsOrder.length || !collection.lessons.getItems().map(c => c.id).every(l => lessonOrderIdSet.has(l)))
+            throw new ValidationAPIError({lessonsOrder: "ids don't match collection lessons: cannot add or remove lessons through this endpoint, only reorder"});
         const userService = new UserService(request.em);
         if (body.image)
-            body.image = await validateFileObjectKey(userService, request.user as User, body.image, "courseImage", "image");
+            body.image = await validateFileObjectKey(userService, request.user as User, body.image, "collectionImage", "image");
 
-        const updatedCourse = await courseService.updateCourse(course, {
+        const updatedCollection = await collectionService.updateCollection(collection, {
             title: body.title,
             description: body.description,
             image: body.image,
             lessonsOrder: body.lessonsOrder
         }, request.user as User);
-        reply.status(200).send(courseSerializer.serialize(updatedCourse));
+        reply.status(200).send(collectionSerializer.serialize(updatedCollection));
     }
 
-    async deleteCourse(request: FastifyRequest, reply: FastifyReply) {
-        const pathParamsValidator = z.object({courseId: numericStringValidator});
+    async deleteCollection(request: FastifyRequest, reply: FastifyReply) {
+        const pathParamsValidator = z.object({collectionId: numericStringValidator});
         const pathParams = pathParamsValidator.parse(request.params);
         const user = request.user as User;
-        const courseService = new CourseService(request.em);
-        const course = await courseService.getCourse(pathParams.courseId, request.user);
+        const collectionService = new CollectionService(request.em);
+        const collection = await collectionService.getCollection(pathParams.collectionId, request.user);
 
-        if (!course)
-            throw new NotFoundAPIError("Course");
-        if (course.addedBy !== user.profile)
-            throw new ForbiddenAPIError("User is not authorized to delete course");
-        await courseService.deleteCourse(course);
+        if (!collection)
+            throw new NotFoundAPIError("Collection");
+        if (collection.addedBy !== user.profile)
+            throw new ForbiddenAPIError("User is not authorized to delete collection");
+        await collectionService.deleteCollection(collection);
         reply.status(204).send();
     }
 
-    async getUserBookmarkedCourses(request: FastifyRequest, reply: FastifyReply) {
+    async getUserBookmarkedCollections(request: FastifyRequest, reply: FastifyReply) {
         const queryParamsValidator = z.object({
             languageCode: languageCodeValidator.optional(),
             addedBy: usernameValidator.or(z.literal("me")).optional(),
@@ -164,51 +164,51 @@ class CourseController {
         };
         const sort = {sortBy: queryParams.sortBy, sortOrder: queryParams.sortOrder};
         const pagination = {page: queryParams.page, pageSize: queryParams.pageSize};
-        const courseService = new CourseService(request.em);
-        const [courses, recordsCount] = await courseService.getPaginatedCourses(filters, sort, pagination, request.user);
+        const collectionService = new CollectionService(request.em);
+        const [collections, recordsCount] = await collectionService.getPaginatedCollections(filters, sort, pagination, request.user);
         reply.send({
             page: pagination.page,
             pageSize: pagination.pageSize,
             pageCount: Math.ceil(recordsCount / pagination.pageSize),
-            data: courseSerializer.serializeList(courses)
+            data: collectionSerializer.serializeList(collections)
         });
     }
 
-    async addCourseToUserBookmarks(request: FastifyRequest, reply: FastifyReply) {
+    async addCollectionToUserBookmarks(request: FastifyRequest, reply: FastifyReply) {
         const user = request.user as User;
-        const bodyValidator = z.object({courseId: z.number().min(0)});
+        const bodyValidator = z.object({collectionId: z.number().min(0)});
         const body = bodyValidator.parse(request.body);
 
-        const courseService = new CourseService(request.em);
-        const course = await courseService.getCourse(body.courseId, request.user);
-        if (!course)
-            throw new ValidationAPIError({course: "Not found"});
-        if (!(request.user as User).profile.languagesLearning.contains(course.language))
-            throw new ValidationAPIError({course: "not in a language the user is learning"});
-        const existingCourseMapping = await courseService.findBookMarkerCourseMapping({course: course, bookmarker: user.profile});
-        if (existingCourseMapping) {
-            reply.status(200).send(courseSerializer.serialize(existingCourseMapping.course));
+        const collectionService = new CollectionService(request.em);
+        const collection = await collectionService.getCollection(body.collectionId, request.user);
+        if (!collection)
+            throw new ValidationAPIError({collection: "Not found"});
+        if (!(request.user as User).profile.languagesLearning.contains(collection.language))
+            throw new ValidationAPIError({collection: "not in a language the user is learning"});
+        const existingCollectionMapping = await collectionService.findBookMarkerCollectionMapping({collection: collection, bookmarker: user.profile});
+        if (existingCollectionMapping) {
+            reply.status(200).send(collectionSerializer.serialize(existingCollectionMapping.collection));
             return;
         }
-        const newCourseMapping = await courseService.addCourseToUserBookmarks(course, request.user as User);
-        reply.status(201).send(courseSerializer.serialize(newCourseMapping.course));
+        const newCollectionMapping = await collectionService.addCollectionToUserBookmarks(collection, request.user as User);
+        reply.status(201).send(collectionSerializer.serialize(newCollectionMapping.collection));
     }
 
-    async removeCourseFromUserBookmarks(request: FastifyRequest, reply: FastifyReply) {
+    async removeCollectionFromUserBookmarks(request: FastifyRequest, reply: FastifyReply) {
         const user = request.user as User;
-        const pathParamsValidator = z.object({courseId: numericStringValidator});
+        const pathParamsValidator = z.object({collectionId: numericStringValidator});
         const pathParams = pathParamsValidator.parse(request.params);
 
-        const courseService = new CourseService(request.em);
-        const course = await courseService.getCourse(pathParams.courseId, request.user);
-        if (!course)
-            throw new NotFoundAPIError("Course");
-        const existingCourseMapping = await courseService.findBookMarkerCourseMapping({course: course, bookmarker: user.profile});
-        if (!existingCourseMapping)
-            throw new APIError(StatusCodes.NOT_FOUND, "Course is not bookmarked");
-        await courseService.removeCourseFromUserBookmarks(course, user);
+        const collectionService = new CollectionService(request.em);
+        const collection = await collectionService.getCollection(pathParams.collectionId, request.user);
+        if (!collection)
+            throw new NotFoundAPIError("Collection");
+        const existingCollectionMapping = await collectionService.findBookMarkerCollectionMapping({collection: collection, bookmarker: user.profile});
+        if (!existingCollectionMapping)
+            throw new APIError(StatusCodes.NOT_FOUND, "Collection is not bookmarked");
+        await collectionService.removeCollectionFromUserBookmarks(collection, user);
         reply.status(204).send();
     }
 }
 
-export const courseController = new CourseController();
+export const collectionController = new CollectionController();

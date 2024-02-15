@@ -40,10 +40,10 @@ export class LessonFactory extends CustomFactory<Lesson> {
 
     override makeDefinitions(amount: number, overrideParameters?: EntityData<Lesson>): EntityData<Lesson>[] {
         let overrideArray: EntityData<Lesson>[] = [...Array(amount)].map(_ => ({...overrideParameters}));
-        if (overrideParameters?.orderInCourse === undefined)
-            overrideArray = overrideArray.map((p, i) => ({...p, orderInCourse: i}));
-        if (overrideParameters?.isLastInCourse === undefined)
-            overrideArray = overrideArray.map((p, i) => ({...p, isLastInCourse: i == amount - 1}));
+        if (overrideParameters?.orderInCollection === undefined)
+            overrideArray = overrideArray.map((p, i) => ({...p, orderInCollection: i}));
+        if (overrideParameters?.isLastInCollection === undefined)
+            overrideArray = overrideArray.map((p, i) => ({...p, isLastInCollection: i == amount - 1}));
         return overrideArray.map((p) => this.makeDefinition(p));
     }
 }

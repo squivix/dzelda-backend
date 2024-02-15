@@ -2,7 +2,7 @@ import {EntityRepository} from "@mikro-orm/postgresql";
 import {Lesson} from "@/src/models/entities/Lesson.js";
 import {VocabLevel} from "@/src/models/enums/VocabLevel.js";
 import {numericEnumValues} from "@/src/utils/utils.js";
-import {Course} from "@/src/models/entities/Course.js";
+import {Collection} from "@/src/models/entities/Collection.js";
 import {User} from "@/src/models/entities/auth/User.js";
 
 export class LessonRepo extends EntityRepository<Lesson> {

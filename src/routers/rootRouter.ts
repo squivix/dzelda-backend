@@ -3,7 +3,7 @@ import {attachOrmEntityManagerMiddleware} from "@/src/middlewares/attachOrmEntit
 import {authMiddleware} from "@/src/middlewares/authMiddleware.js";
 import {userRouter} from "@/src/routers/usersRouter.js";
 import {languageRouter} from "@/src/routers/languagesRouter.js";
-import {coursesRouter} from "@/src/routers/coursesRouter.js";
+import {collectionsRouter} from "@/src/routers/collectionsRouter.js";
 import {lessonsRouter} from "@/src/routers/lessonsRouter.js";
 import {vocabRouter} from "@/src/routers/vocabRouter.js";
 import {meaningRouter} from "@/src/routers/meaningRouter.js";
@@ -19,7 +19,7 @@ const rootRouter: FastifyPluginCallback = function rootRouter(fastify, options, 
 
     fastify.register(userRouter);
     fastify.register(languageRouter);
-    fastify.register(coursesRouter);
+    fastify.register(collectionsRouter);
     fastify.register(lessonsRouter);
     fastify.register(vocabRouter);
     fastify.register(pronunciationRouter);

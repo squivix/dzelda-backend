@@ -1,11 +1,7 @@
 import {CustomCallbackObject, CustomEntitySerializer} from "@/src/presentation/response/serializers/CustomEntitySerializer.js";
-import {MapLearnerVocab} from "@/src/models/entities/MapLearnerVocab.js";
-import {Vocab} from "@/src/models/entities/Vocab.js";
-import {CourseSchema, LearnerVocabSchema, LessonHistoryEntrySchema, MeaningSchema} from "dzelda-common";
-import {meaningSerializer} from "@/src/presentation/response/serializers/entities/MeaningSerializer.js";
-import {VocabLevel} from "@/src/models/enums/VocabLevel.js";
+import {CollectionSchema, LessonHistoryEntrySchema} from "dzelda-common";
 import {MapPastViewerLesson} from "@/src/models/entities/MapPastViewerLesson.js";
-import {courseSerializer} from "@/src/presentation/response/serializers/entities/CourseSerializer.js";
+import {collectionSerializer} from "@/src/presentation/response/serializers/entities/CollectionSerializer.js";
 
 export class LessonHistoryEntrySerializer extends CustomEntitySerializer<MapPastViewerLesson, LessonHistoryEntrySchema> {
     definition(lessonHistoryEntry: MapPastViewerLesson): CustomCallbackObject<Partial<LessonHistoryEntrySchema>> {
@@ -18,9 +14,10 @@ export class LessonHistoryEntrySerializer extends CustomEntitySerializer<MapPast
             parsedText: () => lessonHistoryEntry.lesson.parsedText,
             audio: () => lessonHistoryEntry.lesson.audio,
             image: () => lessonHistoryEntry.lesson.image,
-            course: () => lessonHistoryEntry.lesson.course ? courseSerializer.serialize(lessonHistoryEntry.lesson.course, {ignore: ["lessons"]}) as Omit<CourseSchema, "lessons"> : null,
-            orderInCourse: () => lessonHistoryEntry.lesson.orderInCourse,
-            isLastInCourse: () => lessonHistoryEntry.lesson.isLastInCourse,
+            //@ts-ignore
+            collection: () => lessonHistoryEntry.lesson.collection ? collectionSerializer.serialize(lessonHistoryEntry.lesson.collection, {ignore: ["lessons"]}) as Omit<CollectionSchema, "lessons"> : null,
+            orderInCollection: () => lessonHistoryEntry.lesson.orderInCollection ?? undefined,
+            isLastInCollection: () => lessonHistoryEntry.lesson.isLastInCollection ?? undefined,
             addedOn: () => lessonHistoryEntry.lesson.addedOn.toISOString(),
             vocabsByLevel: () => lessonHistoryEntry.lesson.vocabsByLevel,
             pastViewersCount: () => Number(lessonHistoryEntry.lesson.pastViewersCount),

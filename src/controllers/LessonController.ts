@@ -7,7 +7,7 @@ import {AnonymousUser, User} from "@/src/models/entities/auth/User.js";
 import {UnauthenticatedAPIError} from "@/src/utils/errors/UnauthenticatedAPIError.js";
 import {booleanStringValidator, numericStringValidator} from "@/src/validators/utilValidators.js";
 import {ValidationAPIError} from "@/src/utils/errors/ValidationAPIError.js";
-import {CourseService} from "@/src/services/CourseService.js";
+import {CollectionService} from "@/src/services/CollectionService.js";
 import {lessonTextValidator, lessonTitleValidator} from "@/src/validators/lessonValidators.js";
 import {ForbiddenAPIError} from "@/src/utils/errors/ForbiddenAPIError.js";
 import {NotFoundAPIError} from "@/src/utils/errors/NotFoundAPIError.js";
@@ -16,9 +16,9 @@ import {API_ROOT} from "@/src/server.js";
 import {lessonHistoryEntrySerializer} from "@/src/presentation/response/serializers/mappings/LessonHistoryEntrySerializer.js";
 import {UserService} from "@/src/services/UserService.js";
 import {validateFileObjectKey} from "@/src/controllers/ControllerUtils.js";
-import {courseLevelsFilterValidator, courseLevelValidator} from "@/src/validators/courseValidator.js";
+import {collectionLevelsFilterValidator, collectionLevelValidator} from "@/src/validators/collectionValidator.js";
 import {LanguageService} from "@/src/services/LanguageService.js";
-import {Course} from "@/src/models/entities/Course.js";
+import {Collection} from "@/src/models/entities/Collection.js";
 
 class LessonController {
     async getLessons(request: FastifyRequest, reply: FastifyReply) {
@@ -26,7 +26,7 @@ class LessonController {
             languageCode: languageCodeValidator.optional(),
             addedBy: usernameValidator.or(z.literal("me")).optional(),
             searchQuery: z.string().max(256).optional(),
-            level: courseLevelsFilterValidator.default([]),
+            level: collectionLevelsFilterValidator.default([]),
             hasAudio: booleanStringValidator.optional(),
             sortBy: z.union([z.literal("title"), z.literal("createdDate"), z.literal("pastViewersCount")]).optional().default("title"),
             sortOrder: z.union([z.literal("asc"), z.literal("desc")]).optional().default("asc"),
@@ -66,28 +66,27 @@ class LessonController {
             title: lessonTitleValidator,
             text: lessonTextValidator,
             isPublic: z.boolean().optional().default(true),
-            level: courseLevelValidator.optional(),
-            courseId: z.number().min(0).or(z.literal(null)).optional().default(null),
+            level: collectionLevelValidator.optional(),
+            collectionId: z.number().min(0).or(z.literal(null)).optional().default(null),
             image: z.string().optional(),
             audio: z.string().optional(),
         });
         const body = bodyValidator.parse(request.body);
         const user = request.user as User;
-        const courseService = new CourseService(request.em);
+        const collectionService = new CollectionService(request.em);
         const languageService = new LanguageService(request.em);
         const language = await languageService.findLanguage({code: body.languageCode});
         if (!language)
             throw new NotFoundAPIError("Language");
-        let course: Course | null = null;
-        if (body.courseId) {
-            course = await courseService.getCourse(body.courseId, request.user);
-
-            if (!course)
-                throw new ValidationAPIError({course: "Not found"});
-            if (course.language !== language)
-                throw new ValidationAPIError({course: "Not in the same language as lesson"});
-            if (course.addedBy !== user.profile)
-                throw new ForbiddenAPIError("User is not author of course");
+        let collection: Collection | null = null;
+        if (body.collectionId) {
+            collection = await collectionService.getCollection(body.collectionId, request.user);
+            if (!collection)
+                throw new ValidationAPIError({collection: "Not found"});
+            if (collection.language !== language)
+                throw new ValidationAPIError({collection: "Not in the same language as lesson"});
+            if (collection.addedBy !== user.profile)
+                throw new ForbiddenAPIError("User is not author of collection");
         }
         const userService = new UserService(request.em);
         if (body.image)
@@ -102,7 +101,7 @@ class LessonController {
             language: language,
             isPublic: body.isPublic,
             level: body.level,
-            course: course,
+            collection: collection,
             image: body.image,
             audio: body.audio,
         }, user);
@@ -126,11 +125,11 @@ class LessonController {
         const pathParams = pathParamsValidator.parse(request.params);
 
         const bodyValidator = z.object({
-            courseId: z.number().min(0).optional().or(z.literal(null)),
+            collectionId: z.number().min(0).optional().or(z.literal(null)),
             title: lessonTitleValidator,
             text: lessonTextValidator,
             isPublic: z.boolean().optional(),
-            level: courseLevelValidator.optional(),
+            level: collectionLevelValidator.optional(),
             image: z.string().optional(),
             audio: z.string().optional(),
         });
@@ -143,18 +142,18 @@ class LessonController {
         if (request?.user?.profile !== lesson.addedBy)
             throw lesson.isPublic ? new ForbiddenAPIError() : new NotFoundAPIError("Lesson");
 
-        const courseService = new CourseService(request.em);
-        let newCourse: Course | null | undefined;
-        if (body.courseId === null)
-            newCourse = null;
-        else if (body.courseId) {
-            newCourse = await courseService.getCourse(body.courseId, request.user);
-            if (!newCourse)
-                throw new ValidationAPIError({course: "Not found"});
-            if (request?.user?.profile !== newCourse.addedBy)
+        const collectionService = new CollectionService(request.em);
+        let newCollection: Collection | null | undefined;
+        if (body.collectionId === null)
+            newCollection = null;
+        else if (body.collectionId) {
+            newCollection = await collectionService.getCollection(body.collectionId, request.user);
+            if (!newCollection)
+                throw new ValidationAPIError({collection: "Not found"});
+            if (request?.user?.profile !== newCollection.addedBy)
                 throw new ForbiddenAPIError() ;
-            if (newCourse.language !== lesson.language)
-                throw new ValidationAPIError({course: "Cannot move lesson to a course in a different language"});
+            if (newCollection.language !== lesson.language)
+                throw new ValidationAPIError({collection: "Cannot move lesson to a collection in a different language"});
         }
 
         const userService = new UserService(request.em);
@@ -163,7 +162,7 @@ class LessonController {
         if (body.audio)
             body.audio = await validateFileObjectKey(userService, request.user as User, body.audio, "lessonAudio", "audio");
         const updatedLesson = await lessonService.updateLesson(lesson, {
-            course: newCourse,
+            collection: newCollection,
             title: body.title,
             text: body.text,
             level: body.level,
@@ -190,14 +189,14 @@ class LessonController {
         reply.status(204).send();
     }
 
-    //TODO show deleted and privated lessons as deleted and privated lessons instead of hiding them. Do this with bookmarked courses as well
+    //TODO show deleted and privated lessons as deleted and privated lessons instead of hiding them. Do this with bookmarked collections as well
     async getUserLessonsHistory(request: FastifyRequest, reply: FastifyReply) {
         const user = request.user as User;
         const queryParamsValidator = z.object({
             languageCode: languageCodeValidator.optional(),
             addedBy: usernameValidator.or(z.literal("me")).optional(),
             searchQuery: z.string().max(256).optional(),
-            level: courseLevelsFilterValidator.default([]),
+            level: collectionLevelsFilterValidator.default([]),
             hasAudio: booleanStringValidator.optional(),
             sortBy: z.union([z.literal("timeViewed"), z.literal("title"), z.literal("createdDate"), z.literal("pastViewersCount")]).optional().default("title"),
             sortOrder: z.union([z.literal("asc"), z.literal("desc")]).optional().default("asc"),
@@ -247,17 +246,17 @@ class LessonController {
         reply.status(201).send(lessonSerializer.serialize(newLessonMapping.lesson));
     }
 
-    async getNextLessonInCourse(request: FastifyRequest, reply: FastifyReply) {
-        const pathParamsValidator = z.object({courseId: numericStringValidator, lessonId: numericStringValidator});
+    async getNextLessonInCollection(request: FastifyRequest, reply: FastifyReply) {
+        const pathParamsValidator = z.object({collectionId: numericStringValidator, lessonId: numericStringValidator});
         const pathParams = pathParamsValidator.parse(request.params);
 
-        const courseService = new CourseService(request.em);
-        const course = await courseService.findCourse({id: pathParams.courseId});
+        const collectionService = new CollectionService(request.em);
+        const collection = await collectionService.findCollection({id: pathParams.collectionId});
 
-        if (!course)
-            throw new NotFoundAPIError("Course");
-        const nextLesson = await courseService.getNextLessonInCourse(course, pathParams.lessonId, request.user);
-        if (!nextLesson || (!nextLesson.isPublic && request?.user?.profile !== course.addedBy))
+        if (!collection)
+            throw new NotFoundAPIError("Collection");
+        const nextLesson = await collectionService.getNextLessonInCollection(collection, pathParams.lessonId, request.user);
+        if (!nextLesson || (!nextLesson.isPublic && request?.user?.profile !== collection.addedBy))
             throw new NotFoundAPIError("Next lesson");
 
         reply.header("Location", `${API_ROOT}/lessons/${nextLesson.id}/`).status(303).send();

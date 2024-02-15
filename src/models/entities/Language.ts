@@ -1,6 +1,6 @@
-import {Collection, Entity, Formula, ManyToMany, OneToMany, Property, types} from "@mikro-orm/core";
+import {Collection as MikroORMCollection, Entity, Formula, ManyToMany, OneToMany, Property, types} from "@mikro-orm/core";
 import {CustomBaseEntity} from "@/src/models/entities/CustomBaseEntity.js";
-import {Course} from "@/src/models/entities/Course.js";
+import {Collection} from "@/src/models/entities/Collection.js";
 import {Vocab} from "@/src/models/entities/Vocab.js";
 import {Meaning} from "@/src/models/entities/Meaning.js";
 import {Dictionary} from "@/src/models/entities/Dictionary.js";
@@ -54,22 +54,22 @@ export class Language extends CustomBaseEntity {
     };
 
     @OneToMany({entity: () => Lesson, mappedBy: (lesson: Lesson) => lesson.language, hidden: true})
-    lessons: Collection<Lesson> = new Collection<Lesson>(this);
+    lessons: MikroORMCollection<Lesson> = new MikroORMCollection<Lesson>(this);
 
-    @OneToMany({entity: () => Course, mappedBy: (course: Course) => course.language, hidden: true})
-    courses: Collection<Course> = new Collection<Course>(this);
+    @OneToMany({entity: () => Collection, mappedBy: (collection: Collection) => collection.language, hidden: true})
+    collections: MikroORMCollection<Collection> = new MikroORMCollection<Collection>(this);
 
     @OneToMany({entity: () => Dictionary, mappedBy: (dictionary) => dictionary.language, hidden: true})
-    dictionaries: Collection<Dictionary> = new Collection<Dictionary>(this);
+    dictionaries: MikroORMCollection<Dictionary> = new MikroORMCollection<Dictionary>(this);
 
     @OneToMany({entity: () => Vocab, mappedBy: (vocab) => vocab.language, hidden: true})
-    vocabs: Collection<Vocab> = new Collection<Vocab>(this);
+    vocabs: MikroORMCollection<Vocab> = new MikroORMCollection<Vocab>(this);
 
     @OneToMany({entity: () => TTSVoice, mappedBy: (ttsVoice) => ttsVoice.language})
-    ttsVoices: Collection<TTSVoice> = new Collection<TTSVoice>(this);
+    ttsVoices: MikroORMCollection<TTSVoice> = new MikroORMCollection<TTSVoice>(this);
 
     @OneToMany({entity: () => Meaning, mappedBy: (meaning) => meaning.language, hidden: true})
-    meaningsSavedIn: Collection<Meaning> = new Collection<Meaning>(this);
+    meaningsSavedIn: MikroORMCollection<Meaning> = new MikroORMCollection<Meaning>(this);
 
     @ManyToMany({
         entity: () => Profile,
@@ -79,10 +79,10 @@ export class Language extends CustomBaseEntity {
         inverseJoinColumn: "learner_id",
         hidden: true
     })
-    learners: Collection<Profile> = new Collection<Profile>(this);
+    learners: MikroORMCollection<Profile> = new MikroORMCollection<Profile>(this);
 
     @OneToMany({entity: () => HumanPronunciation, mappedBy: (humanPronunciation: HumanPronunciation) => humanPronunciation.language})
-    humanPronunciations: Collection<HumanPronunciation> = new Collection<HumanPronunciation>(this);
+    humanPronunciations: MikroORMCollection<HumanPronunciation> = new MikroORMCollection<HumanPronunciation>(this);
 
 
     @Formula((alias: string) => `(SELECT COUNT(learner_id) FROM map_learner_language WHERE language_id=${alias}.id)`, {
