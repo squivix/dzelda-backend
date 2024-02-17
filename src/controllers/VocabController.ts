@@ -11,7 +11,7 @@ import {UserService} from "@/src/services/UserService.js";
 import {NotFoundAPIError} from "@/src/utils/errors/NotFoundAPIError.js";
 import {User} from "@/src/models/entities/auth/User.js";
 import {booleanStringValidator, numericStringValidator} from "@/src/validators/utilValidators.js";
-import {LessonService} from "@/src/services/LessonService.js";
+import {TextService} from "@/src/services/TextService.js";
 import {vocabSerializer} from "@/src/presentation/response/serializers/entities/VocabSerializer.js";
 import {learnerVocabSerializer} from "@/src/presentation/response/serializers/mappings/LearnerVocabSerializer.js";
 import {APIError} from "@/src/utils/errors/APIError.js";
@@ -27,7 +27,7 @@ class VocabController {
         const queryParamsValidator = z.object({
             languageCode: languageCodeValidator.optional(),
             searchQuery: z.string().max(256).optional(),
-            sortBy: z.union([z.literal("text"), z.literal("lessonsCount"), z.literal("learnersCount")]).optional().default("text"),
+            sortBy: z.union([z.literal("text"), z.literal("textsCount"), z.literal("learnersCount")]).optional().default("text"),
             sortOrder: z.union([z.literal("asc"), z.literal("desc")]).optional().default("asc"),
             page: z.coerce.number().int().min(1).optional().default(1),
             pageSize: z.coerce.number().int().min(1).max(200).optional().default(25),
@@ -93,7 +93,7 @@ class VocabController {
             languageCode: languageCodeValidator.optional(),
             searchQuery: z.string().max(256).optional(),
             level: vocabLevelValidator.transform(l => [l]).or(z.array(vocabLevelValidator)).optional(),
-            sortBy: z.union([z.literal("text"), z.literal("lessonsCount"), z.literal("learnersCount")]).optional().default("text"),
+            sortBy: z.union([z.literal("text"), z.literal("textsCount"), z.literal("learnersCount")]).optional().default("text"),
             sortOrder: z.union([z.literal("asc"), z.literal("desc")]).optional().default("asc"),
             page: z.coerce.number().int().min(1).optional().default(1),
             pageSize: z.coerce.number().int().min(1).max(200).optional().default(25),
@@ -187,17 +187,17 @@ class VocabController {
     }
 
 
-    async getLessonVocabs(request: FastifyRequest, reply: FastifyReply) {
-        const pathParamsValidator = z.object({lessonId: numericStringValidator});
+    async getTextVocabs(request: FastifyRequest, reply: FastifyReply) {
+        const pathParamsValidator = z.object({textId: numericStringValidator});
         const pathParams = pathParamsValidator.parse(request.params);
-        const lessonService = new LessonService(request.em);
-        const lesson = await lessonService.findLesson({id: pathParams.lessonId});
-        if (!lesson || (!lesson.isPublic && request?.user?.profile !== lesson.addedBy))
-            throw new NotFoundAPIError("Lesson");
+        const textService = new TextService(request.em);
+        const text = await textService.findText({id: pathParams.textId});
+        if (!text || (!text.isPublic && request?.user?.profile !== text.addedBy))
+            throw new NotFoundAPIError("Text");
 
         const vocabService = new VocabService(request.em);
 
-        const vocabs = await vocabService.getLessonVocabs(lesson, request.user as User);
+        const vocabs = await vocabService.getTextVocabs(text, request.user as User);
         reply.send(learnerVocabSerializer.serializeList(vocabs));
     }
 

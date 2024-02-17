@@ -15,7 +15,7 @@ import {VocabRepo} from "@/src/models/repos/VocabRepo.js";
 import {randomCase, randomEnum, randomEnums} from "@/tests/utils.js";
 import {VocabLevel} from "@/src/models/enums/VocabLevel.js";
 import {learnerVocabSerializer} from "@/src/presentation/response/serializers/mappings/LearnerVocabSerializer.js";
-import {LessonFactory} from "@/devtools/factories/LessonFactory.js";
+import {TextFactory} from "@/devtools/factories/TextFactory.js";
 import {CollectionFactory} from "@/devtools/factories/CollectionFactory.js";
 import {MeaningFactory} from "@/devtools/factories/MeaningFactory.js";
 import {MapLearnerMeaning} from "@/src/models/entities/MapLearnerMeaning.js";
@@ -26,7 +26,7 @@ interface LocalTestContext extends TestContext {
     languageFactory: LanguageFactory;
     vocabFactory: VocabFactory;
     vocabRepo: VocabRepo;
-    lessonFactory: LessonFactory;
+    textFactory: TextFactory;
     meaningFactory: MeaningFactory;
 }
 
@@ -45,7 +45,7 @@ beforeEach<LocalTestContext>(async (context) => {
     context.sessionFactory = new SessionFactory(context.em);
     context.languageFactory = new LanguageFactory(context.em);
     context.vocabFactory = new VocabFactory(context.em);
-    context.lessonFactory = new LessonFactory(context.em);
+    context.textFactory = new TextFactory(context.em);
     context.meaningFactory = new MeaningFactory(context.em);
 
     context.vocabRepo = context.em.getRepository(Vocab);
@@ -205,15 +205,15 @@ describe("GET vocabs/", () => {
                     data: vocabSerializer.serializeList(expectedVocabs)
                 });
             });
-            test<LocalTestContext>("test sortBy lessonsCount", async (context) => {
+            test<LocalTestContext>("test sortBy textsCount", async (context) => {
                 const language = await context.languageFactory.createOne();
-                const lesson1 = await context.lessonFactory.createOne({language});
-                const lesson2 = await context.lessonFactory.createOne({language});
+                const text1 = await context.textFactory.createOne({language});
+                const text2 = await context.textFactory.createOne({language});
                 const expectedVocabs = [
-                    await context.vocabFactory.createOne({language, lessonsAppearingIn: [lesson1]}),
-                    await context.vocabFactory.createOne({language, lessonsAppearingIn: [lesson1, lesson2]}),
+                    await context.vocabFactory.createOne({language, textsAppearingIn: [text1]}),
+                    await context.vocabFactory.createOne({language, textsAppearingIn: [text1, text2]}),
                 ];
-                const response = await makeRequest({sortBy: "lessonsCount"});
+                const response = await makeRequest({sortBy: "textsCount"});
 
                 const recordsCount = expectedVocabs.length;
 
@@ -724,7 +724,7 @@ describe("GET users/me/vocabs/", () => {
                 data: learnerVocabSerializer.serializeList(expectedMappings)
             });
         });
-        test<LocalTestContext>("If multiple levels are sent return lessons in any of those levels", async (context) => {
+        test<LocalTestContext>("If multiple levels are sent return vocabs in any of those levels", async (context) => {
             const user = await context.userFactory.createOne();
             const session = await context.sessionFactory.createOne({user: user});
             const language = await context.languageFactory.createOne();
@@ -864,16 +864,16 @@ describe("GET users/me/vocabs/", () => {
                     data: learnerVocabSerializer.serializeList(expectedMappings)
                 });
             });
-            test<LocalTestContext>("test sortBy lessonsCount", async (context) => {
+            test<LocalTestContext>("test sortBy textsCount", async (context) => {
                 const user = await context.userFactory.createOne();
                 const session = await context.sessionFactory.createOne({user: user});
                 const language = await context.languageFactory.createOne();
-                const lesson1 = await context.lessonFactory.createOne({language});
-                const lesson2 = await context.lessonFactory.createOne({language});
+                const text1 = await context.textFactory.createOne({language});
+                const text2 = await context.textFactory.createOne({language});
 
                 const expectedVocabs = [
-                    await context.vocabFactory.createOne({language, lessonsAppearingIn: [lesson1]}),
-                    await context.vocabFactory.createOne({language, lessonsAppearingIn: [lesson1, lesson2]})
+                    await context.vocabFactory.createOne({language, textsAppearingIn: [text1]}),
+                    await context.vocabFactory.createOne({language, textsAppearingIn: [text1, text2]})
                 ];
                 await context.vocabFactory.createOne({language});
                 const expectedMappings = [];
@@ -882,7 +882,7 @@ describe("GET users/me/vocabs/", () => {
                 await context.em.flush();
                 const recordsCount = expectedMappings.length;
 
-                const response = await makeRequest({sortBy: "lessonsCount"}, session.token);
+                const response = await makeRequest({sortBy: "textsCount"}, session.token);
 
                 expect(response.statusCode).to.equal(200);
                 expect(response.json()).toEqual({
@@ -1487,12 +1487,12 @@ describe("DELETE users/me/vocabs/:vocabId/", () => {
     });
 });
 
-/**{@link VocabController#getLessonVocabs}*/
-describe("GET lessons/:lessonId/vocabs/", () => {
-    const makeRequest = async (lessonId: number | string, authToken?: string) => {
+/**{@link VocabController#getTextVocabs}*/
+describe("GET texts/:textId/vocabs/", () => {
+    const makeRequest = async (textId: number | string, authToken?: string) => {
         const options: InjectOptions = {
             method: "GET",
-            url: `lessons/${lessonId}/vocabs/`
+            url: `texts/${textId}/vocabs/`
         };
         return await fetchRequest(options, authToken);
     };
@@ -1504,24 +1504,24 @@ describe("GET lessons/:lessonId/vocabs/", () => {
     //  This test failed and still fails to catch 2 HUGE logical errors with SQL bad queries:
     //  1) non-null-safe != for map_learner_vocab.learner_id
     //  2) if user1 is learning vocab and user2 is not learning vocab just filtering by learner_id != user2_id won't detect new vocabs for user2 because user1 records will survive the filter
-    test<LocalTestContext>("If user is logged in, lesson exists and is public return vocabs in lesson", async (context) => {
+    test<LocalTestContext>("If user is logged in, text exists and is public return vocabs in text", async (context) => {
         const user = await context.userFactory.createOne();
         const session = await context.sessionFactory.createOne({user: user});
         const language = await context.languageFactory.createOne();
-        const lesson = await context.lessonFactory.createOne({language, isPublic: true});
-        const expectedNewVocabs = await context.vocabFactory.create(3, {language, lessonsAppearingIn: lesson});
-        const expectedExistingVocabs = await context.vocabFactory.create(3, {language, lessonsAppearingIn: lesson});
+        const text = await context.textFactory.createOne({language, isPublic: true});
+        const expectedNewVocabs = await context.vocabFactory.create(3, {language, textsAppearingIn: text});
+        const expectedExistingVocabs = await context.vocabFactory.create(3, {language, textsAppearingIn: text});
         const expectedExistingMappings = [];
         for (let vocab of expectedExistingVocabs)
             expectedExistingMappings.push(context.em.create(MapLearnerVocab, {learner: user.profile, vocab}));
         await context.em.flush();
-        const expectedLessonVocabs = [...expectedExistingMappings, ...expectedNewVocabs];
+        const expectedTextVocabs = [...expectedExistingMappings, ...expectedNewVocabs];
         await context.vocabFactory.create(10, {language});
-        const response = await makeRequest(lesson.id, session.token);
+        const response = await makeRequest(text.id, session.token);
 
         expect(response.statusCode).to.equal(200);
         const responseBody = response.json();
-        const expectedBody = learnerVocabSerializer.serializeList(expectedLessonVocabs);
+        const expectedBody = learnerVocabSerializer.serializeList(expectedTextVocabs);
         //ignore order
         expect(responseBody.length).toEqual(expectedBody.length);
         expect(responseBody).toEqual(expect.arrayContaining(expectedBody));
@@ -1529,9 +1529,9 @@ describe("GET lessons/:lessonId/vocabs/", () => {
     test<LocalTestContext>("If user is not logged in return 401", async (context) => {
         const user = await context.userFactory.createOne();
         const language = await context.languageFactory.createOne({learners: user.profile});
-        const lesson = await context.lessonFactory.createOne({language});
+        const text = await context.textFactory.createOne({language});
 
-        const response = await makeRequest(lesson.id);
+        const response = await makeRequest(text.id);
 
         expect(response.statusCode).to.equal(401);
     });
@@ -1539,13 +1539,13 @@ describe("GET lessons/:lessonId/vocabs/", () => {
         const user = await context.userFactory.createOne({isEmailConfirmed: false});
         const session = await context.sessionFactory.createOne({user: user});
         const language = await context.languageFactory.createOne({learners: user.profile});
-        const lesson = await context.lessonFactory.createOne({language});
+        const text = await context.textFactory.createOne({language});
 
-        const response = await makeRequest(lesson.id, session.token);
+        const response = await makeRequest(text.id, session.token);
 
         expect(response.statusCode).to.equal(403);
     });
-    test<LocalTestContext>("If lesson does not exists return 404", async (context) => {
+    test<LocalTestContext>("If text does not exists return 404", async (context) => {
         const user = await context.userFactory.createOne();
         const session = await context.sessionFactory.createOne({user: user});
 
@@ -1553,34 +1553,34 @@ describe("GET lessons/:lessonId/vocabs/", () => {
 
         expect(response.statusCode).to.equal(404);
     });
-    test<LocalTestContext>("If lesson is not public and user is not author return 404", async (context) => {
+    test<LocalTestContext>("If text is not public and user is not author return 404", async (context) => {
         const user = await context.userFactory.createOne();
         const session = await context.sessionFactory.createOne({user: user});
         const language = await context.languageFactory.createOne();
-        const lesson = await context.lessonFactory.createOne({language, isPublic: false});
+        const text = await context.textFactory.createOne({language, isPublic: false});
 
-        const response = await makeRequest(lesson.id, session.token);
+        const response = await makeRequest(text.id, session.token);
 
         expect(response.statusCode).to.equal(404);
     });
-    test<LocalTestContext>("If lesson is not public and user is author return lesson vocabs", async (context) => {
+    test<LocalTestContext>("If text is not public and user is author return text vocabs", async (context) => {
         const user = await context.userFactory.createOne();
         const session = await context.sessionFactory.createOne({user: user});
         const language = await context.languageFactory.createOne();
-        const lesson = await context.lessonFactory.createOne({language, isPublic: false, addedBy: user.profile});
-        const expectedNewVocabs = await context.vocabFactory.create(3, {language, lessonsAppearingIn: lesson});
-        const expectedExistingVocabs = await context.vocabFactory.create(3, {language, lessonsAppearingIn: lesson});
+        const text = await context.textFactory.createOne({language, isPublic: false, addedBy: user.profile});
+        const expectedNewVocabs = await context.vocabFactory.create(3, {language, textsAppearingIn: text});
+        const expectedExistingVocabs = await context.vocabFactory.create(3, {language, textsAppearingIn: text});
         const expectedExistingMappings = [];
         for (let vocab of expectedExistingVocabs)
             expectedExistingMappings.push(context.em.create(MapLearnerVocab, {learner: user.profile, vocab}));
         await context.em.flush();
-        const expectedLessonVocabs = [...expectedExistingMappings, ...expectedNewVocabs];
+        const expectedTextVocabs = [...expectedExistingMappings, ...expectedNewVocabs];
         await context.vocabFactory.create(10, {language});
-        const response = await makeRequest(lesson.id, session.token);
+        const response = await makeRequest(text.id, session.token);
 
         expect(response.statusCode).to.equal(200);
         const responseBody = response.json();
-        const expectedBody = learnerVocabSerializer.serializeList(expectedLessonVocabs);
+        const expectedBody = learnerVocabSerializer.serializeList(expectedTextVocabs);
         //ignore order
         expect(responseBody.length).toEqual(expectedBody.length);
         expect(responseBody).toEqual(expect.arrayContaining(expectedBody));

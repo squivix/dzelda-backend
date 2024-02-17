@@ -11,9 +11,9 @@ import {Language} from "@/src/models/entities/Language.js";
 import {EntityRepository} from "@mikro-orm/core";
 import {ProfileFactory} from "@/devtools/factories/ProfileFactory.js";
 import {languageSerializer} from "@/src/presentation/response/serializers/entities/LanguageSerializer.js";
-import {LessonFactory} from "@/devtools/factories/LessonFactory.js";
+import {TextFactory} from "@/devtools/factories/TextFactory.js";
 import {CollectionFactory} from "@/devtools/factories/CollectionFactory.js";
-import {MapPastViewerLesson} from "@/src/models/entities/MapPastViewerLesson.js";
+import {TextHistoryEntry} from "@/src/models/entities/TextHistoryEntry.js";
 import {MapLearnerDictionary} from "@/src/models/entities/MapLearnerDictionary.js";
 import {DictionaryFactory} from "@/devtools/factories/DictionaryFactory.js";
 import {VocabFactory} from "@/devtools/factories/VocabFactory.js";
@@ -29,7 +29,7 @@ interface LocalTestContext extends TestContext {
     mapLearnerLanguageRepo: EntityRepository<MapLearnerLanguage>;
     languageFactory: LanguageFactory;
     collectionFactory: CollectionFactory;
-    lessonFactory: LessonFactory;
+    textFactory: TextFactory;
     dictionaryFactory: DictionaryFactory;
     vocabFactory: VocabFactory;
     meaningFactory: MeaningFactory;
@@ -50,7 +50,7 @@ beforeEach<LocalTestContext>(async (context) => {
     context.profileFactory = new ProfileFactory(context.em);
     context.sessionFactory = new SessionFactory(context.em);
     context.languageFactory = new LanguageFactory(context.em);
-    context.lessonFactory = new LessonFactory(context.em);
+    context.textFactory = new TextFactory(context.em);
     context.collectionFactory = new CollectionFactory(context.em);
     context.dictionaryFactory = new DictionaryFactory(context.em);
     context.vocabFactory = new VocabFactory(context.em);
@@ -556,12 +556,12 @@ describe("DELETE users/me/languages/:languageCode/", () => {
         const language = await context.languageFactory.createOne({learners: user.profile});
 
         const collections = await context.collectionFactory.create(3, {language});
-        const lessons = [
-            ...await context.lessonFactory.create(3, {language, collection: collections[0]}),
-            ...await context.lessonFactory.create(3, {language, collection: collections[1]}),
-            ...await context.lessonFactory.create(3, {language, collection: collections[2]})
+        const texts = [
+            ...await context.textFactory.create(3, {language, collection: collections[0]}),
+            ...await context.textFactory.create(3, {language, collection: collections[1]}),
+            ...await context.textFactory.create(3, {language, collection: collections[2]})
         ];
-        await context.em.insertMany(MapPastViewerLesson, lessons.map(l => ({lesson: l, pastViewer: user.profile})));
+        await context.em.insertMany(TextHistoryEntry, texts.map(l => ({text: l, pastViewer: user.profile})));
         const dictionaries = await context.dictionaryFactory.create(3, {language});
         await context.em.insertMany(MapLearnerDictionary, dictionaries.map(d => ({dictionary: d, learner: user.profile})));
         const vocabs = await context.vocabFactory.create(3, {language});

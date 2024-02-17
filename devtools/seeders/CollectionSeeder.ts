@@ -9,7 +9,7 @@ import {DATASET_FILES} from "@/devtools/constants.js";
 export class CollectionSeeder extends Seeder {
 
     async run(em: EntityManager, context: Dictionary): Promise<void> {
-        const collectionFilePath = path.join(context.databaseDumpPath, DATASET_FILES.collections);
+        const collectionFilePath = path.join(context.databaseDumpPath, DATASET_FILES.collection);
 
         if (!await fs.exists(collectionFilePath)) {
             console.error(`${collectionFilePath} not found`);

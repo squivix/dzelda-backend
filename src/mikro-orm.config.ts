@@ -5,13 +5,13 @@ import {Collection} from "@/src/models/entities/Collection.js";
 import {CustomBaseEntity} from "@/src/models/entities/CustomBaseEntity.js";
 import {Meaning} from "@/src/models/entities/Meaning.js";
 import {Dictionary} from "@/src/models/entities/Dictionary.js";
-import {MapLessonVocab} from "@/src/models/entities/MapLessonVocab.js";
-import {MapPastViewerLesson} from "@/src/models/entities/MapPastViewerLesson.js";
+import {MapTextVocab} from "@/src/models/entities/MapTextVocab.js";
+import {TextHistoryEntry} from "@/src/models/entities/TextHistoryEntry.js";
 import {MapLearnerMeaning} from "@/src/models/entities/MapLearnerMeaning.js";
 import {Language} from "@/src/models/entities/Language.js";
 import {MapLearnerDictionary} from "@/src/models/entities/MapLearnerDictionary.js";
 import {MapLearnerVocab} from "@/src/models/entities/MapLearnerVocab.js";
-import {Lesson} from "@/src/models/entities/Lesson.js";
+import {Text} from "@/src/models/entities/Text.js";
 import {Session} from "@/src/models/entities/auth/Session.js";
 import {Vocab} from "@/src/models/entities/Vocab.js";
 import {MapLearnerLanguage} from "@/src/models/entities/MapLearnerLanguage.js";
@@ -26,8 +26,8 @@ import {MapBookmarkerCollection} from "@/src/models/entities/MapBookmarkerCollec
 
 const devOptions: Options = {
     type: "postgresql",
-    entities: [Collection, CustomBaseEntity, Dictionary, Language, Lesson, MapLearnerDictionary, MapBookmarkerCollection,
-        MapPastViewerLesson, MapLearnerMeaning, MapLearnerVocab, MapLessonVocab, MapLearnerLanguage, Meaning,
+    entities: [Collection, CustomBaseEntity, Dictionary, Language, Text, MapLearnerDictionary, MapBookmarkerCollection,
+        TextHistoryEntry, MapLearnerMeaning, MapLearnerVocab, MapTextVocab, MapLearnerLanguage, Meaning,
         Profile, Vocab, User, Session, PasswordResetToken, EmailConfirmationToken, FileUploadRequest, TTSVoice, TTSPronunciation, HumanPronunciation],
     loadStrategy: LoadStrategy.SELECT_IN,
     debug: true,

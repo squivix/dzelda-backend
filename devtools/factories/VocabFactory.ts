@@ -11,13 +11,13 @@ export class VocabFactory extends CustomFactory<Vocab> {
             text: faker.random.alpha(20),
             isPhrase: faker.datatype.boolean(),
             learnersCount: 0,
-            lessonsCount: 0
+            textsCount: 0
         };
     }
 
     override makeDefinition(overrideParameters?: EntityData<Vocab>): EntityData<Vocab> {
-        if (overrideParameters?.lessonsAppearingIn !== undefined)
-            overrideParameters.lessonsCount = Array.isArray(overrideParameters?.lessonsAppearingIn) ? overrideParameters.lessonsAppearingIn.length : 1;
+        if (overrideParameters?.textsAppearingIn !== undefined)
+            overrideParameters.textsCount = Array.isArray(overrideParameters?.textsAppearingIn) ? overrideParameters.textsAppearingIn.length : 1;
         if (overrideParameters?.learners !== undefined)
             overrideParameters.learnersCount = Array.isArray(overrideParameters?.learners) ? overrideParameters.learners.length : 1;
         return super.makeDefinition(overrideParameters);

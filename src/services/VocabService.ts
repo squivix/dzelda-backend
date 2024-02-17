@@ -5,12 +5,12 @@ import {User} from "@/src/models/entities/auth/User.js";
 import {MapLearnerVocab} from "@/src/models/entities/MapLearnerVocab.js";
 import {VocabRepo} from "@/src/models/repos/VocabRepo.js";
 import {VocabLevel} from "@/src/models/enums/VocabLevel.js";
-import {Lesson} from "@/src/models/entities/Lesson.js";
+import {Text} from "@/src/models/entities/Text.js";
 import {QueryOrderMap} from "@mikro-orm/core/enums.js";
 import {MapLearnerMeaning} from "@/src/models/entities/MapLearnerMeaning.js";
 import {EntityField} from "@mikro-orm/core/drivers/IDatabaseDriver.js";
 import {Profile} from "@/src/models/entities/Profile.js";
-import {MapLessonVocab} from "@/src/models/entities/MapLessonVocab.js";
+import {MapTextVocab} from "@/src/models/entities/MapTextVocab.js";
 import {escapeRegExp} from "@/src/utils/utils.js";
 import {TTSVoice} from "@/src/models/entities/TTSVoice.js";
 import textToSpeech from "@google-cloud/text-to-speech";
@@ -34,7 +34,7 @@ export class VocabService {
     }
 
     async getPaginatedVocabs(filters: { languageCode?: string, searchQuery?: string },
-                             sort: { sortBy: "text" | "lessonsCount" | "learnersCount", sortOrder: "asc" | "desc" },
+                             sort: { sortBy: "text" | "textsCount" | "learnersCount", sortOrder: "asc" | "desc" },
                              pagination: { page: number, pageSize: number }) {
         const dbFilters: FilterQuery<Vocab> = {$and: []};
 
@@ -47,12 +47,12 @@ export class VocabService {
             dbOrderBy.push({text: sort.sortOrder});
         else if (sort.sortBy == "learnersCount")
             dbOrderBy.push({learnersCount: sort.sortOrder});
-        else if (sort.sortBy == "lessonsCount")
-            dbOrderBy.push({lessonsCount: sort.sortOrder});
+        else if (sort.sortBy == "textsCount")
+            dbOrderBy.push({textsCount: sort.sortOrder});
         dbOrderBy.push({id: "asc"});
 
         return await this.vocabRepo.findAndCount(dbFilters, {
-            populate: ["language", "meanings", "meanings.addedBy.user", "learnersCount", "lessonsCount"],
+            populate: ["language", "meanings", "meanings.addedBy.user", "learnersCount", "textsCount"],
             orderBy: dbOrderBy,
             limit: pagination.pageSize,
             offset: pagination.pageSize * (pagination.page - 1),
@@ -65,14 +65,14 @@ export class VocabService {
             language: vocabData.language,
             isPhrase: vocabData.isPhrase,
             learnersCount: 0,
-            lessonsCount: 0
+            textsCount: 0
         });
         await this.em.flush();
-        //TODO move vocab in lesson regex somewhere centralized and test the heck out of it
+        //TODO move vocab in text regex somewhere centralized and test the heck out of it
         const vocabFindRegex = new RegExp(`(\\s|^)${escapeRegExp(newVocab.text)}(\\s|$)`);
-        const lessonsWithVocab = await this.em.find(Lesson, {$or: [{parsedText: vocabFindRegex}, {parsedTitle: vocabFindRegex}]});
-        if (lessonsWithVocab.length > 0)
-            await this.em.insertMany(MapLessonVocab, lessonsWithVocab.map(lesson => ({lesson, vocab: newVocab})));
+        const textsWithVocab = await this.em.find(Text, {$or: [{parsedContent: vocabFindRegex}, {parsedTitle: vocabFindRegex}]});
+        if (textsWithVocab.length > 0)
+            await this.em.insertMany(MapTextVocab, textsWithVocab.map(text => ({text: text, vocab: newVocab})));
         return newVocab;
     }
 
@@ -90,7 +90,7 @@ export class VocabService {
     }
 
     async getPaginatedLearnerVocabs(filters: { languageCode?: string, level?: VocabLevel[], searchQuery?: string },
-                                    sort: { sortBy: "text" | "lessonsCount" | "learnersCount", sortOrder: "asc" | "desc" },
+                                    sort: { sortBy: "text" | "textsCount" | "learnersCount", sortOrder: "asc" | "desc" },
                                     pagination: { page: number, pageSize: number }, user: User): Promise<[MapLearnerVocab[], number]> {
         const dbFilters: FilterQuery<MapLearnerVocab> = {$and: []};
         dbFilters.$and!.push({learner: user.profile});
@@ -106,8 +106,8 @@ export class VocabService {
             dbOrderBy.push({vocab: {text: sort.sortOrder}});
         else if (sort.sortBy == "learnersCount")
             dbOrderBy.push({vocab: {learnersCount: sort.sortOrder}});
-        else if (sort.sortBy == "lessonsCount")
-            dbOrderBy.push({vocab: {lessonsCount: sort.sortOrder}});
+        else if (sort.sortBy == "textsCount")
+            dbOrderBy.push({vocab: {textsCount: sort.sortOrder}});
         dbOrderBy.push({vocab: {id: "asc"}});
 
         const [mappings, totalCount] = await this.em.findAndCount(MapLearnerVocab, dbFilters, {
@@ -174,9 +174,9 @@ export class VocabService {
         await this.em.flush();
     }
 
-    async getLessonVocabs(lesson: Lesson, user: User) {
+    async getTextVocabs(text: Text, user: User) {
         const existingMappings = await this.em.find(MapLearnerVocab, {
-            vocab: {lessonsAppearingIn: lesson},
+            vocab: {textsAppearingIn: text},
             learner: user.profile
         }, {
             populate: ["vocab.language", "vocab.meanings.language", "vocab.meanings.addedBy.user", "vocab.ttsPronunciations", "vocab.ttsPronunciations.voice"],
@@ -185,7 +185,7 @@ export class VocabService {
             where: {vocab: {learnerMeanings: {learners: user.profile}}},
         });
         const newVocabs = await this.em.find(Vocab, {
-            lessonsAppearingIn: lesson,
+            textsAppearingIn: text,
             $nin: existingMappings.map(m => m.vocab)
         }, {
             populate: ["language", "meanings", "meanings.language", "meanings.addedBy.user", "ttsPronunciations", "ttsPronunciations.voice"],

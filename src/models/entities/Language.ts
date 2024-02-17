@@ -7,7 +7,7 @@ import {Dictionary} from "@/src/models/entities/Dictionary.js";
 import {Profile} from "@/src/models/entities/Profile.js";
 import {MapLearnerLanguage} from "@/src/models/entities/MapLearnerLanguage.js";
 import {LanguageRepo} from "@/src/models/repos/LanguageRepo.js";
-import {Lesson} from "@/src/models/entities/Lesson.js";
+import {Text} from "@/src/models/entities/Text.js";
 import {TTSVoice} from "@/src/models/entities/TTSVoice.js";
 import {HumanPronunciation} from "@/src/models/entities/HumanPronunciation.js";
 
@@ -53,8 +53,8 @@ export class Language extends CustomBaseEntity {
         advanced2: number;
     };
 
-    @OneToMany({entity: () => Lesson, mappedBy: (lesson: Lesson) => lesson.language, hidden: true})
-    lessons: MikroORMCollection<Lesson> = new MikroORMCollection<Lesson>(this);
+    @OneToMany({entity: () => Text, mappedBy: (text: Text) => text.language, hidden: true})
+    texts: MikroORMCollection<Text> = new MikroORMCollection<Text>(this);
 
     @OneToMany({entity: () => Collection, mappedBy: (collection: Collection) => collection.language, hidden: true})
     collections: MikroORMCollection<Collection> = new MikroORMCollection<Collection>(this);

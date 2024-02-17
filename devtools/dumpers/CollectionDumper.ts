@@ -7,7 +7,7 @@ import path from "path";
 export async function dumpCollections({em, batchSize, dataPath}: { em: EntityManager, batchSize: number, dataPath: string }) {
     await batchDump({
         em, batchSize,
-        filePath: path.join(dataPath, DATASET_FILES.collections),
+        filePath: path.join(dataPath, DATASET_FILES.collection),
         entityClass: Collection,
         resourceName: "collection",
         writeEntity: (collection: Collection) => ({

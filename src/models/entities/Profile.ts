@@ -3,8 +3,8 @@ import {User} from "@/src/models/entities/auth/User.js";
 import {CustomBaseEntity} from "@/src/models/entities/CustomBaseEntity.js";
 import {Collection} from "@/src/models/entities/Collection.js";
 import {Meaning} from "@/src/models/entities/Meaning.js";
-import {Lesson} from "@/src/models/entities/Lesson.js";
-import {MapPastViewerLesson} from "@/src/models/entities/MapPastViewerLesson.js";
+import {Text} from "@/src/models/entities/Text.js";
+import {TextHistoryEntry} from "@/src/models/entities/TextHistoryEntry.js";
 import {Vocab} from "@/src/models/entities/Vocab.js";
 import {MapLearnerVocab} from "@/src/models/entities/MapLearnerVocab.js";
 import {MapLearnerMeaning} from "@/src/models/entities/MapLearnerMeaning.js";
@@ -49,12 +49,12 @@ export class Profile extends CustomBaseEntity {
     languagesLearning: MikroORMCollection<Language> = new MikroORMCollection<Language>(this);
 
     @ManyToMany({
-        entity: () => Lesson,
-        mappedBy: (lesson: Lesson) => lesson.pastViewers,
-        pivotEntity: () => MapPastViewerLesson,
+        entity: () => Text,
+        mappedBy: (text: Text) => text.pastViewers,
+        pivotEntity: () => TextHistoryEntry,
         hidden: true
     })
-    lessonHistory: MikroORMCollection<Lesson> = new MikroORMCollection<Lesson>(this);
+    textHistory: MikroORMCollection<Text> = new MikroORMCollection<Text>(this);
 
     @ManyToMany({
         entity: () => Vocab,
@@ -91,8 +91,8 @@ export class Profile extends CustomBaseEntity {
     @OneToMany({entity: () => Collection, mappedBy: (collection: Collection) => collection.addedBy, hidden: true})
     collectionsAdded: MikroORMCollection<Collection> = new MikroORMCollection<Collection>(this);
 
-    @OneToMany({entity: () => Lesson, mappedBy: (lesson: Lesson) => lesson.addedBy, hidden: true})
-    lessonsAdded: MikroORMCollection<Lesson> = new MikroORMCollection<Lesson>(this);
+    @OneToMany({entity: () => Text, mappedBy: (text: Text) => text.addedBy, hidden: true})
+    textsAdded: MikroORMCollection<Text> = new MikroORMCollection<Text>(this);
 
     @OneToMany({entity: () => Meaning, mappedBy: (meaning: Meaning) => meaning.addedBy, hidden: true})
     meaningsAdded: MikroORMCollection<Meaning> = new MikroORMCollection<Meaning>(this);

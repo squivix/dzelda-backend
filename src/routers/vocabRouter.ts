@@ -30,9 +30,9 @@ export const vocabRouter: FastifyPluginCallback = function (fastify, options, do
         preHandler: [requiresAuth, requiresEmailConfirmed],
         handler: vocabController.deleteUserVocab
     });
-    fastify.get(`/lessons/:lessonId/vocabs/`, {
+    fastify.get(`/texts/:textId/vocabs/`, {
         preHandler: [requiresAuth, requiresEmailConfirmed],
-        handler: vocabController.getLessonVocabs
+        handler: vocabController.getTextVocabs
     });
 
     fastify.post(`/tts-pronunciations/`, {

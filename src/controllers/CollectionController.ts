@@ -23,7 +23,7 @@ class CollectionController {
             languageCode: languageCodeValidator.optional(),
             addedBy: usernameValidator.or(z.literal("me")).optional(),
             searchQuery: z.string().max(256).optional(),
-            sortBy: z.union([z.literal("title"), z.literal("createdDate"), z.literal("avgPastViewersCountPerLesson")]).optional().default("title"),
+            sortBy: z.union([z.literal("title"), z.literal("createdDate"), z.literal("avgPastViewersCountPerText")]).optional().default("title"),
             sortOrder: z.union([z.literal("asc"), z.literal("desc")]).optional().default("asc"),
             page: z.coerce.number().int().min(1).optional().default(1),
             pageSize: z.coerce.number().int().min(1).max(100).optional().default(10),
@@ -98,13 +98,13 @@ class CollectionController {
         const bodyValidator = z.object({
             title: collectionTitleValidator,
             description: collectionDescriptionValidator,
-            lessonsOrder: z.array(z.number().int().min(0)).refine(e => new Set(e).size === e.length),
+            textsOrder: z.array(z.number().int().min(0)).refine(e => new Set(e).size === e.length),
             image: z.string().optional()
         });
         const body = bodyValidator.parse(request.body);
 
         const collectionService = new CollectionService(request.em);
-        const collection = await collectionService.findCollection(pathParams.collectionId, ["id", "addedBy", "lessons"]);
+        const collection = await collectionService.findCollection(pathParams.collectionId, ["id", "addedBy", "texts"]);
 
         if (!collection)
             throw new NotFoundAPIError("Collection");
@@ -112,9 +112,9 @@ class CollectionController {
         if (request?.user?.profile !== collection.addedBy)
             throw new ForbiddenAPIError();
 
-        const lessonOrderIdSet = new Set(body.lessonsOrder);
-        if (collection.lessons.length !== body.lessonsOrder.length || !collection.lessons.getItems().map(c => c.id).every(l => lessonOrderIdSet.has(l)))
-            throw new ValidationAPIError({lessonsOrder: "ids don't match collection lessons: cannot add or remove lessons through this endpoint, only reorder"});
+        const textOrderIdSet = new Set(body.textsOrder);
+        if (collection.texts.length !== body.textsOrder.length || !collection.texts.getItems().map(c => c.id).every(l => textOrderIdSet.has(l)))
+            throw new ValidationAPIError({textsOrder: "ids don't match collection text: cannot add or remove texts through this endpoint, only reorder"});
         const userService = new UserService(request.em);
         if (body.image)
             body.image = await validateFileObjectKey(userService, request.user as User, body.image, "collectionImage", "image");
@@ -123,7 +123,7 @@ class CollectionController {
             title: body.title,
             description: body.description,
             image: body.image,
-            lessonsOrder: body.lessonsOrder
+            textsOrder: body.textsOrder
         }, request.user as User);
         reply.status(200).send(collectionSerializer.serialize(updatedCollection));
     }
@@ -148,7 +148,7 @@ class CollectionController {
             languageCode: languageCodeValidator.optional(),
             addedBy: usernameValidator.or(z.literal("me")).optional(),
             searchQuery: z.string().max(256).optional(),
-            sortBy: z.union([z.literal("title"), z.literal("createdDate"), z.literal("avgPastViewersCountPerLesson")]).optional().default("title"),
+            sortBy: z.union([z.literal("title"), z.literal("createdDate"), z.literal("avgPastViewersCountPerText")]).optional().default("title"),
             sortOrder: z.union([z.literal("asc"), z.literal("desc")]).optional().default("asc"),
             page: z.coerce.number().int().min(1).optional().default(1),
             pageSize: z.coerce.number().int().min(1).max(100).optional().default(10),

@@ -17,15 +17,15 @@ export class CollectionRepo extends EntityRepository<Collection> {
         const query = `SELECT json_object_agg(outq.id, outq.vocab_levels) AS vocab_levels_by_collection
 FROM (SELECT subq.collection_id                          AS id,
              json_object_agg(COALESCE(subq.level, 0), subq.count) AS vocab_levels
-      FROM (SELECT lesson.collection_id,
+      FROM (SELECT text.collection_id,
                    mlv2.level,
                    COUNT(*)
-            FROM map_lesson_vocab mlv
+            FROM map_text_vocab mlv
                      LEFT JOIN map_learner_vocab mlv2 on mlv.vocab_id = mlv2.vocab_id AND mlv2.learner_id = ${learnerId}
-                     LEFT JOIN lesson on mlv.lesson_id = lesson.id
-            WHERE lesson.collection_id IN (${collections.map(c=>c.id).join(",")})
-            GROUP BY lesson.collection_id, mlv2.level
-            ORDER BY lesson.collection_id) AS subq
+                     LEFT JOIN text on mlv.text_id = text.id
+            WHERE text.collection_id IN (${collections.map(c=>c.id).join(",")})
+            GROUP BY text.collection_id, mlv2.level
+            ORDER BY text.collection_id) AS subq
       GROUP BY subq.collection_id) as outq`;
 
         const vocabLevelsByCollection = (await this.em.execute(query))[0].vocab_levels_by_collection;

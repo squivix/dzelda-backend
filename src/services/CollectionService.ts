@@ -4,8 +4,8 @@ import {CollectionRepo} from "@/src/models/repos/CollectionRepo.js";
 import {AnonymousUser, User} from "@/src/models/entities/auth/User.js";
 import {Language} from "@/src/models/entities/Language.js";
 import {defaultVocabsByLevel} from "@/src/models/enums/VocabLevel.js";
-import {Lesson} from "@/src/models/entities/Lesson.js";
-import {LessonRepo} from "@/src/models/repos/LessonRepo.js";
+import {Text} from "@/src/models/entities/Text.js";
+import {TextRepo} from "@/src/models/repos/TextRepo.js";
 import {QueryOrderMap} from "@mikro-orm/core/enums.js";
 import {EntityField} from "@mikro-orm/core/drivers/IDatabaseDriver.js";
 import {MapBookmarkerCollection} from "@/src/models/entities/MapBookmarkerCollection.js";
@@ -13,18 +13,18 @@ import {MapBookmarkerCollection} from "@/src/models/entities/MapBookmarkerCollec
 export class CollectionService {
     em: EntityManager;
     collectionRepo: CollectionRepo;
-    lessonRepo: LessonRepo;
+    textRepo: TextRepo;
 
     constructor(em: EntityManager) {
         this.em = em;
         this.collectionRepo = this.em.getRepository(Collection) as CollectionRepo;
-        this.lessonRepo = this.em.getRepository(Lesson) as LessonRepo;
+        this.textRepo = this.em.getRepository(Text) as TextRepo;
     }
 
     async getPaginatedCollections(filters: {
         languageCode?: string, addedBy?: string, searchQuery?: string, isBookmarked?: boolean
     }, sort: {
-        sortBy: "title" | "createdDate" | "avgPastViewersCountPerLesson",
+        sortBy: "title" | "createdDate" | "avgPastViewersCountPerText",
         sortOrder: "asc" | "desc"
     }, pagination: { page: number, pageSize: number }, user: User | AnonymousUser | null): Promise<[Collection[], number]> {
         const dbFilters: FilterQuery<Collection> = {$and: []};
@@ -45,8 +45,8 @@ export class CollectionService {
             dbOrderBy.push({title: sort.sortOrder});
         else if (sort.sortBy == "createdDate")
             dbOrderBy.push({addedOn: sort.sortOrder});
-        else if (sort.sortBy == "avgPastViewersCountPerLesson")
-            dbOrderBy.push({avgPastViewersCountPerLesson: sort.sortOrder});
+        else if (sort.sortBy == "avgPastViewersCountPerText")
+            dbOrderBy.push({avgPastViewersCountPerText: sort.sortOrder});
         dbOrderBy.push({id: "asc"});
 
         const [collections, totalCount] = await this.collectionRepo.findAndCount(dbFilters, {
@@ -79,11 +79,11 @@ export class CollectionService {
     async getCollection(collectionId: number, user: User | AnonymousUser | null) {
         const collection = await this.collectionRepo.findOne({id: collectionId}, {populate: ["language", "addedBy", "addedBy.user"]});
         if (collection) {
-            const privateFilter: FilterQuery<Lesson> = user instanceof User ? {$or: [{isPublic: true}, {addedBy: user.profile}]} : {isPublic: true};
-            await collection.lessons.init({where: privateFilter, orderBy: {orderInCollection: "asc"}, populate: ["addedBy.user"]});
+            const privateFilter: FilterQuery<Text> = user instanceof User ? {$or: [{isPublic: true}, {addedBy: user.profile}]} : {isPublic: true};
+            await collection.texts.init({where: privateFilter, orderBy: {orderInCollection: "asc"}, populate: ["addedBy.user"]});
             if (user && !(user instanceof AnonymousUser)) {
                 await this.collectionRepo.annotateCollectionsWithUserData([collection], user);
-                await this.lessonRepo.annotateLessonsWithUserData(collection.lessons.getItems(), user);
+                await this.textRepo.annotateTextsWithUserData(collection.texts.getItems(), user);
             }
         }
         return collection;
@@ -93,7 +93,7 @@ export class CollectionService {
         title: string;
         description: string;
         image?: string;
-        lessonsOrder: number[]
+        textsOrder: number[]
     }, user: User) {
         collection.title = updatedCollectionData.title;
         collection.description = updatedCollectionData.description;
@@ -101,14 +101,14 @@ export class CollectionService {
         if (updatedCollectionData.image !== undefined)
             collection.image = updatedCollectionData.image;
 
-        const idToOrder: Record<number, number> = updatedCollectionData.lessonsOrder.reduce((acc, curr, index) => ({
+        const idToOrder: Record<number, number> = updatedCollectionData.textsOrder.reduce((acc, curr, index) => ({
             ...acc,
             [curr]: index
         }), {});
-        const collectionLessons = collection.lessons.getItems();
-        collectionLessons.forEach(l => l.orderInCollection = idToOrder[l.id]);
+        const collectionTexts = collection.texts.getItems();
+        collectionTexts.forEach(l => l.orderInCollection = idToOrder[l.id]);
         this.em.persist(collection);
-        this.em.persist(collectionLessons);
+        this.em.persist(collectionTexts);
         await this.em.flush();
 
         return (await this.getCollection(collection.id, user))!;
@@ -118,10 +118,10 @@ export class CollectionService {
         await this.em.nativeDelete(Collection, {id: collection.id});
     }
 
-    async getNextLessonInCollection(collection: Collection, lessonId: number, user: User | AnonymousUser | null) {
-        const queryBuilder = this.lessonRepo.createQueryBuilder("l0");
-        const subQueryBuilder = this.lessonRepo.createQueryBuilder("l1").select("orderInCollection").where({id: lessonId}).getKnexQuery();
-        const privateFilter: FilterQuery<Lesson> = user instanceof User ? {$or: [{isPublic: true}, {addedBy: user.profile}]} : {isPublic: true};
+    async getNextTextInCollection(collection: Collection, textId: number, user: User | AnonymousUser | null) {
+        const queryBuilder = this.textRepo.createQueryBuilder("l0");
+        const subQueryBuilder = this.textRepo.createQueryBuilder("l1").select("orderInCollection").where({id: textId}).getKnexQuery();
+        const privateFilter: FilterQuery<Text> = user instanceof User ? {$or: [{isPublic: true}, {addedBy: user.profile}]} : {isPublic: true};
 
         return await queryBuilder.select("*")
             .where({collection: collection.id})

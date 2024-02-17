@@ -9,7 +9,7 @@ import path from "path";
 import {dumpDictionaries} from "@/devtools/dumpers/DictionaryDumper.js";
 import {dumpLanguages} from "@/devtools/dumpers/LanguageDumper.js";
 import {dumpUsers} from "@/devtools/dumpers/UserDumper.js";
-import {dumpLessons} from "@/devtools/dumpers/LessonDumper.js";
+import {dumpTexts} from "@/devtools/dumpers/TextDumper.js";
 import {dumpVocabs} from "@/devtools/dumpers/VocabDumper.js";
 import {dumpMeanings} from "@/devtools/dumpers/MeaningDumper.js";
 
@@ -80,7 +80,7 @@ async function dumpDatabase() {
     await dumpUsers({em, batchSize, dataPath})
     await dumpLanguages({em, batchSize, dataPath})
     await dumpCollections({em, batchSize, dataPath});
-    await dumpLessons({em, batchSize, dataPath})
+    await dumpTexts({em, batchSize, dataPath})
     await dumpDictionaries({em, batchSize, dataPath});
     await dumpVocabs({em, batchSize, dataPath})
     await dumpMeanings({em, batchSize, dataPath})

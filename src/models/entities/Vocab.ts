@@ -1,6 +1,6 @@
-import {Lesson} from "@/src/models/entities/Lesson.js";
+import {Text} from "@/src/models/entities/Text.js";
 import {Collection, Entity, expr, Formula, Index, ManyToMany, ManyToOne, OneToMany, OptionalProps, Property, types, Unique} from "@mikro-orm/core";
-import {MapLessonVocab} from "@/src/models/entities/MapLessonVocab.js";
+import {MapTextVocab} from "@/src/models/entities/MapTextVocab.js";
 import {CustomBaseEntity} from "@/src/models/entities/CustomBaseEntity.js";
 import {Language} from "@/src/models/entities/Language.js";
 import {Meaning} from "@/src/models/entities/Meaning.js";
@@ -39,11 +39,11 @@ export class Vocab extends CustomBaseEntity {
     learnerMeanings: Collection<Meaning> = new Collection<Meaning>(this);
 
     @ManyToMany({
-        entity: () => Lesson,
-        inversedBy: (lesson: Lesson) => lesson.vocabs,
-        pivotEntity: () => MapLessonVocab
+        entity: () => Text,
+        inversedBy: (text: Text) => text.vocabs,
+        pivotEntity: () => MapTextVocab
     })
-    lessonsAppearingIn: Collection<Lesson> = new Collection<Lesson>(this);
+    textsAppearingIn: Collection<Text> = new Collection<Text>(this);
 
     @ManyToMany({
         entity: () => Profile,
@@ -65,9 +65,9 @@ export class Vocab extends CustomBaseEntity {
     learnersCount?: number;
 
 
-    @Formula((alias: string) => `(SELECT COUNT(DISTINCT map_lesson_vocab.lesson_id) FROM map_lesson_vocab WHERE vocab_id = ${alias}.id)`, {
+    @Formula((alias: string) => `(SELECT COUNT(DISTINCT map_text_vocab.text_id) FROM map_text_vocab WHERE vocab_id = ${alias}.id)`, {
         type: "number"
     })
-    lessonsCount?: number;
+    textsCount?: number;
 
 }

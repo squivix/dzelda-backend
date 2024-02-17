@@ -1,7 +1,7 @@
 import {Collection} from "@/src/models/entities/Collection.js";
 import {CustomCallbackObject, CustomEntitySerializer} from "@/src/presentation/response/serializers/CustomEntitySerializer.js";
-import {lessonSerializer} from "@/src/presentation/response/serializers/entities/LessonSerializer.js";
-import {CollectionSchema, LessonSchema} from "dzelda-common";
+import {textSerializer} from "@/src/presentation/response/serializers/entities/TextSerializer.js";
+import {CollectionSchema, TextSchema} from "dzelda-common";
 
 export class CollectionSerializer extends CustomEntitySerializer<Collection, CollectionSchema> {
 
@@ -14,7 +14,7 @@ export class CollectionSerializer extends CustomEntitySerializer<Collection, Col
             image: () => collection.image,
             language: () => collection.language.code,
             // @ts-ignore
-            lessons: () => lessonSerializer.serializeList(collection.lessons.getItems(), {ignore: ["collection"]}) as Omit<LessonSchema, "collection">[],
+            texts: () => textSerializer.serializeList(collection.texts.getItems(), {ignore: ["collection"]}) as Omit<TextSchema, "collection">[],
             addedOn: () => collection.addedOn.toISOString(),
             addedBy: () => collection.addedBy.user.username,
             vocabsByLevel: () => collection.vocabsByLevel,
@@ -23,7 +23,7 @@ export class CollectionSerializer extends CustomEntitySerializer<Collection, Col
     }
 
     serializeList(entities: Collection[], {ignore = [], ...options}: { ignore?: (keyof CollectionSchema)[] } = {}): Partial<CollectionSchema>[] {
-        return super.serializeList(entities, {ignore: [...ignore, "lessons"], ...options});
+        return super.serializeList(entities, {ignore: [...ignore, "texts"], ...options});
     }
 
 }

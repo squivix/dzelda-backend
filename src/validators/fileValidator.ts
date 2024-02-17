@@ -7,14 +7,14 @@ export const fileFields = {
         minSize: 1,
         maxSize: kibiBytes(500)
     },
-    lessonImage: {
-        path: "uploads/lessons/images",
+    textImage: {
+        path: "uploads/texts/images",
         extensions: [".jpg", ".jpeg", ".png"],
         minSize: 1,
         maxSize: kibiBytes(500)
     },
-    lessonAudio: {
-        path: "uploads/lessons/audio",
+    textAudio: {
+        path: "uploads/texts/audio",
         extensions: [".mp3", ".m4a"],
         minSize: 1,
         maxSize: mebiBytes(100)

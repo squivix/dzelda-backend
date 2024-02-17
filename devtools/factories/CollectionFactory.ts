@@ -5,7 +5,7 @@ import {Collection} from "@/src/models/entities/Collection.js";
 import {ProfileFactory} from "@/devtools/factories/ProfileFactory.js";
 import {UserFactory} from "@/devtools/factories/UserFactory.js";
 import {LanguageLevel} from "@/src/models/enums/LanguageLevel.js";
-import {Lesson} from "@/src/models/entities/Lesson.js";
+import {Text} from "@/src/models/entities/Text.js";
 
 export class CollectionFactory extends CustomFactory<Collection> {
     readonly model = Collection;
@@ -20,13 +20,13 @@ export class CollectionFactory extends CustomFactory<Collection> {
             image: faker.image.imageUrl(100, 100),
             addedOn: new Date(Math.round(Date.now() / 1000) * 1000), // now rounded to nearest second because db column is timestampz(0)
             addedBy: profileFactory.makeDefinition({user: userFactory.makeDefinition({}, ["profile"])}),
-            lessons: []
+            texts: []
         };
     }
 
     override makeDefinition(overrideParameters?: EntityData<Collection>): EntityData<Collection> {
-        if (Array.isArray(overrideParameters?.lessons))
-            (overrideParameters!.lessons as EntityData<Lesson>[]).forEach((l, i) => l.orderInCollection = i + 1);
+        if (Array.isArray(overrideParameters?.texts))
+            (overrideParameters!.texts as EntityData<Text>[]).forEach((l, i) => l.orderInCollection = i + 1);
         return super.makeDefinition(overrideParameters);
     }
 }

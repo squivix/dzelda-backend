@@ -1,6 +1,6 @@
 import {FastifyReply, FastifyRequest} from "fastify";
 import {z} from "zod";
-import {LessonService} from "@/src/services/LessonService.js";
+import {TextService} from "@/src/services/TextService.js";
 import {languageCodeValidator} from "@/src/validators/languageValidators.js";
 import {usernameValidator} from "@/src/validators/userValidator.js";
 import {AnonymousUser, User} from "@/src/models/entities/auth/User.js";
@@ -8,20 +8,20 @@ import {UnauthenticatedAPIError} from "@/src/utils/errors/UnauthenticatedAPIErro
 import {booleanStringValidator, numericStringValidator} from "@/src/validators/utilValidators.js";
 import {ValidationAPIError} from "@/src/utils/errors/ValidationAPIError.js";
 import {CollectionService} from "@/src/services/CollectionService.js";
-import {lessonTextValidator, lessonTitleValidator} from "@/src/validators/lessonValidators.js";
+import {textContentValidator, textTitleValidator} from "@/src/validators/textValidators.js";
 import {ForbiddenAPIError} from "@/src/utils/errors/ForbiddenAPIError.js";
 import {NotFoundAPIError} from "@/src/utils/errors/NotFoundAPIError.js";
-import {lessonSerializer} from "@/src/presentation/response/serializers/entities/LessonSerializer.js";
+import {textSerializer} from "@/src/presentation/response/serializers/entities/TextSerializer.js";
 import {API_ROOT} from "@/src/server.js";
-import {lessonHistoryEntrySerializer} from "@/src/presentation/response/serializers/mappings/LessonHistoryEntrySerializer.js";
+import {textHistoryEntrySerializer} from "@/src/presentation/response/serializers/mappings/TextHistoryEntrySerializer.js";
 import {UserService} from "@/src/services/UserService.js";
 import {validateFileObjectKey} from "@/src/controllers/ControllerUtils.js";
 import {collectionLevelsFilterValidator, collectionLevelValidator} from "@/src/validators/collectionValidator.js";
 import {LanguageService} from "@/src/services/LanguageService.js";
 import {Collection} from "@/src/models/entities/Collection.js";
 
-class LessonController {
-    async getLessons(request: FastifyRequest, reply: FastifyReply) {
+class TextController {
+    async getTexts(request: FastifyRequest, reply: FastifyReply) {
         const queryParamsValidator = z.object({
             languageCode: languageCodeValidator.optional(),
             addedBy: usernameValidator.or(z.literal("me")).optional(),
@@ -49,22 +49,22 @@ class LessonController {
         };
         const sort = {sortBy: queryParams.sortBy, sortOrder: queryParams.sortOrder};
         const pagination = {page: queryParams.page, pageSize: queryParams.pageSize};
-        const lessonService = new LessonService(request.em);
-        const [lessons, recordsCount] = await lessonService.getPaginatedLessons(filters, sort, pagination, request.user);
+        const textService = new TextService(request.em);
+        const [texts, recordsCount] = await textService.getPaginatedTexts(filters, sort, pagination, request.user);
         reply.send({
             page: pagination.page,
             pageSize: pagination.pageSize,
             pageCount: Math.ceil(recordsCount / pagination.pageSize),
-            data: lessonSerializer.serializeList(lessons)
+            data: textSerializer.serializeList(texts)
         });
     }
 
 //TODO be consistent with error code for not found in body
-    async createLesson(request: FastifyRequest, reply: FastifyReply) {
+    async createText(request: FastifyRequest, reply: FastifyReply) {
         const bodyValidator = z.object({
             languageCode: languageCodeValidator,
-            title: lessonTitleValidator,
-            text: lessonTextValidator,
+            title: textTitleValidator,
+            content: textContentValidator,
             isPublic: z.boolean().optional().default(true),
             level: collectionLevelValidator.optional(),
             collectionId: z.number().min(0).or(z.literal(null)).optional().default(null),
@@ -84,20 +84,20 @@ class LessonController {
             if (!collection)
                 throw new ValidationAPIError({collection: "Not found"});
             if (collection.language !== language)
-                throw new ValidationAPIError({collection: "Not in the same language as lesson"});
+                throw new ValidationAPIError({collection: "Not in the same language as text"});
             if (collection.addedBy !== user.profile)
                 throw new ForbiddenAPIError("User is not author of collection");
         }
         const userService = new UserService(request.em);
         if (body.image)
-            body.image = await validateFileObjectKey(userService, request.user as User, body.image, "lessonImage", "image");
+            body.image = await validateFileObjectKey(userService, request.user as User, body.image, "textImage", "image");
         if (body.audio)
-            body.audio = await validateFileObjectKey(userService, request.user as User, body.audio, "lessonAudio", "audio");
+            body.audio = await validateFileObjectKey(userService, request.user as User, body.audio, "textAudio", "audio");
 
-        const lessonService = new LessonService(request.em);
-        const lesson = await lessonService.createLesson({
+        const textService = new TextService(request.em);
+        const text = await textService.createText({
             title: body.title,
-            text: body.text,
+            content: body.content,
             language: language,
             isPublic: body.isPublic,
             level: body.level,
@@ -105,29 +105,29 @@ class LessonController {
             image: body.image,
             audio: body.audio,
         }, user);
-        reply.status(201).send(lessonSerializer.serialize(lesson));
+        reply.status(201).send(textSerializer.serialize(text));
     }
 
-    async getLesson(request: FastifyRequest, reply: FastifyReply) {
-        const pathParamsValidator = z.object({lessonId: numericStringValidator});
+    async getText(request: FastifyRequest, reply: FastifyReply) {
+        const pathParamsValidator = z.object({textId: numericStringValidator});
         const pathParams = pathParamsValidator.parse(request.params);
 
-        const lessonService = new LessonService(request.em);
-        const lesson = await lessonService.getLesson(pathParams.lessonId, request.user);
+        const textService = new TextService(request.em);
+        const text = await textService.getText(pathParams.textId, request.user);
 
-        if (!lesson || (!lesson.isPublic && request?.user?.profile !== lesson.addedBy))
-            throw new NotFoundAPIError("Lesson");
-        reply.status(200).send(lessonSerializer.serialize(lesson));
+        if (!text || (!text.isPublic && request?.user?.profile !== text.addedBy))
+            throw new NotFoundAPIError("Text");
+        reply.status(200).send(textSerializer.serialize(text));
     }
 
-    async updateLesson(request: FastifyRequest, reply: FastifyReply) {
-        const pathParamsValidator = z.object({lessonId: numericStringValidator});
+    async updateText(request: FastifyRequest, reply: FastifyReply) {
+        const pathParamsValidator = z.object({textId: numericStringValidator});
         const pathParams = pathParamsValidator.parse(request.params);
 
         const bodyValidator = z.object({
             collectionId: z.number().min(0).optional().or(z.literal(null)),
-            title: lessonTitleValidator,
-            text: lessonTextValidator,
+            title: textTitleValidator,
+            content: textContentValidator,
             isPublic: z.boolean().optional(),
             level: collectionLevelValidator.optional(),
             image: z.string().optional(),
@@ -135,12 +135,12 @@ class LessonController {
         });
         const body = bodyValidator.parse(request.body);
 
-        const lessonService = new LessonService(request.em);
-        const lesson = await lessonService.getLesson(pathParams.lessonId, request.user);
-        if (!lesson)
-            throw new NotFoundAPIError("Lesson");
-        if (request?.user?.profile !== lesson.addedBy)
-            throw lesson.isPublic ? new ForbiddenAPIError() : new NotFoundAPIError("Lesson");
+        const textService = new TextService(request.em);
+        const text = await textService.getText(pathParams.textId, request.user);
+        if (!text)
+            throw new NotFoundAPIError("Text");
+        if (request?.user?.profile !== text.addedBy)
+            throw text.isPublic ? new ForbiddenAPIError() : new NotFoundAPIError("Text");
 
         const collectionService = new CollectionService(request.em);
         let newCollection: Collection | null | undefined;
@@ -152,45 +152,45 @@ class LessonController {
                 throw new ValidationAPIError({collection: "Not found"});
             if (request?.user?.profile !== newCollection.addedBy)
                 throw new ForbiddenAPIError() ;
-            if (newCollection.language !== lesson.language)
-                throw new ValidationAPIError({collection: "Cannot move lesson to a collection in a different language"});
+            if (newCollection.language !== text.language)
+                throw new ValidationAPIError({collection: "Cannot move text to a collection in a different language"});
         }
 
         const userService = new UserService(request.em);
         if (body.image)
-            body.image = await validateFileObjectKey(userService, request.user as User, body.image, "lessonImage", "image");
+            body.image = await validateFileObjectKey(userService, request.user as User, body.image, "textImage", "image");
         if (body.audio)
-            body.audio = await validateFileObjectKey(userService, request.user as User, body.audio, "lessonAudio", "audio");
-        const updatedLesson = await lessonService.updateLesson(lesson, {
+            body.audio = await validateFileObjectKey(userService, request.user as User, body.audio, "textAudio", "audio");
+        const updatedText = await textService.updateText(text, {
             collection: newCollection,
             title: body.title,
-            text: body.text,
+            content: body.content,
             level: body.level,
             isPublic: body.isPublic,
             image: body.image,
             audio: body.audio
         }, request.user as User);
-        reply.status(200).send(lessonSerializer.serialize(updatedLesson));
+        reply.status(200).send(textSerializer.serialize(updatedText));
     }
 
-    async deleteLesson(request: FastifyRequest, reply: FastifyReply) {
-        const pathParamsValidator = z.object({lessonId: numericStringValidator});
+    async deleteText(request: FastifyRequest, reply: FastifyReply) {
+        const pathParamsValidator = z.object({textId: numericStringValidator});
         const pathParams = pathParamsValidator.parse(request.params);
 
-        const lessonService = new LessonService(request.em);
-        const lesson = await lessonService.getLesson(pathParams.lessonId, request.user);
+        const textService = new TextService(request.em);
+        const text = await textService.getText(pathParams.textId, request.user);
         const user = request.user as User;
 
-        if (!lesson || (!lesson.isPublic && request?.user?.profile !== lesson.addedBy))
-            throw new NotFoundAPIError("Lesson");
-        if (lesson.addedBy !== user.profile)
-            throw new ForbiddenAPIError("User is not authorized to delete lesson");
-        await lessonService.deleteLesson(lesson);
+        if (!text || (!text.isPublic && request?.user?.profile !== text.addedBy))
+            throw new NotFoundAPIError("Text");
+        if (text.addedBy !== user.profile)
+            throw new ForbiddenAPIError("User is not authorized to delete text");
+        await textService.deleteText(text);
         reply.status(204).send();
     }
 
-    //TODO show deleted and privated lessons as deleted and privated lessons instead of hiding them. Do this with bookmarked collections as well
-    async getUserLessonsHistory(request: FastifyRequest, reply: FastifyReply) {
+    //TODO show deleted and privated texts as deleted and privated texts instead of hiding them. Do this with bookmarked collections as well
+    async getUserTextsHistory(request: FastifyRequest, reply: FastifyReply) {
         const user = request.user as User;
         const queryParamsValidator = z.object({
             languageCode: languageCodeValidator.optional(),
@@ -218,36 +218,36 @@ class LessonController {
         };
         const sort = {sortBy: queryParams.sortBy, sortOrder: queryParams.sortOrder};
         const pagination = {page: queryParams.page, pageSize: queryParams.pageSize};
-        const lessonService = new LessonService(request.em);
-        const [lessonHistoryEntries, recordsCount] = await lessonService.getPaginatedLessonHistory(filters, sort, pagination, user);
+        const textService = new TextService(request.em);
+        const [textHistoryEntries, recordsCount] = await textService.getPaginatedTextHistory(filters, sort, pagination, user);
         reply.send({
             page: pagination.page,
             pageSize: pagination.pageSize,
             pageCount: Math.ceil(recordsCount / pagination.pageSize),
-            data: lessonHistoryEntrySerializer.serializeList(lessonHistoryEntries)
+            data: textHistoryEntrySerializer.serializeList(textHistoryEntries)
         });
     }
 
-    async addLessonToUserHistory(request: FastifyRequest, reply: FastifyReply) {
+    async addTextToUserHistory(request: FastifyRequest, reply: FastifyReply) {
         const user = request.user as User;
 
-        const bodyValidator = z.object({lessonId: z.number().min(0)});
+        const bodyValidator = z.object({textId: z.number().min(0)});
         const body = bodyValidator.parse(request.body);
 
-        const lessonService = new LessonService(request.em);
-        const lesson = await lessonService.getLesson(body.lessonId, request.user);
-        if (!lesson || (!lesson.isPublic && user.profile !== lesson.addedBy))
-            throw new ValidationAPIError({lesson: "Not found"});
+        const textService = new TextService(request.em);
+        const text = await textService.getText(body.textId, request.user);
+        if (!text || (!text.isPublic && user.profile !== text.addedBy))
+            throw new ValidationAPIError({text: "Not found"});
         // TODO: explicitly fetch request.user.profile.languagesLearning instead of populating in middleware
-        if (!user.profile.languagesLearning.contains(lesson.language))
-            throw new ValidationAPIError({lesson: "not in a language the user is learning"});
+        if (!user.profile.languagesLearning.contains(text.language))
+            throw new ValidationAPIError({text: "not in a language the user is learning"});
 
-        const newLessonMapping = await lessonService.addLessonToUserHistory(lesson, user);
-        reply.status(201).send(lessonSerializer.serialize(newLessonMapping.lesson));
+        const textHistoryEntry = await textService.addTextToUserHistory(text, user);
+        reply.status(201).send(textHistoryEntrySerializer.serialize(textHistoryEntry));
     }
 
-    async getNextLessonInCollection(request: FastifyRequest, reply: FastifyReply) {
-        const pathParamsValidator = z.object({collectionId: numericStringValidator, lessonId: numericStringValidator});
+    async getNextTextInCollection(request: FastifyRequest, reply: FastifyReply) {
+        const pathParamsValidator = z.object({collectionId: numericStringValidator, textId: numericStringValidator});
         const pathParams = pathParamsValidator.parse(request.params);
 
         const collectionService = new CollectionService(request.em);
@@ -255,12 +255,12 @@ class LessonController {
 
         if (!collection)
             throw new NotFoundAPIError("Collection");
-        const nextLesson = await collectionService.getNextLessonInCollection(collection, pathParams.lessonId, request.user);
-        if (!nextLesson || (!nextLesson.isPublic && request?.user?.profile !== collection.addedBy))
-            throw new NotFoundAPIError("Next lesson");
+        const nextText = await collectionService.getNextTextInCollection(collection, pathParams.textId, request.user);
+        if (!nextText || (!nextText.isPublic && request?.user?.profile !== collection.addedBy))
+            throw new NotFoundAPIError("Next text");
 
-        reply.header("Location", `${API_ROOT}/lessons/${nextLesson.id}/`).status(303).send();
+        reply.header("Location", `${API_ROOT}/texts/${nextText.id}/`).status(303).send();
     }
 }
 
-export const lessonController = new LessonController();
+export const textController = new TextController();

@@ -1239,107 +1239,6 @@
           "nullable": false,
           "mappedType": "integer"
         },
-        "collection_id": {
-          "name": "collection_id",
-          "type": "int",
-          "unsigned": false,
-          "autoincrement": false,
-          "primary": false,
-          "nullable": false,
-          "mappedType": "integer"
-        },
-        "bookmarker_id": {
-          "name": "bookmarker_id",
-          "type": "int",
-          "unsigned": false,
-          "autoincrement": false,
-          "primary": false,
-          "nullable": false,
-          "mappedType": "integer"
-        }
-      },
-      "name": "map_bookmarker_collection",
-      "schema": "public",
-      "indexes": [
-        {
-          "keyName": "map_bookmarker_collection_bookmarker_id_index",
-          "columnNames": [
-            "bookmarker_id"
-          ],
-          "composite": false,
-          "primary": false,
-          "unique": false
-        },
-        {
-          "keyName": "map_bookmarker_collection_collection_id_index",
-          "columnNames": [
-            "collection_id"
-          ],
-          "composite": false,
-          "primary": false,
-          "unique": false
-        },
-        {
-          "keyName": "map_bookmarker_collection_collection_id_bookmarker_id_unique",
-          "columnNames": [
-            "collection_id",
-            "bookmarker_id"
-          ],
-          "composite": true,
-          "primary": false,
-          "unique": true
-        },
-        {
-          "keyName": "map_bookmarker_collection_pkey",
-          "columnNames": [
-            "id"
-          ],
-          "composite": false,
-          "primary": true,
-          "unique": true
-        }
-      ],
-      "checks": [],
-      "foreignKeys": {
-        "map_bookmarker_collection_collection_id_foreign": {
-          "constraintName": "map_bookmarker_collection_collection_id_foreign",
-          "columnNames": [
-            "collection_id"
-          ],
-          "localTableName": "public.map_bookmarker_collection",
-          "referencedColumnNames": [
-            "id"
-          ],
-          "referencedTableName": "public.collection",
-          "deleteRule": "cascade",
-          "updateRule": "cascade"
-        },
-        "map_bookmarker_collection_bookmarker_id_foreign": {
-          "constraintName": "map_bookmarker_collection_bookmarker_id_foreign",
-          "columnNames": [
-            "bookmarker_id"
-          ],
-          "localTableName": "public.map_bookmarker_collection",
-          "referencedColumnNames": [
-            "id"
-          ],
-          "referencedTableName": "public.profile",
-          "deleteRule": "cascade",
-          "updateRule": "cascade"
-        }
-      }
-    },
-    {
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "int",
-          "unsigned": true,
-          "autoincrement": true,
-          "primary": true,
-          "nullable": false,
-          "mappedType": "integer"
-        },
         "title": {
           "name": "title",
           "type": "varchar(124)",
@@ -1350,8 +1249,8 @@
           "length": 124,
           "mappedType": "string"
         },
-        "text": {
-          "name": "text",
+        "content": {
+          "name": "content",
           "type": "text",
           "unsigned": false,
           "autoincrement": false,
@@ -1370,8 +1269,8 @@
           "length": 248,
           "mappedType": "string"
         },
-        "parsed_text": {
-          "name": "parsed_text",
+        "parsed_content": {
+          "name": "parsed_content",
           "type": "text",
           "unsigned": false,
           "autoincrement": false,
@@ -1480,11 +1379,11 @@
           "mappedType": "datetime"
         }
       },
-      "name": "lesson",
+      "name": "text",
       "schema": "public",
       "indexes": [
         {
-          "keyName": "lesson_added_on_index",
+          "keyName": "text_added_on_index",
           "columnNames": [
             "added_on"
           ],
@@ -1493,7 +1392,7 @@
           "unique": false
         },
         {
-          "keyName": "lesson_title_index",
+          "keyName": "text_title_index",
           "columnNames": [
             "title"
           ],
@@ -1502,7 +1401,7 @@
           "unique": false
         },
         {
-          "keyName": "lesson_collection_id_index",
+          "keyName": "text_collection_id_index",
           "columnNames": [
             "collection_id"
           ],
@@ -1511,7 +1410,7 @@
           "unique": false
         },
         {
-          "keyName": "lesson_pkey",
+          "keyName": "text_pkey",
           "columnNames": [
             "id"
           ],
@@ -1522,12 +1421,12 @@
       ],
       "checks": [],
       "foreignKeys": {
-        "lesson_language_id_foreign": {
-          "constraintName": "lesson_language_id_foreign",
+        "text_language_id_foreign": {
+          "constraintName": "text_language_id_foreign",
           "columnNames": [
             "language_id"
           ],
-          "localTableName": "public.lesson",
+          "localTableName": "public.text",
           "referencedColumnNames": [
             "id"
           ],
@@ -1535,12 +1434,12 @@
           "deleteRule": "cascade",
           "updateRule": "cascade"
         },
-        "lesson_collection_id_foreign": {
-          "constraintName": "lesson_collection_id_foreign",
+        "text_collection_id_foreign": {
+          "constraintName": "text_collection_id_foreign",
           "columnNames": [
             "collection_id"
           ],
-          "localTableName": "public.lesson",
+          "localTableName": "public.text",
           "referencedColumnNames": [
             "id"
           ],
@@ -1548,12 +1447,12 @@
           "deleteRule": "set null",
           "updateRule": "cascade"
         },
-        "lesson_added_by_id_foreign": {
-          "constraintName": "lesson_added_by_id_foreign",
+        "text_added_by_id_foreign": {
+          "constraintName": "text_added_by_id_foreign",
           "columnNames": [
             "added_by_id"
           ],
-          "localTableName": "public.lesson",
+          "localTableName": "public.text",
           "referencedColumnNames": [
             "id"
           ],
@@ -1574,8 +1473,8 @@
           "nullable": false,
           "mappedType": "integer"
         },
-        "lesson_id": {
-          "name": "lesson_id",
+        "text_id": {
+          "name": "text_id",
           "type": "int",
           "unsigned": false,
           "autoincrement": false,
@@ -1604,11 +1503,11 @@
           "mappedType": "datetime"
         }
       },
-      "name": "map_past_viewer_lesson",
+      "name": "text_history_entry",
       "schema": "public",
       "indexes": [
         {
-          "keyName": "map_past_viewer_lesson_past_viewer_id_index",
+          "keyName": "text_history_entry_past_viewer_id_index",
           "columnNames": [
             "past_viewer_id"
           ],
@@ -1617,18 +1516,18 @@
           "unique": false
         },
         {
-          "keyName": "map_past_viewer_lesson_lesson_id_index",
+          "keyName": "text_history_entry_text_id_index",
           "columnNames": [
-            "lesson_id"
+            "text_id"
           ],
           "composite": false,
           "primary": false,
           "unique": false
         },
         {
-          "keyName": "map_past_viewer_lesson_lesson_id_past_viewer_id_index",
+          "keyName": "text_history_entry_text_id_past_viewer_id_index",
           "columnNames": [
-            "lesson_id",
+            "text_id",
             "past_viewer_id"
           ],
           "composite": true,
@@ -1636,7 +1535,7 @@
           "unique": false
         },
         {
-          "keyName": "map_past_viewer_lesson_pkey",
+          "keyName": "text_history_entry_pkey",
           "columnNames": [
             "id"
           ],
@@ -1647,30 +1546,131 @@
       ],
       "checks": [],
       "foreignKeys": {
-        "map_past_viewer_lesson_lesson_id_foreign": {
-          "constraintName": "map_past_viewer_lesson_lesson_id_foreign",
+        "text_history_entry_text_id_foreign": {
+          "constraintName": "text_history_entry_text_id_foreign",
           "columnNames": [
-            "lesson_id"
+            "text_id"
           ],
-          "localTableName": "public.map_past_viewer_lesson",
+          "localTableName": "public.text_history_entry",
           "referencedColumnNames": [
             "id"
           ],
-          "referencedTableName": "public.lesson",
+          "referencedTableName": "public.text",
           "deleteRule": "cascade",
           "updateRule": "cascade"
         },
-        "map_past_viewer_lesson_past_viewer_id_foreign": {
-          "constraintName": "map_past_viewer_lesson_past_viewer_id_foreign",
+        "text_history_entry_past_viewer_id_foreign": {
+          "constraintName": "text_history_entry_past_viewer_id_foreign",
           "columnNames": [
             "past_viewer_id"
           ],
-          "localTableName": "public.map_past_viewer_lesson",
+          "localTableName": "public.text_history_entry",
           "referencedColumnNames": [
             "id"
           ],
           "referencedTableName": "public.profile",
           "deleteRule": "set null",
+          "updateRule": "cascade"
+        }
+      }
+    },
+    {
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "int",
+          "unsigned": true,
+          "autoincrement": true,
+          "primary": true,
+          "nullable": false,
+          "mappedType": "integer"
+        },
+        "collection_id": {
+          "name": "collection_id",
+          "type": "int",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "mappedType": "integer"
+        },
+        "bookmarker_id": {
+          "name": "bookmarker_id",
+          "type": "int",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "mappedType": "integer"
+        }
+      },
+      "name": "map_bookmarker_collection",
+      "schema": "public",
+      "indexes": [
+        {
+          "keyName": "map_bookmarker_collection_bookmarker_id_index",
+          "columnNames": [
+            "bookmarker_id"
+          ],
+          "composite": false,
+          "primary": false,
+          "unique": false
+        },
+        {
+          "keyName": "map_bookmarker_collection_collection_id_index",
+          "columnNames": [
+            "collection_id"
+          ],
+          "composite": false,
+          "primary": false,
+          "unique": false
+        },
+        {
+          "keyName": "map_bookmarker_collection_collection_id_bookmarker_id_unique",
+          "columnNames": [
+            "collection_id",
+            "bookmarker_id"
+          ],
+          "composite": true,
+          "primary": false,
+          "unique": true
+        },
+        {
+          "keyName": "map_bookmarker_collection_pkey",
+          "columnNames": [
+            "id"
+          ],
+          "composite": false,
+          "primary": true,
+          "unique": true
+        }
+      ],
+      "checks": [],
+      "foreignKeys": {
+        "map_bookmarker_collection_collection_id_foreign": {
+          "constraintName": "map_bookmarker_collection_collection_id_foreign",
+          "columnNames": [
+            "collection_id"
+          ],
+          "localTableName": "public.map_bookmarker_collection",
+          "referencedColumnNames": [
+            "id"
+          ],
+          "referencedTableName": "public.collection",
+          "deleteRule": "cascade",
+          "updateRule": "cascade"
+        },
+        "map_bookmarker_collection_bookmarker_id_foreign": {
+          "constraintName": "map_bookmarker_collection_bookmarker_id_foreign",
+          "columnNames": [
+            "bookmarker_id"
+          ],
+          "localTableName": "public.map_bookmarker_collection",
+          "referencedColumnNames": [
+            "id"
+          ],
+          "referencedTableName": "public.profile",
+          "deleteRule": "cascade",
           "updateRule": "cascade"
         }
       }
@@ -2405,8 +2405,8 @@
           "nullable": false,
           "mappedType": "integer"
         },
-        "lesson_id": {
-          "name": "lesson_id",
+        "text_id": {
+          "name": "text_id",
           "type": "int",
           "unsigned": false,
           "autoincrement": false,
@@ -2415,11 +2415,11 @@
           "mappedType": "integer"
         }
       },
-      "name": "map_lesson_vocab",
+      "name": "map_text_vocab",
       "schema": "public",
       "indexes": [
         {
-          "keyName": "map_lesson_vocab_vocab_id_index",
+          "keyName": "map_text_vocab_vocab_id_index",
           "columnNames": [
             "vocab_id"
           ],
@@ -2428,26 +2428,26 @@
           "unique": false
         },
         {
-          "keyName": "map_lesson_vocab_lesson_id_index",
+          "keyName": "map_text_vocab_text_id_index",
           "columnNames": [
-            "lesson_id"
+            "text_id"
           ],
           "composite": false,
           "primary": false,
           "unique": false
         },
         {
-          "keyName": "map_lesson_vocab_vocab_id_lesson_id_unique",
+          "keyName": "map_text_vocab_vocab_id_text_id_unique",
           "columnNames": [
             "vocab_id",
-            "lesson_id"
+            "text_id"
           ],
           "composite": true,
           "primary": false,
           "unique": true
         },
         {
-          "keyName": "map_lesson_vocab_pkey",
+          "keyName": "map_text_vocab_pkey",
           "columnNames": [
             "id"
           ],
@@ -2458,12 +2458,12 @@
       ],
       "checks": [],
       "foreignKeys": {
-        "map_lesson_vocab_vocab_id_foreign": {
-          "constraintName": "map_lesson_vocab_vocab_id_foreign",
+        "map_text_vocab_vocab_id_foreign": {
+          "constraintName": "map_text_vocab_vocab_id_foreign",
           "columnNames": [
             "vocab_id"
           ],
-          "localTableName": "public.map_lesson_vocab",
+          "localTableName": "public.map_text_vocab",
           "referencedColumnNames": [
             "id"
           ],
@@ -2471,16 +2471,16 @@
           "deleteRule": "cascade",
           "updateRule": "cascade"
         },
-        "map_lesson_vocab_lesson_id_foreign": {
-          "constraintName": "map_lesson_vocab_lesson_id_foreign",
+        "map_text_vocab_text_id_foreign": {
+          "constraintName": "map_text_vocab_text_id_foreign",
           "columnNames": [
-            "lesson_id"
+            "text_id"
           ],
-          "localTableName": "public.map_lesson_vocab",
+          "localTableName": "public.map_text_vocab",
           "referencedColumnNames": [
             "id"
           ],
-          "referencedTableName": "public.lesson",
+          "referencedTableName": "public.text",
           "deleteRule": "cascade",
           "updateRule": "cascade"
         }
