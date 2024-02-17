@@ -12,7 +12,7 @@ import {Dictionary} from "@/src/models/entities/Dictionary.js";
 import {MapLearnerDictionary} from "@/src/models/entities/MapLearnerDictionary.js";
 import {Language} from "@/src/models/entities/Language.js";
 import {MapLearnerLanguage} from "@/src/models/entities/MapLearnerLanguage.js";
-import {MapBookmarkerCollection} from "@/src/models/entities/MapBookmarkerCollection.js";
+import {CollectionBookmark} from "@/src/models/entities/CollectionBookmark.js";
 
 @Entity()
 export class Profile extends CustomBaseEntity {
@@ -83,7 +83,7 @@ export class Profile extends CustomBaseEntity {
     @ManyToMany({
         entity: () => Collection,
         mappedBy: (collection: Collection) => collection.bookmarkers,
-        pivotEntity: () => MapBookmarkerCollection,
+        pivotEntity: () => CollectionBookmark,
         hidden: true
     })
     collectionsBookmarked:MikroORMCollection<Collection> = new MikroORMCollection<Collection>(this);

@@ -1604,11 +1604,11 @@
           "mappedType": "integer"
         }
       },
-      "name": "map_bookmarker_collection",
+      "name": "collection_bookmark",
       "schema": "public",
       "indexes": [
         {
-          "keyName": "map_bookmarker_collection_bookmarker_id_index",
+          "keyName": "collection_bookmark_bookmarker_id_index",
           "columnNames": [
             "bookmarker_id"
           ],
@@ -1617,7 +1617,7 @@
           "unique": false
         },
         {
-          "keyName": "map_bookmarker_collection_collection_id_index",
+          "keyName": "collection_bookmark_collection_id_index",
           "columnNames": [
             "collection_id"
           ],
@@ -1626,7 +1626,7 @@
           "unique": false
         },
         {
-          "keyName": "map_bookmarker_collection_collection_id_bookmarker_id_unique",
+          "keyName": "collection_bookmark_collection_id_bookmarker_id_unique",
           "columnNames": [
             "collection_id",
             "bookmarker_id"
@@ -1636,7 +1636,7 @@
           "unique": true
         },
         {
-          "keyName": "map_bookmarker_collection_pkey",
+          "keyName": "collection_bookmark_pkey",
           "columnNames": [
             "id"
           ],
@@ -1647,12 +1647,12 @@
       ],
       "checks": [],
       "foreignKeys": {
-        "map_bookmarker_collection_collection_id_foreign": {
-          "constraintName": "map_bookmarker_collection_collection_id_foreign",
+        "collection_bookmark_collection_id_foreign": {
+          "constraintName": "collection_bookmark_collection_id_foreign",
           "columnNames": [
             "collection_id"
           ],
-          "localTableName": "public.map_bookmarker_collection",
+          "localTableName": "public.collection_bookmark",
           "referencedColumnNames": [
             "id"
           ],
@@ -1660,12 +1660,12 @@
           "deleteRule": "cascade",
           "updateRule": "cascade"
         },
-        "map_bookmarker_collection_bookmarker_id_foreign": {
-          "constraintName": "map_bookmarker_collection_bookmarker_id_foreign",
+        "collection_bookmark_bookmarker_id_foreign": {
+          "constraintName": "collection_bookmark_bookmarker_id_foreign",
           "columnNames": [
             "bookmarker_id"
           ],
-          "localTableName": "public.map_bookmarker_collection",
+          "localTableName": "public.collection_bookmark",
           "referencedColumnNames": [
             "id"
           ],

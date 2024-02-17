@@ -5,7 +5,7 @@ import {Profile} from "@/src/models/entities/Profile.js";
 import {Text} from "@/src/models/entities/Text.js";
 import {VocabLevel} from "@/src/models/enums/VocabLevel.js";
 import {CollectionRepo} from "@/src/models/repos/CollectionRepo.js";
-import {MapBookmarkerCollection} from "@/src/models/entities/MapBookmarkerCollection.js";
+import {CollectionBookmark} from "@/src/models/entities/CollectionBookmark.js";
 
 @Entity({customRepository: () => CollectionRepo})
 @Index({properties: ["language"]})
@@ -38,7 +38,7 @@ export class Collection extends CustomBaseEntity {
     @ManyToMany({
         entity: () => Profile,
         inversedBy: (bookmarker: Profile) => bookmarker.collectionsBookmarked,
-        pivotEntity: () => MapBookmarkerCollection,
+        pivotEntity: () => CollectionBookmark,
         joinColumn: "collection_id",
         inverseJoinColumn: "bookmarker_id"
     })

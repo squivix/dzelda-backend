@@ -7,7 +7,7 @@ import {Collection} from "@/src/models/entities/Collection.js";
 @Unique({properties: ["collection", "bookmarker"]})
 @Index({properties: ["collection"]})
 @Index({properties: ["bookmarker"]})
-export class MapBookmarkerCollection extends CustomBaseEntity {
+export class CollectionBookmark extends CustomBaseEntity {
     @ManyToOne({entity: () => Collection, onDelete: "cascade", onUpdateIntegrity: "cascade"})
     collection!: Collection;
 

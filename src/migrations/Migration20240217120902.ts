@@ -1,6 +1,6 @@
 import { Migration } from '@mikro-orm/migrations';
 
-export class Migration20240217092829 extends Migration {
+export class Migration20240217120902 extends Migration {
 
   async up(): Promise<void> {
     this.addSql('create table "language" ("id" serial primary key, "code" varchar(255) not null, "name" varchar(255) not null, "greeting" varchar(255) not null, "second_speakers_count" int not null, "flag" varchar(500) null default null, "flag_circular" varchar(500) null default null, "flag_emoji" varchar(32) null default null, "color" varchar(32) not null, "is_supported" boolean not null default false, "level_thresholds" jsonb not null default \'{"beginner1": 0,"beginner2": 1000,"intermediate1": 5000,"intermediate2": 12000,"advanced1": 20000,"advanced2": 30000}\');');
@@ -52,10 +52,10 @@ export class Migration20240217092829 extends Migration {
     this.addSql('create index "text_history_entry_text_id_index" on "text_history_entry" ("text_id");');
     this.addSql('create index "text_history_entry_text_id_past_viewer_id_index" on "text_history_entry" ("text_id", "past_viewer_id");');
 
-    this.addSql('create table "map_bookmarker_collection" ("id" serial primary key, "collection_id" int not null, "bookmarker_id" int not null);');
-    this.addSql('create index "map_bookmarker_collection_bookmarker_id_index" on "map_bookmarker_collection" ("bookmarker_id");');
-    this.addSql('create index "map_bookmarker_collection_collection_id_index" on "map_bookmarker_collection" ("collection_id");');
-    this.addSql('alter table "map_bookmarker_collection" add constraint "map_bookmarker_collection_collection_id_bookmarker_id_unique" unique ("collection_id", "bookmarker_id");');
+    this.addSql('create table "collection_bookmark" ("id" serial primary key, "collection_id" int not null, "bookmarker_id" int not null);');
+    this.addSql('create index "collection_bookmark_bookmarker_id_index" on "collection_bookmark" ("bookmarker_id");');
+    this.addSql('create index "collection_bookmark_collection_id_index" on "collection_bookmark" ("collection_id");');
+    this.addSql('alter table "collection_bookmark" add constraint "collection_bookmark_collection_id_bookmarker_id_unique" unique ("collection_id", "bookmarker_id");');
 
     this.addSql('create table "password_reset_token" ("id" serial primary key, "token" varchar(255) not null, "expires_on" timestamptz(0) not null default now() + interval \'1 hour\', "user_id" int not null);');
     this.addSql('alter table "password_reset_token" add constraint "password_reset_token_user_id_unique" unique ("user_id");');
@@ -119,8 +119,8 @@ export class Migration20240217092829 extends Migration {
     this.addSql('alter table "text_history_entry" add constraint "text_history_entry_text_id_foreign" foreign key ("text_id") references "text" ("id") on update cascade on delete cascade;');
     this.addSql('alter table "text_history_entry" add constraint "text_history_entry_past_viewer_id_foreign" foreign key ("past_viewer_id") references "profile" ("id") on update cascade on delete set null;');
 
-    this.addSql('alter table "map_bookmarker_collection" add constraint "map_bookmarker_collection_collection_id_foreign" foreign key ("collection_id") references "collection" ("id") on update cascade on delete cascade;');
-    this.addSql('alter table "map_bookmarker_collection" add constraint "map_bookmarker_collection_bookmarker_id_foreign" foreign key ("bookmarker_id") references "profile" ("id") on update cascade on delete cascade;');
+    this.addSql('alter table "collection_bookmark" add constraint "collection_bookmark_collection_id_foreign" foreign key ("collection_id") references "collection" ("id") on update cascade on delete cascade;');
+    this.addSql('alter table "collection_bookmark" add constraint "collection_bookmark_bookmarker_id_foreign" foreign key ("bookmarker_id") references "profile" ("id") on update cascade on delete cascade;');
 
     this.addSql('alter table "password_reset_token" add constraint "password_reset_token_user_id_foreign" foreign key ("user_id") references "user" ("id") on update cascade on delete cascade;');
 
@@ -145,6 +145,8 @@ export class Migration20240217092829 extends Migration {
 
     this.addSql('alter table "map_learner_vocab" add constraint "map_learner_vocab_vocab_id_foreign" foreign key ("vocab_id") references "vocab" ("id") on update cascade on delete cascade;');
     this.addSql('alter table "map_learner_vocab" add constraint "map_learner_vocab_learner_id_foreign" foreign key ("learner_id") references "profile" ("id") on update cascade on delete cascade;');
+
+    this.addSql('drop table if exists "map_bookmarker_collection" cascade;');
   }
 
   async down(): Promise<void> {
@@ -190,7 +192,7 @@ export class Migration20240217092829 extends Migration {
 
     this.addSql('alter table "text_history_entry" drop constraint "text_history_entry_past_viewer_id_foreign";');
 
-    this.addSql('alter table "map_bookmarker_collection" drop constraint "map_bookmarker_collection_bookmarker_id_foreign";');
+    this.addSql('alter table "collection_bookmark" drop constraint "collection_bookmark_bookmarker_id_foreign";');
 
     this.addSql('alter table "meaning" drop constraint "meaning_added_by_id_foreign";');
 
@@ -200,7 +202,7 @@ export class Migration20240217092829 extends Migration {
 
     this.addSql('alter table "text" drop constraint "text_collection_id_foreign";');
 
-    this.addSql('alter table "map_bookmarker_collection" drop constraint "map_bookmarker_collection_collection_id_foreign";');
+    this.addSql('alter table "collection_bookmark" drop constraint "collection_bookmark_collection_id_foreign";');
 
     this.addSql('alter table "text_history_entry" drop constraint "text_history_entry_text_id_foreign";');
 
@@ -215,6 +217,11 @@ export class Migration20240217092829 extends Migration {
     this.addSql('alter table "map_learner_vocab" drop constraint "map_learner_vocab_vocab_id_foreign";');
 
     this.addSql('alter table "map_learner_meaning" drop constraint "map_learner_meaning_meaning_id_foreign";');
+
+    this.addSql('create table "map_bookmarker_collection" ("id" serial primary key, "collection_id" int4 not null default null, "bookmarker_id" int4 not null default null);');
+    this.addSql('create index "map_bookmarker_collection_bookmarker_id_index" on "map_bookmarker_collection" ("bookmarker_id");');
+    this.addSql('alter table "map_bookmarker_collection" add constraint "map_bookmarker_collection_collection_id_bookmarker_id_unique" unique ("collection_id", "bookmarker_id");');
+    this.addSql('create index "map_bookmarker_collection_collection_id_index" on "map_bookmarker_collection" ("collection_id");');
 
     this.addSql('drop table if exists "language" cascade;');
 
@@ -240,7 +247,7 @@ export class Migration20240217092829 extends Migration {
 
     this.addSql('drop table if exists "text_history_entry" cascade;');
 
-    this.addSql('drop table if exists "map_bookmarker_collection" cascade;');
+    this.addSql('drop table if exists "collection_bookmark" cascade;');
 
     this.addSql('drop table if exists "password_reset_token" cascade;');
 

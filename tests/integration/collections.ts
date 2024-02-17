@@ -17,7 +17,7 @@ import {TextRepo} from "@/src/models/repos/TextRepo.js";
 import {Text} from "@/src/models/entities/Text.js";
 import {collectionSerializer} from "@/src/presentation/response/serializers/entities/CollectionSerializer.js";
 import {CollectionSchema, TextSchema} from "dzelda-common";
-import {MapBookmarkerCollection} from "@/src/models/entities/MapBookmarkerCollection.js";
+import {CollectionBookmark} from "@/src/models/entities/CollectionBookmark.js";
 import {FileUploadRequestFactory} from "@/devtools/factories/FileUploadRequestFactory.js";
 
 interface LocalTestContext extends TestContext {
@@ -1824,7 +1824,7 @@ describe("POST users/me/collections/bookmarked/", function () {
         expectedCollection.isBookmarked = true;
         expect(response.statusCode).to.equal(201);
         expect(response.json()).toEqual(collectionSerializer.serialize(expectedCollection));
-        const dbRecord = await context.em.findOne(MapBookmarkerCollection, {bookmarker: user.profile, collection: expectedCollection});
+        const dbRecord = await context.em.findOne(CollectionBookmark, {bookmarker: user.profile, collection: expectedCollection});
         expect(dbRecord).not.toBeNull();
         expect(collectionSerializer.serialize(dbRecord!.collection)).toEqual(collectionSerializer.serialize(expectedCollection));
     });
@@ -1899,7 +1899,7 @@ describe("DELETE users/me/collections/bookmarked/:collectionId", function () {
         const response = await makeRequest(collection.id, session.token);
 
         expect(response.statusCode).to.equal(204);
-        expect(await context.em.findOne(MapBookmarkerCollection, {bookmarker: user.profile, collection: collection})).toBeNull();
+        expect(await context.em.findOne(CollectionBookmark, {bookmarker: user.profile, collection: collection})).toBeNull();
     });
     test<LocalTestContext>("If user is not logged in return 401", async (context) => {
         const user = await context.userFactory.createOne();

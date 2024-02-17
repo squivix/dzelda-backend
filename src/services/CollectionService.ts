@@ -8,7 +8,7 @@ import {Text} from "@/src/models/entities/Text.js";
 import {TextRepo} from "@/src/models/repos/TextRepo.js";
 import {QueryOrderMap} from "@mikro-orm/core/enums.js";
 import {EntityField} from "@mikro-orm/core/drivers/IDatabaseDriver.js";
-import {MapBookmarkerCollection} from "@/src/models/entities/MapBookmarkerCollection.js";
+import {CollectionBookmark} from "@/src/models/entities/CollectionBookmark.js";
 
 export class CollectionService {
     em: EntityManager;
@@ -136,19 +136,19 @@ export class CollectionService {
         return await this.collectionRepo.findOne(where, {fields});
     }
 
-    async findBookMarkerCollectionMapping(where: FilterQuery<MapBookmarkerCollection>, fields: EntityField<MapBookmarkerCollection>[] = ["collection"]) {
-        return await this.em.findOne(MapBookmarkerCollection, where, {fields});
+    async findBookMarkerCollectionMapping(where: FilterQuery<CollectionBookmark>, fields: EntityField<CollectionBookmark>[] = ["collection"]) {
+        return await this.em.findOne(CollectionBookmark, where, {fields});
     }
 
     async addCollectionToUserBookmarks(collection: Collection, user: User) {
-        const mapping = this.em.create(MapBookmarkerCollection, {bookmarker: user.profile, collection: collection});
+        const bookmark = this.em.create(CollectionBookmark, {bookmarker: user.profile, collection: collection});
         await this.em.flush();
         await this.collectionRepo.annotateCollectionsWithUserData([collection], user);
-        return mapping;
+        return bookmark;
     }
 
     async removeCollectionFromUserBookmarks(collection: Collection, user: User) {
-        await this.em.nativeDelete(MapBookmarkerCollection, {collection: collection, bookmarker: user.profile}, {});
+        await this.em.nativeDelete(CollectionBookmark, {collection: collection, bookmarker: user.profile}, {});
     }
 
 }

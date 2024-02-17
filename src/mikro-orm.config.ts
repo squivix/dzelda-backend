@@ -21,12 +21,12 @@ import {FileUploadRequest} from "@/src/models/entities/FileUploadRequest.js";
 import {TTSVoice} from "@/src/models/entities/TTSVoice.js";
 import {TTSPronunciation} from "@/src/models/entities/TTSPronunciation.js";
 import {HumanPronunciation} from "@/src/models/entities/HumanPronunciation.js";
-import {MapBookmarkerCollection} from "@/src/models/entities/MapBookmarkerCollection.js";
+import {CollectionBookmark} from "@/src/models/entities/CollectionBookmark.js";
 
 
 const devOptions: Options = {
     type: "postgresql",
-    entities: [Collection, CustomBaseEntity, Dictionary, Language, Text, MapLearnerDictionary, MapBookmarkerCollection,
+    entities: [Collection, CustomBaseEntity, Dictionary, Language, Text, MapLearnerDictionary, CollectionBookmark,
         TextHistoryEntry, MapLearnerMeaning, MapLearnerVocab, MapTextVocab, MapLearnerLanguage, Meaning,
         Profile, Vocab, User, Session, PasswordResetToken, EmailConfirmationToken, FileUploadRequest, TTSVoice, TTSPronunciation, HumanPronunciation],
     loadStrategy: LoadStrategy.SELECT_IN,
