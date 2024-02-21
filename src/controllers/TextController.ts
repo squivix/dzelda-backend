@@ -2,7 +2,6 @@ import {FastifyReply, FastifyRequest} from "fastify";
 import {z} from "zod";
 import {TextService} from "@/src/services/TextService.js";
 import {languageCodeValidator} from "@/src/validators/languageValidators.js";
-import {usernameValidator} from "@/src/validators/userValidator.js";
 import {AnonymousUser, User} from "@/src/models/entities/auth/User.js";
 import {UnauthenticatedAPIError} from "@/src/utils/errors/UnauthenticatedAPIError.js";
 import {booleanStringValidator, numericStringValidator} from "@/src/validators/utilValidators.js";
@@ -21,12 +20,13 @@ import {LanguageService} from "@/src/services/LanguageService.js";
 import {Collection} from "@/src/models/entities/Collection.js";
 import {APIError} from "@/src/utils/errors/APIError.js";
 import {StatusCodes} from "http-status-codes";
+import {TextHistoryEntry} from "@/src/models/entities/TextHistoryEntry.js";
 
 class TextController {
     async getTexts(request: FastifyRequest, reply: FastifyReply) {
         const queryParamsValidator = z.object({
             languageCode: languageCodeValidator.optional(),
-            addedBy: usernameValidator.or(z.literal("me")).optional(),
+            addedBy: z.string().min(1).or(z.literal("me")).optional(),
             searchQuery: z.string().max(256).optional(),
             level: collectionLevelsFilterValidator.default([]),
             hasAudio: booleanStringValidator.optional(),
@@ -196,7 +196,7 @@ class TextController {
         const user = request.user as User;
         const queryParamsValidator = z.object({
             languageCode: languageCodeValidator.optional(),
-            addedBy: usernameValidator.or(z.literal("me")).optional(),
+            addedBy: z.string().min(1).or(z.literal("me")).optional(),
             searchQuery: z.string().max(256).optional(),
             level: collectionLevelsFilterValidator.default([]),
             hasAudio: booleanStringValidator.optional(),
@@ -243,7 +243,12 @@ class TextController {
         // TODO: explicitly fetch request.user.profile.languagesLearning instead of populating in middleware
         if (!user.profile.languagesLearning.contains(text.language))
             throw new ValidationAPIError({text: "not in a language the user is learning"});
+        const latestHistoryEntry = await textService.findLatestTextHistoryEntry(user);
 
+        if (latestHistoryEntry && latestHistoryEntry.text == text) {
+            reply.status(200).send(textHistoryEntrySerializer.serialize(latestHistoryEntry));
+            return;
+        }
         const textHistoryEntry = await textService.addTextToUserHistory(text, user);
         reply.status(201).send(textHistoryEntrySerializer.serialize(textHistoryEntry));
     }
@@ -267,7 +272,7 @@ class TextController {
     async getUserBookmarkedTexts(request: FastifyRequest, reply: FastifyReply) {
         const queryParamsValidator = z.object({
             languageCode: languageCodeValidator.optional(),
-            addedBy: usernameValidator.or(z.literal("me")).optional(),
+            addedBy: z.string().min(1).or(z.literal("me")).optional(),
             searchQuery: z.string().max(256).optional(),
             level: collectionLevelsFilterValidator.default([]),
             hasAudio: booleanStringValidator.optional(),

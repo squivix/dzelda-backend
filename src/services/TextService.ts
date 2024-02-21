@@ -253,10 +253,10 @@ export class TextService {
     }
 
     async addTextToUserHistory(text: Text, user: User) {
-        const mapping = this.em.create(TextHistoryEntry, {pastViewer: user.profile, text: text});
+        const historyEntry = this.em.create(TextHistoryEntry, {pastViewer: user.profile, text: text});
         await this.em.flush();
-        await this.em.refresh(mapping.text, {populate: ["addedBy.user"]});
-        return mapping;
+        await this.em.refresh(historyEntry.text, {populate: ["addedBy.user"]});
+        return historyEntry;
     }
 
     async addTextToUserBookmarks(text: Text, user: User) {
@@ -272,5 +272,9 @@ export class TextService {
 
     async findText(where: FilterQuery<Text>, fields: EntityField<Text>[] = ["id", "collection", "isPublic", "addedBy"]) {
         return await this.textRepo.findOne(where, {fields});
+    }
+
+    async findLatestTextHistoryEntry(user: User) {
+        return await this.em.findOne(TextHistoryEntry, {pastViewer: user.profile}, {orderBy: {timeViewed: "desc"}});
     }
 }

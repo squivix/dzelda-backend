@@ -5,7 +5,6 @@ import {NotFoundAPIError} from "@/src/utils/errors/NotFoundAPIError.js";
 import {emailValidator, passwordValidator, usernameValidator} from "@/src/validators/userValidator.js";
 import {userSerializer} from "@/src/presentation/response/serializers/entities/UserSerializer.js";
 import {emailTransporter} from "@/src/nodemailer.config.js";
-import {DOMAIN_NAME} from "@/src/constants.js";
 import {APIError} from "@/src/utils/errors/APIError.js";
 import {StatusCodes} from "http-status-codes";
 import {profileSerializer} from "@/src/presentation/response/serializers/entities/ProfileSerializer.js";
@@ -114,7 +113,7 @@ class UserController {
     }
 
     async getUser(request: FastifyRequest, reply: FastifyReply) {
-        const pathParamsValidator = z.object({username: usernameValidator.or(z.literal("me")),});
+        const pathParamsValidator = z.object({username: z.string().min(1).or(z.literal("me")),});
         const pathParams = pathParamsValidator.parse(request.params);
         const userService = new UserService(request.em);
         const user = await userService.getUser(pathParams.username, request.user);

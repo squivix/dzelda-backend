@@ -3,8 +3,6 @@ import {z} from "zod";
 import {LanguageService} from "@/src/services/LanguageService.js";
 import {NotFoundAPIError} from "@/src/utils/errors/NotFoundAPIError.js";
 import {UserService} from "@/src/services/UserService.js";
-import {ForbiddenAPIError} from "@/src/utils/errors/ForbiddenAPIError.js";
-import {usernameValidator} from "@/src/validators/userValidator.js";
 import {ValidationAPIError} from "@/src/utils/errors/ValidationAPIError.js";
 import {languageCodeValidator} from "@/src/validators/languageValidators.js";
 import {User} from "@/src/models/entities/auth/User.js";
@@ -30,7 +28,7 @@ class LanguageController {
     }
 
     async getUserLanguages(request: FastifyRequest, reply: FastifyReply) {
-        const pathParamsValidator = z.object({username: usernameValidator.or(z.literal("me"))});
+        const pathParamsValidator = z.object({username: z.string().min(1).or(z.literal("me"))});
         const pathParams = pathParamsValidator.parse(request.params);
         const userService = new UserService(request.em);
         const user = await userService.getUser(pathParams.username, request.user);

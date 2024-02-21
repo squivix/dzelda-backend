@@ -6,7 +6,6 @@ import {vocabLevelValidator, vocabNotesValidator, vocabTextValidator} from "@/sr
 import {LanguageService} from "@/src/services/LanguageService.js";
 import {VocabService} from "@/src/services/VocabService.js";
 import {getParser} from "dzelda-common";
-import {usernameValidator} from "@/src/validators/userValidator.js";
 import {UserService} from "@/src/services/UserService.js";
 import {NotFoundAPIError} from "@/src/utils/errors/NotFoundAPIError.js";
 import {User} from "@/src/models/entities/auth/User.js";
@@ -202,7 +201,7 @@ class VocabController {
     }
 
     async getUserSavedVocabsCount(request: FastifyRequest, reply: FastifyReply) {
-        const pathParamsValidator = z.object({username: usernameValidator.or(z.literal("me"))});
+        const pathParamsValidator = z.object({username: z.string().min(1).or(z.literal("me"))});
         const pathParams = pathParamsValidator.parse(request.params);
         const userService = new UserService(request.em);
         const user = await userService.getUser(pathParams.username, request.user);
@@ -230,7 +229,7 @@ class VocabController {
     }
 
     async getUserSavedVocabsCountTimeSeries(request: FastifyRequest, reply: FastifyReply) {
-        const pathParamsValidator = z.object({username: usernameValidator.or(z.literal("me"))});
+        const pathParamsValidator = z.object({username: z.string().min(1).or(z.literal("me"))});
         const pathParams = pathParamsValidator.parse(request.params);
         const userService = new UserService(request.em);
         const user = await userService.getUser(pathParams.username, request.user);

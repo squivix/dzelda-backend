@@ -3,7 +3,6 @@ import {z} from "zod";
 import {CollectionService} from "@/src/services/CollectionService.js";
 import {AnonymousUser, User} from "@/src/models/entities/auth/User.js";
 import {languageCodeValidator} from "@/src/validators/languageValidators.js";
-import {usernameValidator} from "@/src/validators/userValidator.js";
 import {UnauthenticatedAPIError} from "@/src/utils/errors/UnauthenticatedAPIError.js";
 import {collectionDescriptionValidator, collectionTitleValidator} from "@/src/validators/collectionValidator.js";
 import {NotFoundAPIError} from "@/src/utils/errors/NotFoundAPIError.js";
@@ -21,7 +20,7 @@ class CollectionController {
     async getCollections(request: FastifyRequest, reply: FastifyReply) {
         const queryParamsValidator = z.object({
             languageCode: languageCodeValidator.optional(),
-            addedBy: usernameValidator.or(z.literal("me")).optional(),
+            addedBy: z.string().min(1).or(z.literal("me")).optional(),
             searchQuery: z.string().max(256).optional(),
             sortBy: z.union([z.literal("title"), z.literal("createdDate"), z.literal("avgPastViewersCountPerText")]).optional().default("title"),
             sortOrder: z.union([z.literal("asc"), z.literal("desc")]).optional().default("asc"),
@@ -146,7 +145,7 @@ class CollectionController {
     async getUserBookmarkedCollections(request: FastifyRequest, reply: FastifyReply) {
         const queryParamsValidator = z.object({
             languageCode: languageCodeValidator.optional(),
-            addedBy: usernameValidator.or(z.literal("me")).optional(),
+            addedBy: z.string().min(1).or(z.literal("me")).optional(),
             searchQuery: z.string().max(256).optional(),
             sortBy: z.union([z.literal("title"), z.literal("createdDate"), z.literal("avgPastViewersCountPerText")]).optional().default("title"),
             sortOrder: z.union([z.literal("asc"), z.literal("desc")]).optional().default("asc"),
