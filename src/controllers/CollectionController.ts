@@ -203,8 +203,7 @@ class CollectionController {
         const collection = await collectionService.getCollection(pathParams.collectionId, request.user);
         if (!collection)
             throw new NotFoundAPIError("Collection");
-        const existingCollectionMapping = await collectionService.findBookMarkerCollectionMapping({collection: collection, bookmarker: user.profile});
-        if (!existingCollectionMapping)
+        if (!collection.isBookmarked)
             throw new APIError(StatusCodes.NOT_FOUND, "Collection is not bookmarked");
         await collectionService.removeCollectionFromUserBookmarks(collection, user);
         reply.status(204).send();

@@ -2363,6 +2363,22 @@ describe("POST users/me/texts/history/", () => {
     });
 });
 
+
+/**{@link TextController#getUserBookmarkedTexts}*/
+describe("GET users/me/texts/bookmarked/", () => {
+    test.todo("");
+});
+
+/**{@link TextController#addTextToUserBookmarks}*/
+describe("POST users/me/texts/bookmarked/", () => {
+    test.todo("");
+});
+
+/**{@link TextController#addTextToUserBookmarks}*/
+describe("DELETE users/me/texts/bookmarked/:textId", () => {
+    test.todo("");
+});
+
 /**{@link TextController#getNextTextInCollection}*/
 describe("GET collections/:collectionId/texts/:textId/next/", () => {
     const makeRequest = async (collectionId: string | number, textId: number | string, authToken?: string) => {

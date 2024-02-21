@@ -8,6 +8,7 @@ import {User} from "@/src/models/entities/auth/User.js";
 export class TextRepo extends EntityRepository<Text> {
     async annotateTextsWithUserData(texts: Text[], user: User) {
         await this.annotateVocabsByLevel(texts, user.profile.id);
+        await this.annotateIsBookmarked(texts, user.profile.id);
     }
 
     private async annotateVocabsByLevel(texts: Text[], learnerId: number) {
@@ -29,6 +30,15 @@ FROM (SELECT subq.text_id                                                   AS i
         const vocabsLevelsByText = (await this.em.execute(query))[0].vocab_levels_by_text;
         const defaultCounts = numericEnumValues(VocabLevel).reduce((a, v) => ({...a, [v]: 0}), {});
         texts.forEach(text => text.vocabsByLevel = Object.assign({}, defaultCounts, vocabsLevelsByText?.[text.id] ?? {}));
+        return texts;
+    }
+
+    private async annotateIsBookmarked(texts: Text[], learnerId: number) {
+        if (texts.length === 0)
+            return texts;
+        const query = `SELECT json_object_agg(text_id, true) AS text_id_to_is_bookmarked FROM text_bookmark WHERE bookmarker_id = ${learnerId};`;
+        const textIdToIsBookmarked = (await this.em.execute(query))[0].text_id_to_is_bookmarked;
+        texts.forEach(collection => collection.isBookmarked = textIdToIsBookmarked?.[collection.id] ?? false);
         return texts;
     }
 

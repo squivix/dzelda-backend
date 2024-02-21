@@ -19,6 +19,8 @@ import {validateFileObjectKey} from "@/src/controllers/ControllerUtils.js";
 import {collectionLevelsFilterValidator, collectionLevelValidator} from "@/src/validators/collectionValidator.js";
 import {LanguageService} from "@/src/services/LanguageService.js";
 import {Collection} from "@/src/models/entities/Collection.js";
+import {APIError} from "@/src/utils/errors/APIError.js";
+import {StatusCodes} from "http-status-codes";
 
 class TextController {
     async getTexts(request: FastifyRequest, reply: FastifyReply) {
@@ -260,6 +262,75 @@ class TextController {
             throw new NotFoundAPIError("Next text");
 
         reply.header("Location", `${API_ROOT}/texts/${nextText.id}/`).status(303).send();
+    }
+
+    async getUserBookmarkedTexts(request: FastifyRequest, reply: FastifyReply) {
+        const queryParamsValidator = z.object({
+            languageCode: languageCodeValidator.optional(),
+            addedBy: usernameValidator.or(z.literal("me")).optional(),
+            searchQuery: z.string().max(256).optional(),
+            level: collectionLevelsFilterValidator.default([]),
+            hasAudio: booleanStringValidator.optional(),
+            sortBy: z.union([z.literal("title"), z.literal("createdDate"), z.literal("pastViewersCount")]).optional().default("title"),
+            sortOrder: z.union([z.literal("asc"), z.literal("desc")]).optional().default("asc"),
+            page: z.coerce.number().int().min(1).optional().default(1),
+            pageSize: z.coerce.number().int().min(1).max(100).optional().default(10),
+        });
+        const queryParams = queryParamsValidator.parse(request.query);
+        const user = request.user as User;
+        if (queryParams.addedBy == "me")
+            queryParams.addedBy = user.username;
+
+        const filters = {
+            languageCode: queryParams.languageCode,
+            addedBy: queryParams.addedBy,
+            searchQuery: queryParams.searchQuery,
+            level: queryParams.level,
+            hasAudio: queryParams.hasAudio,
+            isBookmarked: true,
+        };
+        const sort = {sortBy: queryParams.sortBy, sortOrder: queryParams.sortOrder};
+        const pagination = {page: queryParams.page, pageSize: queryParams.pageSize};
+        const textService = new TextService(request.em);
+        const [texts, recordsCount] = await textService.getPaginatedTexts(filters, sort, pagination, request.user);
+        reply.send({
+            page: pagination.page,
+            pageSize: pagination.pageSize,
+            pageCount: Math.ceil(recordsCount / pagination.pageSize),
+            data: textSerializer.serializeList(texts)
+        });
+    }
+
+    async addTextToUserBookmarks(request: FastifyRequest, reply: FastifyReply) {
+        const user = request.user as User;
+
+        const bodyValidator = z.object({textId: z.number().min(0)});
+        const body = bodyValidator.parse(request.body);
+
+        const textService = new TextService(request.em);
+        const text = await textService.getText(body.textId, request.user);
+        if (!text || (!text.isPublic && user.profile !== text.addedBy))
+            throw new ValidationAPIError({text: "Not found"});
+        if (!user.profile.languagesLearning.contains(text.language))
+            throw new ValidationAPIError({text: "not in a language the user is learning"});
+        const textBookmark = await textService.addTextToUserBookmarks(text, user);
+        reply.status(201).send(textSerializer.serialize(textBookmark.text));
+    }
+
+    async removeTextFromUserBookmarks(request: FastifyRequest, reply: FastifyReply) {
+        const user = request.user as User;
+        const pathParamsValidator = z.object({textId: numericStringValidator});
+        const pathParams = pathParamsValidator.parse(request.params);
+
+        const textService = new TextService(request.em);
+        const text = await textService.getText(pathParams.textId, request.user);
+        if (!text)
+            throw new NotFoundAPIError("Text");
+
+        if (!text.isBookmarked)
+            throw new APIError(StatusCodes.NOT_FOUND, "Text is not bookmarked");
+        await textService.removeTextFromUserBookmarks(text, user);
+        reply.status(204).send();
     }
 }
 

@@ -1585,6 +1585,107 @@
           "nullable": false,
           "mappedType": "integer"
         },
+        "text_id": {
+          "name": "text_id",
+          "type": "int",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "mappedType": "integer"
+        },
+        "bookmarker_id": {
+          "name": "bookmarker_id",
+          "type": "int",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "mappedType": "integer"
+        }
+      },
+      "name": "text_bookmark",
+      "schema": "public",
+      "indexes": [
+        {
+          "keyName": "text_bookmark_bookmarker_id_index",
+          "columnNames": [
+            "bookmarker_id"
+          ],
+          "composite": false,
+          "primary": false,
+          "unique": false
+        },
+        {
+          "keyName": "text_bookmark_text_id_index",
+          "columnNames": [
+            "text_id"
+          ],
+          "composite": false,
+          "primary": false,
+          "unique": false
+        },
+        {
+          "keyName": "text_bookmark_text_id_bookmarker_id_unique",
+          "columnNames": [
+            "text_id",
+            "bookmarker_id"
+          ],
+          "composite": true,
+          "primary": false,
+          "unique": true
+        },
+        {
+          "keyName": "text_bookmark_pkey",
+          "columnNames": [
+            "id"
+          ],
+          "composite": false,
+          "primary": true,
+          "unique": true
+        }
+      ],
+      "checks": [],
+      "foreignKeys": {
+        "text_bookmark_text_id_foreign": {
+          "constraintName": "text_bookmark_text_id_foreign",
+          "columnNames": [
+            "text_id"
+          ],
+          "localTableName": "public.text_bookmark",
+          "referencedColumnNames": [
+            "id"
+          ],
+          "referencedTableName": "public.text",
+          "deleteRule": "cascade",
+          "updateRule": "cascade"
+        },
+        "text_bookmark_bookmarker_id_foreign": {
+          "constraintName": "text_bookmark_bookmarker_id_foreign",
+          "columnNames": [
+            "bookmarker_id"
+          ],
+          "localTableName": "public.text_bookmark",
+          "referencedColumnNames": [
+            "id"
+          ],
+          "referencedTableName": "public.profile",
+          "deleteRule": "cascade",
+          "updateRule": "cascade"
+        }
+      }
+    },
+    {
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "int",
+          "unsigned": true,
+          "autoincrement": true,
+          "primary": true,
+          "nullable": false,
+          "mappedType": "integer"
+        },
         "collection_id": {
           "name": "collection_id",
           "type": "int",

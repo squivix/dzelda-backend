@@ -24,7 +24,8 @@ export class TextSerializer extends CustomEntitySerializer<Text, TextSchema> {
             level: () => text.level,
             language: () => text.language.code,
             vocabsByLevel: () => text.vocabsByLevel,
-            pastViewersCount: () => Number(text.pastViewersCount)
+            pastViewersCount: () => Number(text.pastViewersCount),
+            isBookmarked: () => text.isBookmarked
         };
     }
 

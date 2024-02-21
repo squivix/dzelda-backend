@@ -9,6 +9,8 @@ import {TextRepo} from "@/src/models/repos/TextRepo.js";
 import {VocabLevel} from "@/src/models/enums/VocabLevel.js";
 import {LanguageLevel} from "@/src/models/enums/LanguageLevel.js";
 import {Language} from "@/src/models/entities/Language.js";
+import {CollectionBookmark} from "@/src/models/entities/CollectionBookmark.js";
+import {TextBookmark} from "@/src/models/entities/TextBookmark.js";
 
 @Entity({customRepository: () => TextRepo})
 @Index({properties: ["collection"]})
@@ -70,7 +72,16 @@ export class Text extends CustomBaseEntity {
     })
     pastViewers: MikroORMCollection<Profile> = new MikroORMCollection<Profile>(this);
 
-    [OptionalProps]?: "image" | "audio" | "addedOn" | "level" | "orderInCollection" | "pastViewersCount" | "parsedContent" | "parsedTitle" | "isLastInCollection";
+    @ManyToMany({
+        entity: () => Profile,
+        inversedBy: (bookmarker: Profile) => bookmarker.textsBookmarked,
+        pivotEntity: () => TextBookmark,
+        joinColumn: "text_id",
+        inverseJoinColumn: "bookmarker_id"
+    })
+    bookmarkers!: Profile;
+
+    [OptionalProps]?: "image" | "audio" | "addedOn" | "level" | "orderInCollection" | "pastViewersCount" | "parsedContent" | "parsedTitle" | "isLastInCollection" | "bookmarkers";
 
     //annotated properties
     @Property({persist: false, type: types.json})
@@ -85,6 +96,9 @@ export class Text extends CustomBaseEntity {
         type: "boolean"
     })
     isLastInCollection: boolean | null = null;
+
+    @Property({persist: false, type: types.boolean})
+    isBookmarked?: boolean;
 
     //TODO add field for keeping track of which parser last parsed text (to reparse on demand if parser was updated)
 }

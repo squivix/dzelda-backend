@@ -13,6 +13,7 @@ import {MapLearnerDictionary} from "@/src/models/entities/MapLearnerDictionary.j
 import {Language} from "@/src/models/entities/Language.js";
 import {MapLearnerLanguage} from "@/src/models/entities/MapLearnerLanguage.js";
 import {CollectionBookmark} from "@/src/models/entities/CollectionBookmark.js";
+import {TextBookmark} from "@/src/models/entities/TextBookmark.js";
 
 @Entity()
 export class Profile extends CustomBaseEntity {
@@ -81,12 +82,20 @@ export class Profile extends CustomBaseEntity {
     dictionariesSaved: MikroORMCollection<Dictionary> = new MikroORMCollection<Dictionary>(this);
 
     @ManyToMany({
+        entity: () => Text,
+        mappedBy: (text: Text) => text.bookmarkers,
+        pivotEntity: () => TextBookmark,
+        hidden: true
+    })
+    textsBookmarked: MikroORMCollection<Text> = new MikroORMCollection<Text>(this);
+
+    @ManyToMany({
         entity: () => Collection,
         mappedBy: (collection: Collection) => collection.bookmarkers,
         pivotEntity: () => CollectionBookmark,
         hidden: true
     })
-    collectionsBookmarked:MikroORMCollection<Collection> = new MikroORMCollection<Collection>(this);
+    collectionsBookmarked: MikroORMCollection<Collection> = new MikroORMCollection<Collection>(this);
 
     @OneToMany({entity: () => Collection, mappedBy: (collection: Collection) => collection.addedBy, hidden: true})
     collectionsAdded: MikroORMCollection<Collection> = new MikroORMCollection<Collection>(this);

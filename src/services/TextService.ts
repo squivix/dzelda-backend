@@ -13,6 +13,8 @@ import {TextHistoryEntry} from "@/src/models/entities/TextHistoryEntry.js";
 import {QueryOrderMap} from "@mikro-orm/core/enums.js";
 import {EntityField} from "@mikro-orm/core/drivers/IDatabaseDriver.js";
 import {LanguageLevel} from "@/src/models/enums/LanguageLevel.js";
+import {CollectionBookmark} from "@/src/models/entities/CollectionBookmark.js";
+import {TextBookmark} from "@/src/models/entities/TextBookmark.js";
 
 export class TextService {
     em: SqlEntityManager;
@@ -26,19 +28,22 @@ export class TextService {
     }
 
     async getPaginatedTexts(filters: {
-                                  languageCode?: string,
-                                  addedBy?: string,
-                                  searchQuery?: string,
-                                  level?: LanguageLevel[],
-                                  hasAudio?: boolean;
-                              },
+                                languageCode?: string,
+                                addedBy?: string,
+                                searchQuery?: string,
+                                level?: LanguageLevel[],
+                                hasAudio?: boolean;
+                                isBookmarked?: boolean;
+                            },
                             sort: { sortBy: "title" | "createdDate" | "pastViewersCount", sortOrder: "asc" | "desc" },
                             pagination: { page: number, pageSize: number },
                             user: User | AnonymousUser | null): Promise<[Text[], number]> {
         const dbFilters: FilterQuery<Text> = {$and: []};
-        if (user && user instanceof User)
+        if (user && user instanceof User) {
             dbFilters.$and!.push({$or: [{isPublic: true}, {addedBy: (user as User).profile}]});
-        else
+            if (filters.isBookmarked)
+                dbFilters.$and!.push({bookmarkers: user.profile});
+        } else
             dbFilters.$and!.push({isPublic: true});
 
         if (filters.languageCode !== undefined)
@@ -74,16 +79,16 @@ export class TextService {
     }
 
     async getPaginatedTextHistory(filters: {
-                                        languageCode?: string,
-                                        addedBy?: string,
-                                        searchQuery?: string,
-                                        level?: LanguageLevel[],
-                                        hasAudio?: boolean;
-                                    },
+                                      languageCode?: string,
+                                      addedBy?: string,
+                                      searchQuery?: string,
+                                      level?: LanguageLevel[],
+                                      hasAudio?: boolean;
+                                  },
                                   sort: {
-                                        sortBy: "timeViewed" | "title" | "createdDate" | "pastViewersCount",
-                                        sortOrder: "asc" | "desc"
-                                    },
+                                      sortBy: "timeViewed" | "title" | "createdDate" | "pastViewersCount",
+                                      sortOrder: "asc" | "desc"
+                                  },
                                   pagination: { page: number, pageSize: number },
                                   user: User): Promise<[TextHistoryEntry[], number]> {
         const dbFilters: FilterQuery<TextHistoryEntry> = {$and: []};
@@ -252,6 +257,17 @@ export class TextService {
         await this.em.flush();
         await this.em.refresh(mapping.text, {populate: ["addedBy.user"]});
         return mapping;
+    }
+
+    async addTextToUserBookmarks(text: Text, user: User) {
+        const bookmark = this.em.create(TextBookmark, {bookmarker: user.profile, text: text});
+        await this.em.flush();
+        await this.textRepo.annotateTextsWithUserData([text], user);
+        return bookmark;
+    }
+
+    async removeTextFromUserBookmarks(text: Text, user: User) {
+        await this.em.nativeDelete(TextBookmark, {text: text, bookmarker: user.profile}, {});
     }
 
     async findText(where: FilterQuery<Text>, fields: EntityField<Text>[] = ["id", "collection", "isPublic", "addedBy"]) {
