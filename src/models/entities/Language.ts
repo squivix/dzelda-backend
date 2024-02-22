@@ -11,7 +11,7 @@ import {Text} from "@/src/models/entities/Text.js";
 import {TTSVoice} from "@/src/models/entities/TTSVoice.js";
 import {HumanPronunciation} from "@/src/models/entities/HumanPronunciation.js";
 
-@Entity({customRepository: () => LanguageRepo})
+@Entity({repository: () => LanguageRepo})
 export class Language extends CustomBaseEntity {
     @Property({type: types.string, unique: true})
     code!: string;

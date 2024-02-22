@@ -98,7 +98,7 @@ export class UserService {
     }
 
     async findUser(where: FilterQuery<User>, fields: EntityField<User>[] = ["id", "email", "username"]) {
-        return await this.userRepo.findOne(where, {fields});
+        return await this.userRepo.findOne(where, {fields: fields as any});
     }
 
     async generateEmailConfirmToken(tokenData: { user: User, email: string }) {

@@ -20,8 +20,6 @@ import {s3Client} from "@/src/storageClient.js";
 import process from "process";
 import {TTSPronunciation} from "@/src/models/entities/TTSPronunciation.js";
 import urlJoin from "url-join";
-import {util} from "zod";
-import objectKeys = util.objectKeys;
 
 export class VocabService {
     em: EntityManager;
@@ -253,11 +251,11 @@ export class VocabService {
     }
 
     async findVocab(where: FilterQuery<Vocab>, fields: EntityField<Vocab>[] = ["*", "language"]) {
-        return await this.vocabRepo.findOne(where, {fields});
+        return await this.vocabRepo.findOne(where, {fields:fields as any});
     }
 
     async findLearnerVocab(where: FilterQuery<MapLearnerVocab>, fields?: EntityField<MapLearnerVocab>[]) {
-        return await this.em.findOne(MapLearnerVocab, where, {fields});
+        return await this.em.findOne(MapLearnerVocab, where, {fields: fields as any});
     }
 
     async findTTSVoice(where: FilterQuery<TTSVoice>, fields?: EntityField<TTSVoice>[]) {

@@ -34,5 +34,21 @@ export const textsRouter: FastifyPluginCallback = function (fastify, options, do
         preHandler: [requiresAuth, requiresEmailConfirmed],
         handler: textController.removeTextFromUserBookmarks,
     });
+    fastify.get(`/users/me/texts/hidden/`, {
+        preHandler: [requiresAuth, requiresEmailConfirmed],
+        handler: textController.getUserHiddenTexts,
+    });
+    fastify.post(`/users/me/texts/hidden/`, {
+        preHandler: [requiresAuth, requiresEmailConfirmed],
+        handler: textController.hideTextForUser,
+    });
+    fastify.delete(`/users/me/texts/hidden/:textId/`, {
+        preHandler: [requiresAuth, requiresEmailConfirmed],
+        handler: textController.unhideTextForUser,
+    });
+    fastify.post(`/texts/:textId/reports/`, {
+        preHandler: [requiresAuth, requiresEmailConfirmed],
+        handler: textController.reportText,
+    });
     done();
 };

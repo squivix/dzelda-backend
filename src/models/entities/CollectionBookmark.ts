@@ -8,9 +8,9 @@ import {Collection} from "@/src/models/entities/Collection.js";
 @Index({properties: ["collection"]})
 @Index({properties: ["bookmarker"]})
 export class CollectionBookmark extends CustomBaseEntity {
-    @ManyToOne({entity: () => Collection, onDelete: "cascade", onUpdateIntegrity: "cascade"})
+    @ManyToOne({entity: () => Collection, deleteRule: "cascade", updateRule: "cascade"})
     collection!: Collection;
 
-    @ManyToOne({entity: () => Profile, onDelete: "cascade", onUpdateIntegrity: "cascade"})
+    @ManyToOne({entity: () => Profile, deleteRule: "cascade", updateRule: "cascade"})
     bookmarker!: Profile;
 }

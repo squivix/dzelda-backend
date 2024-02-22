@@ -8,10 +8,10 @@ import {Profile} from "@/src/models/entities/Profile.js";
 @Index({properties: ["text"]})
 @Index({properties: ["pastViewer"]})
 export class TextHistoryEntry extends CustomBaseEntity {
-    @ManyToOne({entity: () => Text, onDelete: "cascade", onUpdateIntegrity: "cascade"})
+    @ManyToOne({entity: () => Text, deleteRule: "cascade", updateRule: "cascade"})
     text!: Text;
 
-    @ManyToOne({entity: () => Profile, nullable: true, onDelete: "set null", onUpdateIntegrity: "cascade"})
+    @ManyToOne({entity: () => Profile, nullable: true, deleteRule: "set null", updateRule: "cascade"})
     pastViewer!: Profile;
 
     @Property({type: types.datetime, defaultRaw: "now()"})

@@ -9,10 +9,10 @@ import {VocabLevel} from "@/src/models/enums/VocabLevel.js";
 @Index({properties: ["vocab"]})
 @Index({properties: ["learner"]})
 export class MapLearnerVocab extends CustomBaseEntity {
-    @ManyToOne({entity: () => Vocab, onDelete: "cascade", onUpdateIntegrity: "cascade"})
+    @ManyToOne({entity: () => Vocab, deleteRule: "cascade", updateRule: "cascade"})
     vocab!: Vocab;
 
-    @ManyToOne({entity: () => Profile, onDelete: "cascade", onUpdateIntegrity: "cascade"})
+    @ManyToOne({entity: () => Profile, deleteRule: "cascade", updateRule: "cascade"})
     learner!: Profile;
 
     @Enum({items: () => VocabLevel, type: types.enum, default: VocabLevel.LEVEL_1})

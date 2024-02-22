@@ -126,6 +126,7 @@
           ],
           "composite": false,
           "keyName": "language_code_unique",
+          "constraint": true,
           "primary": false,
           "unique": true
         },
@@ -135,12 +136,14 @@
             "id"
           ],
           "composite": false,
+          "constraint": true,
           "primary": true,
           "unique": true
         }
       ],
       "checks": [],
-      "foreignKeys": {}
+      "foreignKeys": {},
+      "nativeEnums": {}
     },
     {
       "columns": {
@@ -230,6 +233,7 @@
             "parsed_text"
           ],
           "composite": false,
+          "constraint": false,
           "primary": false,
           "unique": false
         },
@@ -239,6 +243,7 @@
             "id"
           ],
           "composite": false,
+          "constraint": true,
           "primary": true,
           "unique": true
         }
@@ -258,7 +263,8 @@
           "deleteRule": "cascade",
           "updateRule": "cascade"
         }
-      }
+      },
+      "nativeEnums": {}
     },
     {
       "columns": {
@@ -340,6 +346,7 @@
             "is_pronunciation"
           ],
           "composite": false,
+          "constraint": false,
           "primary": false,
           "unique": false
         },
@@ -349,6 +356,7 @@
             "name"
           ],
           "composite": false,
+          "constraint": false,
           "primary": false,
           "unique": false
         },
@@ -358,6 +366,7 @@
             "language_id"
           ],
           "composite": false,
+          "constraint": false,
           "primary": false,
           "unique": false
         },
@@ -367,6 +376,7 @@
             "id"
           ],
           "composite": false,
+          "constraint": true,
           "primary": true,
           "unique": true
         }
@@ -386,7 +396,8 @@
           "deleteRule": "cascade",
           "updateRule": "cascade"
         }
-      }
+      },
+      "nativeEnums": {}
     },
     {
       "columns": {
@@ -486,6 +497,7 @@
             "code"
           ],
           "composite": true,
+          "constraint": true,
           "primary": false,
           "unique": true
         },
@@ -495,6 +507,7 @@
             "id"
           ],
           "composite": false,
+          "constraint": true,
           "primary": true,
           "unique": true
         }
@@ -514,7 +527,8 @@
           "deleteRule": "cascade",
           "updateRule": "cascade"
         }
-      }
+      },
+      "nativeEnums": {}
     },
     {
       "columns": {
@@ -589,23 +603,23 @@
         },
         "account_created_at": {
           "name": "account_created_at",
-          "type": "timestamptz(0)",
+          "type": "timestamptz",
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
           "nullable": false,
-          "length": 0,
+          "length": 6,
           "default": "now()",
           "mappedType": "datetime"
         },
         "last_login": {
           "name": "last_login",
-          "type": "timestamptz(0)",
+          "type": "timestamptz",
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
           "nullable": true,
-          "length": 0,
+          "length": 6,
           "default": "null",
           "mappedType": "datetime"
         }
@@ -619,6 +633,7 @@
           ],
           "composite": false,
           "keyName": "user_username_unique",
+          "constraint": true,
           "primary": false,
           "unique": true
         },
@@ -628,6 +643,7 @@
           ],
           "composite": false,
           "keyName": "user_email_unique",
+          "constraint": true,
           "primary": false,
           "unique": true
         },
@@ -637,12 +653,14 @@
             "id"
           ],
           "composite": false,
+          "constraint": true,
           "primary": true,
           "unique": true
         }
       ],
       "checks": [],
-      "foreignKeys": {}
+      "foreignKeys": {},
+      "nativeEnums": {}
     },
     {
       "columns": {
@@ -676,23 +694,23 @@
         },
         "created_at": {
           "name": "created_at",
-          "type": "timestamptz(0)",
+          "type": "timestamptz",
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
           "nullable": false,
-          "length": 0,
+          "length": 6,
           "default": "now()",
           "mappedType": "datetime"
         },
         "expires_on": {
           "name": "expires_on",
-          "type": "timestamptz(0)",
+          "type": "timestamptz",
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
           "nullable": false,
-          "length": 0,
+          "length": 6,
           "default": "now() + interval '1 month'",
           "mappedType": "datetime"
         }
@@ -706,6 +724,7 @@
             "id"
           ],
           "composite": false,
+          "constraint": true,
           "primary": true,
           "unique": true
         }
@@ -725,7 +744,8 @@
           "deleteRule": "cascade",
           "updateRule": "cascade"
         }
-      }
+      },
+      "nativeEnums": {}
     },
     {
       "columns": {
@@ -789,6 +809,7 @@
           ],
           "composite": false,
           "keyName": "profile_user_id_unique",
+          "constraint": true,
           "primary": false,
           "unique": true
         },
@@ -798,6 +819,7 @@
             "id"
           ],
           "composite": false,
+          "constraint": true,
           "primary": true,
           "unique": true
         }
@@ -817,7 +839,8 @@
           "deleteRule": "cascade",
           "updateRule": "cascade"
         }
-      }
+      },
+      "nativeEnums": {}
     },
     {
       "columns": {
@@ -850,23 +873,23 @@
         },
         "started_learning_on": {
           "name": "started_learning_on",
-          "type": "timestamptz(0)",
+          "type": "timestamptz",
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
           "nullable": false,
-          "length": 0,
+          "length": 6,
           "default": "now()",
           "mappedType": "datetime"
         },
         "last_opened": {
           "name": "last_opened",
-          "type": "timestamptz(0)",
+          "type": "timestamptz",
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
           "nullable": false,
-          "length": 0,
+          "length": 6,
           "default": "now()",
           "mappedType": "datetime"
         },
@@ -890,6 +913,7 @@
             "language_id"
           ],
           "composite": false,
+          "constraint": false,
           "primary": false,
           "unique": false
         },
@@ -899,6 +923,7 @@
             "learner_id"
           ],
           "composite": false,
+          "constraint": false,
           "primary": false,
           "unique": false
         },
@@ -909,6 +934,7 @@
             "learner_id"
           ],
           "composite": true,
+          "constraint": true,
           "primary": false,
           "unique": true
         },
@@ -918,6 +944,7 @@
             "id"
           ],
           "composite": false,
+          "constraint": true,
           "primary": true,
           "unique": true
         }
@@ -963,7 +990,8 @@
           "deleteRule": "set null",
           "updateRule": "cascade"
         }
-      }
+      },
+      "nativeEnums": {}
     },
     {
       "columns": {
@@ -1014,6 +1042,7 @@
             "learner_id"
           ],
           "composite": false,
+          "constraint": false,
           "primary": false,
           "unique": false
         },
@@ -1023,6 +1052,7 @@
             "dictionary_id"
           ],
           "composite": false,
+          "constraint": false,
           "primary": false,
           "unique": false
         },
@@ -1033,6 +1063,7 @@
             "learner_id"
           ],
           "composite": true,
+          "constraint": true,
           "primary": false,
           "unique": true
         },
@@ -1042,6 +1073,7 @@
             "id"
           ],
           "composite": false,
+          "constraint": true,
           "primary": true,
           "unique": true
         }
@@ -1074,7 +1106,8 @@
           "deleteRule": "cascade",
           "updateRule": "cascade"
         }
-      }
+      },
+      "nativeEnums": {}
     },
     {
       "columns": {
@@ -1139,12 +1172,12 @@
         },
         "added_on": {
           "name": "added_on",
-          "type": "timestamptz(0)",
+          "type": "timestamptz",
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
           "nullable": false,
-          "length": 0,
+          "length": 6,
           "default": "now()",
           "mappedType": "datetime"
         }
@@ -1158,6 +1191,7 @@
             "added_on"
           ],
           "composite": false,
+          "constraint": false,
           "primary": false,
           "unique": false
         },
@@ -1167,6 +1201,7 @@
             "title"
           ],
           "composite": false,
+          "constraint": false,
           "primary": false,
           "unique": false
         },
@@ -1176,6 +1211,7 @@
             "added_by_id"
           ],
           "composite": false,
+          "constraint": false,
           "primary": false,
           "unique": false
         },
@@ -1185,6 +1221,7 @@
             "language_id"
           ],
           "composite": false,
+          "constraint": false,
           "primary": false,
           "unique": false
         },
@@ -1194,6 +1231,7 @@
             "id"
           ],
           "composite": false,
+          "constraint": true,
           "primary": true,
           "unique": true
         }
@@ -1226,7 +1264,8 @@
           "deleteRule": "cascade",
           "updateRule": "cascade"
         }
-      }
+      },
+      "nativeEnums": {}
     },
     {
       "columns": {
@@ -1369,14 +1408,24 @@
         },
         "added_on": {
           "name": "added_on",
-          "type": "timestamptz(0)",
+          "type": "timestamptz",
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
           "nullable": false,
-          "length": 0,
+          "length": 6,
           "default": "now()",
           "mappedType": "datetime"
+        },
+        "is_hidden": {
+          "name": "is_hidden",
+          "type": "boolean",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "default": "false",
+          "mappedType": "boolean"
         }
       },
       "name": "text",
@@ -1388,6 +1437,7 @@
             "added_on"
           ],
           "composite": false,
+          "constraint": false,
           "primary": false,
           "unique": false
         },
@@ -1397,6 +1447,7 @@
             "title"
           ],
           "composite": false,
+          "constraint": false,
           "primary": false,
           "unique": false
         },
@@ -1406,6 +1457,7 @@
             "collection_id"
           ],
           "composite": false,
+          "constraint": false,
           "primary": false,
           "unique": false
         },
@@ -1415,6 +1467,7 @@
             "id"
           ],
           "composite": false,
+          "constraint": true,
           "primary": true,
           "unique": true
         }
@@ -1460,7 +1513,8 @@
           "deleteRule": "cascade",
           "updateRule": "cascade"
         }
-      }
+      },
+      "nativeEnums": {}
     },
     {
       "columns": {
@@ -1493,12 +1547,12 @@
         },
         "time_viewed": {
           "name": "time_viewed",
-          "type": "timestamptz(0)",
+          "type": "timestamptz",
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
           "nullable": false,
-          "length": 0,
+          "length": 6,
           "default": "now()",
           "mappedType": "datetime"
         }
@@ -1512,6 +1566,7 @@
             "past_viewer_id"
           ],
           "composite": false,
+          "constraint": false,
           "primary": false,
           "unique": false
         },
@@ -1521,6 +1576,7 @@
             "text_id"
           ],
           "composite": false,
+          "constraint": false,
           "primary": false,
           "unique": false
         },
@@ -1531,6 +1587,7 @@
             "past_viewer_id"
           ],
           "composite": true,
+          "constraint": false,
           "primary": false,
           "unique": false
         },
@@ -1540,6 +1597,7 @@
             "id"
           ],
           "composite": false,
+          "constraint": true,
           "primary": true,
           "unique": true
         }
@@ -1572,7 +1630,8 @@
           "deleteRule": "set null",
           "updateRule": "cascade"
         }
-      }
+      },
+      "nativeEnums": {}
     },
     {
       "columns": {
@@ -1613,6 +1672,7 @@
             "bookmarker_id"
           ],
           "composite": false,
+          "constraint": false,
           "primary": false,
           "unique": false
         },
@@ -1622,6 +1682,7 @@
             "text_id"
           ],
           "composite": false,
+          "constraint": false,
           "primary": false,
           "unique": false
         },
@@ -1632,6 +1693,7 @@
             "bookmarker_id"
           ],
           "composite": true,
+          "constraint": true,
           "primary": false,
           "unique": true
         },
@@ -1641,6 +1703,7 @@
             "id"
           ],
           "composite": false,
+          "constraint": true,
           "primary": true,
           "unique": true
         }
@@ -1673,7 +1736,241 @@
           "deleteRule": "cascade",
           "updateRule": "cascade"
         }
-      }
+      },
+      "nativeEnums": {}
+    },
+    {
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "int",
+          "unsigned": true,
+          "autoincrement": true,
+          "primary": true,
+          "nullable": false,
+          "mappedType": "integer"
+        },
+        "text_id": {
+          "name": "text_id",
+          "type": "int",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "mappedType": "integer"
+        },
+        "hider_id": {
+          "name": "hider_id",
+          "type": "int",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "mappedType": "integer"
+        }
+      },
+      "name": "map_hider_text",
+      "schema": "public",
+      "indexes": [
+        {
+          "keyName": "map_hider_text_hider_id_index",
+          "columnNames": [
+            "hider_id"
+          ],
+          "composite": false,
+          "constraint": false,
+          "primary": false,
+          "unique": false
+        },
+        {
+          "keyName": "map_hider_text_text_id_index",
+          "columnNames": [
+            "text_id"
+          ],
+          "composite": false,
+          "constraint": false,
+          "primary": false,
+          "unique": false
+        },
+        {
+          "keyName": "map_hider_text_text_id_hider_id_unique",
+          "columnNames": [
+            "text_id",
+            "hider_id"
+          ],
+          "composite": true,
+          "constraint": true,
+          "primary": false,
+          "unique": true
+        },
+        {
+          "keyName": "map_hider_text_pkey",
+          "columnNames": [
+            "id"
+          ],
+          "composite": false,
+          "constraint": true,
+          "primary": true,
+          "unique": true
+        }
+      ],
+      "checks": [],
+      "foreignKeys": {
+        "map_hider_text_text_id_foreign": {
+          "constraintName": "map_hider_text_text_id_foreign",
+          "columnNames": [
+            "text_id"
+          ],
+          "localTableName": "public.map_hider_text",
+          "referencedColumnNames": [
+            "id"
+          ],
+          "referencedTableName": "public.text",
+          "deleteRule": "cascade",
+          "updateRule": "cascade"
+        },
+        "map_hider_text_hider_id_foreign": {
+          "constraintName": "map_hider_text_hider_id_foreign",
+          "columnNames": [
+            "hider_id"
+          ],
+          "localTableName": "public.map_hider_text",
+          "referencedColumnNames": [
+            "id"
+          ],
+          "referencedTableName": "public.profile",
+          "deleteRule": "cascade",
+          "updateRule": "cascade"
+        }
+      },
+      "nativeEnums": {}
+    },
+    {
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "int",
+          "unsigned": true,
+          "autoincrement": true,
+          "primary": true,
+          "nullable": false,
+          "mappedType": "integer"
+        },
+        "text_id": {
+          "name": "text_id",
+          "type": "int",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "mappedType": "integer"
+        },
+        "reporter_id": {
+          "name": "reporter_id",
+          "type": "int",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "mappedType": "integer"
+        },
+        "reason_for_reporting": {
+          "name": "reason_for_reporting",
+          "type": "varchar(512)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "length": 512,
+          "mappedType": "string"
+        },
+        "report_text": {
+          "name": "report_text",
+          "type": "text",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "length": 5000,
+          "default": "''",
+          "mappedType": "text"
+        }
+      },
+      "name": "flagged_text_report",
+      "schema": "public",
+      "indexes": [
+        {
+          "keyName": "flagged_text_report_reporter_id_index",
+          "columnNames": [
+            "reporter_id"
+          ],
+          "composite": false,
+          "constraint": false,
+          "primary": false,
+          "unique": false
+        },
+        {
+          "keyName": "flagged_text_report_text_id_index",
+          "columnNames": [
+            "text_id"
+          ],
+          "composite": false,
+          "constraint": false,
+          "primary": false,
+          "unique": false
+        },
+        {
+          "keyName": "flagged_text_report_text_id_reporter_id_unique",
+          "columnNames": [
+            "text_id",
+            "reporter_id"
+          ],
+          "composite": true,
+          "constraint": true,
+          "primary": false,
+          "unique": true
+        },
+        {
+          "keyName": "flagged_text_report_pkey",
+          "columnNames": [
+            "id"
+          ],
+          "composite": false,
+          "constraint": true,
+          "primary": true,
+          "unique": true
+        }
+      ],
+      "checks": [],
+      "foreignKeys": {
+        "flagged_text_report_text_id_foreign": {
+          "constraintName": "flagged_text_report_text_id_foreign",
+          "columnNames": [
+            "text_id"
+          ],
+          "localTableName": "public.flagged_text_report",
+          "referencedColumnNames": [
+            "id"
+          ],
+          "referencedTableName": "public.text",
+          "deleteRule": "cascade",
+          "updateRule": "cascade"
+        },
+        "flagged_text_report_reporter_id_foreign": {
+          "constraintName": "flagged_text_report_reporter_id_foreign",
+          "columnNames": [
+            "reporter_id"
+          ],
+          "localTableName": "public.flagged_text_report",
+          "referencedColumnNames": [
+            "id"
+          ],
+          "referencedTableName": "public.profile",
+          "deleteRule": "set null",
+          "updateRule": "cascade"
+        }
+      },
+      "nativeEnums": {}
     },
     {
       "columns": {
@@ -1714,6 +2011,7 @@
             "bookmarker_id"
           ],
           "composite": false,
+          "constraint": false,
           "primary": false,
           "unique": false
         },
@@ -1723,6 +2021,7 @@
             "collection_id"
           ],
           "composite": false,
+          "constraint": false,
           "primary": false,
           "unique": false
         },
@@ -1733,6 +2032,7 @@
             "bookmarker_id"
           ],
           "composite": true,
+          "constraint": true,
           "primary": false,
           "unique": true
         },
@@ -1742,6 +2042,7 @@
             "id"
           ],
           "composite": false,
+          "constraint": true,
           "primary": true,
           "unique": true
         }
@@ -1774,7 +2075,8 @@
           "deleteRule": "cascade",
           "updateRule": "cascade"
         }
-      }
+      },
+      "nativeEnums": {}
     },
     {
       "columns": {
@@ -1799,12 +2101,12 @@
         },
         "expires_on": {
           "name": "expires_on",
-          "type": "timestamptz(0)",
+          "type": "timestamptz",
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
           "nullable": false,
-          "length": 0,
+          "length": 6,
           "default": "now() + interval '1 hour'",
           "mappedType": "datetime"
         },
@@ -1827,6 +2129,7 @@
           ],
           "composite": false,
           "keyName": "password_reset_token_user_id_unique",
+          "constraint": true,
           "primary": false,
           "unique": true
         },
@@ -1836,6 +2139,7 @@
             "id"
           ],
           "composite": false,
+          "constraint": true,
           "primary": true,
           "unique": true
         }
@@ -1855,7 +2159,8 @@
           "deleteRule": "cascade",
           "updateRule": "cascade"
         }
-      }
+      },
+      "nativeEnums": {}
     },
     {
       "columns": {
@@ -1906,12 +2211,12 @@
         },
         "expires_on": {
           "name": "expires_on",
-          "type": "timestamptz(0)",
+          "type": "timestamptz",
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
           "nullable": false,
-          "length": 0,
+          "length": 6,
           "default": "now() + interval '5 minutes'",
           "mappedType": "datetime"
         }
@@ -1925,6 +2230,7 @@
             "id"
           ],
           "composite": false,
+          "constraint": true,
           "primary": true,
           "unique": true
         }
@@ -1944,7 +2250,8 @@
           "deleteRule": "cascade",
           "updateRule": "cascade"
         }
-      }
+      },
+      "nativeEnums": {}
     },
     {
       "columns": {
@@ -1969,12 +2276,12 @@
         },
         "expires_on": {
           "name": "expires_on",
-          "type": "timestamptz(0)",
+          "type": "timestamptz",
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
           "nullable": false,
-          "length": 0,
+          "length": 6,
           "default": "now() + interval '24 hours'",
           "mappedType": "datetime"
         },
@@ -2007,6 +2314,7 @@
           ],
           "composite": false,
           "keyName": "email_confirmation_token_user_id_unique",
+          "constraint": true,
           "primary": false,
           "unique": true
         },
@@ -2016,6 +2324,7 @@
             "id"
           ],
           "composite": false,
+          "constraint": true,
           "primary": true,
           "unique": true
         }
@@ -2035,7 +2344,8 @@
           "deleteRule": "cascade",
           "updateRule": "cascade"
         }
-      }
+      },
+      "nativeEnums": {}
     },
     {
       "columns": {
@@ -2087,6 +2397,7 @@
             "language_id"
           ],
           "composite": false,
+          "constraint": false,
           "primary": false,
           "unique": false
         },
@@ -2097,6 +2408,7 @@
             "text"
           ],
           "composite": true,
+          "constraint": true,
           "primary": false,
           "unique": true
         },
@@ -2106,6 +2418,7 @@
             "id"
           ],
           "composite": false,
+          "constraint": true,
           "primary": true,
           "unique": true
         }
@@ -2125,7 +2438,8 @@
           "deleteRule": "cascade",
           "updateRule": "cascade"
         }
-      }
+      },
+      "nativeEnums": {}
     },
     {
       "columns": {
@@ -2151,12 +2465,12 @@
         },
         "added_on": {
           "name": "added_on",
-          "type": "timestamptz(0)",
+          "type": "timestamptz",
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
           "nullable": false,
-          "length": 0,
+          "length": 6,
           "default": "now()",
           "mappedType": "datetime"
         },
@@ -2188,6 +2502,7 @@
             "id"
           ],
           "composite": false,
+          "constraint": true,
           "primary": true,
           "unique": true
         }
@@ -2220,7 +2535,8 @@
           "deleteRule": "cascade",
           "updateRule": "cascade"
         }
-      }
+      },
+      "nativeEnums": {}
     },
     {
       "columns": {
@@ -2263,12 +2579,12 @@
         },
         "added_on": {
           "name": "added_on",
-          "type": "timestamptz(0)",
+          "type": "timestamptz",
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
           "nullable": false,
-          "length": 0,
+          "length": 6,
           "default": "now()",
           "mappedType": "datetime"
         },
@@ -2300,6 +2616,7 @@
             "added_by_id"
           ],
           "composite": false,
+          "constraint": false,
           "primary": false,
           "unique": false
         },
@@ -2309,6 +2626,7 @@
             "language_id"
           ],
           "composite": false,
+          "constraint": false,
           "primary": false,
           "unique": false
         },
@@ -2318,6 +2636,7 @@
             "vocab_id"
           ],
           "composite": false,
+          "constraint": false,
           "primary": false,
           "unique": false
         },
@@ -2329,6 +2648,7 @@
             "language_id"
           ],
           "composite": true,
+          "constraint": true,
           "primary": false,
           "unique": true
         },
@@ -2338,6 +2658,7 @@
             "id"
           ],
           "composite": false,
+          "constraint": true,
           "primary": true,
           "unique": true
         }
@@ -2383,7 +2704,8 @@
           "deleteRule": "cascade",
           "updateRule": "cascade"
         }
-      }
+      },
+      "nativeEnums": {}
     },
     {
       "columns": {
@@ -2424,6 +2746,7 @@
             "learner_id"
           ],
           "composite": false,
+          "constraint": false,
           "primary": false,
           "unique": false
         },
@@ -2433,6 +2756,7 @@
             "meaning_id"
           ],
           "composite": false,
+          "constraint": false,
           "primary": false,
           "unique": false
         },
@@ -2443,6 +2767,7 @@
             "learner_id"
           ],
           "composite": true,
+          "constraint": true,
           "primary": false,
           "unique": true
         },
@@ -2452,6 +2777,7 @@
             "id"
           ],
           "composite": false,
+          "constraint": true,
           "primary": true,
           "unique": true
         }
@@ -2484,7 +2810,8 @@
           "deleteRule": "cascade",
           "updateRule": "cascade"
         }
-      }
+      },
+      "nativeEnums": {}
     },
     {
       "columns": {
@@ -2525,6 +2852,7 @@
             "vocab_id"
           ],
           "composite": false,
+          "constraint": false,
           "primary": false,
           "unique": false
         },
@@ -2534,6 +2862,7 @@
             "text_id"
           ],
           "composite": false,
+          "constraint": false,
           "primary": false,
           "unique": false
         },
@@ -2544,6 +2873,7 @@
             "text_id"
           ],
           "composite": true,
+          "constraint": true,
           "primary": false,
           "unique": true
         },
@@ -2553,6 +2883,7 @@
             "id"
           ],
           "composite": false,
+          "constraint": true,
           "primary": true,
           "unique": true
         }
@@ -2585,7 +2916,8 @@
           "deleteRule": "cascade",
           "updateRule": "cascade"
         }
-      }
+      },
+      "nativeEnums": {}
     },
     {
       "columns": {
@@ -2639,12 +2971,12 @@
         },
         "saved_on": {
           "name": "saved_on",
-          "type": "timestamptz(0)",
+          "type": "timestamptz",
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
           "nullable": false,
-          "length": 0,
+          "length": 6,
           "default": "now()",
           "mappedType": "datetime"
         }
@@ -2658,6 +2990,7 @@
             "learner_id"
           ],
           "composite": false,
+          "constraint": false,
           "primary": false,
           "unique": false
         },
@@ -2667,6 +3000,7 @@
             "vocab_id"
           ],
           "composite": false,
+          "constraint": false,
           "primary": false,
           "unique": false
         },
@@ -2677,6 +3011,7 @@
             "learner_id"
           ],
           "composite": true,
+          "constraint": true,
           "primary": false,
           "unique": true
         },
@@ -2686,6 +3021,7 @@
             "id"
           ],
           "composite": false,
+          "constraint": true,
           "primary": true,
           "unique": true
         }
@@ -2718,7 +3054,9 @@
           "deleteRule": "cascade",
           "updateRule": "cascade"
         }
-      }
+      },
+      "nativeEnums": {}
     }
-  ]
+  ],
+  "nativeEnums": {}
 }

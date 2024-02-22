@@ -22,13 +22,19 @@ import {TTSVoice} from "@/src/models/entities/TTSVoice.js";
 import {TTSPronunciation} from "@/src/models/entities/TTSPronunciation.js";
 import {HumanPronunciation} from "@/src/models/entities/HumanPronunciation.js";
 import {CollectionBookmark} from "@/src/models/entities/CollectionBookmark.js";
+import {MapHiderText} from "@/src/models/entities/MapHiderText.js";
+import {FlaggedTextReport} from "@/src/models/entities/FlaggedTextReport.js";
+import {PostgreSqlDriver} from "@mikro-orm/postgresql";
+import {SeedManager} from "@mikro-orm/seeder";
+import {Migrator} from "@mikro-orm/migrations";
 
 
 const devOptions: Options = {
-    type: "postgresql",
+    driver:PostgreSqlDriver,
+    extensions: [Migrator, SeedManager],
     entities: [Collection, CustomBaseEntity, Dictionary, Language, Text, MapLearnerDictionary, CollectionBookmark,
         TextHistoryEntry, MapLearnerMeaning, MapLearnerVocab, MapTextVocab, MapLearnerLanguage, Meaning,
-        Profile, Vocab, User, Session, PasswordResetToken, EmailConfirmationToken, FileUploadRequest, TTSVoice, TTSPronunciation, HumanPronunciation],
+        Profile, Vocab, User, Session, PasswordResetToken, EmailConfirmationToken, FileUploadRequest, TTSVoice, TTSPronunciation, HumanPronunciation, MapHiderText, FlaggedTextReport],
     loadStrategy: LoadStrategy.SELECT_IN,
     debug: true,
     migrations: {

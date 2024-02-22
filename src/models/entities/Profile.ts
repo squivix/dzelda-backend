@@ -14,6 +14,7 @@ import {Language} from "@/src/models/entities/Language.js";
 import {MapLearnerLanguage} from "@/src/models/entities/MapLearnerLanguage.js";
 import {CollectionBookmark} from "@/src/models/entities/CollectionBookmark.js";
 import {TextBookmark} from "@/src/models/entities/TextBookmark.js";
+import {MapHiderText} from "@/src/models/entities/MapHiderText.js";
 
 @Entity()
 export class Profile extends CustomBaseEntity {
@@ -27,8 +28,8 @@ export class Profile extends CustomBaseEntity {
         inversedBy: (user) => user.profile,
         owner: true,
         hidden: true,
-        onDelete: "cascade",
-        onUpdateIntegrity: "cascade"
+        deleteRule: "cascade",
+        updateRule: "cascade"
     })
     user!: User;
 
@@ -88,6 +89,14 @@ export class Profile extends CustomBaseEntity {
         hidden: true
     })
     textsBookmarked: MikroORMCollection<Text> = new MikroORMCollection<Text>(this);
+
+    @ManyToMany({
+        entity: () => Text,
+        mappedBy: (text: Text) => text.hiddenBy,
+        pivotEntity: () => MapHiderText,
+        hidden: true
+    })
+    textsHidden: MikroORMCollection<Text> = new MikroORMCollection<Text>(this);
 
     @ManyToMany({
         entity: () => Collection,

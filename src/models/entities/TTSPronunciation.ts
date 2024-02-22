@@ -11,10 +11,10 @@ export class TTSPronunciation extends CustomBaseEntity {
     @Property({type: types.datetime, defaultRaw: "now()"})
     addedOn!: Date;
 
-    @ManyToOne({entity: () => TTSVoice, onDelete: "restrict", onUpdateIntegrity: "cascade"})
+    @ManyToOne({entity: () => TTSVoice, deleteRule: "restrict", updateRule: "cascade"})
     voice!: TTSVoice;
 
-    @ManyToOne({entity: () => Vocab, onDelete: "cascade", onUpdateIntegrity: "cascade"})
+    @ManyToOne({entity: () => Vocab, deleteRule: "cascade", updateRule: "cascade"})
     vocab!: Vocab;
 
     [OptionalProps]?: "addedOn"

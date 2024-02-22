@@ -11,7 +11,7 @@ export class EmailConfirmationToken extends CustomBaseEntity {
     @Property({type: types.datetime, defaultRaw: "now() + interval '24 hours'"})
     expiresOn!: Date;
 
-    @OneToOne({entity: () => User, owner: true, nullable: false, onDelete: "cascade", onUpdateIntegrity: "cascade"})
+    @OneToOne({entity: () => User, owner: true, nullable: false, deleteRule: "cascade", updateRule: "cascade"})
     user!: User;
 
     @Property({type: types.string, length: 255})

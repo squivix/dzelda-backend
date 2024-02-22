@@ -1,4 +1,4 @@
-import {EntityManager, FilterQuery} from "@mikro-orm/core";
+import {EntityManager, FilterQuery, ManyToOne, Property, types} from "@mikro-orm/core";
 import {Text} from "@/src/models/entities/Text.js";
 import {Language} from "@/src/models/entities/Language.js";
 import {SqlEntityManager} from "@mikro-orm/postgresql";
@@ -13,8 +13,13 @@ import {TextHistoryEntry} from "@/src/models/entities/TextHistoryEntry.js";
 import {QueryOrderMap} from "@mikro-orm/core/enums.js";
 import {EntityField} from "@mikro-orm/core/drivers/IDatabaseDriver.js";
 import {LanguageLevel} from "@/src/models/enums/LanguageLevel.js";
-import {CollectionBookmark} from "@/src/models/entities/CollectionBookmark.js";
 import {TextBookmark} from "@/src/models/entities/TextBookmark.js";
+import {MapHiderText} from "@/src/models/entities/MapHiderText.js";
+import {FlaggedTextReport} from "@/src/models/entities/FlaggedTextReport.js";
+import {Profile} from "@/src/models/entities/Profile.js";
+import prompts from "prompts";
+import text = prompts.prompts.text;
+import {TEXT_REPORT_HIDING_THRESHOLD} from "@/src/constants.js";
 
 export class TextService {
     em: SqlEntityManager;
@@ -34,12 +39,18 @@ export class TextService {
                                 level?: LanguageLevel[],
                                 hasAudio?: boolean;
                                 isBookmarked?: boolean;
+                                isHiddenByUser?: boolean;
                             },
                             sort: { sortBy: "title" | "createdDate" | "pastViewersCount", sortOrder: "asc" | "desc" },
                             pagination: { page: number, pageSize: number },
                             user: User | AnonymousUser | null): Promise<[Text[], number]> {
         const dbFilters: FilterQuery<Text> = {$and: []};
+        dbFilters.$and!.push({isHidden: false});
         if (user && user instanceof User) {
+            if (!filters.isHiddenByUser)
+                dbFilters.$and!.push({hiddenBy: {$none: user.profile}});
+            else
+                dbFilters.$and!.push({hiddenBy: {$some: user.profile}});
             dbFilters.$and!.push({$or: [{isPublic: true}, {addedBy: (user as User).profile}]});
             if (filters.isBookmarked)
                 dbFilters.$and!.push({bookmarkers: user.profile});
@@ -92,6 +103,8 @@ export class TextService {
                                   pagination: { page: number, pageSize: number },
                                   user: User): Promise<[TextHistoryEntry[], number]> {
         const dbFilters: FilterQuery<TextHistoryEntry> = {$and: []};
+        dbFilters.$and!.push({text: {isHidden: false}});
+        dbFilters.$and!.push({text: {hiddenBy: {$none: user.profile}}});
         dbFilters.$and!.push({$or: [{text: {isPublic: true}}, {text: {addedBy: user.profile}}]});
         dbFilters.$and!.push({pastViewer: user.profile});
 
@@ -151,7 +164,7 @@ export class TextService {
             title: fields.title,
             content: fields.content,
             language: fields.language,
-            addedBy: user,
+            addedBy: user.profile,
             parsedContent: textParsedContent,
             parsedTitle: textParsedTitle,
             image: fields.image,
@@ -177,7 +190,12 @@ export class TextService {
     }
 
     async getText(textId: number, user: User | AnonymousUser | null) {
-        let text = await this.textRepo.findOne({id: textId}, {populate: ["language", "addedBy.user", "collection", "collection.language", "collection.addedBy.user"]});
+        const dbFilters: FilterQuery<Text> = {$and: [{id: textId}]};
+        dbFilters.$and!.push({isHidden: false});
+        if (user instanceof User)
+            dbFilters.$and!.push({hiddenBy: {$none: user.profile}});
+        let text = await this.textRepo.findOne(dbFilters, {populate: ["language", "addedBy.user", "collection", "collection.language", "collection.addedBy.user"]});
+
         if (text) {
             if (user && !(user instanceof AnonymousUser)) {
                 await this.textRepo.annotateTextsWithUserData([text], user);
@@ -267,14 +285,48 @@ export class TextService {
     }
 
     async removeTextFromUserBookmarks(text: Text, user: User) {
-        await this.em.nativeDelete(TextBookmark, {text: text, bookmarker: user.profile}, {});
+        await this.em.nativeDelete(TextBookmark, {text: text, bookmarker: user.profile});
+    }
+
+    async hideTextForUser(text: Text, user: User) {
+        const mapping = this.em.create(MapHiderText, {hider: user.profile, text: text});
+        await this.em.flush();
+        return mapping;
+    }
+
+    async unhideTextForUser(text: Text, user: User) {
+        await this.em.nativeDelete(MapHiderText, {text: text, hider: user.profile});
+    }
+
+    async createFlaggedTextReport(fields: { text: Text, reporter: Profile, reasonForReporting: string, reportText?: string }) {
+        const report = this.em.create(FlaggedTextReport, {
+            text: fields.text,
+            reporter: fields.reporter,
+            reasonForReporting: fields.reasonForReporting,
+            reportText: fields.reportText,
+        });
+        await this.em.flush();
+        if (await fields.text.flaggedReports.loadCount() > TEXT_REPORT_HIDING_THRESHOLD) {
+            fields.text.isHidden = true;
+            await this.em.flush();
+        }
+        return report;
     }
 
     async findText(where: FilterQuery<Text>, fields: EntityField<Text>[] = ["id", "collection", "isPublic", "addedBy"]) {
-        return await this.textRepo.findOne(where, {fields});
+        return await this.textRepo.findOne({$and: [where, {isHidden: false}]}, {fields: fields as any}) as Text;
     }
 
     async findLatestTextHistoryEntry(user: User) {
         return await this.em.findOne(TextHistoryEntry, {pastViewer: user.profile}, {orderBy: {timeViewed: "desc"}});
     }
+
+    async findHiderTextMapping(where: FilterQuery<MapHiderText>, fields: EntityField<MapHiderText>[] = ["id", "text", "hider"]) {
+        return await this.em.findOne(MapHiderText, where, {fields});
+    }
+
+    async findFlaggedTextReport(where: FilterQuery<FlaggedTextReport>, fields: EntityField<FlaggedTextReport>[] = ["id", "reportText", "reasonForReporting", "reporter"]) {
+        return await this.em.findOne(FlaggedTextReport, where, {fields: fields as any});
+    }
+
 }

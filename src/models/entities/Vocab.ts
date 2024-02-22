@@ -1,5 +1,5 @@
 import {Text} from "@/src/models/entities/Text.js";
-import {Collection, Entity, expr, Formula, Index, ManyToMany, ManyToOne, OneToMany, OptionalProps, Property, types, Unique} from "@mikro-orm/core";
+import {Collection, Entity, Formula, Index, ManyToMany, ManyToOne, OneToMany, OptionalProps, Property, raw, types, Unique} from "@mikro-orm/core";
 import {MapTextVocab} from "@/src/models/entities/MapTextVocab.js";
 import {CustomBaseEntity} from "@/src/models/entities/CustomBaseEntity.js";
 import {Language} from "@/src/models/entities/Language.js";
@@ -10,7 +10,7 @@ import {VocabRepo} from "@/src/models/repos/VocabRepo.js";
 import {VocabLevel} from "@/src/models/enums/VocabLevel.js";
 import {TTSPronunciation} from "@/src/models/entities/TTSPronunciation.js";
 
-@Entity({customRepository: () => VocabRepo})
+@Entity({repository: () => VocabRepo})
 @Unique({properties: ["language", "text"]})
 @Index({properties: ["language"]})
 export class Vocab extends CustomBaseEntity {
@@ -20,15 +20,20 @@ export class Vocab extends CustomBaseEntity {
     @ManyToOne({
         entity: () => Language,
         inversedBy: (language: Language) => language.vocabs,
-        onDelete: "cascade",
-        onUpdateIntegrity: "cascade"
+        deleteRule: "cascade",
+        updateRule: "cascade"
     })
     language!: Language;
 
     @Property({type: types.boolean, default: false})
     isPhrase: boolean = false;
 
-    @OneToMany({entity: () => Meaning, mappedBy: (meaning: Meaning) => meaning.vocab, orderBy: {learnersCount: "desc", [expr("length(text)")]: "asc"}})
+    @OneToMany({entity: () => Meaning, mappedBy: (meaning: Meaning) => meaning.vocab,
+        orderBy: {learnersCount: "desc",
+            // TODO fix this to work with raw in v6 like it worked with expr before
+            // [raw(alias=>`length(${alias}.text)`)]: "asc"
+    }
+    })
     meanings: Collection<Meaning> = new Collection<Meaning>(this);
 
     @OneToMany({

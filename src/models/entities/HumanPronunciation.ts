@@ -15,7 +15,7 @@ export class HumanPronunciation extends CustomBaseEntity {
     @Property({type: types.string})
     parsedText!: string;
 
-    @ManyToOne({entity: () => Language, inversedBy: (language: Language) => language.humanPronunciations, onDelete: "cascade", onUpdateIntegrity: "cascade"})
+    @ManyToOne({entity: () => Language, inversedBy: (language: Language) => language.humanPronunciations, deleteRule: "cascade", updateRule: "cascade"})
     language!: Language;
 
     @Property({type: types.string, nullable: true, default: null})

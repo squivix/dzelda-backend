@@ -7,7 +7,7 @@ import {VocabLevel} from "@/src/models/enums/VocabLevel.js";
 import {CollectionRepo} from "@/src/models/repos/CollectionRepo.js";
 import {CollectionBookmark} from "@/src/models/entities/CollectionBookmark.js";
 
-@Entity({customRepository: () => CollectionRepo})
+@Entity({repository: () => CollectionRepo})
 @Index({properties: ["language"]})
 @Index({properties: ["addedBy"]})
 @Index({properties: ["title"]})
@@ -20,13 +20,13 @@ export class Collection extends CustomBaseEntity {
     @Property({type: types.string, length: 500, default: ""})
     description: string = "";
 
-    @ManyToOne({entity: () => Language, inversedBy: (language) => language.collections, onDelete: "cascade", onUpdateIntegrity: "cascade"})
+    @ManyToOne({entity: () => Language, inversedBy: (language) => language.collections, deleteRule: "cascade", updateRule: "cascade"})
     language!: Language;
 
     @Property({type: types.string, length: 500, default: ""})
     image: string = "";
 
-    @ManyToOne({entity: () => Profile, inversedBy: (profile) => profile.collectionsAdded, onDelete: "cascade", onUpdateIntegrity: "cascade"})
+    @ManyToOne({entity: () => Profile, inversedBy: (profile) => profile.collectionsAdded, deleteRule: "cascade", updateRule: "cascade"})
     addedBy!: Profile;
 
     @Property({type: types.datetime, defaultRaw: "now()"})

@@ -20,7 +20,6 @@ import {LanguageService} from "@/src/services/LanguageService.js";
 import {Collection} from "@/src/models/entities/Collection.js";
 import {APIError} from "@/src/utils/errors/APIError.js";
 import {StatusCodes} from "http-status-codes";
-import {TextHistoryEntry} from "@/src/models/entities/TextHistoryEntry.js";
 
 class TextController {
     async getTexts(request: FastifyRequest, reply: FastifyReply) {
@@ -335,6 +334,96 @@ class TextController {
         if (!text.isBookmarked)
             throw new APIError(StatusCodes.NOT_FOUND, "Text is not bookmarked");
         await textService.removeTextFromUserBookmarks(text, user);
+        reply.status(204).send();
+    }
+
+    async getUserHiddenTexts(request: FastifyRequest, reply: FastifyReply) {
+        const queryParamsValidator = z.object({
+            languageCode: languageCodeValidator.optional(),
+            addedBy: z.string().min(1).or(z.literal("me")).optional(),
+            searchQuery: z.string().max(256).optional(),
+            level: collectionLevelsFilterValidator.default([]),
+            hasAudio: booleanStringValidator.optional(),
+            sortBy: z.union([z.literal("title"), z.literal("createdDate"), z.literal("pastViewersCount")]).optional().default("title"),
+            sortOrder: z.union([z.literal("asc"), z.literal("desc")]).optional().default("asc"),
+            page: z.coerce.number().int().min(1).optional().default(1),
+            pageSize: z.coerce.number().int().min(1).max(100).optional().default(10),
+        });
+        const queryParams = queryParamsValidator.parse(request.query);
+        const user = request.user as User;
+        if (queryParams.addedBy == "me")
+            queryParams.addedBy = user.username;
+
+        const filters = {
+            languageCode: queryParams.languageCode,
+            addedBy: queryParams.addedBy,
+            searchQuery: queryParams.searchQuery,
+            level: queryParams.level,
+            hasAudio: queryParams.hasAudio,
+            isHidden: true,
+        };
+        const sort = {sortBy: queryParams.sortBy, sortOrder: queryParams.sortOrder};
+        const pagination = {page: queryParams.page, pageSize: queryParams.pageSize};
+        const textService = new TextService(request.em);
+        const [texts, recordsCount] = await textService.getPaginatedTexts(filters, sort, pagination, request.user);
+        reply.send({
+            page: pagination.page,
+            pageSize: pagination.pageSize,
+            pageCount: Math.ceil(recordsCount / pagination.pageSize),
+            data: textSerializer.serializeList(texts)
+        });
+    }
+
+    async hideTextForUser(request: FastifyRequest, reply: FastifyReply) {
+        const user = request.user as User;
+        const bodyValidator = z.object({textId: z.number().min(0)});
+        const body = bodyValidator.parse(request.body);
+
+        const textService = new TextService(request.em);
+        const text = await textService.findText({id: body.textId});
+        if (!text)
+            throw new NotFoundAPIError("Text");
+        const existingMapping = await textService.findHiderTextMapping({hider: user.profile, text: text});
+        if (existingMapping)
+            throw new APIError(400, "Text is already hidden by user");
+        await textService.hideTextForUser(text, user);
+        reply.status(204).send();
+    }
+
+    async unhideTextForUser(request: FastifyRequest, reply: FastifyReply) {
+        const user = request.user as User;
+        const pathParamsValidator = z.object({textId: numericStringValidator});
+        const pathParams = pathParamsValidator.parse(request.params);
+        const textService = new TextService(request.em);
+        const text = await textService.findText({id: pathParams.textId});
+        if (!text)
+            throw new NotFoundAPIError("Text");
+        const mapping = await textService.findHiderTextMapping({hider: user.profile, text: text});
+        if (!mapping)
+            throw new APIError(404, "Text is not hidden by user");
+        await textService.unhideTextForUser(text, user);
+        reply.status(204).send();
+    }
+
+    async reportText(request: FastifyRequest, reply: FastifyReply) {
+        const user = request.user as User;
+        const pathParamsValidator = z.object({textId: numericStringValidator});
+        const bodyValidator = z.object({
+            reasonForReporting: z.string().min(1).max(512),
+            reportText: z.string().min(0).max(5000).optional()
+        });
+        const pathParams = pathParamsValidator.parse(request.params);
+        const body = bodyValidator.parse(request.body);
+
+        const textService = new TextService(request.em);
+        const text = await textService.findText({id: pathParams.textId});
+        if (!text)
+            throw new NotFoundAPIError("Text");
+        const existingReport = await textService.findFlaggedTextReport({reporter: user.profile, text: text});
+        if (existingReport)
+            throw new APIError(400, "Text is already flagged by user");
+        await textService.createFlaggedTextReport({text, reporter: user.profile, reasonForReporting: body.reasonForReporting, reportText: body.reportText});
+        await textService.hideTextForUser(text, user);
         reply.status(204).send();
     }
 }

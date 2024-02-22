@@ -11,7 +11,7 @@ export const API_VERSION = 1;
 export const API_ROOT = `/api/v${API_VERSION}`;
 
 export const server = Fastify(
-    {logger: {transport: {target: "@fastify/one-line-logger"}}}
+    // {logger: {transport: {target: "@fastify/one-line-logger"}}}
 );
 //TODO replace with proper CORS
 await server.register(cors, {});

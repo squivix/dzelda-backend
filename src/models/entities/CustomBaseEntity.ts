@@ -1,6 +1,6 @@
 import {BaseEntity, PrimaryKey, types} from "@mikro-orm/core";
 
-export abstract class CustomBaseEntity extends BaseEntity<CustomBaseEntity, "id"> {
+export abstract class CustomBaseEntity {
     @PrimaryKey({type: types.integer})
     id!: number;
 }

@@ -8,10 +8,10 @@ import {Dictionary} from "@/src/models/entities/Dictionary.js";
 @Index({properties: ["dictionary"]})
 @Index({properties: ["learner"]})
 export class MapLearnerDictionary extends CustomBaseEntity {
-    @ManyToOne({entity: () => Dictionary, onDelete: "cascade", onUpdateIntegrity: "cascade"})
+    @ManyToOne({entity: () => Dictionary, deleteRule: "cascade", updateRule: "cascade"})
     dictionary!: Dictionary;
 
-    @ManyToOne({entity: () => Profile, onDelete: "cascade", onUpdateIntegrity: "cascade"})
+    @ManyToOne({entity: () => Profile, deleteRule: "cascade", updateRule: "cascade"})
     learner!: Profile;
 
     @Property({type: types.integer, default: 0})

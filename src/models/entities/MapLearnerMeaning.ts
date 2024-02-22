@@ -8,10 +8,10 @@ import {Meaning} from "@/src/models/entities/Meaning.js";
 @Index({properties: ["meaning"]})
 @Index({properties: ["learner"]})
 export class MapLearnerMeaning extends CustomBaseEntity {
-    @ManyToOne({entity: () => Meaning, onDelete: "cascade", onUpdateIntegrity: "cascade"})
+    @ManyToOne({entity: () => Meaning, deleteRule: "cascade", updateRule: "cascade"})
     meaning!: Meaning;
 
-    @ManyToOne({entity: () => Profile, onDelete: "cascade", onUpdateIntegrity: "cascade"})
+    @ManyToOne({entity: () => Profile, deleteRule: "cascade", updateRule: "cascade"})
     learner!: Profile;
 
 }

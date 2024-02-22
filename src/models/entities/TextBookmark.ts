@@ -8,9 +8,9 @@ import {Text} from "@/src/models/entities/Text.js";
 @Index({properties: ["text"]})
 @Index({properties: ["bookmarker"]})
 export class TextBookmark extends CustomBaseEntity {
-    @ManyToOne({entity: () => Text, onDelete: "cascade", onUpdateIntegrity: "cascade"})
+    @ManyToOne({entity: () => Text, deleteRule: "cascade", updateRule: "cascade"})
     text!: Text;
 
-    @ManyToOne({entity: () => Profile, onDelete: "cascade", onUpdateIntegrity: "cascade"})
+    @ManyToOne({entity: () => Profile, deleteRule: "cascade", updateRule: "cascade"})
     bookmarker!: Profile;
 }

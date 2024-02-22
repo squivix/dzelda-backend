@@ -1,4 +1,4 @@
-import {EntityManager, FilterQuery, PopulateHint} from "@mikro-orm/core";
+import {EntityManager, FilterQuery, PopulateHint, raw} from "@mikro-orm/core";
 import {Collection} from "@/src/models/entities/Collection.js";
 import {CollectionRepo} from "@/src/models/repos/CollectionRepo.js";
 import {AnonymousUser, User} from "@/src/models/entities/auth/User.js";
@@ -125,7 +125,7 @@ export class CollectionService {
 
         return await queryBuilder.select("*")
             .where({collection: collection.id})
-            .andWhere({"orderInCollection": {$gt: queryBuilder.raw(`(${subQueryBuilder})`)}})
+            .andWhere({"orderInCollection": {$gt: raw(`(${subQueryBuilder})`)}})
             .andWhere(privateFilter)
             .orderBy({orderInCollection: "asc"})
             .limit(1)
@@ -133,11 +133,11 @@ export class CollectionService {
     }
 
     async findCollection(where: FilterQuery<Collection>, fields: EntityField<Collection>[] = ["id", "addedBy"]) {
-        return await this.collectionRepo.findOne(where, {fields});
+        return await this.collectionRepo.findOne(where, {fields: fields as any}) as Collection;
     }
 
     async findBookMarkerCollectionMapping(where: FilterQuery<CollectionBookmark>, fields: EntityField<CollectionBookmark>[] = ["collection"]) {
-        return await this.em.findOne(CollectionBookmark, where, {fields});
+        return await this.em.findOne(CollectionBookmark, where, {fields}) as CollectionBookmark;
     }
 
     async addCollectionToUserBookmarks(collection: Collection, user: User) {

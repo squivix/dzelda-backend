@@ -12,7 +12,7 @@ export class PasswordResetToken extends CustomBaseEntity {
     @Property({type: types.datetime, defaultRaw: "now() + interval '1 hour'"})
     expiresOn!: Date;
 
-    @OneToOne({entity: () => User, owner: true, nullable: false, onDelete: "cascade", onUpdateIntegrity: "cascade"})
+    @OneToOne({entity: () => User, owner: true, nullable: false, deleteRule: "cascade", updateRule: "cascade"})
     user!: User;
 
     @Formula((alias: string) => `${alias}.expires_on < now()`, {

@@ -1,5 +1,5 @@
 import {CustomBaseEntity} from "@/src/models/entities/CustomBaseEntity.js";
-import {Collection as MikroORMCollection, Entity, Enum, Formula, Index, ManyToMany, ManyToOne, OptionalProps, Property, types} from "@mikro-orm/core";
+import {Collection as MikroORMCollection, Entity, Enum, Formula, Index, ManyToMany, ManyToOne, OneToMany, OptionalProps, Property, types} from "@mikro-orm/core";
 import {Collection} from "@/src/models/entities/Collection.js";
 import {Vocab} from "@/src/models/entities/Vocab.js";
 import {MapTextVocab} from "@/src/models/entities/MapTextVocab.js";
@@ -9,10 +9,11 @@ import {TextRepo} from "@/src/models/repos/TextRepo.js";
 import {VocabLevel} from "@/src/models/enums/VocabLevel.js";
 import {LanguageLevel} from "@/src/models/enums/LanguageLevel.js";
 import {Language} from "@/src/models/entities/Language.js";
-import {CollectionBookmark} from "@/src/models/entities/CollectionBookmark.js";
 import {TextBookmark} from "@/src/models/entities/TextBookmark.js";
+import {MapHiderText} from "@/src/models/entities/MapHiderText.js";
+import {FlaggedTextReport} from "@/src/models/entities/FlaggedTextReport.js";
 
-@Entity({customRepository: () => TextRepo})
+@Entity({repository: () => TextRepo})
 @Index({properties: ["collection"]})
 @Index({properties: ["title"]})
 @Index({properties: ["addedOn"]})
@@ -35,16 +36,16 @@ export class Text extends CustomBaseEntity {
     @Property({type: types.string, length: 500, default: ""})
     image: string = "";
 
-    @ManyToOne({entity: () => Language, inversedBy: (language) => language.texts, onDelete: "cascade", onUpdateIntegrity: "cascade"})
+    @ManyToOne({entity: () => Language, inversedBy: (language) => language.texts, deleteRule: "cascade", updateRule: "cascade"})
     language!: Language;
 
-    @ManyToOne({entity: () => Collection, inversedBy: (collection) => collection.texts, onDelete: "set null", onUpdateIntegrity: "cascade", nullable: true, default: null})
+    @ManyToOne({entity: () => Collection, inversedBy: (collection) => collection.texts, deleteRule: "set null", updateRule: "cascade", nullable: true, default: null})
     collection: Collection | null = null;
 
     @Property({type: types.boolean, default: true})
     isPublic: boolean = true;
 
-    @ManyToOne({entity: () => Profile, inversedBy: (profile) => profile.textsAdded, onDelete: "cascade", onUpdateIntegrity: "cascade"})
+    @ManyToOne({entity: () => Profile, inversedBy: (profile) => profile.textsAdded, deleteRule: "cascade", updateRule: "cascade"})
     addedBy!: Profile;
 
     @Enum({items: () => LanguageLevel, type: types.enum, default: LanguageLevel.ADVANCED_1})
@@ -55,6 +56,9 @@ export class Text extends CustomBaseEntity {
 
     @Property({type: types.datetime, defaultRaw: "now()"})
     addedOn!: Date;
+
+    @Property({type: types.boolean, default: false})
+    isHidden!: boolean;
 
     @ManyToMany({
         entity: () => Vocab,
@@ -81,7 +85,7 @@ export class Text extends CustomBaseEntity {
     })
     bookmarkers!: Profile;
 
-    [OptionalProps]?: "image" | "audio" | "addedOn" | "level" | "orderInCollection" | "pastViewersCount" | "parsedContent" | "parsedTitle" | "isLastInCollection" | "bookmarkers";
+    [OptionalProps]?: "image" | "audio" | "addedOn" | "level" | "orderInCollection" | "pastViewersCount" | "parsedContent" | "parsedTitle" | "isLastInCollection" | "bookmarkers" | "isHidden";
 
     //annotated properties
     @Property({persist: false, type: types.json})
@@ -99,6 +103,21 @@ export class Text extends CustomBaseEntity {
 
     @Property({persist: false, type: types.boolean})
     isBookmarked?: boolean;
+
+    @ManyToMany({
+        entity: () => Profile,
+        inversedBy: (hider: Profile) => hider.textsHidden,
+        pivotEntity: () => MapHiderText,
+        hidden: true
+    })
+    hiddenBy: MikroORMCollection<Profile> = new MikroORMCollection<Profile>(this);
+
+    @OneToMany({
+        entity: () => FlaggedTextReport,
+        mappedBy: (report: FlaggedTextReport) => report.text,
+        hidden: true
+    })
+    flaggedReports: MikroORMCollection<FlaggedTextReport> = new MikroORMCollection<FlaggedTextReport>(this);
 
     //TODO add field for keeping track of which parser last parsed text (to reparse on demand if parser was updated)
 }

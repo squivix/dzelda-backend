@@ -1,17 +1,16 @@
 import {Entity, Index, ManyToOne, Unique} from "@mikro-orm/core";
 import {CustomBaseEntity} from "@/src/models/entities/CustomBaseEntity.js";
+import {Profile} from "@/src/models/entities/Profile.js";
 import {Text} from "@/src/models/entities/Text.js";
-import {Vocab} from "@/src/models/entities/Vocab.js";
 
 @Entity()
-@Unique({properties: ["vocab", "text"]})
+@Unique({properties: ["text", "hider"]})
 @Index({properties: ["text"]})
-@Index({properties: ["vocab"]})
-export class MapTextVocab extends CustomBaseEntity {
-    @ManyToOne({entity: () => Vocab, deleteRule: "cascade", updateRule: "cascade"})
-    vocab!: Vocab;
-
+@Index({properties: ["hider"]})
+export class MapHiderText extends CustomBaseEntity {
     @ManyToOne({entity: () => Text, deleteRule: "cascade", updateRule: "cascade"})
     text!: Text;
 
+    @ManyToOne({entity: () => Profile, deleteRule: "cascade", updateRule: "cascade"})
+    hider!: Profile;
 }

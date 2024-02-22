@@ -15,15 +15,15 @@ export class Meaning extends CustomBaseEntity {
     @Property({type: types.string, length: 500})
     text!: string;
 
-    @ManyToOne({entity: () => Vocab, inversedBy: (vocab) => vocab.meanings, onDelete: "cascade", onUpdateIntegrity: "cascade"})
+    @ManyToOne({entity: () => Vocab, inversedBy: (vocab) => vocab.meanings, deleteRule: "cascade", updateRule: "cascade"})
     vocab!: Vocab;
 
     @ManyToOne({
         entity: () => Profile,
         inversedBy: (profile) => profile.meaningsAdded,
         nullable: true,
-        onDelete: "set null",
-        onUpdateIntegrity: "cascade"
+        deleteRule: "set null",
+        updateRule: "cascade"
     })
     addedBy!: Profile | null;
 
@@ -33,7 +33,7 @@ export class Meaning extends CustomBaseEntity {
     @Property({type: types.json, nullable: true})
     attribution!: Attribution;
 
-    @ManyToOne({entity: () => Language, inversedBy: (language) => language.meaningsSavedIn, onDelete: "cascade", onUpdateIntegrity: "cascade"})
+    @ManyToOne({entity: () => Language, inversedBy: (language) => language.meaningsSavedIn, deleteRule: "cascade", updateRule: "cascade"})
     language!: Language;
 
     @ManyToMany({

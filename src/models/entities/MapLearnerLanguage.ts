@@ -15,10 +15,10 @@ export class MapLearnerLanguage extends CustomBaseEntity {
         this.language = language;
     }
 
-    @ManyToOne({entity: () => Language, onDelete: "cascade", onUpdateIntegrity: "cascade"})
+    @ManyToOne({entity: () => Language, deleteRule: "cascade", updateRule: "cascade"})
     language!: Language;
 
-    @ManyToOne({entity: () => Profile, onDelete: "cascade", onUpdateIntegrity: "cascade"})
+    @ManyToOne({entity: () => Profile, deleteRule: "cascade", updateRule: "cascade"})
     learner!: Profile;
 
     @Property({type: types.datetime, defaultRaw: "now()"})
@@ -27,7 +27,7 @@ export class MapLearnerLanguage extends CustomBaseEntity {
     @Property({type: types.datetime, defaultRaw: "now()", hidden: true})
     lastOpened!: Date;
 
-    @ManyToOne({entity: () => TTSVoice, inversedBy: (ttsVoice) => ttsVoice.prefererLanguageMappings, onDelete: "set null", onUpdateIntegrity: "cascade", nullable: true, default: null})
+    @ManyToOne({entity: () => TTSVoice, inversedBy: (ttsVoice) => ttsVoice.prefererLanguageMappings, deleteRule: "set null", updateRule: "cascade", nullable: true, default: null})
     preferredTtsVoice!: TTSVoice | null;
 
     [OptionalProps]?: "startedLearningOn" | "lastOpened";

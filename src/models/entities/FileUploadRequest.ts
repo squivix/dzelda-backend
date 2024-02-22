@@ -7,7 +7,7 @@ export class FileUploadRequest extends CustomBaseEntity {
     @Property({type: types.string})
     fileField!: string;
 
-    @ManyToOne({entity: () => User, onDelete: "cascade", onUpdateIntegrity: "cascade"})
+    @ManyToOne({entity: () => User, deleteRule: "cascade", updateRule: "cascade"})
     user!: User;
 
     @Property({type: types.string})

@@ -25,7 +25,7 @@ export class TTSVoice extends CustomBaseEntity {
     @Property({type: types.boolean, default: false})
     isDefault!: boolean;
 
-    @ManyToOne({entity: () => Language, inversedBy: (language: Language) => language.ttsVoices, onDelete: "cascade", onUpdateIntegrity: "cascade"})
+    @ManyToOne({entity: () => Language, inversedBy: (language: Language) => language.ttsVoices, deleteRule: "cascade", updateRule: "cascade"})
     language!: Language;
 
     @OneToMany({entity: () => MapLearnerLanguage, mappedBy: (prefererLanguageMapping: MapLearnerLanguage) => prefererLanguageMapping.preferredTtsVoice, hidden: true})
