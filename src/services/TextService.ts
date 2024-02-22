@@ -306,7 +306,7 @@ export class TextService {
             reportText: fields.reportText,
         });
         await this.em.flush();
-        if (await fields.text.flaggedReports.loadCount() > TEXT_REPORT_HIDING_THRESHOLD) {
+        if (await fields.text.flaggedReports.loadCount() >= TEXT_REPORT_HIDING_THRESHOLD) {
             fields.text.isHidden = true;
             await this.em.flush();
         }

@@ -410,7 +410,8 @@ class TextController {
         const pathParamsValidator = z.object({textId: numericStringValidator});
         const bodyValidator = z.object({
             reasonForReporting: z.string().min(1).max(512),
-            reportText: z.string().min(0).max(5000).optional()
+            reportText: z.string().min(0).max(5000).optional(),
+            hideText: z.boolean().optional().default(true)
         });
         const pathParams = pathParamsValidator.parse(request.params);
         const body = bodyValidator.parse(request.body);
@@ -423,7 +424,8 @@ class TextController {
         if (existingReport)
             throw new APIError(400, "Text is already flagged by user");
         await textService.createFlaggedTextReport({text, reporter: user.profile, reasonForReporting: body.reasonForReporting, reportText: body.reportText});
-        await textService.hideTextForUser(text, user);
+        if (body.hideText)
+            await textService.hideTextForUser(text, user);
         reply.status(204).send();
     }
 }
