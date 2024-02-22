@@ -298,15 +298,15 @@ export class TextService {
         await this.em.nativeDelete(MapHiderText, {text: text, hider: user.profile});
     }
 
-    async createFlaggedTextReport(fields: { text: Text, reporter: Profile, reasonForReporting: string, reportText?: string }) {
+    async createFlaggedTextReport(fields: { text: Text, reportingUser: User, reasonForReporting: string, reportText?: string }) {
         const report = this.em.create(FlaggedTextReport, {
             text: fields.text,
-            reporter: fields.reporter,
+            reporter: fields.reportingUser.profile,
             reasonForReporting: fields.reasonForReporting,
             reportText: fields.reportText,
         });
         await this.em.flush();
-        if (await fields.text.flaggedReports.loadCount({where: {isValid: true}}) >= TEXT_REPORT_HIDING_THRESHOLD) {
+        if (fields.reportingUser.isAdmin || await fields.text.flaggedReports.loadCount({where: {isValid: true}}) >= TEXT_REPORT_HIDING_THRESHOLD) {
             fields.text.isHidden = true;
             await this.em.flush();
         }
