@@ -17,8 +17,11 @@ export class FlaggedTextReport extends CustomBaseEntity {
     @Property({type: types.string, length: 512})
     reasonForReporting!: string;
 
-    @Property({type: types.text, length: 5000, default:""})
+    @Property({type: types.text, length: 5000, default: ""})
     reportText!: string;
 
-    [OptionalProps]?: "reportText"
+    @Property({type: types.boolean, default: true})
+    isValid!: boolean;
+
+    [OptionalProps]?: "reportText" | "isValid";
 }
