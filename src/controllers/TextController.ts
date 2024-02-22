@@ -20,6 +20,10 @@ import {LanguageService} from "@/src/services/LanguageService.js";
 import {Collection} from "@/src/models/entities/Collection.js";
 import {APIError} from "@/src/utils/errors/APIError.js";
 import {StatusCodes} from "http-status-codes";
+import {emailTransporter} from "@/src/nodemailer.config.js";
+import {confirmEmailTemplate} from "@/src/presentation/response/templates/email/confirmEmailTemplate.js";
+import {DOMAIN_NAME} from "@/src/constants.js";
+import {commonEmailTemplate} from "@/src/presentation/response/templates/email/commonSnippets.js";
 
 class TextController {
     async getTexts(request: FastifyRequest, reply: FastifyReply) {
@@ -417,15 +421,26 @@ class TextController {
         const body = bodyValidator.parse(request.body);
 
         const textService = new TextService(request.em);
-        const text = await textService.findText({id: pathParams.textId});
+        const text = await textService.findText({id: pathParams.textId}, ["*", "language"]);
         if (!text)
             throw new NotFoundAPIError("Text");
         const existingReport = await textService.findFlaggedTextReport({reporter: user.profile, text: text});
         if (existingReport)
             throw new APIError(400, "Text is already flagged by user");
-        await textService.createFlaggedTextReport({text, reporter: user.profile, reasonForReporting: body.reasonForReporting, reportText: body.reportText});
+        const newReport = await textService.createFlaggedTextReport({text, reporter: user.profile, reasonForReporting: body.reasonForReporting, reportText: body.reportText});
         if (body.hideText)
             await textService.hideTextForUser(text, user);
+
+        const userService = new UserService(request.em);
+        const admin = await userService.findUser({isAdmin: true});
+        if (admin) {
+            await emailTransporter.sendMail({
+                from: `Dzelda <noreply@${DOMAIN_NAME}>`,
+                to: admin.email,
+                subject: `A text was flagged`,
+                text: `A text was reported. Please review and approve or reject hiding this text.\n\nText id: ${text.id}\nText title: ${text.title}\nText language: ${text.language.code}\nReported by user: ${user.username}\nReason for report: ${newReport.reasonForReporting}\nReport Text:\n"${newReport.reportText}"`,
+            });
+        }
         reply.status(204).send();
     }
 }

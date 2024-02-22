@@ -1894,6 +1894,16 @@
           "length": 5000,
           "default": "''",
           "mappedType": "text"
+        },
+        "is_valid": {
+          "name": "is_valid",
+          "type": "boolean",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "default": "true",
+          "mappedType": "boolean"
         }
       },
       "name": "flagged_text_report",
