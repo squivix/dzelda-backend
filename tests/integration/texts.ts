@@ -2498,3 +2498,21 @@ describe("GET collections/:collectionId/texts/:textId/next/", () => {
         expect(response.statusCode).to.equal(400);
     });
 });
+
+
+/**{@link TextController#getUserHiddenTexts}*/
+describe("GET users/me/texts/hidden/", () => {
+    test.todo("");
+});
+/**{@link TextController#hideTextForUser}*/
+describe("POST users/me/texts/hidden/", () => {
+    test.todo("");
+});
+/**{@link TextController#unhideTextForUser}*/
+describe("DELETE users/me/texts/hidden/:textId/", () => {
+    test.todo("");
+});
+/**{@link TextController#reportText}*/
+describe("POST texts/:textId/reports/", () => {
+    test.todo("");
+});
