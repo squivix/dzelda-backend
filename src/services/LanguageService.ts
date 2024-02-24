@@ -80,15 +80,12 @@ export class LanguageService {
     async removeLanguageFromUser(languageMapping: MapLearnerLanguage) {
         const learner = languageMapping.learner;
         const language = languageMapping.language;
-        const dictionaryMappings = await this.em.find(MapLearnerDictionary, {learner, dictionary: {language}});
-        const vocabMappings = await this.em.find(MapLearnerVocab, {learner, vocab: {language}});
-        const meaningMappings = await this.em.find(MapLearnerMeaning, {learner, meaning: {vocab: {language}}});
-
-        this.em.remove(languageMapping);
-        this.em.remove(dictionaryMappings);
-        this.em.remove(vocabMappings);
-        this.em.remove(meaningMappings);
-        await this.em.flush();
+        await this.em.transactional(async (tm) => {
+            await tm.nativeDelete(MapLearnerLanguage, {id: languageMapping.id});
+            await tm.nativeDelete(MapLearnerDictionary, {learner, dictionary: {language}});
+            await tm.nativeDelete(MapLearnerVocab, {learner, vocab: {language}});
+            await tm.nativeDelete(MapLearnerMeaning, {learner, meaning: {vocab: {language}}});
+        });
     }
 
     async findLanguage(where: FilterQuery<Language>, fields: EntityField<Language>[] = ["id", "code", "isSupported"]) {
