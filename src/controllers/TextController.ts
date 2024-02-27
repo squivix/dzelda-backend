@@ -80,7 +80,7 @@ class TextController {
         const user = request.user as User;
         const collectionService = new CollectionService(request.em);
         const languageService = new LanguageService(request.em);
-        const language = await languageService.findLanguage({code: body.languageCode});
+        const language = await languageService.findLearningLanguage({code: body.languageCode});
         if (!language)
             throw new NotFoundAPIError("Language");
         let collection: Collection | null = null;

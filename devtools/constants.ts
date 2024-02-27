@@ -2,6 +2,7 @@ export const DATA_DIR = "data" as const;
 export const DEFAULT_BATCH_SIZE = 10_000;
 export const DATASET_FILES = {
     language: "languages.jsonl",
+    translationLanguage: "translation_languages.jsonl",
     user: "users.jsonl",
     dictionary: "dictionaries.jsonl",
     collection: "collections.jsonl",

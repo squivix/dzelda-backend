@@ -50,7 +50,7 @@ export class VocabService {
         dbOrderBy.push({id: "asc"});
 
         return await this.vocabRepo.findAndCount(dbFilters, {
-            populate: ["language", "meanings", "meanings.addedBy.user", "learnersCount", "textsCount"],
+            populate: ["language", "meanings", "meanings.language", "meanings.addedBy.user", "learnersCount", "textsCount"],
             orderBy: dbOrderBy,
             limit: pagination.pageSize,
             offset: pagination.pageSize * (pagination.page - 1),
@@ -99,6 +99,7 @@ export class VocabService {
             dbFilters.$and!.push({level: filters.level});
         if (filters.searchQuery !== undefined && filters.searchQuery !== "")
             dbFilters.$and!.push({vocab: {text: {$ilike: `%${filters.searchQuery}%`}}});
+
         const dbOrderBy: QueryOrderMap<MapLearnerVocab>[] = [];
         if (sort.sortBy == "text")
             dbOrderBy.push({vocab: {text: sort.sortOrder}});
@@ -109,12 +110,13 @@ export class VocabService {
         dbOrderBy.push({vocab: {id: "asc"}});
 
         const [mappings, totalCount] = await this.em.findAndCount(MapLearnerVocab, dbFilters, {
-            populate: ["vocab", "vocab.language", "vocab.meanings", "vocab.meanings.addedBy.user", "vocab.ttsPronunciations", "vocab.ttsPronunciations.voice"],
+            populate: ["vocab", "vocab.language", "vocab.meanings", "vocab.meanings.language", "vocab.meanings.addedBy.user", "vocab.ttsPronunciations", "vocab.ttsPronunciations.voice"],
+            populateWhere: {vocab: {meanings: {language: {prefererEntries: {learnerLanguageMapping: {learner: user.profile}}}}}},
             orderBy: dbOrderBy,
             limit: pagination.pageSize,
             offset: pagination.pageSize * (pagination.page - 1),
         });
-        await this.em.populate(mappings, ["vocab.learnerMeanings", "vocab.learnerMeanings.addedBy.user"], {
+        await this.em.populate(mappings, ["vocab.learnerMeanings", "vocab.learnerMeanings.language", "vocab.learnerMeanings.addedBy.user"], {
             where: {vocab: {learnerMeanings: {learners: user.profile}}}
         });
 
@@ -178,6 +180,7 @@ export class VocabService {
             learner: user.profile
         }, {
             populate: ["vocab.language", "vocab.meanings.language", "vocab.meanings.addedBy.user", "vocab.ttsPronunciations", "vocab.ttsPronunciations.voice"],
+            populateWhere: {vocab: {meanings: {language: {prefererEntries: {learnerLanguageMapping: {learner: user.profile}}}}}}
         });
         await this.em.populate(existingMappings, ["vocab.learnerMeanings", "vocab.learnerMeanings.language", "vocab.learnerMeanings.addedBy.user"], {
             where: {vocab: {learnerMeanings: {learners: user.profile}}},
@@ -187,6 +190,7 @@ export class VocabService {
             $nin: existingMappings.map(m => m.vocab)
         }, {
             populate: ["language", "meanings", "meanings.language", "meanings.addedBy.user", "ttsPronunciations", "ttsPronunciations.voice"],
+            populateWhere: {meanings: {language: {prefererEntries: {learnerLanguageMapping: {learner: user.profile}}}}}
         });
         return [...existingMappings, ...newVocabs];
     }
@@ -251,7 +255,7 @@ export class VocabService {
     }
 
     async findVocab(where: FilterQuery<Vocab>, fields: EntityField<Vocab>[] = ["*", "language"]) {
-        return await this.vocabRepo.findOne(where, {fields:fields as any});
+        return await this.vocabRepo.findOne(where, {fields: fields as any});
     }
 
     async findLearnerVocab(where: FilterQuery<MapLearnerVocab>, fields?: EntityField<MapLearnerVocab>[]) {

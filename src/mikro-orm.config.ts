@@ -27,15 +27,20 @@ import {FlaggedTextReport} from "@/src/models/entities/FlaggedTextReport.js";
 import {PostgreSqlDriver} from "@mikro-orm/postgresql";
 import {SeedManager} from "@mikro-orm/seeder";
 import {Migrator} from "@mikro-orm/migrations";
+import {TranslationLanguage} from "@/src/models/entities/TranslationLanguage.js";
+import {PreferredTranslationLanguageEntry} from "@/src/models/entities/PreferredTranslationLanguageEntry.js";
 
 
 const devOptions: Options = {
-    driver:PostgreSqlDriver,
+    driver: PostgreSqlDriver,
     extensions: [Migrator, SeedManager],
-    entities: [Collection, CustomBaseEntity, Dictionary, Language, Text, MapLearnerDictionary, CollectionBookmark,
-        TextHistoryEntry, MapLearnerMeaning, MapLearnerVocab, MapTextVocab, MapLearnerLanguage, Meaning,
-        Profile, Vocab, User, Session, PasswordResetToken, EmailConfirmationToken, FileUploadRequest, TTSVoice, TTSPronunciation, HumanPronunciation, MapHiderText, FlaggedTextReport],
-    loadStrategy: LoadStrategy.SELECT_IN,
+    entities: [
+        CustomBaseEntity, Collection, Dictionary, Language, Text, MapLearnerDictionary, CollectionBookmark,
+        TextHistoryEntry, MapLearnerMeaning, MapLearnerVocab, MapTextVocab, MapLearnerLanguage, Meaning, Profile,
+        Vocab, User, Session, PasswordResetToken, EmailConfirmationToken, FileUploadRequest, TTSVoice, TTSPronunciation,
+        HumanPronunciation, MapHiderText, FlaggedTextReport, TranslationLanguage, PreferredTranslationLanguageEntry
+    ],
+    loadStrategy: LoadStrategy.SELECT_IN,       //populateWhere does not work with JOINED, also to-many joins are slow
     debug: true,
     migrations: {
         path: "build/src/migrations",

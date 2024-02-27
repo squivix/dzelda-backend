@@ -56,11 +56,9 @@ class VocabController {
         const body = bodyValidator.parse(request.body);
 
         const languageService = new LanguageService(request.em);
-        const language = await languageService.findLanguage({code: body.languageCode});
+        const language = await languageService.findLearningLanguage({code: body.languageCode});
         if (!language)
             throw new ValidationAPIError({language: "not found"});
-        if (!language.isSupported)
-            throw new ValidationAPIError({language: "not supported"});
 
         const parser = getParser(language.code);
         const words = parser.splitWords(parser.parseText(body.text));

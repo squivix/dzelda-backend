@@ -13,9 +13,8 @@ export class LanguageSerializer extends CustomEntitySerializer<Language, Languag
             flagCircular: () => language.flagCircular,
             flagEmoji: () => language.flagEmoji,
             color: () => language.color,
-            isSupported: () => language.isSupported,
             levelThresholds: () => language.levelThresholds,
-            learnersCount: () => Number(language?.learnersCount)
+            learnersCount: () => Number(language.learnersCount)
         };
     }
 }

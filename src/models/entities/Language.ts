@@ -1,8 +1,7 @@
-import {Collection as MikroORMCollection, Entity, Formula, ManyToMany, OneToMany, Property, types} from "@mikro-orm/core";
+import {Collection as MikroORMCollection, Entity, Formula, ManyToMany, OneToMany, OptionalProps, Property, types} from "@mikro-orm/core";
 import {CustomBaseEntity} from "@/src/models/entities/CustomBaseEntity.js";
 import {Collection} from "@/src/models/entities/Collection.js";
 import {Vocab} from "@/src/models/entities/Vocab.js";
-import {Meaning} from "@/src/models/entities/Meaning.js";
 import {Dictionary} from "@/src/models/entities/Dictionary.js";
 import {Profile} from "@/src/models/entities/Profile.js";
 import {MapLearnerLanguage} from "@/src/models/entities/MapLearnerLanguage.js";
@@ -37,9 +36,6 @@ export class Language extends CustomBaseEntity {
     @Property({type: types.string, length: 32})
     color!: string;
 
-    @Property({type: types.boolean, default: false})
-    isSupported: boolean = false;
-
     @Property({
         type: types.json,
         defaultRaw: `'{"beginner1": 0,"beginner2": 1000,"intermediate1": 5000,"intermediate2": 12000,"advanced1": 20000,"advanced2": 30000}'::jsonb`
@@ -52,6 +48,8 @@ export class Language extends CustomBaseEntity {
         advanced1: number;
         advanced2: number;
     };
+
+    [OptionalProps]?: "flag" | "flagCircular" | "flagEmoji" | "texts" | "collections" | "dictionaries" | "vocabs" | "ttsVoices" | "learners" | "humanPronunciations" | "learnersCount" | "levelThresholds";
 
     @OneToMany({entity: () => Text, mappedBy: (text: Text) => text.language, hidden: true})
     texts: MikroORMCollection<Text> = new MikroORMCollection<Text>(this);
@@ -68,9 +66,6 @@ export class Language extends CustomBaseEntity {
     @OneToMany({entity: () => TTSVoice, mappedBy: (ttsVoice) => ttsVoice.language})
     ttsVoices: MikroORMCollection<TTSVoice> = new MikroORMCollection<TTSVoice>(this);
 
-    @OneToMany({entity: () => Meaning, mappedBy: (meaning) => meaning.language, hidden: true})
-    meaningsSavedIn: MikroORMCollection<Meaning> = new MikroORMCollection<Meaning>(this);
-
     @ManyToMany({
         entity: () => Profile,
         inversedBy: (profile: Profile) => profile.languagesLearning,
@@ -85,10 +80,7 @@ export class Language extends CustomBaseEntity {
     humanPronunciations: MikroORMCollection<HumanPronunciation> = new MikroORMCollection<HumanPronunciation>(this);
 
 
-    @Formula((alias: string) => `(SELECT COUNT(learner_id) FROM map_learner_language WHERE language_id=${alias}.id)`, {
-        type: types.integer,
-        // lazy: true
-    })
+    @Formula((alias: string) => `(SELECT COUNT(learner_id) FROM map_learner_language WHERE language_id=${alias}.id)`, {type: "number"})
     learnersCount!: number;
 
 

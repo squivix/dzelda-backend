@@ -2,9 +2,9 @@ import {Collection, Entity, Formula, Index, ManyToMany, ManyToOne, OptionalProps
 import {CustomBaseEntity} from "@/src/models/entities/CustomBaseEntity.js";
 import {Vocab} from "@/src/models/entities/Vocab.js";
 import {Profile} from "@/src/models/entities/Profile.js";
-import {Language} from "@/src/models/entities/Language.js";
 import {MapLearnerMeaning} from "@/src/models/entities/MapLearnerMeaning.js";
 import {Attribution} from "@/src/models/interfaces/Attribution.js";
+import {TranslationLanguage} from "@/src/models/entities/TranslationLanguage.js";
 
 @Entity()
 @Unique({properties: ["vocab", "text", "language"]})
@@ -33,8 +33,8 @@ export class Meaning extends CustomBaseEntity {
     @Property({type: types.json, nullable: true})
     attribution!: Attribution;
 
-    @ManyToOne({entity: () => Language, inversedBy: (language) => language.meaningsSavedIn, deleteRule: "cascade", updateRule: "cascade"})
-    language!: Language;
+    @ManyToOne({entity: () => TranslationLanguage, inversedBy: (language) => language.meaningsSavedIn, deleteRule: "cascade", updateRule: "cascade"})
+    language!: TranslationLanguage;
 
     @ManyToMany({
         entity: () => Profile,

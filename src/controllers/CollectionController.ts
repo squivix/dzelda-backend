@@ -60,11 +60,9 @@ class CollectionController {
         const body = bodyValidator.parse(request.body);
 
         const languageService = new LanguageService(request.em);
-        const language = await languageService.findLanguage({code: body.languageCode});
+        const language = await languageService.findLearningLanguage({code: body.languageCode});
         if (!language)
             throw new ValidationAPIError({language: "not found"});
-        if (!language.isSupported)
-            throw new ValidationAPIError({language: "not supported"});
         const userService = new UserService(request.em);
         if (body.image)
             body.image = await validateFileObjectKey(userService, request.user as User, body.image, "collectionImage", "image");

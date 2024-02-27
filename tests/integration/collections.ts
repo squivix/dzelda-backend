@@ -648,19 +648,6 @@ describe("POST collections/", function () {
 
                 expect(response.statusCode).to.equal(400);
             });
-            test<LocalTestContext>("If language is not supported return 400", async (context) => {
-                const user = await context.userFactory.createOne();
-                const session = await context.sessionFactory.createOne({user: user});
-                const language = await context.languageFactory.createOne({isSupported: false});
-                const newCollection = context.collectionFactory.makeOne({language});
-
-                const response = await makeRequest({
-                    title: newCollection.title,
-                    languageCode: language.code,
-                }, session.token);
-
-                expect(response.statusCode).to.equal(400);
-            });
         });
         test<LocalTestContext>("If description is invalid return 400", async (context) => {
             const user = await context.userFactory.createOne();

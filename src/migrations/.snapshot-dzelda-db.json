@@ -96,16 +96,6 @@
           "length": 32,
           "mappedType": "string"
         },
-        "is_supported": {
-          "name": "is_supported",
-          "type": "boolean",
-          "unsigned": false,
-          "autoincrement": false,
-          "primary": false,
-          "nullable": false,
-          "default": "false",
-          "mappedType": "boolean"
-        },
         "level_thresholds": {
           "name": "level_thresholds",
           "type": "jsonb",
@@ -397,6 +387,75 @@
           "updateRule": "cascade"
         }
       },
+      "nativeEnums": {}
+    },
+    {
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "int",
+          "unsigned": true,
+          "autoincrement": true,
+          "primary": true,
+          "nullable": false,
+          "mappedType": "integer"
+        },
+        "code": {
+          "name": "code",
+          "type": "varchar(255)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "mappedType": "string"
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar(255)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "length": 255,
+          "mappedType": "string"
+        },
+        "is_default": {
+          "name": "is_default",
+          "type": "boolean",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "default": "false",
+          "mappedType": "boolean"
+        }
+      },
+      "name": "translation_language",
+      "schema": "public",
+      "indexes": [
+        {
+          "columnNames": [
+            "code"
+          ],
+          "composite": false,
+          "keyName": "translation_language_code_unique",
+          "constraint": true,
+          "primary": false,
+          "unique": true
+        },
+        {
+          "keyName": "translation_language_pkey",
+          "columnNames": [
+            "id"
+          ],
+          "composite": false,
+          "constraint": true,
+          "primary": true,
+          "unique": true
+        }
+      ],
+      "checks": [],
+      "foreignKeys": {},
       "nativeEnums": {}
     },
     {
@@ -988,6 +1047,121 @@
           ],
           "referencedTableName": "public.tts_voice",
           "deleteRule": "set null",
+          "updateRule": "cascade"
+        }
+      },
+      "nativeEnums": {}
+    },
+    {
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "int",
+          "unsigned": true,
+          "autoincrement": true,
+          "primary": true,
+          "nullable": false,
+          "mappedType": "integer"
+        },
+        "translation_language_id": {
+          "name": "translation_language_id",
+          "type": "int",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "mappedType": "integer"
+        },
+        "learner_language_mapping_id": {
+          "name": "learner_language_mapping_id",
+          "type": "int",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "mappedType": "integer"
+        },
+        "precedence_order": {
+          "name": "precedence_order",
+          "type": "int",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "mappedType": "integer"
+        }
+      },
+      "name": "preferred_translation_language_entry",
+      "schema": "public",
+      "indexes": [
+        {
+          "keyName": "preferred_translation_language_entry_learner_langua_c309c_index",
+          "columnNames": [
+            "learner_language_mapping_id"
+          ],
+          "composite": false,
+          "constraint": false,
+          "primary": false,
+          "unique": false
+        },
+        {
+          "keyName": "preferred_translation_language_entry_translation_la_a698b_index",
+          "columnNames": [
+            "translation_language_id"
+          ],
+          "composite": false,
+          "constraint": false,
+          "primary": false,
+          "unique": false
+        },
+        {
+          "keyName": "preferred_translation_language_entry_translation_l_a61a8_unique",
+          "columnNames": [
+            "translation_language_id",
+            "learner_language_mapping_id"
+          ],
+          "composite": true,
+          "constraint": true,
+          "primary": false,
+          "unique": true
+        },
+        {
+          "keyName": "preferred_translation_language_entry_pkey",
+          "columnNames": [
+            "id"
+          ],
+          "composite": false,
+          "constraint": true,
+          "primary": true,
+          "unique": true
+        }
+      ],
+      "checks": [],
+      "foreignKeys": {
+        "preferred_translation_language_entry_translation__4106e_foreign": {
+          "constraintName": "preferred_translation_language_entry_translation__4106e_foreign",
+          "columnNames": [
+            "translation_language_id"
+          ],
+          "localTableName": "public.preferred_translation_language_entry",
+          "referencedColumnNames": [
+            "id"
+          ],
+          "referencedTableName": "public.translation_language",
+          "deleteRule": "cascade",
+          "updateRule": "cascade"
+        },
+        "preferred_translation_language_entry_learner_lang_664ab_foreign": {
+          "constraintName": "preferred_translation_language_entry_learner_lang_664ab_foreign",
+          "columnNames": [
+            "learner_language_mapping_id"
+          ],
+          "localTableName": "public.preferred_translation_language_entry",
+          "referencedColumnNames": [
+            "id"
+          ],
+          "referencedTableName": "public.map_learner_language",
+          "deleteRule": "cascade",
           "updateRule": "cascade"
         }
       },
@@ -2710,7 +2884,7 @@
           "referencedColumnNames": [
             "id"
           ],
-          "referencedTableName": "public.language",
+          "referencedTableName": "public.translation_language",
           "deleteRule": "cascade",
           "updateRule": "cascade"
         }

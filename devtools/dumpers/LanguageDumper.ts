@@ -18,7 +18,6 @@ export async function dumpLanguages({em, batchSize, dataPath}: { em: EntityManag
             code: language.code,
             flagCircular: language.flagCircular,
             flagEmoji: language.flagEmoji,
-            isSupported: language.isSupported,
             secondSpeakersCount: language.secondSpeakersCount,
         })
     });

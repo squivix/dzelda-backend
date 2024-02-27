@@ -14,7 +14,6 @@ export class LanguageFactory extends CustomFactory<Language> {
             flag: faker.image.imageUrl(100, 100),
             flagCircular: faker.image.imageUrl(100, 100),
             flagEmoji: faker.internet.emoji(),
-            isSupported: true,
             color: faker.color.rgb(),
             learnersCount: 0,
             levelThresholds: {

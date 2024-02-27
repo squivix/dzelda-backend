@@ -22,5 +22,6 @@ export const languageRouter: FastifyPluginCallback = function (fastify, options,
         preHandler: [requiresAuth, requiresEmailConfirmed],
         handler: languageController.resetUserLanguageProgress
     });
+    fastify.get(`/translation-languages/`, languageController.getTranslationLanguages);
     done();
 };

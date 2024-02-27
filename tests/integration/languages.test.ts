@@ -8,7 +8,7 @@ import {SessionFactory} from "@/devtools/factories/SessionFactory.js";
 import {InjectOptions} from "light-my-request";
 import {MapLearnerLanguage} from "@/src/models/entities/MapLearnerLanguage.js";
 import {Language} from "@/src/models/entities/Language.js";
-import {EntityRepository} from "@mikro-orm/core";
+import {EntityRepository, RequiredEntityData} from "@mikro-orm/core";
 import {ProfileFactory} from "@/devtools/factories/ProfileFactory.js";
 import {languageSerializer} from "@/src/presentation/response/serializers/entities/LanguageSerializer.js";
 import {TextFactory} from "@/devtools/factories/TextFactory.js";
@@ -74,7 +74,7 @@ describe("GET languages/", function () {
         {property: "id", order: "asc"}
     ]);
 
-    test<LocalTestContext>("If there are no filters return all languages", async (context) => {
+    test<LocalTestContext>("It should return all languages", async (context) => {
         const expectedLanguages = await context.languageFactory.create(10);
         expectedLanguages.sort(defaultSortComparator);
 
@@ -82,37 +82,6 @@ describe("GET languages/", function () {
 
         expect(response.statusCode).to.equal(200);
         expect(response.json()).toEqual(languageSerializer.serializeList(expectedLanguages));
-    });
-    describe("If there are filters return languages that match those filters", async () => {
-        describe("tests isSupported filter", async () => {
-            test<LocalTestContext>("If isSupported filter is true return only supported languages", async (context) => {
-                const expectedLanguages = await context.languageFactory.create(5, {isSupported: true});
-                await context.languageFactory.create(5, {isSupported: false});
-                expectedLanguages.sort(defaultSortComparator);
-
-                const response = await makeRequest({isSupported: true});
-
-                expect(response.statusCode).to.equal(200);
-                expect(response.json()).toEqual(languageSerializer.serializeList(expectedLanguages));
-            });
-            test<LocalTestContext>("If isSupported filter is false return only unsupported languages", async (context) => {
-                const expectedLanguages = await context.languageFactory.create(5, {isSupported: false});
-                await context.languageFactory.create(5, {isSupported: true});
-                expectedLanguages.sort(defaultSortComparator);
-
-                const response = await makeRequest({isSupported: false});
-
-                expect(response.statusCode).to.equal(200);
-                expect(response.json()).toEqual(languageSerializer.serializeList(expectedLanguages));
-            });
-            test<LocalTestContext>("If isSupported filter is invalid return 400", async (context) => {
-                await context.languageFactory.create(5, {isSupported: true});
-                await context.languageFactory.create(5, {isSupported: false});
-
-                const response = await makeRequest({isSupported: "Invalid data"});
-                expect(response.statusCode).to.equal(400);
-            });
-        });
     });
     describe("test sort", () => {
         describe("test sortBy", () => {
@@ -305,11 +274,11 @@ describe("GET users/:username/languages/", function () {
                     context.em.create(MapLearnerLanguage, {
                         language: context.languageFactory.makeDefinition({learnersCount: 1}), learner: user.profile,
                         lastOpened: new Date("2018-07-22T10:30:45.000Z")
-                    }),
+                    } as RequiredEntityData<MapLearnerLanguage>),
                     context.em.create(MapLearnerLanguage, {
                         language: context.languageFactory.makeDefinition({learnersCount: 1}), learner: user.profile,
                         lastOpened: new Date("2023-03-15T20:29:42.000Z")
-                    }),
+                    } as RequiredEntityData<MapLearnerLanguage>),
                 ];
                 await context.em.flush();
 
@@ -437,14 +406,6 @@ describe("POST users/me/languages/", function () {
                 const currentUser = await context.userFactory.createOne();
                 const session = await context.sessionFactory.createOne({user: currentUser});
                 const language = context.languageFactory.makeOne();
-
-                const response = await makeRequest({languageCode: language.code}, session.token);
-                expect(response.statusCode).to.equal(400);
-            });
-            test<LocalTestContext>("If language is not supported return 400", async (context) => {
-                const currentUser = await context.userFactory.createOne();
-                const session = await context.sessionFactory.createOne({user: currentUser});
-                const language = await context.languageFactory.createOne({isSupported: false});
 
                 const response = await makeRequest({languageCode: language.code}, session.token);
                 expect(response.statusCode).to.equal(400);

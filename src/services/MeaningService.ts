@@ -1,12 +1,12 @@
-import {EntityManager, EntityRepository, FilterQuery, QueryOrder} from "@mikro-orm/core";
+import {EntityManager, EntityRepository, FilterQuery, RequiredEntityData} from "@mikro-orm/core";
 import {Meaning} from "@/src/models/entities/Meaning.js";
 import {Vocab} from "@/src/models/entities/Vocab.js";
-import {Language} from "@/src/models/entities/Language.js";
 import {User} from "@/src/models/entities/auth/User.js";
 import {MapLearnerMeaning} from "@/src/models/entities/MapLearnerMeaning.js";
 import {QueryOrderMap} from "@mikro-orm/core/enums.js";
 import {MapLearnerVocab} from "@/src/models/entities/MapLearnerVocab.js";
 import {VocabLevel} from "@/src/models/enums/VocabLevel.js";
+import {TranslationLanguage} from "@/src/models/entities/TranslationLanguage.js";
 
 export class MeaningService {
 
@@ -19,7 +19,7 @@ export class MeaningService {
         this.meaningRepo = this.em.getRepository(Meaning);
     }
 
-    async getMeaningByText(meaningData: { vocab: Vocab; language: Language; text: string }) {
+    async getMeaningByText(meaningData: { vocab: Vocab; language: TranslationLanguage; text: string }) {
         return await this.meaningRepo.findOne({
             vocab: meaningData.vocab,
             text: meaningData.text,
@@ -27,14 +27,14 @@ export class MeaningService {
         }, {populate: ["addedBy.user"]});
     }
 
-    async createMeaning(meaningData: { vocab: Vocab; language: Language; text: string }, user: User) {
+    async createMeaning(meaningData: { vocab: Vocab; language: TranslationLanguage; text: string }, user: User) {
         const newMeaning = this.meaningRepo.create({
             text: meaningData.text,
             language: meaningData.language,
             vocab: meaningData.vocab,
             addedBy: user.profile,
             learnersCount: 0
-        });
+        } as RequiredEntityData<Meaning>);
         await this.em.flush();
         return newMeaning;
     }

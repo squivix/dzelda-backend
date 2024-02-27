@@ -15,6 +15,8 @@ import {MapLearnerLanguage} from "@/src/models/entities/MapLearnerLanguage.js";
 import {CollectionBookmark} from "@/src/models/entities/CollectionBookmark.js";
 import {TextBookmark} from "@/src/models/entities/TextBookmark.js";
 import {MapHiderText} from "@/src/models/entities/MapHiderText.js";
+import {PreferredTranslationLanguageEntry} from "@/src/models/entities/PreferredTranslationLanguageEntry.js";
+import {TranslationLanguage} from "@/src/models/entities/TranslationLanguage.js";
 
 @Entity()
 export class Profile extends CustomBaseEntity {

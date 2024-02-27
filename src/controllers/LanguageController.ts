@@ -10,20 +10,21 @@ import {languageSerializer} from "@/src/presentation/response/serializers/entiti
 import {learnerLanguageSerializer} from "@/src/presentation/response/serializers/mappings/LearnerLanguageSerializer.js";
 import {APIError} from "@/src/utils/errors/APIError.js";
 import {StatusCodes} from "http-status-codes";
+import {TranslationLanguage} from "@/src/models/entities/TranslationLanguage.js";
+import {translationLanguageSerializer} from "@/src/presentation/response/serializers/entities/TranslationLanguageSerializer.js";
+import {PreferredTranslationLanguageEntry} from "@/src/models/entities/PreferredTranslationLanguageEntry.js";
 
 class LanguageController {
     async getLanguages(request: FastifyRequest, reply: FastifyReply) {
         const queryParamsValidator = z.object({
-            isSupported: z.string().regex(/(true|false)/ig).transform(v => v.toLowerCase() == "true").optional(),
             sortBy: z.union([z.literal("name"), z.literal("learnersCount"), z.literal("secondSpeakersCount")]).optional().default("name"),
             sortOrder: z.union([z.literal("asc"), z.literal("desc")]).optional().default("asc"),
         });
         const queryParams = queryParamsValidator.parse(request.query);
 
         const languageService = new LanguageService(request.em);
-        const filters = {isSupported: queryParams.isSupported};
         const sort = {sortBy: queryParams.sortBy, sortOrder: queryParams.sortOrder};
-        const languages = await languageService.getLanguages(filters, sort);
+        const languages = await languageService.getLanguages(sort);
         reply.send(languageSerializer.serializeList(languages));
     }
 
@@ -50,20 +51,24 @@ class LanguageController {
         const user = request.user as User;
 
         const bodyValidator = z.object({
-            languageCode: languageCodeValidator
+            languageCode: languageCodeValidator,
+            preferredTranslationLanguageCodes: z.array(languageCodeValidator).optional()
         });
         const body = bodyValidator.parse(request.body);
         const languageService = new LanguageService(request.em);
-        const language = await languageService.findLanguage({code: body.languageCode});
+        const language = await languageService.findLearningLanguage({code: body.languageCode});
         if (!language)
             throw new ValidationAPIError({language: "not found"});
-        if (!language.isSupported)
-            throw new ValidationAPIError({language: "not supported"});
-
+        let preferredTranslationLanguages: TranslationLanguage[] | undefined;
+        if (body.preferredTranslationLanguageCodes) {
+            preferredTranslationLanguages = await languageService.findTranslationLanguages({code: {$in: body.preferredTranslationLanguageCodes}});
+            if (preferredTranslationLanguages.length !== body.preferredTranslationLanguageCodes.length)
+                throw new ValidationAPIError({preferredTranslationLanguageCodes: "not found"});
+        }
         const existingLanguageMapping = await languageService.getUserLanguage(language.code, user);
         if (existingLanguageMapping)
             reply.status(200).send(learnerLanguageSerializer.serialize(existingLanguageMapping));
-        const newLanguageMapping = await languageService.addLanguageToUser(user, language);
+        const newLanguageMapping = await languageService.addLanguageToUser({user, language, preferredTranslationLanguages});
         reply.status(201).send(learnerLanguageSerializer.serialize(newLanguageMapping));
     }
 
@@ -75,15 +80,26 @@ class LanguageController {
         const pathParams = pathParamsValidator.parse(request.params);
 
         const bodyValidator = z.object({
-            lastOpened: z.literal("now")
+            lastOpened: z.literal("now").optional(),
+            preferredTranslationLanguageCodes: z.array(languageCodeValidator).min(1).optional(),
         });
-        bodyValidator.parse(request.body);
+        const body = bodyValidator.parse(request.body);
 
         const languageService = new LanguageService(request.em);
         const languageMapping = await languageService.getUserLanguage(pathParams.languageCode, user);
         if (!languageMapping)
             throw new APIError(StatusCodes.NOT_FOUND, "User is not learning language", "The user is not learning this language.");
-        const updatedLanguageMapping = await languageService.updateUserLanguage(languageMapping);
+        let preferredTranslationLanguages: TranslationLanguage[] | undefined;
+        if (body.preferredTranslationLanguageCodes) {
+            preferredTranslationLanguages = await languageService.findTranslationLanguages({code: {$in: body.preferredTranslationLanguageCodes}});
+            if (preferredTranslationLanguages.length !== body.preferredTranslationLanguageCodes.length)
+                throw new ValidationAPIError({preferredTranslationLanguageCodes: "not found"});
+            //keep order
+            const codeToTl: Record<string, TranslationLanguage> = {};
+            preferredTranslationLanguages.forEach(tl => codeToTl[tl.code] = tl);
+            preferredTranslationLanguages = body.preferredTranslationLanguageCodes.map(c => codeToTl[c]);
+        }
+        const updatedLanguageMapping = await languageService.updateUserLanguage(languageMapping, {lastOpened: body.lastOpened, preferredTranslationLanguages: preferredTranslationLanguages});
         reply.status(200).send(learnerLanguageSerializer.serialize(updatedLanguageMapping));
     }
 
@@ -116,8 +132,14 @@ class LanguageController {
             throw new APIError(StatusCodes.NOT_FOUND, "User is not learning language", "The user is not learning this language.");
         const language = languageMapping.language;
         await languageService.removeLanguageFromUser(languageMapping);
-        await languageService.addLanguageToUser(user, language);
+        await languageService.addLanguageToUser({user, language});
         reply.status(204).send();
+    }
+
+    async getTranslationLanguages(request: FastifyRequest, reply: FastifyReply) {
+        const languageService = new LanguageService(request.em);
+        const translationLanguages = await languageService.getTranslationLanguages();
+        reply.send(translationLanguageSerializer.serializeList(translationLanguages));
     }
 }
 

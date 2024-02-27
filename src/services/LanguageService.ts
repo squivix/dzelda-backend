@@ -9,6 +9,8 @@ import {MapLearnerMeaning} from "@/src/models/entities/MapLearnerMeaning.js";
 import {EntityField} from "@mikro-orm/core/drivers/IDatabaseDriver.js";
 import {QueryOrderMap} from "@mikro-orm/core/enums.js";
 import {Dictionary} from "@/src/models/entities/Dictionary.js";
+import {TranslationLanguage} from "@/src/models/entities/TranslationLanguage.js";
+import {PreferredTranslationLanguageEntry} from "@/src/models/entities/PreferredTranslationLanguageEntry.js";
 
 export class LanguageService {
     em: EntityManager;
@@ -19,11 +21,7 @@ export class LanguageService {
         this.languageRepo = this.em.getRepository(Language);
     }
 
-    async getLanguages(filters: { isSupported?: boolean }, sort: { sortBy: "name" | "learnersCount" | "secondSpeakersCount", sortOrder: "asc" | "desc" }) {
-        const dbFilters: FilterQuery<Language> = {$and: []};
-        if (filters.isSupported !== undefined)
-            dbFilters.$and!.push({isSupported: filters.isSupported});
-
+    async getLanguages(sort: { sortBy: "name" | "learnersCount" | "secondSpeakersCount", sortOrder: "asc" | "desc" }) {
         const dbOrderBy: QueryOrderMap<Language>[] = [];
         if (sort.sortBy == "name")
             dbOrderBy.push({name: sort.sortOrder});
@@ -34,7 +32,7 @@ export class LanguageService {
 
         dbOrderBy.push({code: "asc"});
         dbOrderBy.push({id: "asc"});
-        return await this.languageRepo.find(dbFilters, {
+        return await this.languageRepo.find({}, {
             populate: ["learnersCount"],
             orderBy: dbOrderBy,
         });
@@ -54,25 +52,45 @@ export class LanguageService {
 
         dbOrderBy.push({language: {code: "asc"}});
         dbOrderBy.push({language: {id: "asc"}});
-        return await this.em.find(MapLearnerLanguage, dbFilters, {orderBy: dbOrderBy, populate: ["preferredTtsVoice"]});
+
+        return await this.em.find(MapLearnerLanguage, dbFilters, {orderBy: dbOrderBy, populate: ["preferredTtsVoice", "preferredTranslationLanguages.translationLanguage"]});
     }
 
     async getUserLanguage(code: string, user: User) {
-        return await this.em.findOne(MapLearnerLanguage, {language: {code}, learner: user.profile}, {populate: ["preferredTtsVoice"]});
+        return await this.em.findOne(MapLearnerLanguage, {language: {code}, learner: user.profile}, {populate: ["preferredTtsVoice", "preferredTranslationLanguages.translationLanguage"]});
     }
 
-    async updateUserLanguage(languageMapping: MapLearnerLanguage) {
-        await this.languageRepo.updateUserLanguageTimeStamp(languageMapping);
-        return (await this.em.refresh(languageMapping, {populate: ["preferredTtsVoice"]}))!;
+    async updateUserLanguage(languageMapping: MapLearnerLanguage, updateFields: { lastOpened: "now" | undefined, preferredTranslationLanguages?: TranslationLanguage[] }) {
+        if (updateFields.preferredTranslationLanguages !== undefined) {
+            const preferredTranslationLanguages = updateFields.preferredTranslationLanguages;
+            await this.em.transactional(async (tm) => {
+                await tm.nativeDelete(PreferredTranslationLanguageEntry, {learnerLanguageMapping: languageMapping, translationLanguage: {$nin: preferredTranslationLanguages.map(t => t.id)}});
+                await tm.upsertMany(PreferredTranslationLanguageEntry, preferredTranslationLanguages.map((tl, i) => ({
+                    learnerLanguageMapping: languageMapping,
+                    translationLanguage: tl,
+                    precedenceOrder: i
+                })));
+            });
+        }
+        if (updateFields.lastOpened !== undefined)
+            await this.languageRepo.updateUserLanguageTimeStamp(languageMapping);
+        return (await this.em.refresh(languageMapping, {populate: ["preferredTtsVoice", "preferredTranslationLanguages.translationLanguage"]}))!;
     }
 
 
-    async addLanguageToUser(user: User, language: Language) {
+    async addLanguageToUser({user, language, preferredTranslationLanguages}: { user: User, language: Language, preferredTranslationLanguages?: TranslationLanguage[] }) {
         const mapping = this.em.create(MapLearnerLanguage, {learner: user.profile, language: language});
         await this.em.flush();
         //TODO test this
         const defaultDictionaries = await this.em.find(Dictionary, {isDefault: true, language: language}, {orderBy: [{name: "asc"}, {id: "asc"}]});
         await this.em.insertMany(MapLearnerDictionary, defaultDictionaries.map((d, i) => ({learner: user.profile.id, dictionary: d.id, order: i})));
+        const defaultTranslationLanguages = await this.em.find(TranslationLanguage, {isDefault: true});
+        preferredTranslationLanguages = preferredTranslationLanguages ?? defaultTranslationLanguages;
+        await this.em.insertMany(PreferredTranslationLanguageEntry, preferredTranslationLanguages.map((t, i) => ({
+            learnerLanguageMapping: mapping,
+            translationLanguage: t,
+            precedenceOrder: i
+        })));
         await this.em.refresh(mapping.language);
         return mapping;
     }
@@ -88,7 +106,19 @@ export class LanguageService {
         });
     }
 
-    async findLanguage(where: FilterQuery<Language>, fields: EntityField<Language>[] = ["id", "code", "isSupported"]) {
-        return await this.languageRepo.findOne(where, {fields});
+    async getTranslationLanguages() {
+        return await this.em.find(TranslationLanguage, {}, {orderBy: {name: "asc"}});
+    }
+
+    async findLearningLanguage(where: FilterQuery<Language>, fields: EntityField<Language>[] = ["id", "code"]) {
+        return await this.em.findOne(Language, where, {fields: fields as any});
+    }
+
+    async findTranslationLanguage(where: FilterQuery<TranslationLanguage>, fields: EntityField<TranslationLanguage>[] = ["id", "code"]) {
+        return await this.em.findOne(TranslationLanguage, where, {fields: fields as any});
+    }
+
+    async findTranslationLanguages(where: FilterQuery<TranslationLanguage>, fields: EntityField<TranslationLanguage>[] = ["id", "code"]) {
+        return await this.em.find(TranslationLanguage, where, {fields: fields as any});
     }
 }

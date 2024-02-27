@@ -523,19 +523,6 @@ describe("POST vocabs/", () => {
 
                 expect(response.statusCode).toEqual(400);
             });
-            test<LocalTestContext>("If language is not supported return 400", async (context) => {
-                const user = await context.userFactory.createOne();
-                const session = await context.sessionFactory.createOne({user: user});
-                const language = await context.languageFactory.createOne({isSupported: false});
-                const newVocab = context.vocabFactory.makeOne({language: language});
-                const response = await makeRequest({
-                    languageCode: language.code,
-                    text: newVocab.text,
-                    isPhrase: newVocab.isPhrase
-                }, session.token);
-
-                expect(response.statusCode).toEqual(400);
-            });
         });
         describe("If text is invalid return 400", async () => {
             test<LocalTestContext>("If text contains no parsable words return 400", async (context) => {

@@ -1,4 +1,4 @@
-import {Dictionary, EntityData, EntityManager} from "@mikro-orm/core";
+import {Dictionary, EntityData, EntityManager, RequiredEntityData} from "@mikro-orm/core";
 import {Seeder} from "@mikro-orm/seeder";
 import fs from "fs-extra";
 import {User} from "@/src/models/entities/auth/User.js";
@@ -66,7 +66,7 @@ export class UserSeeder extends Seeder {
             isEmailConfirmed: userData.isEmailConfirmed,
             accountCreatedAt: userData.accountCreatedAt,
             lastLogin: userData.lastLogin
-        })));
+        } as RequiredEntityData<User>)));
     }
 
     private async insertProfileBatch(em: EntityManager, batch: EntityData<Profile>[]) {
@@ -76,7 +76,7 @@ export class UserSeeder extends Seeder {
             user: profileData.id,
             bio: profileData.bio,
             isPublic: profileData.isPublic
-        })));
+        } as RequiredEntityData<Profile>)));
     }
 
     private async insertMapLearnerLanguageBatch(em: EntityManager, batch: EntityData<MapLearnerLanguage>[]) {
