@@ -22,7 +22,7 @@ export class PronunciationService {
             dbFilters.$and!.push({parsedText: {$ilike: filters.text}});
 
         return await this.em.findAndCount(HumanPronunciation, dbFilters, {
-            populate: ["language"],
+            populate: ["language", "attributionSource"],
             orderBy: {id: "asc"},
             limit: pagination.pageSize,
             offset: pagination.pageSize * (pagination.page - 1),

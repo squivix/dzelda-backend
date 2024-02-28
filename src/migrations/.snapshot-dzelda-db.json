@@ -15,6 +15,63 @@
           "nullable": false,
           "mappedType": "integer"
         },
+        "name": {
+          "name": "name",
+          "type": "varchar(255)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "mappedType": "string"
+        },
+        "url": {
+          "name": "url",
+          "type": "varchar(255)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "mappedType": "string"
+        },
+        "logo_url": {
+          "name": "logo_url",
+          "type": "varchar(255)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "mappedType": "string"
+        }
+      },
+      "name": "attribution_source",
+      "schema": "public",
+      "indexes": [
+        {
+          "keyName": "attribution_source_pkey",
+          "columnNames": [
+            "id"
+          ],
+          "composite": false,
+          "constraint": true,
+          "primary": true,
+          "unique": true
+        }
+      ],
+      "checks": [],
+      "foreignKeys": {},
+      "nativeEnums": {}
+    },
+    {
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "int",
+          "unsigned": true,
+          "autoincrement": true,
+          "primary": true,
+          "nullable": false,
+          "mappedType": "integer"
+        },
         "code": {
           "name": "code",
           "type": "varchar(255)",
@@ -204,6 +261,15 @@
           "default": "null",
           "mappedType": "string"
         },
+        "attribution_source_id": {
+          "name": "attribution_source_id",
+          "type": "int",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "mappedType": "integer"
+        },
         "attribution": {
           "name": "attribution",
           "type": "jsonb",
@@ -251,6 +317,19 @@
           ],
           "referencedTableName": "public.language",
           "deleteRule": "cascade",
+          "updateRule": "cascade"
+        },
+        "human_pronunciation_attribution_source_id_foreign": {
+          "constraintName": "human_pronunciation_attribution_source_id_foreign",
+          "columnNames": [
+            "attribution_source_id"
+          ],
+          "localTableName": "public.human_pronunciation",
+          "referencedColumnNames": [
+            "id"
+          ],
+          "referencedTableName": "public.attribution_source",
+          "deleteRule": "set null",
           "updateRule": "cascade"
         }
       },
@@ -2772,6 +2851,15 @@
           "default": "now()",
           "mappedType": "datetime"
         },
+        "attribution_source_id": {
+          "name": "attribution_source_id",
+          "type": "int",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "mappedType": "integer"
+        },
         "attribution": {
           "name": "attribution",
           "type": "jsonb",
@@ -2872,6 +2960,19 @@
             "id"
           ],
           "referencedTableName": "public.profile",
+          "deleteRule": "set null",
+          "updateRule": "cascade"
+        },
+        "meaning_attribution_source_id_foreign": {
+          "constraintName": "meaning_attribution_source_id_foreign",
+          "columnNames": [
+            "attribution_source_id"
+          ],
+          "localTableName": "public.meaning",
+          "referencedColumnNames": [
+            "id"
+          ],
+          "referencedTableName": "public.attribution_source",
           "deleteRule": "set null",
           "updateRule": "cascade"
         },

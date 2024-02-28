@@ -2,6 +2,7 @@ import {Entity, Index, ManyToOne, Property, types} from "@mikro-orm/core";
 import {CustomBaseEntity} from "@/src/models/entities/CustomBaseEntity.js";
 import {Language} from "@/src/models/entities/Language.js";
 import {Attribution} from "@/src/models/interfaces/Attribution.js";
+import {AttributionSource} from "@/src/models/entities/AttributionSource.js";
 
 @Entity()
 @Index({properties: ["parsedText"]})
@@ -23,6 +24,9 @@ export class HumanPronunciation extends CustomBaseEntity {
 
     @Property({type: types.string, nullable: true, default: null})
     speakerRegion!: string | null;
+
+    @ManyToOne({entity: () => AttributionSource, nullable: true, deleteRule: "set null", updateRule: "cascade", eager: true})
+    attributionSource?: AttributionSource;
 
     @Property({type: types.json, nullable: true})
     attribution!: Attribution;

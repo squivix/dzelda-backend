@@ -12,6 +12,7 @@ import {DictionarySeeder} from "@/devtools/seeders/DictionarySeeder.js";
 import {FileUploadsSeeder} from "@/devtools/seeders/FileUploadsSeeder.js";
 import {DATA_DIR, DEFAULT_BATCH_SIZE} from "@/devtools/constants.js";
 import path from "path";
+import {AttributionSourceSeeder} from "@/devtools/seeders/AttributionSeeder.js";
 
 
 export class DatabaseSeeder extends Seeder {
@@ -48,6 +49,7 @@ export class DatabaseSeeder extends Seeder {
         return this.call(em, [          //order is important
                 LanguageSeeder,
                 UserSeeder,
+                AttributionSourceSeeder,
                 DictionarySeeder,
                 CollectionSeeder,
                 VocabSeeder,

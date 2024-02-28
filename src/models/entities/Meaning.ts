@@ -5,6 +5,7 @@ import {Profile} from "@/src/models/entities/Profile.js";
 import {MapLearnerMeaning} from "@/src/models/entities/MapLearnerMeaning.js";
 import {Attribution} from "@/src/models/interfaces/Attribution.js";
 import {TranslationLanguage} from "@/src/models/entities/TranslationLanguage.js";
+import {AttributionSource} from "@/src/models/entities/AttributionSource.js";
 
 @Entity()
 @Unique({properties: ["vocab", "text", "language"]})
@@ -29,6 +30,9 @@ export class Meaning extends CustomBaseEntity {
 
     @Property({type: types.datetime, defaultRaw: "now()"})
     addedOn!: Date;
+
+    @ManyToOne({entity: () => AttributionSource, nullable: true, deleteRule: "set null", updateRule: "cascade", eager: true})
+    attributionSource?: AttributionSource;
 
     @Property({type: types.json, nullable: true})
     attribution!: Attribution;

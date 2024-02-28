@@ -1,4 +1,4 @@
-import {Dictionary, EntityData, EntityManager} from "@mikro-orm/core";
+import {Dictionary, EntityData, EntityManager, RequiredEntityData} from "@mikro-orm/core";
 import {Seeder} from "@mikro-orm/seeder";
 import fs from "fs-extra";
 import {Meaning} from "@/src/models/entities/Meaning.js";
@@ -48,8 +48,9 @@ export class MeaningSeeder extends Seeder {
             addedBy: meaningData.addedBy,
             language: meaningData.language,
             addedOn: meaningData.addedOn,
+            attributionSource: meaningData.attributionSource,
             attribution: meaningData.attribution,
-        })));
+        } as RequiredEntityData<Meaning>)));
     }
 
     private async insertMapLearnerMeaningBatch(em: EntityManager, batch: EntityData<MapLearnerMeaning>[]) {

@@ -28,11 +28,9 @@ export class Vocab extends CustomBaseEntity {
     @Property({type: types.boolean, default: false})
     isPhrase: boolean = false;
 
-    @OneToMany({entity: () => Meaning, mappedBy: (meaning: Meaning) => meaning.vocab,
-        orderBy: {learnersCount: "desc",
-            // TODO fix this to work with raw in v6 like it worked with expr before
-            // [raw(alias=>`length(${alias}.text)`)]: "asc"
-    }
+    @OneToMany({
+        entity: () => Meaning, mappedBy: (meaning: Meaning) => meaning.vocab,
+        orderBy: {learnersCount: "desc", [raw(alias => `length(${alias}.text)`)]: "asc"}
     })
     meanings: Collection<Meaning> = new Collection<Meaning>(this);
 

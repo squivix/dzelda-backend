@@ -18,6 +18,7 @@ export async function dumpMeanings({em, batchSize, dataPath}: { em: EntityManage
             addedBy: meaning.addedBy?.id,
             language: meaning.language.id,
             addedOn: meaning.addedOn,
+            attributionSource: meaning.attributionSource?.id,
             attribution: meaning.attribution,
         })
     });

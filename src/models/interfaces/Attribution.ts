@@ -1,7 +1,4 @@
 type SourceData = {
-    sourceRootName: string;
-    sourceRootUrl?: string;
-    sourceRootLogoUrl?: string;
     sourcePageTitle?: string;
     sourcePageUrl?: string;
 }

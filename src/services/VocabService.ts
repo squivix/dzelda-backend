@@ -67,10 +67,13 @@ export class VocabService {
         });
         await this.em.flush();
         //TODO move vocab in text regex somewhere centralized and test the heck out of it
-        const vocabFindRegex = new RegExp(`(\\s|^)${escapeRegExp(newVocab.text)}(\\s|$)`);
-        const textsWithVocab = await this.em.find(Text, {$or: [{parsedContent: vocabFindRegex}, {parsedTitle: vocabFindRegex}]});
-        if (textsWithVocab.length > 0)
-            await this.em.insertMany(MapTextVocab, textsWithVocab.map(text => ({text: text, vocab: newVocab})));
+
+        new Promise(async () => {
+            const vocabFindRegex = new RegExp(`(\\s|^)${escapeRegExp(newVocab.text)}(\\s|$)`);
+            const textsWithVocab = await this.em.find(Text, {$or: [{parsedContent: vocabFindRegex}, {parsedTitle: vocabFindRegex}]}, {fields: ["id"]});
+            await this.em.insertMany(MapTextVocab, textsWithVocab.map(text => ({text: text.id, vocab: newVocab})));
+        });
+
         return newVocab;
     }
 

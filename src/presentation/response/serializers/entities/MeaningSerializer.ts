@@ -2,6 +2,7 @@ import {CustomCallbackObject, CustomEntitySerializer} from "@/src/presentation/r
 import {MeaningSchema, VocabSchema} from "dzelda-common";
 import {Meaning} from "@/src/models/entities/Meaning.js";
 import {vocabSerializer} from "@/src/presentation/response/serializers/entities/VocabSerializer.js";
+import {attributionSourceSerializer} from "@/src/presentation/response/serializers/entities/AttributionSourceSerializer.js";
 
 
 class MeaningSerializer extends CustomEntitySerializer<Meaning, MeaningSchema> {
@@ -16,6 +17,7 @@ class MeaningSerializer extends CustomEntitySerializer<Meaning, MeaningSchema> {
             addedBy: () => meaning.addedBy == null ? "anonymous" : meaning.addedBy.user.username,
             language: () => meaning.language.code,
             addedOn: () => meaning.addedOn.toISOString(),
+            attributionSource: () => meaning.attributionSource ? attributionSourceSerializer.serialize(meaning.attributionSource) : null,
             attribution: () => meaning.attribution,
         };
     }

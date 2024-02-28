@@ -1,4 +1,4 @@
-import {Dictionary, EntityData, EntityManager} from "@mikro-orm/core";
+import {Dictionary, EntityData, EntityManager, RequiredEntityData} from "@mikro-orm/core";
 import {Seeder} from "@mikro-orm/seeder";
 import fs from "fs-extra";
 import {Vocab} from "@/src/models/entities/Vocab.js";
@@ -131,6 +131,7 @@ export class VocabSeeder extends Seeder {
             speakerCountryCode: humanPronunciationData.speakerCountryCode,
             speakerRegion: humanPronunciationData.speakerRegion,
             attribution: humanPronunciationData.attribution,
-        })));
+            attributionSource: humanPronunciationData.attributionSource,
+        } as RequiredEntityData<HumanPronunciation>)));
     }
 }
