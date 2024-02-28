@@ -182,7 +182,7 @@ export class UserService {
         } else {
             throw new APIError(
                 StatusCodes.UNAUTHORIZED,
-                "Password is incorrect",
+                "Old password is incorrect",
                 "The password you entered is incorrect"
             );
         }

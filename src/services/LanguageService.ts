@@ -106,8 +106,11 @@ export class LanguageService {
         });
     }
 
-    async getTranslationLanguages() {
-        return await this.em.find(TranslationLanguage, {}, {orderBy: {name: "asc"}});
+    async getTranslationLanguages(filters: { isDefault?: boolean }) {
+        const dbFilters: FilterQuery<TranslationLanguage> = {$and: []};
+        if (filters.isDefault !== undefined)
+            dbFilters.$and!.push({isDefault: filters.isDefault});
+        return await this.em.find(TranslationLanguage, dbFilters, {orderBy: {name: "asc"}});
     }
 
     async findLearningLanguage(where: FilterQuery<Language>, fields: EntityField<Language>[] = ["id", "code"]) {

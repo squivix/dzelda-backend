@@ -12,7 +12,7 @@ import {APIError} from "@/src/utils/errors/APIError.js";
 import {StatusCodes} from "http-status-codes";
 import {TranslationLanguage} from "@/src/models/entities/TranslationLanguage.js";
 import {translationLanguageSerializer} from "@/src/presentation/response/serializers/entities/TranslationLanguageSerializer.js";
-import {PreferredTranslationLanguageEntry} from "@/src/models/entities/PreferredTranslationLanguageEntry.js";
+import {booleanStringValidator} from "@/src/validators/utilValidators.js";
 
 class LanguageController {
     async getLanguages(request: FastifyRequest, reply: FastifyReply) {
@@ -52,7 +52,7 @@ class LanguageController {
 
         const bodyValidator = z.object({
             languageCode: languageCodeValidator,
-            preferredTranslationLanguageCodes: z.array(languageCodeValidator).optional()
+            preferredTranslationLanguageCodes: z.array(languageCodeValidator).min(1).optional()
         });
         const body = bodyValidator.parse(request.body);
         const languageService = new LanguageService(request.em);
@@ -137,8 +137,12 @@ class LanguageController {
     }
 
     async getTranslationLanguages(request: FastifyRequest, reply: FastifyReply) {
+        const queryParamsValidator = z.object({
+            isDefault: booleanStringValidator.optional()
+        });
+        const queryParams = queryParamsValidator.parse(request.query);
         const languageService = new LanguageService(request.em);
-        const translationLanguages = await languageService.getTranslationLanguages();
+        const translationLanguages = await languageService.getTranslationLanguages({isDefault: queryParams.isDefault});
         reply.send(translationLanguageSerializer.serializeList(translationLanguages));
     }
 }

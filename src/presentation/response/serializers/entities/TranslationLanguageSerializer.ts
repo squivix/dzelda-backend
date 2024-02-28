@@ -8,6 +8,7 @@ export class TranslationLanguageSerializer extends CustomEntitySerializer<Transl
             id: () => translationLanguage.id,
             code: () => translationLanguage.code,
             name: () => translationLanguage.name,
+            isDefault: () => translationLanguage.isDefault
         };
     }
 }
