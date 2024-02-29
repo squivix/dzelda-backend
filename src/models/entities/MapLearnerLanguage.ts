@@ -9,6 +9,7 @@ import {PreferredTranslationLanguageEntry} from "@/src/models/entities/Preferred
 @Unique({properties: ["language", "learner"]})
 @Index({properties: ["learner"]})
 @Index({properties: ["language"]})
+@Index({properties: ["preferredTtsVoice"]})
 export class MapLearnerLanguage extends CustomBaseEntity {
     constructor(learner: Profile, language: Language) {
         super();

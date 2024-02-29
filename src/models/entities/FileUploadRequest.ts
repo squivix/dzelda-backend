@@ -1,8 +1,9 @@
-import {Entity, Formula, ManyToOne, OptionalProps, Property, types} from "@mikro-orm/core";
+import {Entity, Formula, Index, ManyToOne, OptionalProps, Property, types} from "@mikro-orm/core";
 import {CustomBaseEntity} from "@/src/models/entities/CustomBaseEntity.js";
 import {User} from "@/src/models/entities/auth/User.js";
 
 @Entity()
+@Index({properties: ["user"]})
 export class FileUploadRequest extends CustomBaseEntity {
     @Property({type: types.string})
     fileField!: string;

@@ -19,4 +19,8 @@ export const DATASET_FILES = {
     mapTextVocab: "map_text_vocabs.jsonl",
     mapLearnerLanguage: "map_learner_languages.jsonl",
     mapLearnerDictionary: "map_learner_dictionaries.jsonl",
+    vocabTagCategory: "vocab_tag_categories.jsonl",
+    vocabTag: "vocab_tags.jsonl",
+    mapVocabTag: "map_vocab_tags.jsonl",
+    mapVocabRootFormFilePath: "map_vocab_root_forms.jsonl"
 };

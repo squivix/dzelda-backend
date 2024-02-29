@@ -1,4 +1,4 @@
-import {Collection, Entity, Enum, ManyToOne, OneToMany, Property, types, Unique} from "@mikro-orm/core";
+import {Collection, Entity, Enum, Index, ManyToOne, OneToMany, Property, types, Unique} from "@mikro-orm/core";
 import {CustomBaseEntity} from "@/src/models/entities/CustomBaseEntity.js";
 import {Language} from "@/src/models/entities/Language.js";
 import {MapLearnerLanguage} from "@/src/models/entities/MapLearnerLanguage.js";
@@ -6,6 +6,7 @@ import {TTSProvider} from "@/src/models/enums/TTSProvider.js";
 
 @Entity({tableName: "tts_voice"})
 @Unique({properties: ["language", "code"]})
+@Index({properties: ["language"]})
 export class TTSVoice extends CustomBaseEntity {
     @Property({type: types.string})
     code!: string;

@@ -6,6 +6,8 @@ import {AttributionSource} from "@/src/models/entities/AttributionSource.js";
 
 @Entity()
 @Index({properties: ["parsedText"]})
+@Index({properties: ["language"]})
+@Index({properties: ["attributionSource"]})
 export class HumanPronunciation extends CustomBaseEntity {
     @Property({type: types.string, length: 500})
     url: string = "";

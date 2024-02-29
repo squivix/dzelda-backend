@@ -12,6 +12,7 @@ import {AttributionSource} from "@/src/models/entities/AttributionSource.js";
 @Index({properties: ["vocab"]})
 @Index({properties: ["language"]})
 @Index({properties: ["addedBy"]})
+@Index({properties: ["attributionSource"]})
 export class Meaning extends CustomBaseEntity {
     @Property({type: types.string, length: 500})
     text!: string;

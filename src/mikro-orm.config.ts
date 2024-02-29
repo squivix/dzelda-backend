@@ -29,6 +29,10 @@ import {SeedManager} from "@mikro-orm/seeder";
 import {Migrator} from "@mikro-orm/migrations";
 import {TranslationLanguage} from "@/src/models/entities/TranslationLanguage.js";
 import {PreferredTranslationLanguageEntry} from "@/src/models/entities/PreferredTranslationLanguageEntry.js";
+import {VocabTag} from "@/src/models/entities/VocabTag.js";
+import {MapVocabTag} from "@/src/models/entities/MapVocabTag.js";
+import {MapVocabRootForm} from "@/src/models/entities/MapVocabRootForm.js";
+import {VocabTagCategory} from "@/src/models/entities/VocabTagCategory.js";
 
 
 const devOptions: Options = {
@@ -38,7 +42,7 @@ const devOptions: Options = {
         CustomBaseEntity, Collection, Dictionary, Language, Text, MapLearnerDictionary, CollectionBookmark,
         TextHistoryEntry, MapLearnerMeaning, MapLearnerVocab, MapTextVocab, MapLearnerLanguage, Meaning, Profile,
         Vocab, User, Session, PasswordResetToken, EmailConfirmationToken, FileUploadRequest, TTSVoice, TTSPronunciation,
-        HumanPronunciation, MapHiderText, FlaggedTextReport, TranslationLanguage, PreferredTranslationLanguageEntry
+        HumanPronunciation, MapHiderText, FlaggedTextReport, TranslationLanguage, PreferredTranslationLanguageEntry, VocabTag, VocabTagCategory, MapVocabTag, MapVocabRootForm
     ],
     loadStrategy: LoadStrategy.SELECT_IN,       //populateWhere does not work with JOINED, also to-many joins are slow
     debug: true,

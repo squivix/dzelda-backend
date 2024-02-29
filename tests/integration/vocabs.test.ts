@@ -16,7 +16,6 @@ import {randomCase, randomEnum, randomEnums} from "@/tests/utils.js";
 import {VocabLevel} from "@/src/models/enums/VocabLevel.js";
 import {learnerVocabSerializer} from "@/src/presentation/response/serializers/mappings/LearnerVocabSerializer.js";
 import {TextFactory} from "@/devtools/factories/TextFactory.js";
-import {CollectionFactory} from "@/devtools/factories/CollectionFactory.js";
 import {MeaningFactory} from "@/devtools/factories/MeaningFactory.js";
 import {MapLearnerMeaning} from "@/src/models/entities/MapLearnerMeaning.js";
 import {Meaning} from "@/src/models/entities/Meaning.js";

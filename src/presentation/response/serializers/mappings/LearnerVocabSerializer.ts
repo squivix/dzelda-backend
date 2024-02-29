@@ -5,6 +5,7 @@ import {LearnerVocabSchema, MeaningSchema, TTSPronunciationSchema} from "dzelda-
 import {meaningSerializer} from "@/src/presentation/response/serializers/entities/MeaningSerializer.js";
 import {VocabLevel} from "@/src/models/enums/VocabLevel.js";
 import {ttsPronunciationSerializer} from "@/src/presentation/response/serializers/entities/TTSPronunciationSerializer.js";
+import {vocabTagSerializer} from "@/src/presentation/response/serializers/entities/VocabTagSerializer.js";
 
 export class LearnerVocabSerializer extends CustomEntitySerializer<Vocab | MapLearnerVocab, LearnerVocabSchema> {
     definition(vocabOrMapping: Vocab | MapLearnerVocab): CustomCallbackObject<Partial<LearnerVocabSchema>> {
@@ -22,6 +23,8 @@ export class LearnerVocabSerializer extends CustomEntitySerializer<Vocab | MapLe
                 // @ts-ignore
                 meanings: () => meaningSerializer.serializeList(vocabOrMapping.meanings.getItems(), {ignore: ["vocab"]}) as Omit<MeaningSchema, "vocab">[],
                 ttsPronunciations: () => ttsPronunciationSerializer.serializeList(vocabOrMapping.ttsPronunciations.getItems()) as TTSPronunciationSchema[],
+                tags: () => vocabTagSerializer.serializeList(vocabOrMapping.tags.getItems()),
+                rootForms: () => vocabOrMapping.rootForms.getItems().map(v => v.text)
             };
         } else {
             return {
@@ -36,6 +39,8 @@ export class LearnerVocabSerializer extends CustomEntitySerializer<Vocab | MapLe
                 // @ts-ignore
                 meanings: () => meaningSerializer.serializeList(vocabOrMapping.vocab.meanings.getItems(), {ignore: ["vocab"]}) as Omit<MeaningSchema, "vocab">[],
                 ttsPronunciations: () => ttsPronunciationSerializer.serializeList(vocabOrMapping.vocab.ttsPronunciations.getItems(), {ignore: ["vocab"]}) as TTSPronunciationSchema[],
+                tags: () => vocabTagSerializer.serializeList(vocabOrMapping.vocab.tags.getItems()),
+                rootForms: () => vocabOrMapping.vocab.rootForms.getItems().map(v => v.text)
             };
         }
     }

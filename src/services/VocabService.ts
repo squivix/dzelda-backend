@@ -50,7 +50,7 @@ export class VocabService {
         dbOrderBy.push({id: "asc"});
 
         return await this.vocabRepo.findAndCount(dbFilters, {
-            populate: ["language", "meanings", "meanings.language", "meanings.addedBy.user", "learnersCount", "textsCount"],
+            populate: ["language", "meanings", "meanings.language", "meanings.addedBy.user", "learnersCount", "textsCount", "tags.category", "rootForms"],
             orderBy: dbOrderBy,
             limit: pagination.pageSize,
             offset: pagination.pageSize * (pagination.page - 1),
@@ -80,14 +80,14 @@ export class VocabService {
     async getVocab(vocabId: number) {
         return await this.vocabRepo.findOne({
             id: vocabId
-        }, {populate: ["meanings", "ttsPronunciations", "ttsPronunciations.voice"]});
+        }, {populate: ["meanings", "ttsPronunciations", "ttsPronunciations.voice", "tags.category", "rootForms"]});
     }
 
     async getVocabByText(vocabData: { text: string; language: Language }) {
         return await this.vocabRepo.findOne({
             text: vocabData.text,
             language: vocabData.language
-        }, {populate: ["meanings", "meanings.addedBy.user"]});
+        }, {populate: ["meanings", "meanings.addedBy.user", "tags.category"]});
     }
 
     async getPaginatedLearnerVocabs(filters: { languageCode?: string, level?: VocabLevel[], searchQuery?: string },
@@ -113,7 +113,7 @@ export class VocabService {
         dbOrderBy.push({vocab: {id: "asc"}});
 
         const [mappings, totalCount] = await this.em.findAndCount(MapLearnerVocab, dbFilters, {
-            populate: ["vocab", "vocab.language", "vocab.meanings", "vocab.meanings.language", "vocab.meanings.addedBy.user", "vocab.ttsPronunciations", "vocab.ttsPronunciations.voice"],
+            populate: ["vocab", "vocab.language", "vocab.meanings", "vocab.meanings.language", "vocab.meanings.addedBy.user", "vocab.ttsPronunciations", "vocab.ttsPronunciations.voice", "vocab.tags.category", "vocab.rootForms"],
             populateWhere: {vocab: {meanings: {language: {prefererEntries: {learnerLanguageMapping: {learner: user.profile}}}}}},
             orderBy: dbOrderBy,
             limit: pagination.pageSize,
@@ -140,7 +140,10 @@ export class VocabService {
         const mapping = await this.em.findOne(MapLearnerVocab, {
             vocab: vocabId,
             learner
-        }, {populate: ["vocab.meanings.learnersCount", "vocab.meanings.addedBy.user", "vocab.ttsPronunciations", "vocab.ttsPronunciations.voice"], refresh: true});
+        }, {
+            populate: ["vocab.meanings.learnersCount", "vocab.meanings.addedBy.user", "vocab.ttsPronunciations", "vocab.ttsPronunciations.voice", "vocab.tags.category", "vocab.rootForms"],
+            refresh: true
+        });
         if (mapping) {
             await this.em.populate(mapping, ["vocab.learnerMeanings", "vocab.learnerMeanings.addedBy.user"], {where: {vocab: {learnerMeanings: {learners: learner}}}});
         }
@@ -182,7 +185,7 @@ export class VocabService {
             vocab: {textsAppearingIn: text},
             learner: user.profile
         }, {
-            populate: ["vocab.language", "vocab.meanings.language", "vocab.meanings.addedBy.user", "vocab.ttsPronunciations", "vocab.ttsPronunciations.voice"],
+            populate: ["vocab.language", "vocab.meanings.language", "vocab.meanings.addedBy.user", "vocab.ttsPronunciations", "vocab.ttsPronunciations.voice", "vocab.tags.category", "vocab.rootForms"],
             populateWhere: {vocab: {meanings: {language: {prefererEntries: {learnerLanguageMapping: {learner: user.profile}}}}}}
         });
         await this.em.populate(existingMappings, ["vocab.learnerMeanings", "vocab.learnerMeanings.language", "vocab.learnerMeanings.addedBy.user"], {
@@ -192,7 +195,7 @@ export class VocabService {
             textsAppearingIn: text,
             $nin: existingMappings.map(m => m.vocab)
         }, {
-            populate: ["language", "meanings", "meanings.language", "meanings.addedBy.user", "ttsPronunciations", "ttsPronunciations.voice"],
+            populate: ["language", "meanings", "meanings.language", "meanings.addedBy.user", "ttsPronunciations", "ttsPronunciations.voice", "tags.category", "rootForms"],
             populateWhere: {meanings: {language: {prefererEntries: {learnerLanguageMapping: {learner: user.profile}}}}}
         });
         return [...existingMappings, ...newVocabs];

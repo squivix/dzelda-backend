@@ -9,6 +9,9 @@ import {MapLearnerVocab} from "@/src/models/entities/MapLearnerVocab.js";
 import {VocabRepo} from "@/src/models/repos/VocabRepo.js";
 import {VocabLevel} from "@/src/models/enums/VocabLevel.js";
 import {TTSPronunciation} from "@/src/models/entities/TTSPronunciation.js";
+import {VocabTag} from "@/src/models/entities/VocabTag.js";
+import {MapVocabTag} from "@/src/models/entities/MapVocabTag.js";
+import {MapVocabRootForm} from "@/src/models/entities/MapVocabRootForm.js";
 
 @Entity({repository: () => VocabRepo})
 @Unique({properties: ["language", "text"]})
@@ -56,6 +59,28 @@ export class Vocab extends CustomBaseEntity {
         inverseJoinColumn: "learner_id",
     })
     learners: Collection<Profile> = new Collection<Profile>(this);
+
+    @ManyToMany({
+        entity: () => VocabTag,
+        mappedBy: (tag: VocabTag) => tag.vocabs,
+        pivotEntity: () => MapVocabTag,
+    })
+    tags: Collection<VocabTag> = new Collection<VocabTag>(this);
+
+
+    @ManyToMany({
+        entity: () => Vocab,
+        inversedBy: (vocab: Vocab) => vocab.derivedForms,
+        pivotEntity: () => MapVocabRootForm,
+    })
+    rootForms: Collection<Vocab> = new Collection<Vocab>(this);
+
+    @ManyToMany({
+        entity: () => Vocab,
+        mappedBy: (vocab: Vocab) => vocab.rootForms,
+        pivotEntity: () => MapVocabRootForm,
+    })
+    derivedForms: Collection<Vocab> = new Collection<Vocab>(this);
 
     @OneToMany({entity: () => TTSPronunciation, mappedBy: (ttsPronunciation: TTSPronunciation) => ttsPronunciation.vocab})
     ttsPronunciations: Collection<TTSPronunciation> = new Collection<TTSPronunciation>(this);

@@ -15,7 +15,7 @@ import {BANNED_LITERAL_USERNAMES} from "@/src/validators/userValidator.js";
 import {PasswordResetToken} from "@/src/models/entities/auth/PasswordResetToken.js";
 import {emailTransporter} from "@/src/nodemailer.config.js";
 import crypto from "crypto";
-import {DOMAIN_NAME, EMAIL_CONFIRM_TOKEN_LENGTH, PASSWORD_RESET_TOKEN_LENGTH} from "@/src/constants.js";
+import {BASE_URL, DOMAIN_NAME, EMAIL_CONFIRM_TOKEN_LENGTH, PASSWORD_RESET_TOKEN_LENGTH} from "@/src/constants.js";
 import {expiringTokenHasher} from "@/src/utils/security/ExpiringTokenHasher.js";
 import {passwordHasher} from "@/src/utils/security/PasswordHasher.js";
 import {Session} from "@/src/models/entities/auth/Session.js";
@@ -309,8 +309,8 @@ describe("DELETE users/me/", function () {
         const session = await context.sessionFactory.createOne({user});
         const response = await makeRequest(session.token);
         expect(response.statusCode).to.equal(204);
-        expect(await context.em.findOne(User, {id: user.id})).toBeNull();
-        expect(await context.em.findOne(Profile, {user: user})).toBeNull();
+        expect(await context.em.findOne(User, {id: user.id}, {refresh: true})).toBeNull();
+        expect(await context.em.findOne(Profile, {user: user}, {refresh: true})).toBeNull();
     });
     test<LocalTestContext>("If user is not logged in return 401", async (context) => {
         const response = await makeRequest();
@@ -555,7 +555,7 @@ describe("POST password-reset-tokens/", function () {
         });
     };
 
-    const resetUrlRegex = new RegExp(`https://${DOMAIN_NAME}/reset-password\\?token=.*`);
+    const resetUrlRegex = new RegExp(`${BASE_URL}/reset-password\\?token=.*`);
     test<LocalTestContext>("If username and email exist and match, create a token, store its hash in the db and send an email with the token, return 204", async (context) => {
         const user = await context.userFactory.createOne();
 
@@ -577,6 +577,7 @@ describe("POST password-reset-tokens/", function () {
 
         const emailText = sendMailSpy.mock.calls[0][0].text as string;
         const resetUrl = emailText.substring(emailText.search(resetUrlRegex));
+        expect(resetUrl).toBeTruthy();
         expect(sendMailSpy.mock.calls[0][0].html).toMatch(resetUrl);
         const sentToken = parseUrlQueryString(resetUrl)["token"];
         expect(sentToken).toBeDefined();
@@ -609,6 +610,7 @@ describe("POST password-reset-tokens/", function () {
 
         const emailText = sendMailSpy.mock.calls[0][0].text as string;
         const resetUrl = emailText.substring(emailText.search(resetUrlRegex));
+        expect(resetUrl).toBeTruthy();
         expect(sendMailSpy.mock.calls[0][0].html).toMatch(resetUrl);
         const sentToken = parseUrlQueryString(resetUrl)["token"];
         expect(sentToken).toBeDefined();
@@ -798,7 +800,7 @@ describe("PUT users/me/email/", function () {
         expect(sendMailSpy).toHaveBeenCalledOnce();
         expect(sendMailSpy).toHaveBeenCalledWith(expect.objectContaining({text: expect.stringMatching(confirmUrlRegex), to: newEmail}));
         const emailText = sendMailSpy.mock.calls[0][0].text as string;
-        const confirmUrl = emailText.substring(emailText.search(confirmUrlRegex));
+        const confirmUrl = emailText.substring(emailText.search(confirmUrlRegex));expect(confirmUrl).toBeTruthy()
         expect(sendMailSpy.mock.calls[0][0].html).toMatch(confirmUrl);
         const sentToken = parseUrlQueryString(confirmUrl)["token"];
         expect(sentToken).toBeDefined();

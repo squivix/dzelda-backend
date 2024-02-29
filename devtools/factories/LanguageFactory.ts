@@ -16,6 +16,7 @@ export class LanguageFactory extends CustomFactory<Language> {
             flagEmoji: faker.internet.emoji(),
             color: faker.color.rgb(),
             learnersCount: 0,
+            secondSpeakersCount: 0,
             levelThresholds: {
                 beginner1: 0,
                 beginner2: faker.datatype.number({min: 500, max: 1500}),

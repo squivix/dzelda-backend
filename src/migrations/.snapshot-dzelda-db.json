@@ -284,6 +284,26 @@
       "schema": "public",
       "indexes": [
         {
+          "keyName": "human_pronunciation_attribution_source_id_index",
+          "columnNames": [
+            "attribution_source_id"
+          ],
+          "composite": false,
+          "constraint": false,
+          "primary": false,
+          "unique": false
+        },
+        {
+          "keyName": "human_pronunciation_language_id_index",
+          "columnNames": [
+            "language_id"
+          ],
+          "composite": false,
+          "constraint": false,
+          "primary": false,
+          "unique": false
+        },
+        {
           "keyName": "human_pronunciation_parsed_text_index",
           "columnNames": [
             "parsed_text"
@@ -629,6 +649,16 @@
       "schema": "public",
       "indexes": [
         {
+          "keyName": "tts_voice_language_id_index",
+          "columnNames": [
+            "language_id"
+          ],
+          "composite": false,
+          "constraint": false,
+          "primary": false,
+          "unique": false
+        },
+        {
           "keyName": "tts_voice_language_id_code_unique",
           "columnNames": [
             "language_id",
@@ -857,6 +887,16 @@
       "schema": "public",
       "indexes": [
         {
+          "keyName": "session_user_id_index",
+          "columnNames": [
+            "user_id"
+          ],
+          "composite": false,
+          "constraint": false,
+          "primary": false,
+          "unique": false
+        },
+        {
           "keyName": "session_pkey",
           "columnNames": [
             "id"
@@ -1045,6 +1085,16 @@
       "name": "map_learner_language",
       "schema": "public",
       "indexes": [
+        {
+          "keyName": "map_learner_language_preferred_tts_voice_id_index",
+          "columnNames": [
+            "preferred_tts_voice_id"
+          ],
+          "composite": false,
+          "constraint": false,
+          "primary": false,
+          "unique": false
+        },
         {
           "keyName": "map_learner_language_language_id_index",
           "columnNames": [
@@ -1684,6 +1734,26 @@
       "name": "text",
       "schema": "public",
       "indexes": [
+        {
+          "keyName": "text_added_by_id_index",
+          "columnNames": [
+            "added_by_id"
+          ],
+          "composite": false,
+          "constraint": false,
+          "primary": false,
+          "unique": false
+        },
+        {
+          "keyName": "text_language_id_index",
+          "columnNames": [
+            "language_id"
+          ],
+          "composite": false,
+          "constraint": false,
+          "primary": false,
+          "unique": false
+        },
         {
           "keyName": "text_added_on_index",
           "columnNames": [
@@ -2488,6 +2558,16 @@
       "schema": "public",
       "indexes": [
         {
+          "keyName": "file_upload_request_user_id_index",
+          "columnNames": [
+            "user_id"
+          ],
+          "composite": false,
+          "constraint": false,
+          "primary": false,
+          "unique": false
+        },
+        {
           "keyName": "file_upload_request_pkey",
           "columnNames": [
             "id"
@@ -2760,6 +2840,26 @@
       "schema": "public",
       "indexes": [
         {
+          "keyName": "tts_pronunciation_vocab_id_index",
+          "columnNames": [
+            "vocab_id"
+          ],
+          "composite": false,
+          "constraint": false,
+          "primary": false,
+          "unique": false
+        },
+        {
+          "keyName": "tts_pronunciation_voice_id_index",
+          "columnNames": [
+            "voice_id"
+          ],
+          "composite": false,
+          "constraint": false,
+          "primary": false,
+          "unique": false
+        },
+        {
           "keyName": "tts_pronunciation_pkey",
           "columnNames": [
             "id"
@@ -2882,6 +2982,16 @@
       "name": "meaning",
       "schema": "public",
       "indexes": [
+        {
+          "keyName": "meaning_attribution_source_id_index",
+          "columnNames": [
+            "attribution_source_id"
+          ],
+          "composite": false,
+          "constraint": false,
+          "primary": false,
+          "unique": false
+        },
         {
           "keyName": "meaning_added_by_id_index",
           "columnNames": [
@@ -3092,6 +3202,112 @@
             "id"
           ],
           "referencedTableName": "public.profile",
+          "deleteRule": "cascade",
+          "updateRule": "cascade"
+        }
+      },
+      "nativeEnums": {}
+    },
+    {
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "int",
+          "unsigned": true,
+          "autoincrement": true,
+          "primary": true,
+          "nullable": false,
+          "mappedType": "integer"
+        },
+        "vocab_id": {
+          "name": "vocab_id",
+          "type": "int",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "mappedType": "integer"
+        },
+        "root_form_id": {
+          "name": "root_form_id",
+          "type": "int",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "mappedType": "integer"
+        }
+      },
+      "name": "map_vocab_root_form",
+      "schema": "public",
+      "indexes": [
+        {
+          "keyName": "map_vocab_root_form_vocab_id_index",
+          "columnNames": [
+            "vocab_id"
+          ],
+          "composite": false,
+          "constraint": false,
+          "primary": false,
+          "unique": false
+        },
+        {
+          "keyName": "map_vocab_root_form_root_form_id_index",
+          "columnNames": [
+            "root_form_id"
+          ],
+          "composite": false,
+          "constraint": false,
+          "primary": false,
+          "unique": false
+        },
+        {
+          "keyName": "map_vocab_root_form_vocab_id_root_form_id_unique",
+          "columnNames": [
+            "vocab_id",
+            "root_form_id"
+          ],
+          "composite": true,
+          "constraint": true,
+          "primary": false,
+          "unique": true
+        },
+        {
+          "keyName": "map_vocab_root_form_pkey",
+          "columnNames": [
+            "id"
+          ],
+          "composite": false,
+          "constraint": true,
+          "primary": true,
+          "unique": true
+        }
+      ],
+      "checks": [],
+      "foreignKeys": {
+        "map_vocab_root_form_vocab_id_foreign": {
+          "constraintName": "map_vocab_root_form_vocab_id_foreign",
+          "columnNames": [
+            "vocab_id"
+          ],
+          "localTableName": "public.map_vocab_root_form",
+          "referencedColumnNames": [
+            "id"
+          ],
+          "referencedTableName": "public.vocab",
+          "deleteRule": "cascade",
+          "updateRule": "cascade"
+        },
+        "map_vocab_root_form_root_form_id_foreign": {
+          "constraintName": "map_vocab_root_form_root_form_id_foreign",
+          "columnNames": [
+            "root_form_id"
+          ],
+          "localTableName": "public.map_vocab_root_form",
+          "referencedColumnNames": [
+            "id"
+          ],
+          "referencedTableName": "public.vocab",
           "deleteRule": "cascade",
           "updateRule": "cascade"
         }
@@ -3336,6 +3552,223 @@
             "id"
           ],
           "referencedTableName": "public.profile",
+          "deleteRule": "cascade",
+          "updateRule": "cascade"
+        }
+      },
+      "nativeEnums": {}
+    },
+    {
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "int",
+          "unsigned": true,
+          "autoincrement": true,
+          "primary": true,
+          "nullable": false,
+          "mappedType": "integer"
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar(255)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "mappedType": "string"
+        }
+      },
+      "name": "vocab_tag_category",
+      "schema": "public",
+      "indexes": [
+        {
+          "keyName": "vocab_tag_category_pkey",
+          "columnNames": [
+            "id"
+          ],
+          "composite": false,
+          "constraint": true,
+          "primary": true,
+          "unique": true
+        }
+      ],
+      "checks": [],
+      "foreignKeys": {},
+      "nativeEnums": {}
+    },
+    {
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "int",
+          "unsigned": true,
+          "autoincrement": true,
+          "primary": true,
+          "nullable": false,
+          "mappedType": "integer"
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar(255)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "mappedType": "string"
+        },
+        "category_id": {
+          "name": "category_id",
+          "type": "int",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "mappedType": "integer"
+        }
+      },
+      "name": "vocab_tag",
+      "schema": "public",
+      "indexes": [
+        {
+          "keyName": "vocab_tag_category_id_index",
+          "columnNames": [
+            "category_id"
+          ],
+          "composite": false,
+          "constraint": false,
+          "primary": false,
+          "unique": false
+        },
+        {
+          "keyName": "vocab_tag_pkey",
+          "columnNames": [
+            "id"
+          ],
+          "composite": false,
+          "constraint": true,
+          "primary": true,
+          "unique": true
+        }
+      ],
+      "checks": [],
+      "foreignKeys": {
+        "vocab_tag_category_id_foreign": {
+          "constraintName": "vocab_tag_category_id_foreign",
+          "columnNames": [
+            "category_id"
+          ],
+          "localTableName": "public.vocab_tag",
+          "referencedColumnNames": [
+            "id"
+          ],
+          "referencedTableName": "public.vocab_tag_category",
+          "deleteRule": "set null",
+          "updateRule": "cascade"
+        }
+      },
+      "nativeEnums": {}
+    },
+    {
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "int",
+          "unsigned": true,
+          "autoincrement": true,
+          "primary": true,
+          "nullable": false,
+          "mappedType": "integer"
+        },
+        "tag_id": {
+          "name": "tag_id",
+          "type": "int",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "mappedType": "integer"
+        },
+        "vocab_id": {
+          "name": "vocab_id",
+          "type": "int",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "mappedType": "integer"
+        }
+      },
+      "name": "map_vocab_tag",
+      "schema": "public",
+      "indexes": [
+        {
+          "keyName": "map_vocab_tag_vocab_id_index",
+          "columnNames": [
+            "vocab_id"
+          ],
+          "composite": false,
+          "constraint": false,
+          "primary": false,
+          "unique": false
+        },
+        {
+          "keyName": "map_vocab_tag_tag_id_index",
+          "columnNames": [
+            "tag_id"
+          ],
+          "composite": false,
+          "constraint": false,
+          "primary": false,
+          "unique": false
+        },
+        {
+          "keyName": "map_vocab_tag_tag_id_vocab_id_unique",
+          "columnNames": [
+            "tag_id",
+            "vocab_id"
+          ],
+          "composite": true,
+          "constraint": true,
+          "primary": false,
+          "unique": true
+        },
+        {
+          "keyName": "map_vocab_tag_pkey",
+          "columnNames": [
+            "id"
+          ],
+          "composite": false,
+          "constraint": true,
+          "primary": true,
+          "unique": true
+        }
+      ],
+      "checks": [],
+      "foreignKeys": {
+        "map_vocab_tag_tag_id_foreign": {
+          "constraintName": "map_vocab_tag_tag_id_foreign",
+          "columnNames": [
+            "tag_id"
+          ],
+          "localTableName": "public.map_vocab_tag",
+          "referencedColumnNames": [
+            "id"
+          ],
+          "referencedTableName": "public.vocab_tag",
+          "deleteRule": "cascade",
+          "updateRule": "cascade"
+        },
+        "map_vocab_tag_vocab_id_foreign": {
+          "constraintName": "map_vocab_tag_vocab_id_foreign",
+          "columnNames": [
+            "vocab_id"
+          ],
+          "localTableName": "public.map_vocab_tag",
+          "referencedColumnNames": [
+            "id"
+          ],
+          "referencedTableName": "public.vocab",
           "deleteRule": "cascade",
           "updateRule": "cascade"
         }

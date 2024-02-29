@@ -17,6 +17,8 @@ import {FlaggedTextReport} from "@/src/models/entities/FlaggedTextReport.js";
 @Index({properties: ["collection"]})
 @Index({properties: ["title"]})
 @Index({properties: ["addedOn"]})
+@Index({properties: ["language"]})
+@Index({properties: ["addedBy"]})
 export class Text extends CustomBaseEntity {
     @Property({type: types.string, length: 124})
     title!: string;
