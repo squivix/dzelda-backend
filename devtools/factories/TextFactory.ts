@@ -1,4 +1,3 @@
-import {Faker} from "@mikro-orm/seeder";
 import {EntityData, EntityManager} from "@mikro-orm/core";
 import {CustomFactory} from "@/devtools/factories/CustomFactory.js";
 import {Text} from "@/src/models/entities/Text.js";
@@ -7,11 +6,12 @@ import {ProfileFactory} from "@/devtools/factories/ProfileFactory.js";
 import {UserFactory} from "@/devtools/factories/UserFactory.js";
 import {randomEnum} from "@/tests/utils.js";
 import {LanguageLevel} from "@/src/models/enums/LanguageLevel.js";
+import {faker} from "@faker-js/faker";
 
 export class TextFactory extends CustomFactory<Text> {
     readonly model = Text;
 
-    protected definition(faker: Faker): EntityData<Text> {
+    protected definition(): EntityData<Text> {
         const title = faker.random.words(faker.datatype.number({min: 4, max: 10}));
         const content = faker.random.words(faker.datatype.number({min: 50, max: 100}));
         const em = (this as any).em as EntityManager;

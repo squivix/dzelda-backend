@@ -1,16 +1,15 @@
-import {Faker} from "@mikro-orm/seeder";
 import {EntityData, EntityManager} from "@mikro-orm/core";
 import {CustomFactory} from "@/devtools/factories/CustomFactory.js";
 import {Collection} from "@/src/models/entities/Collection.js";
 import {ProfileFactory} from "@/devtools/factories/ProfileFactory.js";
 import {UserFactory} from "@/devtools/factories/UserFactory.js";
-import {LanguageLevel} from "@/src/models/enums/LanguageLevel.js";
 import {Text} from "@/src/models/entities/Text.js";
+import {faker} from "@faker-js/faker";
 
 export class CollectionFactory extends CustomFactory<Collection> {
     readonly model = Collection;
 
-    protected definition(faker: Faker): EntityData<Collection> {
+    protected definition(): EntityData<Collection> {
         const em = (this as any).em as EntityManager;
         const userFactory = new UserFactory(em);
         const profileFactory = new ProfileFactory(em);

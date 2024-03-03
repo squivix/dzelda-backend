@@ -33,6 +33,7 @@ import {VocabTag} from "@/src/models/entities/VocabTag.js";
 import {MapVocabTag} from "@/src/models/entities/MapVocabTag.js";
 import {MapVocabRootForm} from "@/src/models/entities/MapVocabRootForm.js";
 import {VocabTagCategory} from "@/src/models/entities/VocabTagCategory.js";
+import tr from "@faker-js/faker/locales/tr/index.js";
 
 
 const devOptions: Options = {

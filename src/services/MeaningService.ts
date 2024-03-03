@@ -24,7 +24,7 @@ export class MeaningService {
             vocab: meaningData.vocab,
             text: meaningData.text,
             language: meaningData.language
-        }, {populate: ["addedBy.user"]});
+        }, {populate: ["addedBy.user", "vocab.language"]});
     }
 
     async createMeaning(meaningData: { vocab: Vocab; language: TranslationLanguage; text: string }, user: User) {
@@ -34,8 +34,9 @@ export class MeaningService {
             vocab: meaningData.vocab,
             addedBy: user.profile,
             learnersCount: 0
-        } as RequiredEntityData<Meaning>);
+        });
         await this.em.flush();
+        await this.em.populate(newMeaning, ["addedBy.user", "vocab.language"]);
         return newMeaning;
     }
 

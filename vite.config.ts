@@ -17,12 +17,11 @@ export default defineConfig({
         hmr: false      //debugging line numbers wrong with hmr :(
     },
     test: {
-        /* for example, use global to avoid globals imports (describe, test, expect): */
         exclude: [...defaultExclude, "build/**"],
-        threads: false,
-        setupFiles: ["./tests/setup.ts"],
-        globalSetup: [
-            "./tests/globalSetup.ts",
+        fileParallelism: false,
+        globalSetup: ["./tests/globalSetup.ts",],
+        setupFiles: [
+            "./tests/setup.ts"
         ],
         restoreMocks: true,
         testTimeout: 10_000

@@ -113,11 +113,13 @@ export class VocabService {
         dbOrderBy.push({vocab: {id: "asc"}});
 
         const [mappings, totalCount] = await this.em.findAndCount(MapLearnerVocab, dbFilters, {
-            populate: ["vocab", "vocab.language", "vocab.meanings", "vocab.meanings.language", "vocab.meanings.addedBy.user", "vocab.ttsPronunciations", "vocab.ttsPronunciations.voice", "vocab.tags.category", "vocab.rootForms"],
-            populateWhere: {vocab: {meanings: {language: {prefererEntries: {learnerLanguageMapping: {learner: user.profile}}}}}},
+            populate: ["vocab", "vocab.language", "vocab.ttsPronunciations", "vocab.ttsPronunciations.voice", "vocab.tags.category", "vocab.rootForms"],
             orderBy: dbOrderBy,
             limit: pagination.pageSize,
             offset: pagination.pageSize * (pagination.page - 1),
+        });
+        await this.em.populate(mappings, ["vocab.meanings", "vocab.meanings.language", "vocab.meanings.addedBy.user"], {
+            where: {vocab: {meanings: {language: {prefererEntries: {learnerLanguageMapping: {learner: user.profile}}}}}},
         });
         await this.em.populate(mappings, ["vocab.learnerMeanings", "vocab.learnerMeanings.language", "vocab.learnerMeanings.addedBy.user"], {
             where: {vocab: {learnerMeanings: {learners: user.profile}}}
@@ -141,11 +143,16 @@ export class VocabService {
             vocab: vocabId,
             learner
         }, {
-            populate: ["vocab.meanings.learnersCount", "vocab.meanings.addedBy.user", "vocab.ttsPronunciations", "vocab.ttsPronunciations.voice", "vocab.tags.category", "vocab.rootForms"],
+            populate: ["vocab.ttsPronunciations", "vocab.ttsPronunciations.voice", "vocab.tags.category", "vocab.rootForms"],
             refresh: true
         });
         if (mapping) {
-            await this.em.populate(mapping, ["vocab.learnerMeanings", "vocab.learnerMeanings.addedBy.user"], {where: {vocab: {learnerMeanings: {learners: learner}}}});
+            await this.em.populate(mapping, ["vocab.meanings", "vocab.meanings.learnersCount", "vocab.meanings.addedBy.user", "vocab.meanings.language"], {
+                where: {vocab: {meanings: {language: {prefererEntries: {learnerLanguageMapping: {learner: learner}}}}}},
+            });
+            await this.em.populate(mapping, ["vocab.learnerMeanings", "vocab.learnerMeanings.addedBy.user"], {
+                where: {vocab: {learnerMeanings: {learners: learner}}}
+            });
         }
         return mapping;
     }
@@ -185,8 +192,10 @@ export class VocabService {
             vocab: {textsAppearingIn: text},
             learner: user.profile
         }, {
-            populate: ["vocab.language", "vocab.meanings.language", "vocab.meanings.addedBy.user", "vocab.ttsPronunciations", "vocab.ttsPronunciations.voice", "vocab.tags.category", "vocab.rootForms"],
-            populateWhere: {vocab: {meanings: {language: {prefererEntries: {learnerLanguageMapping: {learner: user.profile}}}}}}
+            populate: ["vocab.language", "vocab.ttsPronunciations", "vocab.ttsPronunciations.voice", "vocab.tags.category", "vocab.rootForms"],
+        });
+        await this.em.populate(existingMappings, ["vocab.meanings", "vocab.meanings.language", "vocab.meanings.addedBy.user"], {
+            where: {vocab: {meanings: {language: {prefererEntries: {learnerLanguageMapping: {learner: user.profile}}}}}}
         });
         await this.em.populate(existingMappings, ["vocab.learnerMeanings", "vocab.learnerMeanings.language", "vocab.learnerMeanings.addedBy.user"], {
             where: {vocab: {learnerMeanings: {learners: user.profile}}},

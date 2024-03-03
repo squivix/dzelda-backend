@@ -36,7 +36,7 @@ export class Meaning extends CustomBaseEntity {
     attributionSource?: AttributionSource;
 
     @Property({type: types.json, nullable: true})
-    attribution!: Attribution;
+    attribution: Attribution | null = null;
 
     @ManyToOne({entity: () => TranslationLanguage, inversedBy: (language) => language.meaningsSavedIn, deleteRule: "cascade", updateRule: "cascade"})
     language!: TranslationLanguage;

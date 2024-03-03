@@ -1,6 +1,5 @@
 import {Factory} from "@mikro-orm/seeder";
 import {EntityData, EntityManager, RequiredEntityData} from "@mikro-orm/core";
-import {faker} from "@faker-js/faker";
 
 /**
  * An Entity Factory that overrides make/makeOne functions so as not to persist entity
@@ -21,11 +20,11 @@ export abstract class CustomFactory<T extends Object> extends Factory<T> {
 
     public makeDefinition(overrideParameters?: EntityData<T>, exclude?: Array<keyof EntityData<T>>): EntityData<T> {
         const definition = {
-            ...this.definition(faker),
+            ...this.definition(),
             ...overrideParameters
-        }
+        };
         if (exclude !== undefined)
-            exclude.forEach(k => delete definition[k])
+            exclude.forEach(k => delete definition[k]);
         return definition;
     }
 

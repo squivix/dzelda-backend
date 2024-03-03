@@ -1,15 +1,16 @@
 import {CustomFactory} from "@/devtools/factories/CustomFactory.js";
 import {EntityData} from "@mikro-orm/core";
-import {Faker} from "@mikro-orm/seeder";
 import {Meaning} from "@/src/models/entities/Meaning.js";
+import {faker} from "@faker-js/faker";
 
 export class MeaningFactory extends CustomFactory<Meaning> {
     readonly model = Meaning;
 
-    protected definition(faker: Faker): EntityData<Meaning> {
+    protected definition(): EntityData<Meaning> {
         return {
             text: faker.random.alpha({count: 20}),
             learners: [],
+            attribution: null,
             learnersCount: 0
         };
     }

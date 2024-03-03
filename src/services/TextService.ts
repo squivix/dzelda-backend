@@ -1,4 +1,4 @@
-import {EntityManager, FilterQuery, ManyToOne, Property, types} from "@mikro-orm/core";
+import {EntityManager, FilterQuery} from "@mikro-orm/core";
 import {Text} from "@/src/models/entities/Text.js";
 import {Language} from "@/src/models/entities/Language.js";
 import {SqlEntityManager} from "@mikro-orm/postgresql";
@@ -16,9 +16,6 @@ import {LanguageLevel} from "@/src/models/enums/LanguageLevel.js";
 import {TextBookmark} from "@/src/models/entities/TextBookmark.js";
 import {MapHiderText} from "@/src/models/entities/MapHiderText.js";
 import {FlaggedTextReport} from "@/src/models/entities/FlaggedTextReport.js";
-import {Profile} from "@/src/models/entities/Profile.js";
-import prompts from "prompts";
-import text = prompts.prompts.text;
 import {TEXT_REPORT_HIDING_THRESHOLD} from "@/src/constants.js";
 
 export class TextService {

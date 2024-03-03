@@ -1,12 +1,12 @@
-import {Faker} from "@mikro-orm/seeder";
 import {EntityData} from "@mikro-orm/core";
 import {Language} from "@/src/models/entities/Language.js";
 import {CustomFactory} from "@/devtools/factories/CustomFactory.js";
+import {faker} from "@faker-js/faker";
 
 export class LanguageFactory extends CustomFactory<Language> {
     readonly model = Language;
 
-    protected definition(faker: Faker): EntityData<Language> {
+    protected definition(): EntityData<Language> {
         return {
             code: faker.random.alpha({count: 20}),
             name: faker.random.word(),
