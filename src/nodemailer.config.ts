@@ -1,7 +1,8 @@
 import nodemailer from "nodemailer";
 import aws from "@aws-sdk/client-ses";
+import process from "process";
 
-let config:any;
+let config: any;
 if (process.env.NODE_ENV == "prod") {
     config = {
         SES: {
@@ -18,7 +19,7 @@ if (process.env.NODE_ENV == "prod") {
 } else {
     // Mailhog mock server accessed at http://localhost:8025
     config = {
-        host: "localhost",
+        host: process.env.EMAIL_SERVER_HOST ?? "localhost",
         port: 1025,
     };
 }
