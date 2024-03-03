@@ -22,6 +22,8 @@ jobs:
           POSTGRES_INITDB_ARGS: "--lc-collate=C"
       email-server:
         image: mailhog/mailhog
+        ports:
+          - "1025:1025"
     steps:
       - name: "Checkout code"
         uses: actions/checkout@v3
