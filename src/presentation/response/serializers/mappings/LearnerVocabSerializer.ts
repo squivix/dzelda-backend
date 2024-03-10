@@ -24,6 +24,7 @@ export class LearnerVocabSerializer extends CustomEntitySerializer<Vocab | MapLe
                 meanings: () => meaningSerializer.serializeList(vocabOrMapping.meanings.getItems(), {ignore: ["vocab"]}) as Omit<MeaningSchema, "vocab">[],
                 ttsPronunciations: () => ttsPronunciationSerializer.serializeList(vocabOrMapping.ttsPronunciations.getItems()) as TTSPronunciationSchema[],
                 tags: () => vocabTagSerializer.serializeList(vocabOrMapping.tags.getItems()),
+                learnersCount: () => Number(vocabOrMapping.learnersCount),
                 rootForms: () => vocabOrMapping.rootForms.getItems().map(v => v.text)
             };
         } else {
@@ -38,6 +39,7 @@ export class LearnerVocabSerializer extends CustomEntitySerializer<Vocab | MapLe
                 learnerMeanings: () => meaningSerializer.serializeList(vocabOrMapping.vocab.learnerMeanings.getItems(), {ignore: ["vocab"]}) as Omit<MeaningSchema, "vocab">[],
                 // @ts-ignore
                 meanings: () => meaningSerializer.serializeList(vocabOrMapping.vocab.meanings.getItems(), {ignore: ["vocab"]}) as Omit<MeaningSchema, "vocab">[],
+                learnersCount: () => Number(vocabOrMapping.vocab.learnersCount),
                 ttsPronunciations: () => ttsPronunciationSerializer.serializeList(vocabOrMapping.vocab.ttsPronunciations.getItems(), {ignore: ["vocab"]}) as TTSPronunciationSchema[],
                 tags: () => vocabTagSerializer.serializeList(vocabOrMapping.vocab.tags.getItems()),
                 rootForms: () => vocabOrMapping.vocab.rootForms.getItems().map(v => v.text)
