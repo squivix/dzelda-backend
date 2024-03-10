@@ -80,7 +80,7 @@ export class VocabService {
     async getVocab(vocabId: number) {
         return await this.vocabRepo.findOne({
             id: vocabId
-        }, {populate: ["meanings", "ttsPronunciations", "ttsPronunciations.voice", "tags.category", "rootForms"]});
+        }, {populate: ["language", "meanings", "ttsPronunciations", "ttsPronunciations.voice", "tags.category", "rootForms"]});
     }
 
     async getVocabByText(vocabData: { text: string; language: Language }) {

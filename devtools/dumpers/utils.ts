@@ -1,29 +1,28 @@
-import {EntityData, EntityManager} from "@mikro-orm/core";
+import {EntityManager} from "@mikro-orm/postgresql";
 import fs from "fs-extra";
 import * as cliProgress from "cli-progress";
-import {EntityClass} from "@mikro-orm/core/typings.js";
 
-export async function batchDump<T>({em, resourceName, entityClass, filePath, batchSize, postDump, writeEntity}: {
+export async function batchDump<T>({em, tableName, filePath, batchSize, postDump}: {
     em: EntityManager,
-    resourceName: string,
-    entityClass: EntityClass<any>,
+    tableName: string,
     filePath: string,
     batchSize: number,
-    writeEntity: (entity: T) => EntityData<T>
     postDump?: () => Promise<void>
 }): Promise<void> {
-    await fs.ensureFile(filePath)
-    const entitiesCount = await em.count(entityClass, {});
-    console.log(`seeding ${entitiesCount.toLocaleString("en")} ${resourceName}(s)...`);
+    await fs.ensureFile(filePath);
+    const entitiesCount = await em.createQueryBuilder(tableName).count();
+    console.log(`dumping ${entitiesCount.toLocaleString("en")} row(s) from ${tableName}...`);
     const loadingBar = new cliProgress.SingleBar({
         format: " {bar} {percentage}% | {duration_formatted} | ETA: {eta}s | {value}/{total}",
     }, cliProgress.Presets.shades_classic);
     const fileOutputStream = fs.createWriteStream(filePath);
     let insertedCount = 0;
     loadingBar.start(entitiesCount, 0);
+
+    const table = `${em.schema ?? "public"}.${tableName}`;
     while (insertedCount < entitiesCount) {
-        const batch = await em.find(entityClass, {}, {limit: batchSize, offset: insertedCount});
-        batch.forEach(e => fileOutputStream.write(`${JSON.stringify(writeEntity(e))}\n`))
+        const batch = await em.execute(`select * from ${table} order by id limit ${batchSize} offset ${insertedCount}`);
+        batch.forEach((e: Record<string, any>) => fileOutputStream.write(`${JSON.stringify(e)}\n`));
         insertedCount += batch.length;
         loadingBar.increment(batch.length);
     }

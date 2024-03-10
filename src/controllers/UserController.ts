@@ -24,6 +24,7 @@ import {confirmEmailChangeTemplate} from "@/src/presentation/response/templates/
 import {passwordChangedNotificationTemplate} from "@/src/presentation/response/templates/email/passwordChangedNotificationTemplate.js";
 import {confirmEmailTemplate} from "@/src/presentation/response/templates/email/confirmEmailTemplate.js";
 import {passwordResetTemplate} from "@/src/presentation/response/templates/email/passwordResetTemplate.js";
+import urlJoin from "url-join";
 
 class UserController {
     async signUp(request: FastifyRequest, reply: FastifyReply) {
@@ -214,7 +215,7 @@ class UserController {
 
         const bucket = process.env.SPACES_BUCKET!;
         const fileName = `${Date.now()}-${crypto.randomBytes(8).toString("hex")}`;
-        const objectKey = `${fieldMetaData.path}/${fileName}.${body.fileExtension}`;
+        const objectKey = `${fieldMetaData.path}/${fileName}${body.fileExtension}`;
         const mimeType = mime.lookup(body.fileExtension) as string;
         const conditions = [
             {bucket: bucket},
@@ -237,7 +238,7 @@ class UserController {
         await userService.generateFileUploadRequest({
             user: request.user as User,
             fileField: body.fileField,
-            fileUrl: new URL(objectKey, uploadUrl).href,
+            fileUrl: urlJoin(process.env.SPACES_CDN_ENDPOINT!, objectKey),
             objectKey: objectKey
         });
 

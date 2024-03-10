@@ -16,7 +16,7 @@ export const server = Fastify(
 //TODO replace with proper CORS
 await server.register(cors, {});
 await server.register(helmet, {global: true});
-await server.register(rateLimit, {max: 100, timeWindow: "1m"});
+// await server.register(rateLimit, {max: 100, timeWindow: "1m"});
 export const orm = await MikroORM.init(options);
 server.register(rootRouter, {prefix: API_ROOT});
 

@@ -2,20 +2,19 @@ import {readdirSync} from "fs";
 import prompts from "prompts";
 import fs from "fs-extra";
 import {DATA_DIR, DEFAULT_BATCH_SIZE} from "@/devtools/constants.js";
-import {dumpCollections} from "@/devtools/dumpers/CollectionDumper.js";
-import {MikroORM} from "@mikro-orm/postgresql";
+import {EntityManager, MikroORM} from "@mikro-orm/postgresql";
 import options from "@/src/mikro-orm.config.js";
 import path from "path";
-import {dumpDictionaries} from "@/devtools/dumpers/DictionaryDumper.js";
-import {dumpLanguages} from "@/devtools/dumpers/LanguageDumper.js";
-import {dumpUsers} from "@/devtools/dumpers/UserDumper.js";
-import {dumpTexts} from "@/devtools/dumpers/TextDumper.js";
-import {dumpVocabs} from "@/devtools/dumpers/VocabDumper.js";
-import {dumpMeanings} from "@/devtools/dumpers/MeaningDumper.js";
+import {batchDump} from "@/devtools/dumpers/utils.js";
+
+
+const orm = await MikroORM.init({...options, debug: false});
+await dumpDatabase();
+await orm.close();
 
 
 async function dumpDatabase() {
-    console.log("Seeding");
+    console.log("Dumping");
 
     const datasets = readdirSync(DATA_DIR, {withFileTypes: true})
         .filter(dirent => dirent.isDirectory())
@@ -43,11 +42,11 @@ async function dumpDatabase() {
         //new dataset
         const datasetName = (await prompts([{
             type: "text",
-            name: 'name',
+            name: "name",
             message: `Enter new dataset name: `
-        }])).name
+        }])).name;
         if (datasets.includes(datasetName)) {
-            console.error(`dataset ${datasetName} already exists`)
+            console.error(`dataset ${datasetName} already exists`);
             return;
         }
         datasetPath = path.join(DATA_DIR, datasetName);
@@ -57,12 +56,12 @@ async function dumpDatabase() {
             type: "confirm",
             name: "isSure",
             message: `Are you sure you want to do this? The directory ${response.dataset} will be wiped!`
-        }])
+        }]);
         if (!confirmAnswer.isSure) {
-            console.log("Aborting.")
+            console.log("Aborting.");
             return;
         }
-        datasetPath = response.dataset
+        datasetPath = response.dataset;
     }
     const batchSize = (await prompts([
         {
@@ -73,20 +72,17 @@ async function dumpDatabase() {
         }
     ])).batchSize || DEFAULT_BATCH_SIZE;
     const dataPath = path.join(datasetPath, "database");
-    await fs.remove(dataPath)
-    await fs.ensureDir(dataPath)
-    console.log(`Writing db data to to ${datasetPath}...`)
-    const em = orm.em.fork();
-    await dumpUsers({em, batchSize, dataPath})
-    await dumpLanguages({em, batchSize, dataPath})
-    await dumpCollections({em, batchSize, dataPath});
-    await dumpTexts({em, batchSize, dataPath})
-    await dumpDictionaries({em, batchSize, dataPath});
-    await dumpVocabs({em, batchSize, dataPath})
-    await dumpMeanings({em, batchSize, dataPath})
+    await fs.remove(dataPath);
+    await fs.ensureDir(dataPath);
+    console.log(`Writing db data to to ${datasetPath}...`);
+    const em = orm.em.fork() as EntityManager;
+    const tableNames = Object.values(em.getMetadata().getAll()).map(m => m.tableName);
+    for (const tableName of tableNames) {
+        await batchDump({
+            em, batchSize,
+            tableName,
+            filePath: path.join(dataPath, `${tableName}.jsonl`),
+        });
+    }
 
 }
-
-const orm = await MikroORM.init({...options, debug: false});
-await dumpDatabase();
-await orm.close()
