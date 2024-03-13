@@ -4,6 +4,7 @@ import {fetchRequest} from "@/tests/integration/utils.js";
 import {MapLearnerVocab} from "@/src/models/entities/MapLearnerVocab.js";
 import {learnerVocabSerializer} from "@/src/presentation/response/serializers/mappings/LearnerVocabSerializer.js";
 import {faker} from "@faker-js/faker";
+import {Vocab} from "@/src/models/entities/Vocab.js";
 
 /**{@link VocabController#addVocabToUser}*/
 describe("POST users/me/vocabs/", () => {
@@ -24,6 +25,7 @@ describe("POST users/me/vocabs/", () => {
         const expectedMapping = context.em.create(MapLearnerVocab, {learner: user.profile, vocab}, {persist: false});
 
         const response = await makeRequest({vocabId: vocab.id}, session.token);
+        await context.em.find(Vocab, vocab, {refresh: true});
 
         expect(response.statusCode).to.equal(201);
         expect(response.json()).toEqual(learnerVocabSerializer.serialize(expectedMapping));
@@ -40,6 +42,7 @@ describe("POST users/me/vocabs/", () => {
         await context.em.flush();
 
         const response = await makeRequest({vocabId: vocab.id}, session.token);
+        await context.em.find(Vocab, vocab, {refresh: true});
 
         expect(response.statusCode).to.equal(200);
         expect(response.json()).toEqual(learnerVocabSerializer.serialize(mapping));

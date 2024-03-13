@@ -37,6 +37,7 @@ describe("GET texts/{textId}/vocabs/", () => {
         const expectedTextVocabs = [...expectedExistingMappings, ...expectedNewVocabs];
         await context.vocabFactory.create(10, {language});
         const response = await makeRequest(text.id, session.token);
+        await context.em.find(Vocab, expectedExistingVocabs, {refresh: true});
 
         expect(response.statusCode).to.equal(200);
         const responseBody = response.json();
@@ -96,6 +97,7 @@ describe("GET texts/{textId}/vocabs/", () => {
         const expectedTextVocabs = [...expectedExistingMappings, ...expectedNewVocabs];
         await context.vocabFactory.create(10, {language});
         const response = await makeRequest(text.id, session.token);
+        await context.em.find(Vocab, expectedExistingVocabs, {refresh: true});
 
         expect(response.statusCode).to.equal(200);
         const responseBody = response.json();

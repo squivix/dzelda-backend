@@ -37,6 +37,7 @@ describe("GET users/me/vocabs/", () => {
 
         const response = await makeRequest({}, session.token);
         await context.em.count(MapLearnerVocab, {learner: user.profile});
+        await context.em.find(Vocab, expectedVocabs, {refresh: true});
 
         expect(response.statusCode).to.equal(200);
         expect(response.json()).toEqual({
@@ -63,6 +64,7 @@ describe("GET users/me/vocabs/", () => {
             const recordsCount = expectedMappings.length;
 
             const response = await makeRequest({languageCode: language1.code}, session.token);
+            await context.em.find(Vocab, expectedVocabs, {refresh: true});
 
             expect(response.statusCode).to.equal(200);
             expect(response.json()).toEqual({
@@ -112,6 +114,7 @@ describe("GET users/me/vocabs/", () => {
             await context.em.flush();
             const recordsCount = expectedMappings.length;
             const response = await makeRequest({level: level}, session.token);
+            await context.em.find(Vocab, expectedVocabs, {refresh: true});
 
             expect(response.statusCode).to.equal(200);
             expect(response.json()).toEqual({
@@ -138,6 +141,7 @@ describe("GET users/me/vocabs/", () => {
             await context.em.flush();
             const recordsCount = expectedMappings.length;
             const response = await makeRequest({level: levels}, session.token);
+            await context.em.find(Vocab, expectedVocabs, {refresh: true});
 
             expect(response.statusCode).to.equal(200);
             expect(response.json()).toEqual({
@@ -172,6 +176,8 @@ describe("GET users/me/vocabs/", () => {
             const recordsCount = expectedMappings.length;
 
             const response = await makeRequest({searchQuery: searchQuery}, session.token);
+            await context.em.find(Vocab, expectedVocabs, {refresh: true});
+
             expect(response.statusCode).to.equal(200);
             expect(response.json()).toEqual({
                 page: queryDefaults.pagination.page,
@@ -223,7 +229,7 @@ describe("GET users/me/vocabs/", () => {
                 const recordsCount = expectedMappings.length;
 
                 const response = await makeRequest({sortBy: "text"}, session.token);
-
+                await context.em.find(Vocab, expectedVocabs, {refresh: true});
 
                 expect(response.statusCode).to.equal(200);
                 expect(response.json()).toEqual({
@@ -252,6 +258,7 @@ describe("GET users/me/vocabs/", () => {
 
 
                 const response = await makeRequest({sortBy: "learnersCount"}, session.token);
+                await context.em.find(Vocab, expectedVocabs, {refresh: true});
 
                 expect(response.statusCode).to.equal(200);
                 expect(response.json()).toEqual({
@@ -280,6 +287,7 @@ describe("GET users/me/vocabs/", () => {
                 const recordsCount = expectedMappings.length;
 
                 const response = await makeRequest({sortBy: "textsCount"}, session.token);
+                await context.em.find(Vocab, expectedVocabs, {refresh: true});
 
                 expect(response.statusCode).to.equal(200);
                 expect(response.json()).toEqual({
@@ -313,6 +321,7 @@ describe("GET users/me/vocabs/", () => {
                 const recordsCount = expectedMappings.length;
 
                 const response = await makeRequest({sortBy: "text", sortOrder: "asc"}, session.token);
+                await context.em.find(Vocab, expectedVocabs, {refresh: true});
 
                 expect(response.statusCode).to.equal(200);
                 expect(response.json()).toEqual({
@@ -338,6 +347,7 @@ describe("GET users/me/vocabs/", () => {
                 const recordsCount = expectedMappings.length;
 
                 const response = await makeRequest({sortBy: "text", sortOrder: "desc"}, session.token);
+                await context.em.find(Vocab, expectedVocabs, {refresh: true});
 
                 expect(response.statusCode).to.equal(200);
                 expect(response.json()).toEqual({
@@ -373,6 +383,7 @@ describe("GET users/me/vocabs/", () => {
                 const expectedMappings = allMappings.slice(pageSize * (page - 1), pageSize * (page - 1) + pageSize);
 
                 const response = await makeRequest({page, pageSize}, session.token);
+                await context.em.find(Vocab, expectedVocabs, {refresh: true});
 
                 expect(response.statusCode).to.equal(200);
                 expect(response.json()).toEqual({
@@ -398,6 +409,7 @@ describe("GET users/me/vocabs/", () => {
                 const expectedMappings = allMappings.slice(pageSize * (page - 1), pageSize * (page - 1) + pageSize);
 
                 const response = await makeRequest({page, pageSize}, session.token);
+                await context.em.find(Vocab, expectedVocabs, {refresh: true});
 
                 expect(response.statusCode).to.equal(200);
                 expect(response.json()).toEqual({
@@ -424,6 +436,7 @@ describe("GET users/me/vocabs/", () => {
                 const expectedMappings = allMappings.slice(pageSize * (page - 1), pageSize * (page - 1) + pageSize);
 
                 const response = await makeRequest({page, pageSize}, session.token);
+                await context.em.find(Vocab, expectedVocabs, {refresh: true});
 
                 expect(response.statusCode).to.equal(200);
                 expect(response.json()).toEqual({
@@ -492,6 +505,7 @@ describe("GET users/me/vocabs/", () => {
                 const expectedMappings = allMappings.slice(pageSize * (page - 1), pageSize * (page - 1) + pageSize);
 
                 const response = await makeRequest({page, pageSize}, session.token);
+                await context.em.find(Vocab, expectedVocabs, {refresh: true});
 
                 expect(response.statusCode).to.equal(200);
                 expect(response.json()).toEqual({
