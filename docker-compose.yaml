@@ -46,6 +46,19 @@ services:
       context: .
     env_file:
       - env/prod.env
+    environment:
+      PORT: 8080
+    ports:
+      - "8080:8080"
+    profiles:
+      - prod
+  nginx-proxy:
+    restart: always
+    build:
+      dockerfile: nginx-proxy.dockerfile
+      context: .
+    ports:
+      - "80:80"
     profiles:
       - prod
 volumes:
