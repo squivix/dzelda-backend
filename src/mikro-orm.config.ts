@@ -53,6 +53,9 @@ const devOptions: Options = {
         pathTs: "src/migrations",
         disableForeignKeys: true,
     },
+    schemaGenerator: {
+        disableForeignKeys: true,
+    },
     seeder: {
         path: "build/devtools/seeders/",
         pathTs: "devtools/seeders/",
