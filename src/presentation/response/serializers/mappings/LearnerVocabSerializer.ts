@@ -12,37 +12,39 @@ export class LearnerVocabSerializer extends CustomEntitySerializer<Vocab | MapLe
         //if only vocab is sent
         if (vocabOrMapping instanceof Vocab) {
             //assume it's new
+            const newVocab = vocabOrMapping;
             return {
-                id: () => vocabOrMapping.id,
-                text: () => vocabOrMapping.text,
-                isPhrase: () => vocabOrMapping.isPhrase,
+                id: () => newVocab.id,
+                text: () => newVocab.text,
+                isPhrase: () => newVocab.isPhrase,
                 level: () => VocabLevel.NEW,
                 notes: () => null,
-                language: () => vocabOrMapping.language.code,
+                language: () => newVocab.language.code,
                 learnerMeanings: () => [],
                 // @ts-ignore
-                meanings: () => meaningSerializer.serializeList(vocabOrMapping.meanings.getItems(), {ignore: ["vocab"]}) as Omit<MeaningSchema, "vocab">[],
-                ttsPronunciations: () => ttsPronunciationSerializer.serializeList(vocabOrMapping.ttsPronunciations.getItems()) as TTSPronunciationSchema[],
-                tags: () => vocabTagSerializer.serializeList(vocabOrMapping.tags.getItems()),
-                learnersCount: () => Number(vocabOrMapping.learnersCount),
-                rootForms: () => vocabOrMapping.rootForms.getItems().map(v => v.text)
+                meanings: () => meaningSerializer.serializeList(newVocab.meanings.getItems(), {ignore: ["vocab"]}) as Omit<MeaningSchema, "vocab">[],
+                ttsPronunciationUrl: () => newVocab.ttsPronunciations.getItems().pop()?.url ?? null,
+                tags: () => vocabTagSerializer.serializeList(newVocab.tags.getItems()),
+                learnersCount: () => Number(newVocab.learnersCount),
+                rootForms: () => newVocab.rootForms.getItems().map(v => v.text)
             };
         } else {
+            const mapping = vocabOrMapping;
             return {
-                id: () => vocabOrMapping.vocab.id,
-                text: () => vocabOrMapping.vocab.text,
-                isPhrase: () => vocabOrMapping.vocab.isPhrase,
-                level: () => vocabOrMapping.level,
-                notes: () => vocabOrMapping.notes,
-                language: () => vocabOrMapping.vocab.language.code,
+                id: () => mapping.vocab.id,
+                text: () => mapping.vocab.text,
+                isPhrase: () => mapping.vocab.isPhrase,
+                level: () => mapping.level,
+                notes: () => mapping.notes,
+                language: () => mapping.vocab.language.code,
                 // @ts-ignore
-                learnerMeanings: () => meaningSerializer.serializeList(vocabOrMapping.vocab.learnerMeanings.getItems(), {ignore: ["vocab"]}) as Omit<MeaningSchema, "vocab">[],
+                learnerMeanings: () => meaningSerializer.serializeList(mapping.vocab.learnerMeanings.getItems(), {ignore: ["vocab"]}) as Omit<MeaningSchema, "vocab">[],
                 // @ts-ignore
-                meanings: () => meaningSerializer.serializeList(vocabOrMapping.vocab.meanings.getItems(), {ignore: ["vocab"]}) as Omit<MeaningSchema, "vocab">[],
-                learnersCount: () => Number(vocabOrMapping.vocab.learnersCount),
-                ttsPronunciations: () => ttsPronunciationSerializer.serializeList(vocabOrMapping.vocab.ttsPronunciations.getItems(), {ignore: ["vocab"]}) as TTSPronunciationSchema[],
-                tags: () => vocabTagSerializer.serializeList(vocabOrMapping.vocab.tags.getItems()),
-                rootForms: () => vocabOrMapping.vocab.rootForms.getItems().map(v => v.text)
+                meanings: () => meaningSerializer.serializeList(mapping.vocab.meanings.getItems(), {ignore: ["vocab"]}) as Omit<MeaningSchema, "vocab">[],
+                learnersCount: () => Number(mapping.vocab.learnersCount),
+                ttsPronunciationUrl: () => mapping.vocab.ttsPronunciations.getItems().pop()?.url ?? null,
+                tags: () => vocabTagSerializer.serializeList(mapping.vocab.tags.getItems()),
+                rootForms: () => mapping.vocab.rootForms.getItems().map(v => v.text)
             };
         }
     }

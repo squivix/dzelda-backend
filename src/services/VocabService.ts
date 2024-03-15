@@ -124,7 +124,9 @@ export class VocabService {
         await this.em.populate(mappings, ["vocab.learnerMeanings", "vocab.learnerMeanings.language", "vocab.learnerMeanings.addedBy.user"], {
             where: {vocab: {learnerMeanings: {learners: user.profile}}}
         });
-
+        await this.em.populate(mappings, ["vocab.ttsPronunciations", "vocab.ttsPronunciations.voice"], {
+            where: {vocab: {ttsPronunciations: {voice: {$or: [{prefererLanguageMappings: {learner: user.profile}}, {isDefault: true}]}}}}
+        });
         return [mappings, totalCount];
     }
 
@@ -192,7 +194,10 @@ export class VocabService {
             vocab: {textsAppearingIn: text},
             learner: user.profile
         }, {
-            populate: ["vocab.language", "vocab.ttsPronunciations", "vocab.ttsPronunciations.voice", "vocab.tags.category", "vocab.rootForms"],
+            populate: ["vocab.language", "vocab.tags.category", "vocab.rootForms"],
+        });
+        await this.em.populate(existingMappings, ["vocab.ttsPronunciations", "vocab.ttsPronunciations.voice"], {
+            where: {vocab: {ttsPronunciations: {voice: {$or: [{prefererLanguageMappings: {learner: user.profile}}, {isDefault: true}]}}}}
         });
         await this.em.populate(existingMappings, ["vocab.meanings", "vocab.meanings.language", "vocab.meanings.addedBy.user"], {
             where: {vocab: {meanings: {language: {prefererEntries: {learnerLanguageMapping: {learner: user.profile}}}}}}
@@ -206,6 +211,9 @@ export class VocabService {
         }, {
             populate: ["language", "meanings", "meanings.language", "meanings.addedBy.user", "ttsPronunciations", "ttsPronunciations.voice", "tags.category", "rootForms"],
             populateWhere: {meanings: {language: {prefererEntries: {learnerLanguageMapping: {learner: user.profile}}}}}
+        });
+        await this.em.populate(newVocabs, ["ttsPronunciations", "ttsPronunciations.voice"], {
+            where: {ttsPronunciations: {voice: {$or: [{prefererLanguageMappings: {learner: user.profile}}, {isDefault: true}]}}}
         });
         return [...existingMappings, ...newVocabs];
     }

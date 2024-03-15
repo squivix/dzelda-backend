@@ -258,6 +258,22 @@ class VocabController {
         reply.send(stats);
     }
 
+    async getVocabTTSPronunciations(request: FastifyRequest, reply: FastifyReply) {
+        const pathParamsValidator = z.object({
+            vocabId: numericStringValidator
+        });
+        const pathParams = pathParamsValidator.parse(request.params);
+
+        const vocabService = new VocabService(request.em);
+        const vocab = await vocabService.findVocab({id: pathParams.vocabId});
+        if (!vocab)
+            throw new NotFoundAPIError("vocab");
+
+        const pronunciationService = new PronunciationService(request.em);
+        const ttsPronunciations = await pronunciationService.getVocabTTSPronunciations(vocab);
+        reply.send(ttsPronunciationSerializer.serializeList(ttsPronunciations));
+    }
+
     async getVocabHumanPronunciations(request: FastifyRequest, reply: FastifyReply) {
         const pathParamsValidator = z.object({
             vocabId: numericStringValidator

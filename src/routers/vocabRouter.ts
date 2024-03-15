@@ -6,6 +6,7 @@ import {requiresEmailConfirmed} from "@/src/middlewares/requiresEmailConfirmed.j
 export const vocabRouter: FastifyPluginCallback = function (fastify, options, done) {
     fastify.post(`/vocabs/`, {preHandler: [requiresAuth, requiresEmailConfirmed], handler: vocabController.createVocab});
     fastify.get(`/vocabs/`, vocabController.getVocabs);
+    fastify.get(`/vocabs/:vocabId/tts-pronunciations/`, vocabController.getVocabTTSPronunciations);
     fastify.get(`/vocabs/:vocabId/human-pronunciations/`, vocabController.getVocabHumanPronunciations);
     fastify.get(`/users/me/vocabs/`, {
         preHandler: [requiresAuth, requiresEmailConfirmed],
@@ -34,7 +35,6 @@ export const vocabRouter: FastifyPluginCallback = function (fastify, options, do
         preHandler: [requiresAuth, requiresEmailConfirmed],
         handler: vocabController.getTextVocabs
     });
-
     fastify.post(`/tts-pronunciations/`, {
         preHandler: [requiresAuth, requiresEmailConfirmed],
         handler: vocabController.synthesizeTTSPronunciation

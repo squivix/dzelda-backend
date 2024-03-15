@@ -2,6 +2,8 @@ import {EntityManager, FilterQuery} from "@mikro-orm/core";
 import {HumanPronunciation} from "@/src/models/entities/HumanPronunciation.js";
 import {Language} from "@/src/models/entities/Language.js";
 import {QueryOrderMap} from "@mikro-orm/core/enums.js";
+import {Vocab} from "@/src/models/entities/Vocab.js";
+import {TTSPronunciation} from "@/src/models/entities/TTSPronunciation.js";
 
 export class PronunciationService {
     em: EntityManager;
@@ -34,5 +36,9 @@ export class PronunciationService {
             parsedText: {$ilike: text},
             language: language
         });
+    }
+
+    async getVocabTTSPronunciations(vocab: Vocab) {
+        return await this.em.find(TTSPronunciation, {vocab}, {populate: ["voice"]});
     }
 }
