@@ -12,7 +12,7 @@ declare global {
             SPACES_CDN_ENDPOINT?: string;
             SPACES_BUCKET?: string;
             SPACES_REGION?: string;
-            EMAIL_AES_KEY_BASE_64?: string;
+            DB_SSL_CA_CERT_PATH?: string;
         }
     }
 }

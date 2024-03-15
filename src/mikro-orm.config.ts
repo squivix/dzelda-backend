@@ -33,6 +33,8 @@ import {VocabTag} from "@/src/models/entities/VocabTag.js";
 import {MapVocabTag} from "@/src/models/entities/MapVocabTag.js";
 import {MapVocabRootForm} from "@/src/models/entities/MapVocabRootForm.js";
 import {VocabTagCategory} from "@/src/models/entities/VocabTagCategory.js";
+import fs from "fs";
+import process from "process";
 
 
 const devOptions: Options = {
@@ -65,6 +67,13 @@ const testOptions: Options = {
 const prodOptions: Options = {
     ...devOptions,
     debug: false,
+    driverOptions: {
+        connection: {
+            ssl: {
+                ca: fs.readFileSync(process.env.DB_SSL_CA_CERT_PATH!)
+            }
+        }
+    }
 };
 
 let options: Options;
