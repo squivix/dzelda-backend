@@ -18,6 +18,8 @@
     "predrop": "npm run clean",
     "drop": "mikro-orm schema:drop --run",
     "dev": "env-cmd -f ./env/dev.env tsx --watch ./src/main.ts",
+    "preprod": "npm run clean",
+    "prod": "node ./build/src/main.js",
     "seed": "tsx devtools/seeders/DatabaseSeeder.ts",
     "dump": "tsx devtools/dumpers/DatabaseDumper.ts"
   },

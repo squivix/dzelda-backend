@@ -11,6 +11,9 @@ services:
       POSTGRES_INITDB_ARGS: "--lc-collate=C"
     ports:
       - "54321:5432"
+    profiles:
+      - 'default'
+      - dev
   dev-db:
     image: "postgres:15.3"
     command: "postgres -c log_statement=all"
@@ -26,10 +29,24 @@ services:
       - "postgres-data:/var/lib/postgresql/data"
     ports:
       - "54320:5432"
+    profiles:
+      - 'default'
+      - dev
   email-server:
     image: mailhog/mailhog
     ports:
       - "8025:8025"  # Web interface for viewing emails
       - "1025:1025"  # SMTP server for receiving emails
+    profiles:
+      - 'default'
+      - dev
+  server:
+    build:
+      dockerfile: backend.dockerfile
+      context: .
+    env_file:
+      - env/prod.env
+    profiles:
+      - prod
 volumes:
   postgres-data: null
