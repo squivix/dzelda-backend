@@ -51,6 +51,7 @@ const devOptions: Options = {
     migrations: {
         path: "build/src/migrations",
         pathTs: "src/migrations",
+        disableForeignKeys: true,
     },
     seeder: {
         path: "build/devtools/seeders/",
@@ -59,28 +60,25 @@ const devOptions: Options = {
     persistOnCreate: true
 };
 
-const testOptions: Options = {
-    ...devOptions,
-    debug: false,       //SQL queries too verbose
-};
-
-const prodOptions: Options = {
-    ...devOptions,
-    debug: false,
-    driverOptions: {
-        connection: {
-            ssl: {
-                ca: fs.readFileSync(process.env.DB_SSL_CA_CERT_PATH!)
-            }
-        }
-    }
-};
 
 let options: Options;
 if (process.env.NODE_ENV == "test")
-    options = testOptions;
+    options = {
+        ...devOptions,
+        debug: false,       //SQL queries too verbose
+    };
 else if (process.env.NODE_ENV == "prod")
-    options = prodOptions;
+    options = {
+        ...devOptions,
+        debug: false,
+        driverOptions: {
+            connection: {
+                ssl: {
+                    ca: fs.readFileSync(process.env.DB_SSL_CA_CERT_PATH!).toString()
+                }
+            }
+        }
+    };
 else
     options = devOptions;
 
