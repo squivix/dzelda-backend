@@ -8,6 +8,9 @@ import helmet from "@fastify/helmet";
 import path from "path";
 import fastifyStatic from "@fastify/static";
 import {fileURLToPath} from "url";
+import {DOMAIN_NAME} from "@/src/constants.js";
+import {escapeRegExp} from "@/src/utils/utils.js";
+import process from "process";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -22,8 +25,11 @@ server.register(fastifyStatic, {
     prefix: "/public/"
 });
 
-//TODO replace with proper CORS
-await server.register(cors, {});
+await server.register(cors, process.env.NODE_ENV == "prod" ? {
+    origin: new RegExp(`${escapeRegExp(DOMAIN_NAME)}$`),
+    methods: ["GET", "PUT", "POST", "DELETE", "PATCH", "HEAD", "OPTIONS", "CONNECT", "TRACE"],
+} : undefined);
+
 await server.register(helmet, {global: true});
 // await server.register(rateLimit, {max: 100, timeWindow: "1m"});
 export const orm = await MikroORM.init(options);
