@@ -65,8 +65,8 @@ services:
     volumes:
       - ./public/:/var/www/html
       - ./nginx-conf:/etc/nginx/conf.d
-      - certbot-etc:/etc/letsencrypt
-      - certbot-var:/var/lib/letsencrypt
+      - /etc/letsencrypt/ssl/fullchain.pem:/etc/nginx/ssl/fullchain.pem
+      - /etc/letsencrypt/ssl/privkey.pem:/etc/nginx/ssl/privkey.pem
 
 
 volumes:
