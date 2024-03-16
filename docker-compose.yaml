@@ -52,8 +52,6 @@ services:
       - "8080:8080"
     profiles:
       - prod
-    networks:
-      - app-prod-network
   nginx-proxy:
     restart: unless-stopped
     image: nginx:mainline-alpine
@@ -69,10 +67,9 @@ services:
       - ./nginx-conf:/etc/nginx/conf.d
       - certbot-etc:/etc/letsencrypt
       - certbot-var:/var/lib/letsencrypt
-    networks:
-      - app-prod-network
+
+
 volumes:
   postgres-data: null
   certbot-etc: null
   certbot-var: null
-
