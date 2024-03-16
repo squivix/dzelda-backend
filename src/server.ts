@@ -5,14 +5,23 @@ import rootRouter from "@/src/routers/rootRouter.js";
 import {errorHandler} from "@/src/middlewares/errorHandler.js";
 import {MikroORM} from "@mikro-orm/postgresql";
 import helmet from "@fastify/helmet";
-import rateLimit from "@fastify/rate-limit";
+import path from "path";
+import fastifyStatic from "@fastify/static";
+import {fileURLToPath} from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 export const API_VERSION = 1;
 export const API_ROOT = `/api/v${API_VERSION}`;
-
 export const server = Fastify(
     // {logger: {transport: {target: "@fastify/one-line-logger"}}}
 );
+server.register(fastifyStatic, {
+    root: path.join(__dirname, "..", "public"),
+    prefix: "/public/"
+});
+
 //TODO replace with proper CORS
 await server.register(cors, {});
 await server.register(helmet, {global: true});

@@ -6,8 +6,7 @@ npm-debug.log
 !example.env
 .nyc_output
 specs/schema.ts
-/public/media/
-/public/uploads/
+public
 /data/
 .idea
 .directory

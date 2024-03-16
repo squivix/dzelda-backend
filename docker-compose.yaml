@@ -52,14 +52,27 @@ services:
       - "8080:8080"
     profiles:
       - prod
+    networks:
+      - app-prod-network
   nginx-proxy:
-    restart: always
-    build:
-      dockerfile: nginx-proxy.dockerfile
-      context: .
+    restart: unless-stopped
+    image: nginx:mainline-alpine
     ports:
       - "80:80"
+      - "443:443"
     profiles:
       - prod
+    depends_on:
+      - server
+    volumes:
+      - ./public/:/var/www/html
+      - ./nginx-conf:/etc/nginx/conf.d
+      - certbot-etc:/etc/letsencrypt
+      - certbot-var:/var/lib/letsencrypt
+    networks:
+      - app-prod-network
 volumes:
   postgres-data: null
+  certbot-etc: null
+  certbot-var: null
+

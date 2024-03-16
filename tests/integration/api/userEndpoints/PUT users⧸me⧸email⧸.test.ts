@@ -1,6 +1,6 @@
 import {describe, expect, test, TestContext, vi} from "vitest";
 import {fetchRequest, parseUrlQueryString} from "@/tests/integration/utils.js";
-import {BASE_URL, DOMAIN_NAME} from "@/src/constants.js";
+import {BASE_URL} from "@/src/constants.js";
 import {emailTransporter} from "@/src/nodemailer.config.js";
 import {EmailConfirmationToken} from "@/src/models/entities/auth/EmailConfirmationToken.js";
 import {expiringTokenHasher} from "@/src/utils/security/ExpiringTokenHasher.js";
