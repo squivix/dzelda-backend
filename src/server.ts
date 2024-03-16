@@ -11,6 +11,7 @@ import {fileURLToPath} from "url";
 import {DOMAIN_NAME} from "@/src/constants.js";
 import {escapeRegExp} from "@/src/utils/utils.js";
 import process from "process";
+import rateLimit from "@fastify/rate-limit";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -18,7 +19,7 @@ const __dirname = path.dirname(__filename);
 export const API_VERSION = 1;
 export const API_ROOT = `/api/v${API_VERSION}`;
 export const server = Fastify(
-    // {logger: {transport: {target: "@fastify/one-line-logger"}}}
+    {logger: {transport: {target: "@fastify/one-line-logger"}}}
 );
 server.register(fastifyStatic, {
     root: path.join(__dirname, "..", "public"),
@@ -31,7 +32,7 @@ await server.register(cors, process.env.NODE_ENV == "prod" ? {
 } : undefined);
 
 await server.register(helmet, {global: true});
-// await server.register(rateLimit, {max: 100, timeWindow: "1m"});
+await server.register(rateLimit, {max: 100, timeWindow: "1m"});
 export const orm = await MikroORM.init(options);
 server.register(rootRouter, {prefix: API_ROOT});
 
