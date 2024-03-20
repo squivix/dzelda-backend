@@ -1,19 +1,15 @@
 import nodemailer from "nodemailer";
-import aws from "@aws-sdk/client-ses";
 import process from "process";
 
 let config: any;
 if (process.env.NODE_ENV == "prod") {
     config = {
-        SES: {
-            ses: new aws.SES({
-                region: process.env.EMAIL_REGION!,
-                credentials: {
-                    accessKeyId: process.env.EMAIL_ACCESS_KEY!,
-                    secretAccessKey: process.env.EMAIL_SECRET_KEY!
-                }
-            }),
-            aws
+        host: process.env.SMTP_HOST,
+        secure: true,
+        port: process.env.SMTP_PORT,
+        auth: {
+            user: process.env.SMTP_USERNAME,
+            pass: process.env.SMTP_PASSWORD
         },
     };
 } else {

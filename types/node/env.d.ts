@@ -4,8 +4,10 @@ declare global {
             NODE_ENV?: "dev" | "test" | "prod" | string;
             PORT?: string;
             MIKRO_ORM_CLIENT_URL?: string;
-            EMAIL_SERVER_HOST?: string;
-            EMAIL_SERVER_PORT?: string;
+            SMTP_HOST?: string;
+            SMTP_PORT?: string;
+            SMTP_USERNAME?: string;
+            SMTP_PASSWORD?: string;
             SPACES_ACCESS_KEY?: string;
             SPACES_SECRET_KEY?: string;
             SPACES_ENDPOINT?: string;
