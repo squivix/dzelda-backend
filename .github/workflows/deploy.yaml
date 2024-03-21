@@ -2,6 +2,7 @@ name: "Deploy Server"
 on:
   release:
     types: [ released ]
+  workflow_dispatch:
 jobs:
   deploy:
     runs-on: ubuntu-22.04
