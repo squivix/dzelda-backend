@@ -49,39 +49,15 @@ export function commonEmailTemplate(title: string, bodySlot: string, headSlot: s
         ol, ul {
             list-style: none;
         }
-        :root {
-            --primary-color: #0288d1;
-            --primary-color-dark: #005b9f;
-            --secondary-color: #43a047;
-            --on-primary-color: white;
-            --on-secondary-color: white;
-        }
-        
-        [color-scheme=light] {
-            /*General*/
-            --background-color: white;
-            --on-background-color: black;
-            --on-background-color-inverse: white;
-            --primary-faint-color: #F0F9Fe;
-            --secondary-faint-color: #F3FFF3FF;
-        }
-        
-        [color-scheme=black] {
-            /*General*/
-            --background-color: black;
-            --on-background-color: white;
-            --on-background-color-inverse: black;
-            --primary-faint-color: #0a1c2a;
-            --secondary-faint-color: #0A150AC6;
-        }
+
         * {
             font-family: Verdana, Geneva, Tahoma, sans-serif;
             box-sizing: border-box;
         }
         
         body {
-            background-color: var(--background-color);
-            color: var(--on-background-color);
+            background-color: white;
+            color: black;
         }
         
         header {
@@ -97,11 +73,11 @@ export function commonEmailTemplate(title: string, bodySlot: string, headSlot: s
             justify-content: space-between;
             align-items: center;
             padding: 0 2vw;
-            background-color: var(--primary-color)
+            background-color: #0288d1
         }
         
         .inv-link {
-            color: var(--on-background-color);
+            color: white;
             text-decoration: none;
         }
         
@@ -117,7 +93,7 @@ export function commonEmailTemplate(title: string, bodySlot: string, headSlot: s
         }
         
         .title h1 {
-            color: var(--on-primary-color);
+            color: white;
             font-family: Verdana, sans-serif;
             font-weight: 700;
             font-size: 2rem;
@@ -140,8 +116,8 @@ export function commonEmailTemplate(title: string, bodySlot: string, headSlot: s
         }
         
         .link-button {
-            background: var(--secondary-color);
-            border: 1px solid var(--secondary-color);
+            background: #43a047;
+            border: 1px solid #43a047;
             padding: 0;
             border-radius: 3px;
             font-weight: bold;
@@ -151,7 +127,7 @@ export function commonEmailTemplate(title: string, bodySlot: string, headSlot: s
         
         .link-button>a {
             display: inline-block;
-            color: var(--on-secondary-color);
+            color: white;
             padding: 10px 20px;
         }
     </style>
