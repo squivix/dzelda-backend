@@ -1,7 +1,7 @@
 import {Collection} from "@/src/models/entities/Collection.js";
-import {CustomCallbackObject, CustomEntitySerializer} from "@/src/presentation/response/serializers/CustomEntitySerializer.js";
+import {CustomCallbackObject, CustomEntitySerializer, IgnoreIncludeSerializedObject} from "@/src/presentation/response/serializers/CustomEntitySerializer.js";
 import {textSerializer} from "@/src/presentation/response/serializers/entities/TextSerializer.js";
-import {CollectionSchema, TextSchema} from "dzelda-common";
+import {CollectionSchema} from "dzelda-common";
 
 export class CollectionSerializer extends CustomEntitySerializer<Collection, CollectionSchema> {
 
@@ -13,8 +13,8 @@ export class CollectionSerializer extends CustomEntitySerializer<Collection, Col
             description: () => collection.description,
             image: () => collection.image,
             language: () => collection.language.code,
-            // @ts-ignore
-            texts: () => textSerializer.serializeList(collection.texts.getItems(), {ignore: ["collection"]}) as Omit<TextSchema, "collection">[],
+            //@ts-ignore
+            texts: () => textSerializer.serializeList(collection.texts.getItems(), {ignore: ["collection"]}),
             addedOn: () => collection.addedOn.toISOString(),
             addedBy: () => collection.addedBy.user.username,
             vocabsByLevel: () => collection.vocabsByLevel,
@@ -22,8 +22,11 @@ export class CollectionSerializer extends CustomEntitySerializer<Collection, Col
         };
     }
 
-    serializeList(entities: Collection[], {ignore = [], ...options}: { ignore?: (keyof CollectionSchema)[] } = {}): Partial<CollectionSchema>[] {
-        return super.serializeList(entities, {ignore: [...ignore, "texts"], ...options});
+    serializeList<G extends (keyof CollectionSchema)[] | undefined = undefined, N extends (keyof CollectionSchema)[] | undefined = undefined>
+    (entities: Collection[], {ignore, ...options}: {
+        ignore?: G
+    } = {}): Array<IgnoreIncludeSerializedObject<CollectionSchema, G, N>> {
+        return super.serializeList(entities, {ignore: [...(ignore ?? []), "texts"] as G, ...options});
     }
 
 }

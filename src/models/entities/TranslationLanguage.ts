@@ -1,7 +1,6 @@
-import {Collection as MikroORMCollection, Entity, ManyToMany, OneToMany, Property, types} from "@mikro-orm/core";
+import {Collection as MikroORMCollection, Entity, OneToMany, Property, types} from "@mikro-orm/core";
 import {Meaning} from "@/src/models/entities/Meaning.js";
 import {CustomBaseEntity} from "@/src/models/entities/CustomBaseEntity.js";
-import {Profile} from "@/src/models/entities/Profile.js";
 import {PreferredTranslationLanguageEntry} from "@/src/models/entities/PreferredTranslationLanguageEntry.js";
 
 @Entity()

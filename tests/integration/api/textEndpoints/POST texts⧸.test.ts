@@ -1,6 +1,6 @@
 import {describe, expect, test, TestContext, vi} from "vitest";
 import {fetchRequest} from "@/tests/integration/utils.js";
-import {LanguageLevel} from "@/src/models/enums/LanguageLevel.js";
+import {LanguageLevel} from "dzelda-common";
 import {textSerializer} from "@/src/presentation/response/serializers/entities/TextSerializer.js";
 import {parsers} from "dzelda-common";
 import {MapTextVocab} from "@/src/models/entities/MapTextVocab.js";

@@ -1,11 +1,10 @@
 import {EntityData, EntityManager} from "@mikro-orm/core";
 import {CustomFactory} from "@/devtools/factories/CustomFactory.js";
 import {Text} from "@/src/models/entities/Text.js";
-import {parsers} from "dzelda-common";
+import {LanguageLevel, parsers} from "dzelda-common";
 import {ProfileFactory} from "@/devtools/factories/ProfileFactory.js";
 import {UserFactory} from "@/devtools/factories/UserFactory.js";
 import {randomEnum} from "@/tests/utils.js";
-import {LanguageLevel} from "@/src/models/enums/LanguageLevel.js";
 import {faker} from "@faker-js/faker";
 
 export class TextFactory extends CustomFactory<Text> {

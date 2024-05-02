@@ -1,6 +1,6 @@
 import {describe, expect, test, TestContext} from "vitest";
 import {fetchRequest} from "@/tests/integration/utils.js";
-import {defaultVocabsByLevel} from "@/src/models/enums/VocabLevel.js";
+import {defaultVocabsByLevel} from "dzelda-common";
 import {collectionSerializer} from "@/src/presentation/response/serializers/entities/CollectionSerializer.js";
 import {faker} from "@faker-js/faker";
 

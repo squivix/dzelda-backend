@@ -5,7 +5,7 @@ import {Text} from "@/src/models/entities/Text.js";
 import {textSerializer} from "@/src/presentation/response/serializers/entities/TextSerializer.js";
 import {faker} from "@faker-js/faker";
 import {randomCase, randomEnum, randomEnums} from "@/tests/utils.js";
-import {LanguageLevel} from "@/src/models/enums/LanguageLevel.js";
+import {LanguageLevel} from "dzelda-common";
 
 /**{@link TextController#getTexts}*/
 describe("GET texts/", () => {

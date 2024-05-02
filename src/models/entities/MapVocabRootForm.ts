@@ -1,6 +1,5 @@
 import {Entity, Index, ManyToOne, Unique} from "@mikro-orm/core";
 import {Vocab} from "@/src/models/entities/Vocab.js";
-import {VocabTag} from "@/src/models/entities/VocabTag.js";
 import {CustomBaseEntity} from "@/src/models/entities/CustomBaseEntity.js";
 
 @Entity()

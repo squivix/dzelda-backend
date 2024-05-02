@@ -5,7 +5,7 @@ import {Vocab} from "@/src/models/entities/Vocab.js";
 import {MapLearnerVocab} from "@/src/models/entities/MapLearnerVocab.js";
 import {learnerVocabSerializer} from "@/src/presentation/response/serializers/mappings/LearnerVocabSerializer.js";
 import {randomCase, randomEnum, randomEnums} from "@/tests/utils.js";
-import {VocabLevel} from "@/src/models/enums/VocabLevel.js";
+import {VocabLevel} from "dzelda-common";
 import {faker} from "@faker-js/faker";
 
 /**{@link VocabController#getUserVocabs}*/

@@ -1,5 +1,5 @@
 import {Text} from "@/src/models/entities/Text.js";
-import {CollectionSchema, TextSchema} from "dzelda-common";
+import {TextSchema} from "dzelda-common";
 import {collectionSerializer} from "@/src/presentation/response/serializers/entities/CollectionSerializer.js";
 import {CustomCallbackObject, CustomEntitySerializer} from "@/src/presentation/response/serializers/CustomEntitySerializer.js";
 
@@ -15,7 +15,7 @@ export class TextSerializer extends CustomEntitySerializer<Text, TextSchema> {
             audio: () => text.audio,
             image: () => text.image,
             //@ts-ignore
-            collection: () => text.collection ? collectionSerializer.serialize(text.collection, {ignore: ["texts"]}) as Omit<CollectionSchema, "texts"> : null,
+            collection: () => text.collection ? collectionSerializer.serialize(text.collection, {ignore: ["texts"]}) : null,
             orderInCollection: () => text.orderInCollection ?? undefined,
             isLastInCollection: () => text.isLastInCollection ?? undefined,
             addedOn: () => text.addedOn.toISOString(),

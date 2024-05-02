@@ -3,7 +3,7 @@ import {CustomBaseEntity} from "@/src/models/entities/CustomBaseEntity.js";
 import {Language} from "@/src/models/entities/Language.js";
 import {Profile} from "@/src/models/entities/Profile.js";
 import {Text} from "@/src/models/entities/Text.js";
-import {VocabLevel} from "@/src/models/enums/VocabLevel.js";
+import {VocabLevel} from "dzelda-common";
 import {CollectionRepo} from "@/src/models/repos/CollectionRepo.js";
 import {CollectionBookmark} from "@/src/models/entities/CollectionBookmark.js";
 

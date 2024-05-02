@@ -1,10 +1,8 @@
 import {CustomCallbackObject, CustomEntitySerializer} from "@/src/presentation/response/serializers/CustomEntitySerializer.js";
 import {MapLearnerVocab} from "@/src/models/entities/MapLearnerVocab.js";
 import {Vocab} from "@/src/models/entities/Vocab.js";
-import {LearnerVocabSchema, MeaningSchema, TTSPronunciationSchema} from "dzelda-common";
+import {LearnerVocabSchema, VocabLevel} from "dzelda-common";
 import {meaningSerializer} from "@/src/presentation/response/serializers/entities/MeaningSerializer.js";
-import {VocabLevel} from "@/src/models/enums/VocabLevel.js";
-import {ttsPronunciationSerializer} from "@/src/presentation/response/serializers/entities/TTSPronunciationSerializer.js";
 import {vocabTagSerializer} from "@/src/presentation/response/serializers/entities/VocabTagSerializer.js";
 
 export class LearnerVocabSerializer extends CustomEntitySerializer<Vocab | MapLearnerVocab, LearnerVocabSchema> {
@@ -21,8 +19,8 @@ export class LearnerVocabSerializer extends CustomEntitySerializer<Vocab | MapLe
                 notes: () => null,
                 language: () => newVocab.language.code,
                 learnerMeanings: () => [],
-                // @ts-ignore
-                meanings: () => meaningSerializer.serializeList(newVocab.meanings.getItems(), {ignore: ["vocab"]}) as Omit<MeaningSchema, "vocab">[],
+                //@ts-ignore
+                meanings: () => meaningSerializer.serializeList(newVocab.meanings.getItems(), {ignore: ["vocab"]}),
                 ttsPronunciationUrl: () => newVocab.ttsPronunciations.getItems().pop()?.url ?? null,
                 tags: () => vocabTagSerializer.serializeList(newVocab.tags.getItems()),
                 learnersCount: () => Number(newVocab.learnersCount),
@@ -38,9 +36,9 @@ export class LearnerVocabSerializer extends CustomEntitySerializer<Vocab | MapLe
                 notes: () => mapping.notes,
                 language: () => mapping.vocab.language.code,
                 // @ts-ignore
-                learnerMeanings: () => meaningSerializer.serializeList(mapping.vocab.learnerMeanings.getItems(), {ignore: ["vocab"]}) as Omit<MeaningSchema, "vocab">[],
+                learnerMeanings: () => meaningSerializer.serializeList(mapping.vocab.learnerMeanings.getItems(), {ignore: ["vocab"]}),
                 // @ts-ignore
-                meanings: () => meaningSerializer.serializeList(mapping.vocab.meanings.getItems(), {ignore: ["vocab"]}) as Omit<MeaningSchema, "vocab">[],
+                meanings: () => meaningSerializer.serializeList(mapping.vocab.meanings.getItems(), {ignore: ["vocab"]}),
                 learnersCount: () => Number(mapping.vocab.learnersCount),
                 ttsPronunciationUrl: () => mapping.vocab.ttsPronunciations.getItems().pop()?.url ?? null,
                 tags: () => vocabTagSerializer.serializeList(mapping.vocab.tags.getItems()),

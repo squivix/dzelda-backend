@@ -2,7 +2,7 @@ import {Collection, Entity, Enum, Index, ManyToOne, OneToMany, Property, types, 
 import {CustomBaseEntity} from "@/src/models/entities/CustomBaseEntity.js";
 import {Language} from "@/src/models/entities/Language.js";
 import {MapLearnerLanguage} from "@/src/models/entities/MapLearnerLanguage.js";
-import {TTSProvider} from "@/src/models/enums/TTSProvider.js";
+import {TTSProvider} from "dzelda-common";
 
 @Entity({tableName: "tts_voice"})
 @Unique({properties: ["language", "code"]})

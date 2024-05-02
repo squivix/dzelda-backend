@@ -1,7 +1,7 @@
 import {EntityRepository} from "@mikro-orm/postgresql";
 import {Vocab} from "@/src/models/entities/Vocab.js";
 import {Profile} from "@/src/models/entities/Profile.js";
-import {VocabLevel} from "@/src/models/enums/VocabLevel.js";
+import {VocabLevel} from "dzelda-common";
 
 export class VocabRepo extends EntityRepository<Vocab> {
     async countSavedVocabs(learner: Profile, {groupBy, filters}: {

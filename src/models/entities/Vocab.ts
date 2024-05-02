@@ -7,7 +7,7 @@ import {Meaning} from "@/src/models/entities/Meaning.js";
 import {Profile} from "@/src/models/entities/Profile.js";
 import {MapLearnerVocab} from "@/src/models/entities/MapLearnerVocab.js";
 import {VocabRepo} from "@/src/models/repos/VocabRepo.js";
-import {VocabLevel} from "@/src/models/enums/VocabLevel.js";
+import {VocabLevel} from "dzelda-common";
 import {TTSPronunciation} from "@/src/models/entities/TTSPronunciation.js";
 import {VocabTag} from "@/src/models/entities/VocabTag.js";
 import {MapVocabTag} from "@/src/models/entities/MapVocabTag.js";

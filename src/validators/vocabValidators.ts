@@ -1,5 +1,5 @@
 import {z} from "zod";
-import {VocabLevel} from "@/src/models/enums/VocabLevel.js";
+import {VocabLevel} from "dzelda-common";
 
 export const vocabTextValidator = z.string().min(1).max(255);
 

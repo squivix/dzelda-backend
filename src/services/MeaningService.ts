@@ -1,11 +1,11 @@
-import {EntityManager, EntityRepository, FilterQuery, RequiredEntityData} from "@mikro-orm/core";
+import {EntityManager, EntityRepository, FilterQuery} from "@mikro-orm/core";
 import {Meaning} from "@/src/models/entities/Meaning.js";
 import {Vocab} from "@/src/models/entities/Vocab.js";
 import {User} from "@/src/models/entities/auth/User.js";
 import {MapLearnerMeaning} from "@/src/models/entities/MapLearnerMeaning.js";
 import {QueryOrderMap} from "@mikro-orm/core/enums.js";
 import {MapLearnerVocab} from "@/src/models/entities/MapLearnerVocab.js";
-import {VocabLevel} from "@/src/models/enums/VocabLevel.js";
+import {VocabLevel} from "dzelda-common";
 import {TranslationLanguage} from "@/src/models/entities/TranslationLanguage.js";
 
 export class MeaningService {

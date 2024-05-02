@@ -1,6 +1,6 @@
 // noinspection CssUnresolvedCustomProperty
 
-import {BASE_URL, DOMAIN_NAME} from "@/src/constants.js";
+import {BASE_URL} from "@/src/constants.js";
 
 
 export function commonEmailTemplate(title: string, bodySlot: string, headSlot: string = "") {

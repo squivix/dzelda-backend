@@ -1,8 +1,7 @@
 import {EntityRepository} from "@mikro-orm/postgresql";
-import {defaultVocabsByLevel} from "@/src/models/enums/VocabLevel.js";
+import {defaultVocabsByLevel} from "dzelda-common";
 import {Collection} from "@/src/models/entities/Collection.js";
 import {User} from "@/src/models/entities/auth/User.js";
-import {Loaded} from "@mikro-orm/core";
 
 export class CollectionRepo extends EntityRepository<Collection> {
 

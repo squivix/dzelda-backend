@@ -2,7 +2,7 @@ import {Entity, Enum, Index, ManyToOne, OptionalProps, Property, types, Unique} 
 import {CustomBaseEntity} from "@/src/models/entities/CustomBaseEntity.js";
 import {Vocab} from "@/src/models/entities/Vocab.js";
 import {Profile} from "@/src/models/entities/Profile.js";
-import {VocabLevel} from "@/src/models/enums/VocabLevel.js";
+import {VocabLevel} from "dzelda-common";
 
 @Entity()
 @Unique({properties: ["vocab", "learner"]})

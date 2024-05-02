@@ -21,9 +21,7 @@ import {Collection} from "@/src/models/entities/Collection.js";
 import {APIError} from "@/src/utils/errors/APIError.js";
 import {StatusCodes} from "http-status-codes";
 import {emailTransporter} from "@/src/nodemailer.config.js";
-import {confirmEmailTemplate} from "@/src/presentation/response/templates/email/confirmEmailTemplate.js";
 import {DOMAIN_NAME} from "@/src/constants.js";
-import {commonEmailTemplate} from "@/src/presentation/response/templates/email/commonSnippets.js";
 
 class TextController {
     async getTexts(request: FastifyRequest, reply: FastifyReply) {

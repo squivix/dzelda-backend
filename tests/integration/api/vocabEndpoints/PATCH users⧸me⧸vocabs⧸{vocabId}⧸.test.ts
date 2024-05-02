@@ -3,7 +3,7 @@ import {InjectOptions} from "light-my-request";
 import {createComparator, fetchRequest} from "@/tests/integration/utils.js";
 import {Meaning} from "@/src/models/entities/Meaning.js";
 import {MapLearnerVocab} from "@/src/models/entities/MapLearnerVocab.js";
-import {VocabLevel} from "@/src/models/enums/VocabLevel.js";
+import {VocabLevel} from "dzelda-common";
 import {learnerVocabSerializer} from "@/src/presentation/response/serializers/mappings/LearnerVocabSerializer.js";
 import {MapLearnerMeaning} from "@/src/models/entities/MapLearnerMeaning.js";
 import {faker} from "@faker-js/faker";

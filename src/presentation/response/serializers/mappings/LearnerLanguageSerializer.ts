@@ -4,7 +4,6 @@ import {MapLearnerLanguage} from "@/src/models/entities/MapLearnerLanguage.js";
 import {LearnerLanguageSchema, TranslationLanguageSchema, TTSVoiceSchema} from "dzelda-common";
 import {ttsVoiceSerializer} from "@/src/presentation/response/serializers/entities/TTSVoiceSerializer.js";
 import {translationLanguageSerializer} from "@/src/presentation/response/serializers/entities/TranslationLanguageSerializer.js";
-import {TranslationLanguage} from "@/src/models/entities/TranslationLanguage.js";
 
 export class LearnerLanguageSerializer extends CustomEntitySerializer<Language | MapLearnerLanguage, LearnerLanguageSchema> {
     definition(mapping: MapLearnerLanguage): CustomCallbackObject<Partial<LearnerLanguageSchema>> {

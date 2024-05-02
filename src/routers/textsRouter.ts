@@ -2,7 +2,6 @@ import {FastifyPluginCallback} from "fastify/types/plugin.js";
 import {textController} from "@/src/controllers/TextController.js";
 import {requiresAuth} from "@/src/middlewares/requiresAuth.js";
 import {requiresEmailConfirmed} from "@/src/middlewares/requiresEmailConfirmed.js";
-import {collectionController} from "@/src/controllers/CollectionController.js";
 
 export const textsRouter: FastifyPluginCallback = function (fastify, options, done) {
     fastify.get(`/texts/`, textController.getTexts);
