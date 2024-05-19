@@ -20,12 +20,13 @@ describe("GET users/me/collections/bookmarked/", function () {
         {property: "title", order: "asc"},
         {property: "id", order: "asc"}]
     );
-    test<TestContext>("If there are no filters return all collections user has bookmarked", async (context) => {
+    test<TestContext>("If there are no filters return all public collections user has bookmarked", async (context) => {
         const user = await context.userFactory.createOne();
         const session = await context.sessionFactory.createOne({user});
 
         const language = await context.languageFactory.createOne();
         const expectedCollections = await context.collectionFactory.create(3, {language, bookmarkers: user.profile});
+        await context.collectionFactory.create(3, {language, bookmarkers: user.profile, isPublic: false});
         await context.collectionFactory.create(3, {language});
         await context.collectionRepo.annotateCollectionsWithUserData(expectedCollections, user);
         expectedCollections.sort(defaultSortComparator);
@@ -48,7 +49,11 @@ describe("GET users/me/collections/bookmarked/", function () {
 
             const language1 = await context.languageFactory.createOne();
             const language2 = await context.languageFactory.createOne();
-            const expectedCollections = await context.collectionFactory.create(3, {language: language1, bookmarkers: user.profile});
+            const expectedCollections = await context.collectionFactory.create(3, {
+                language: language1,
+                bookmarkers: user.profile
+            });
+            await context.collectionFactory.create(3, {language: language1, bookmarkers: user.profile, isPublic: false});
             await context.collectionFactory.create(3, {language: language2, bookmarkers: user.profile});
             await context.collectionFactory.create(3, {language: language1});
             await context.collectionRepo.annotateCollectionsWithUserData(expectedCollections, user);
@@ -68,7 +73,10 @@ describe("GET users/me/collections/bookmarked/", function () {
         test<TestContext>("If language does not exist return empty list", async (context) => {
             const user = await context.userFactory.createOne();
             const session = await context.sessionFactory.createOne({user});
-            await context.collectionFactory.create(3, {language: await context.languageFactory.createOne(), bookmarkers: user.profile});
+            await context.collectionFactory.create(3, {
+                language: await context.languageFactory.createOne(),
+                bookmarkers: user.profile
+            });
 
             const response = await makeRequest({languageCode: faker.random.alpha({count: 4})}, session.token);
             expect(response.statusCode).to.equal(200);
@@ -94,7 +102,11 @@ describe("GET users/me/collections/bookmarked/", function () {
 
             const user1 = await context.userFactory.createOne();
             const user2 = await context.userFactory.createOne();
-            const expectedCollections = await context.collectionFactory.create(3, {language, addedBy: user1.profile, bookmarkers: user.profile});
+            const expectedCollections = await context.collectionFactory.create(3, {
+                language,
+                addedBy: user1.profile,
+                bookmarkers: user.profile
+            });
             await context.collectionFactory.create(3, {language, addedBy: user2.profile, bookmarkers: user.profile});
             await context.collectionFactory.create(3, {language, addedBy: user1.profile});
             await context.collectionRepo.annotateCollectionsWithUserData(expectedCollections, user);
@@ -117,8 +129,16 @@ describe("GET users/me/collections/bookmarked/", function () {
             const language = await context.languageFactory.createOne();
 
             const otherUser = await context.userFactory.createOne();
-            const expectedCollections = await context.collectionFactory.create(3, {language, addedBy: user.profile, bookmarkers: user.profile});
-            await context.collectionFactory.create(3, {language, addedBy: otherUser.profile, bookmarkers: user.profile});
+            const expectedCollections = await context.collectionFactory.create(3, {
+                language,
+                addedBy: user.profile,
+                bookmarkers: user.profile
+            });
+            await context.collectionFactory.create(3, {
+                language,
+                addedBy: otherUser.profile,
+                bookmarkers: user.profile
+            });
             await context.collectionFactory.create(3, {language, addedBy: user.profile});
             await context.collectionRepo.annotateCollectionsWithUserData(expectedCollections, user);
             expectedCollections.sort(defaultSortComparator);
@@ -137,7 +157,10 @@ describe("GET users/me/collections/bookmarked/", function () {
         test<TestContext>("If user does not exist return empty list", async (context) => {
             const user = await context.userFactory.createOne();
             const session = await context.sessionFactory.createOne({user});
-            await context.collectionFactory.create(3, {language: await context.languageFactory.createOne(), bookmarkers: user.profile});
+            await context.collectionFactory.create(3, {
+                language: await context.languageFactory.createOne(),
+                bookmarkers: user.profile
+            });
 
             const response = await makeRequest({addedBy: faker.random.alpha({count: 20})}, session.token);
             expect(response.statusCode).to.equal(200);
@@ -174,6 +197,7 @@ describe("GET users/me/collections/bookmarked/", function () {
                     description: `description ${randomCase(searchQuery)} ${faker.random.alphaNumeric(10)}`
                 })
             ];
+            await context.collectionFactory.create(3, {language, bookmarkers: user.profile, isPublic: false, title: searchQuery});
             await context.collectionFactory.create(3, {
                 language: language,
                 title: `title ${randomCase(searchQuery)} ${faker.random.alphaNumeric(10)}`
@@ -206,7 +230,10 @@ describe("GET users/me/collections/bookmarked/", function () {
         test<TestContext>("If no collections match search query return empty list", async (context) => {
             const user = await context.userFactory.createOne();
             const session = await context.sessionFactory.createOne({user});
-            await context.collectionFactory.create(3, {language: await context.languageFactory.createOne(), bookmarkers: user.profile});
+            await context.collectionFactory.create(3, {
+                language: await context.languageFactory.createOne(),
+                bookmarkers: user.profile
+            });
 
             const response = await makeRequest({searchQuery: faker.random.alpha({count: 200})}, session.token);
 
@@ -373,7 +400,10 @@ describe("GET users/me/collections/bookmarked/", function () {
                 const user = await context.userFactory.createOne();
                 const session = await context.sessionFactory.createOne({user});
                 const language = await context.languageFactory.createOne();
-                const allCollections = await context.collectionFactory.create(10, {language, bookmarkers: user.profile});
+                const allCollections = await context.collectionFactory.create(10, {
+                    language,
+                    bookmarkers: user.profile
+                });
                 allCollections.sort(defaultSortComparator);
                 const recordsCount = allCollections.length;
                 const page = 1, pageSize = 3;
@@ -394,7 +424,10 @@ describe("GET users/me/collections/bookmarked/", function () {
                 const user = await context.userFactory.createOne();
                 const session = await context.sessionFactory.createOne({user});
                 const language = await context.languageFactory.createOne();
-                const allCollections = await context.collectionFactory.create(10, {language, bookmarkers: user.profile});
+                const allCollections = await context.collectionFactory.create(10, {
+                    language,
+                    bookmarkers: user.profile
+                });
                 allCollections.sort(defaultSortComparator);
                 const recordsCount = allCollections.length;
                 const page = 2, pageSize = 3;
@@ -415,7 +448,10 @@ describe("GET users/me/collections/bookmarked/", function () {
                 const user = await context.userFactory.createOne();
                 const session = await context.sessionFactory.createOne({user});
                 const language = await context.languageFactory.createOne();
-                const allCollections = await context.collectionFactory.create(10, {language, bookmarkers: user.profile});
+                const allCollections = await context.collectionFactory.create(10, {
+                    language,
+                    bookmarkers: user.profile
+                });
                 allCollections.sort(defaultSortComparator);
                 const recordsCount = allCollections.length;
                 const pageSize = 3;
@@ -437,7 +473,10 @@ describe("GET users/me/collections/bookmarked/", function () {
                 const user = await context.userFactory.createOne();
                 const session = await context.sessionFactory.createOne({user});
                 const language = await context.languageFactory.createOne();
-                const allCollections = await context.collectionFactory.create(10, {language, bookmarkers: user.profile});
+                const allCollections = await context.collectionFactory.create(10, {
+                    language,
+                    bookmarkers: user.profile
+                });
                 const recordsCount = allCollections.length;
                 const pageSize = 3;
                 const page = Math.ceil(recordsCount / pageSize) + 1;
@@ -476,7 +515,10 @@ describe("GET users/me/collections/bookmarked/", function () {
                 const user = await context.userFactory.createOne();
                 const session = await context.sessionFactory.createOne({user});
                 const language = await context.languageFactory.createOne();
-                const allCollections = await context.collectionFactory.create(50, {language, bookmarkers: user.profile});
+                const allCollections = await context.collectionFactory.create(50, {
+                    language,
+                    bookmarkers: user.profile
+                });
                 allCollections.sort(defaultSortComparator);
                 const recordsCount = allCollections.length;
                 const page = 2, pageSize = 20;

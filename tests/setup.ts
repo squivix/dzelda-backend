@@ -1,4 +1,4 @@
-import {vi, afterAll, beforeEach, TestContext, beforeAll} from "vitest";
+import {afterAll, beforeEach, TestContext, vi} from "vitest";
 import {orm} from "@/src/server.js";
 import {UserFactory} from "@/devtools/factories/UserFactory.js";
 import {ProfileFactory} from "@/devtools/factories/ProfileFactory.js";

@@ -540,6 +540,134 @@ describe("GET texts/", () => {
             });
         });
     });
+    describe("Hide private texts from non-authors", () => {
+        test<TestContext>("If user is not logged in hide private texts", async (context) => {
+            const author = await context.userFactory.createOne();
+            const language = await context.languageFactory.createOne();
+            await context.textFactory.create(3, {language, addedBy: author.profile, isPublic: false});
+            const collection = await context.collectionFactory.createOne({language, isPublic: true});
+            await context.textFactory.create(3, {language, collection, addedBy: author.profile, isPublic: false});
+
+            const response = await makeRequest();
+
+            expect(response.statusCode).to.equal(200);
+            expect(response.json()).toEqual({
+                page: queryDefaults.pagination.page,
+                pageSize: queryDefaults.pagination.pageSize,
+                pageCount: 0,
+                data: []
+            });
+        });
+        test<TestContext>("If user is not author hide private texts", async (context) => {
+            const user = await context.userFactory.createOne();
+            const author = await context.userFactory.createOne();
+            const session = await context.sessionFactory.createOne({user: user});
+            const language = await context.languageFactory.createOne();
+            await context.textFactory.create(3, {language, addedBy: author.profile, isPublic: false});
+            const collection = await context.collectionFactory.createOne({language, isPublic: true});
+            await context.textFactory.create(3, {language, collection, addedBy: author.profile, isPublic: false});
+
+            const response = await makeRequest({}, session.token);
+
+            expect(response.statusCode).to.equal(200);
+            expect(response.json()).toEqual({
+                page: queryDefaults.pagination.page,
+                pageSize: queryDefaults.pagination.pageSize,
+                pageCount: 0,
+                data: []
+            });
+        });
+        test<TestContext>("If user is author show private texts", async (context) => {
+            const user = await context.userFactory.createOne();
+            const session = await context.sessionFactory.createOne({user: user});
+            const language = await context.languageFactory.createOne();
+            const expectedTexts = [
+                ...await context.textFactory.create(3, {language, isPublic: true}),
+                ...await context.textFactory.create(3, {
+                    language,
+                    isPublic: false,
+                    addedBy: user.profile
+                }),
+            ];
+            context.textRepo.annotateTextsWithUserData(expectedTexts, user);
+            await context.textFactory.create(3, {language: language, isPublic: false});
+            expectedTexts.sort(defaultSortComparator);
+            const recordsCount = expectedTexts.length;
+
+            const response = await makeRequest({}, session.token);
+
+            expect(response.statusCode).to.equal(200);
+            expect(response.json()).toEqual({
+                page: queryDefaults.pagination.page,
+                pageSize: queryDefaults.pagination.pageSize,
+                pageCount: Math.ceil(recordsCount / queryDefaults.pagination.pageSize),
+                data: textSerializer.serializeList(expectedTexts)
+            });
+        });
+    })
+    describe("Hide texts in private collections from non-authors", () => {
+        test<TestContext>("If user is not logged in hide texts in private collection", async (context) => {
+            const author = await context.userFactory.createOne();
+            const language = await context.languageFactory.createOne();
+            const collection = await context.collectionFactory.createOne({language, isPublic: false});
+            await context.textFactory.create(3, {language, collection, addedBy: author.profile, isPublic: true});
+
+            const response = await makeRequest();
+
+            expect(response.statusCode).to.equal(200);
+            expect(response.json()).toEqual({
+                page: queryDefaults.pagination.page,
+                pageSize: queryDefaults.pagination.pageSize,
+                pageCount: 0,
+                data: []
+            });
+        });
+
+        test<TestContext>("If user is not author hide texts in private collection", async (context) => {
+            const user = await context.userFactory.createOne();
+            const author = await context.userFactory.createOne();
+            const session = await context.sessionFactory.createOne({user: user});
+            const language = await context.languageFactory.createOne();
+            const collection = await context.collectionFactory.createOne({language, isPublic: false});
+            await context.textFactory.create(3, {language, collection, addedBy: author.profile, isPublic: true});
+
+            const response = await makeRequest({}, session.token);
+
+            expect(response.statusCode).to.equal(200);
+            expect(response.json()).toEqual({
+                page: queryDefaults.pagination.page,
+                pageSize: queryDefaults.pagination.pageSize,
+                pageCount: 0,
+                data: []
+            });
+        });
+        test<TestContext>("If user is author show texts in a private collection", async (context) => {
+            const author = await context.userFactory.createOne();
+            const session = await context.sessionFactory.createOne({user: author});
+            const language = await context.languageFactory.createOne();
+            const publicCollection = await context.collectionFactory.createOne({language, isPublic: true});
+            const privateCollection = await context.collectionFactory.createOne({language, isPublic: false, addedBy: author.profile});
+
+            const expectedTexts = [
+                ...await context.textFactory.create(3, {language, collection: publicCollection}),
+                ...await context.textFactory.create(3, {language, collection: privateCollection,}),
+            ];
+            context.textRepo.annotateTextsWithUserData(expectedTexts, author);
+            await context.textFactory.create(3, {language: language, isPublic: false});
+            expectedTexts.sort(defaultSortComparator);
+            const recordsCount = expectedTexts.length;
+
+            const response = await makeRequest({}, session.token);
+
+            expect(response.statusCode).to.equal(200);
+            expect(response.json()).toEqual({
+                page: queryDefaults.pagination.page,
+                pageSize: queryDefaults.pagination.pageSize,
+                pageCount: Math.ceil(recordsCount / queryDefaults.pagination.pageSize),
+                data: textSerializer.serializeList(expectedTexts)
+            });
+        });
+    })
     test<TestContext>("If logged in return texts with vocab levels for user", async (context) => {
         const user = await context.userFactory.createOne();
         const session = await context.sessionFactory.createOne({user: user});
@@ -548,33 +676,6 @@ describe("GET texts/", () => {
             language: language,
             isPublic: true
         });
-        context.textRepo.annotateTextsWithUserData(expectedTexts, user);
-        await context.textFactory.create(3, {language: language, isPublic: false});
-        expectedTexts.sort(defaultSortComparator);
-        const recordsCount = expectedTexts.length;
-
-        const response = await makeRequest({}, session.token);
-
-        expect(response.statusCode).to.equal(200);
-        expect(response.json()).toEqual({
-            page: queryDefaults.pagination.page,
-            pageSize: queryDefaults.pagination.pageSize,
-            pageCount: Math.ceil(recordsCount / queryDefaults.pagination.pageSize),
-            data: textSerializer.serializeList(expectedTexts)
-        });
-    });
-    test<TestContext>("If logged in as author of texts return private texts", async (context) => {
-        const user = await context.userFactory.createOne();
-        const session = await context.sessionFactory.createOne({user: user});
-        const language = await context.languageFactory.createOne();
-        const expectedTexts = [
-            ...await context.textFactory.create(3, {language, isPublic: true}),
-            ...await context.textFactory.create(3, {
-                language,
-                isPublic: false,
-                addedBy: user.profile
-            }),
-        ];
         context.textRepo.annotateTextsWithUserData(expectedTexts, user);
         await context.textFactory.create(3, {language: language, isPublic: false});
         expectedTexts.sort(defaultSortComparator);

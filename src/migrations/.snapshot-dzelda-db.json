@@ -1483,6 +1483,16 @@
           "length": 6,
           "default": "now()",
           "mappedType": "datetime"
+        },
+        "is_public": {
+          "name": "is_public",
+          "type": "boolean",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "default": "true",
+          "mappedType": "boolean"
         }
       },
       "name": "collection",

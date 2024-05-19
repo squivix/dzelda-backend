@@ -20,8 +20,9 @@ describe("GET collections/", function () {
         {property: "title", order: "asc"},
         {property: "id", order: "asc"}]
     );
-    test<TestContext>("If there are no filters return all collections", async (context) => {
+    test<TestContext>("If there are no filters return all public collections", async (context) => {
         const language = await context.languageFactory.createOne();
+        await context.collectionFactory.create(5, {language, isPublic: false});
         const expectedCollection = await context.collectionFactory.create(5, {language});
         expectedCollection.sort(defaultSortComparator);
         const recordsCount = expectedCollection.length;
@@ -40,6 +41,7 @@ describe("GET collections/", function () {
         test<TestContext>("If language filter is valid and language exists only return public collections in that language", async (context) => {
             const language1 = await context.languageFactory.createOne();
             const language2 = await context.languageFactory.createOne();
+            await context.collectionFactory.create(5, {language: language1, isPublic: false});
             const expectedCollections = await context.collectionFactory.create(3, {language: language1});
             await context.collectionFactory.create(3, {language: language2});
             expectedCollections.sort(defaultSortComparator);
@@ -138,9 +140,16 @@ describe("GET collections/", function () {
             const language = await context.languageFactory.createOne();
             const searchQuery = "search query";
             const expectedCollections = [
-                await context.collectionFactory.createOne({language, title: `title ${randomCase(searchQuery)} ${faker.random.alphaNumeric(10)}`}),
-                await context.collectionFactory.createOne({language, description: `description ${randomCase(searchQuery)} ${faker.random.alphaNumeric(10)}`})
+                await context.collectionFactory.createOne({
+                    language,
+                    title: `title ${randomCase(searchQuery)} ${faker.random.alphaNumeric(10)}`
+                }),
+                await context.collectionFactory.createOne({
+                    language,
+                    description: `description ${randomCase(searchQuery)} ${faker.random.alphaNumeric(10)}`
+                })
             ];
+            await context.collectionFactory.create(3, {language, isPublic: false});
             await context.collectionFactory.create(3, {language: language});
             expectedCollections.sort(defaultSortComparator);
             const recordsCount = expectedCollections.length;
@@ -197,8 +206,14 @@ describe("GET collections/", function () {
             test<TestContext>("test sortBy createdDate", async (context) => {
                 const language = await context.languageFactory.createOne();
                 const expectedCollections = [
-                    await context.collectionFactory.createOne({addedOn: new Date("2018-07-22T10:30:45.000Z"), language}),
-                    await context.collectionFactory.createOne({addedOn: new Date("2023-03-15T20:29:42.000Z"), language}),
+                    await context.collectionFactory.createOne({
+                        addedOn: new Date("2018-07-22T10:30:45.000Z"),
+                        language
+                    }),
+                    await context.collectionFactory.createOne({
+                        addedOn: new Date("2023-03-15T20:29:42.000Z"),
+                        language
+                    }),
                 ];
                 const recordsCount = expectedCollections.length;
 
@@ -219,7 +234,10 @@ describe("GET collections/", function () {
                 const language = await context.languageFactory.createOne();
                 const expectedCollections = [
                     await context.collectionFactory.createOne({language, texts: []}),
-                    await context.collectionFactory.createOne({language, texts: [context.textFactory.makeOne({language, pastViewers: []})]}),
+                    await context.collectionFactory.createOne({
+                        language,
+                        texts: [context.textFactory.makeOne({language, pastViewers: []})]
+                    }),
                     await context.collectionFactory.createOne({
                         language,
                         texts: [context.textFactory.makeOne({language, pastViewers: [user1.profile]})]
@@ -435,9 +453,10 @@ describe("GET collections/", function () {
         const user = await context.userFactory.createOne();
         const session = await context.sessionFactory.createOne({user: user});
         const language = await context.languageFactory.createOne();
+        await context.collectionFactory.create(5, {language, isPublic: false})
         const expectedCollections = [
-            ...await context.collectionFactory.create(5, {language,}),
-            ...await context.collectionFactory.create(5, {language, addedBy: user.profile}),
+            ...await context.collectionFactory.create(5, {language, isPublic: true}),
+            ...await context.collectionFactory.create(5, {language, isPublic: false, addedBy: user.profile}),
         ];
         expectedCollections.sort(defaultSortComparator);
         await context.collectionRepo.annotateCollectionsWithUserData(expectedCollections, user);

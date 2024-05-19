@@ -62,7 +62,7 @@ class TextController {
         });
     }
 
-//TODO be consistent with error code for not found in body
+    //TODO be consistent with error code for not found in body
     async createText(request: FastifyRequest, reply: FastifyReply) {
         const bodyValidator = z.object({
             languageCode: languageCodeValidator,
@@ -118,7 +118,7 @@ class TextController {
         const textService = new TextService(request.em);
         const text = await textService.getText(pathParams.textId, request.user);
 
-        if (!text || (!text.isPublic && request?.user?.profile !== text.addedBy))
+        if (!text)
             throw new NotFoundAPIError("Text");
         reply.status(200).send(textSerializer.serialize(text));
     }

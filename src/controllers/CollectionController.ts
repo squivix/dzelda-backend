@@ -55,6 +55,7 @@ class CollectionController {
             languageCode: languageCodeValidator,
             title: collectionTitleValidator,
             description: collectionDescriptionValidator.optional(),
+            isPublic: z.boolean().optional().default(true),
             image: z.string().optional(),
         });
         const body = bodyValidator.parse(request.body);
@@ -71,6 +72,7 @@ class CollectionController {
             language: language,
             title: body.title,
             description: body.description,
+            isPublic: body.isPublic,
             image: body.image,
         }, request.user as User);
         reply.status(201).send(collectionSerializer.serialize(collection));
@@ -95,19 +97,19 @@ class CollectionController {
         const bodyValidator = z.object({
             title: collectionTitleValidator,
             description: collectionDescriptionValidator,
+            isPublic: z.boolean().optional(),
             textsOrder: z.array(z.number().int().min(0)).refine(e => new Set(e).size === e.length),
-            image: z.string().optional()
+            image: z.string().optional(),
         });
         const body = bodyValidator.parse(request.body);
 
         const collectionService = new CollectionService(request.em);
-        const collection = await collectionService.findCollection(pathParams.collectionId, ["id", "addedBy", "texts"]);
+        const collection = await collectionService.findCollection(pathParams.collectionId, ["id", "addedBy", "texts","isPublic"]);
 
         if (!collection)
             throw new NotFoundAPIError("Collection");
-
         if (request?.user?.profile !== collection.addedBy)
-            throw new ForbiddenAPIError();
+            throw collection.isPublic ? new ForbiddenAPIError() : new NotFoundAPIError("Collection");
 
         const textOrderIdSet = new Set(body.textsOrder);
         if (collection.texts.length !== body.textsOrder.length || !collection.texts.getItems().map(c => c.id).every(l => textOrderIdSet.has(l)))
@@ -120,7 +122,8 @@ class CollectionController {
             title: body.title,
             description: body.description,
             image: body.image,
-            textsOrder: body.textsOrder
+            textsOrder: body.textsOrder,
+            isPublic: body.isPublic
         }, request.user as User);
         reply.status(200).send(collectionSerializer.serialize(updatedCollection));
     }

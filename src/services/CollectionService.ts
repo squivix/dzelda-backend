@@ -32,7 +32,9 @@ export class CollectionService {
         if (user && user instanceof User) {
             if (filters.isBookmarked)
                 dbFilters.$and!.push({bookmarkers: user.profile});
-        }
+            dbFilters.$and!.push({$or: [{isPublic: true}, {addedBy: user.profile}]});
+        } else
+            dbFilters.$and!.push({isPublic: true});
         if (filters.languageCode !== undefined)
             dbFilters.$and!.push({language: {code: filters.languageCode}});
         if (filters.addedBy !== undefined)
@@ -62,7 +64,7 @@ export class CollectionService {
     }
 
     async createCollection(fields: {
-        language: Language, title: string, description?: string, image?: string
+        language: Language, isPublic: boolean, title: string, description?: string, image?: string
     }, user: User) {
         const newCollection = this.collectionRepo.create({
             title: fields.title,
@@ -70,6 +72,7 @@ export class CollectionService {
             language: fields.language,
             description: fields.description,
             image: fields.image,
+            isPublic: fields.isPublic
         });
         newCollection.vocabsByLevel = defaultVocabsByLevel();
         await this.em.flush();
@@ -77,9 +80,10 @@ export class CollectionService {
     }
 
     async getCollection(collectionId: number, user: User | AnonymousUser | null) {
-        const collection = await this.collectionRepo.findOne({id: collectionId}, {populate: ["language", "addedBy", "addedBy.user"]});
+        const privateFilter: FilterQuery<Text & Collection> = user instanceof User ? {$or: [{isPublic: true}, {addedBy: user.profile}]} : {isPublic: true};
+
+        const collection = await this.collectionRepo.findOne({$and: [{id: collectionId}, privateFilter]}, {populate: ["language", "addedBy", "addedBy.user"]});
         if (collection) {
-            const privateFilter: FilterQuery<Text> = user instanceof User ? {$or: [{isPublic: true}, {addedBy: user.profile}]} : {isPublic: true};
             await collection.texts.init({where: privateFilter, orderBy: {orderInCollection: "asc"}, populate: ["addedBy.user"]});
             if (user && !(user instanceof AnonymousUser)) {
                 await this.collectionRepo.annotateCollectionsWithUserData([collection], user);
@@ -91,13 +95,15 @@ export class CollectionService {
 
     async updateCollection(collection: Collection, updatedCollectionData: {
         title: string;
+        isPublic?: boolean;
         description: string;
         image?: string;
         textsOrder: number[]
     }, user: User) {
         collection.title = updatedCollectionData.title;
         collection.description = updatedCollectionData.description;
-
+        if (updatedCollectionData.isPublic !== undefined)
+            collection.isPublic = updatedCollectionData.isPublic;
         if (updatedCollectionData.image !== undefined)
             collection.image = updatedCollectionData.image;
 
@@ -132,7 +138,7 @@ export class CollectionService {
             .execute("get");
     }
 
-    async findCollection(where: FilterQuery<Collection>, fields: EntityField<Collection>[] = ["id", "addedBy"]) {
+    async findCollection(where: FilterQuery<Collection>, fields: EntityField<Collection>[] = ["id", "addedBy", "isPublic"]) {
         return await this.collectionRepo.findOne(where, {fields: fields as any}) as Collection;
     }
 

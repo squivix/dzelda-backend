@@ -43,15 +43,21 @@ export class TextService {
         const dbFilters: FilterQuery<Text> = {$and: []};
         dbFilters.$and!.push({isHidden: false});
         if (user && user instanceof User) {
+            dbFilters.$and!.push({
+                $and: [
+                    {$or: [{isPublic: true}, {addedBy: user.profile}]},
+                    {$or: [{collection: {$eq: null}}, {collection: {$or: [{isPublic: true}, {addedBy: user.profile}]}}]},
+                ]
+            });
+
             if (!filters.isHiddenByUser)
                 dbFilters.$and!.push({hiddenBy: {$none: user.profile}});
             else
                 dbFilters.$and!.push({hiddenBy: {$some: user.profile}});
-            dbFilters.$and!.push({$or: [{isPublic: true}, {addedBy: (user as User).profile}]});
             if (filters.isBookmarked)
                 dbFilters.$and!.push({bookmarkers: user.profile});
         } else
-            dbFilters.$and!.push({isPublic: true});
+            dbFilters.$and!.push({$and: [{isPublic: true}, {$or: [{collection: {$eq: null}}, {collection: {isPublic: true}}]}]});
 
         if (filters.languageCode !== undefined)
             dbFilters.$and!.push({language: {code: filters.languageCode}});
@@ -101,7 +107,13 @@ export class TextService {
         const dbFilters: FilterQuery<TextHistoryEntry> = {$and: []};
         dbFilters.$and!.push({text: {isHidden: false}});
         dbFilters.$and!.push({text: {hiddenBy: {$none: user.profile}}});
-        dbFilters.$and!.push({$or: [{text: {isPublic: true}}, {text: {addedBy: user.profile}}]});
+        dbFilters.$and!.push({
+            $and: [
+                {$or: [{text: {isPublic: true}}, {text: {addedBy: user.profile}}]},
+                {$or: [{text: {collection: {$eq: null}}}, {text: {collection: {$or: [{isPublic: true}, {addedBy: user.profile}]}}}]},
+            ]
+        });
+
         dbFilters.$and!.push({pastViewer: user.profile});
 
         if (filters.languageCode !== undefined)
@@ -188,8 +200,17 @@ export class TextService {
     async getText(textId: number, user: User | AnonymousUser | null) {
         const dbFilters: FilterQuery<Text> = {$and: [{id: textId}]};
         dbFilters.$and!.push({isHidden: false});
-        if (user instanceof User)
+        if (user instanceof User) {
+            dbFilters.$and!.push({
+                $and: [
+                    {$or: [{isPublic: true}, {addedBy: user.profile}]},
+                    {$or: [{collection: {$eq: null}}, {collection: {$or: [{isPublic: true}, {addedBy: user.profile}]}}]},
+                ]
+            });
             dbFilters.$and!.push({hiddenBy: {$none: user.profile}});
+        } else
+            dbFilters.$and!.push({$and: [{isPublic: true}, {$or: [{collection: {$eq: null}}, {collection: {isPublic: true}}]}]});
+
         let text = await this.textRepo.findOne(dbFilters, {populate: ["language", "addedBy.user", "collection", "collection.language", "collection.addedBy.user"]});
 
         if (text) {

@@ -26,6 +26,7 @@ describe("POST collections/", function () {
                 addedBy: user.profile,
                 language: language,
                 image: "",
+                isPublic: true,
                 vocabsByLevel: defaultVocabsByLevel()
             });
 
@@ -53,6 +54,7 @@ describe("POST collections/", function () {
                 addedBy: user.profile,
                 language: language,
                 texts: [],
+                isPublic: false,
                 image: fileUploadRequest.fileUrl,
                 vocabsByLevel: defaultVocabsByLevel()
             });
@@ -60,6 +62,7 @@ describe("POST collections/", function () {
                 title: newCollection.title,
                 description: newCollection.description,
                 languageCode: language.code,
+                isPublic: newCollection.isPublic,
                 image: fileUploadRequest.objectKey,
             }, session.token);
 
@@ -170,6 +173,20 @@ describe("POST collections/", function () {
                 title: newCollection.title,
                 languageCode: language.code,
                 description: faker.random.alpha(600)
+            }, session.token);
+
+            expect(response.statusCode).to.equal(400);
+        });
+        test<TestContext>("If isPublic is invalid return 400", async (context) => {
+            const user = await context.userFactory.createOne();
+            const session = await context.sessionFactory.createOne({user: user});
+            const language = await context.languageFactory.createOne();
+            const newCollection = context.collectionFactory.makeOne({language: language});
+
+            const response = await makeRequest({
+                title: newCollection.title,
+                languageCode: language.code,
+                isPublic: "maybe?"
             }, session.token);
 
             expect(response.statusCode).to.equal(400);

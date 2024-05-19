@@ -15,8 +15,9 @@ describe("GET collections/{collectionId}/", function () {
     };
 
     describe("If the collection exists return the collection", () => {
-        test<TestContext>("If the user is not logged in return collection and texts without vocab levels", async (context) => {
-            const collection = await context.collectionFactory.createOne({language: await context.languageFactory.createOne()});
+        test<TestContext>("If the user is not logged in and collection is public return collection and texts without vocab levels", async (context) => {
+            const language = await context.languageFactory.createOne();
+            const collection = await context.collectionFactory.createOne({language});
 
             const response = await makeRequest(collection.id);
 
@@ -40,7 +41,13 @@ describe("GET collections/{collectionId}/", function () {
             const session = await context.sessionFactory.createOne({user: user});
             const language = await context.languageFactory.createOne();
             const collection = await context.collectionFactory.createOne({
-                language, texts: context.textFactory.makeDefinitions(3, {addedBy: author.profile, language, isPublic: true, isLastInCollection: false}),
+                language,
+                texts: context.textFactory.makeDefinitions(3, {
+                    addedBy: author.profile,
+                    language,
+                    isPublic: true,
+                    isLastInCollection: false
+                }),
             });
             const texts = await Promise.all(Array.from({length: 3}).map((_, i) => context.textFactory.createOne({
                 collection, language, addedBy: author.profile, isPublic: false,
@@ -53,6 +60,29 @@ describe("GET collections/{collectionId}/", function () {
             expect(response.json()).toEqual(collectionSerializer.serialize(collection));
         });
     });
+    describe("If the collection is private hide it from non-author user", () => {
+        test<TestContext>("If the user is not logged in and collection is private return 404", async (context) => {
+            const language = await context.languageFactory.createOne();
+            const collection = await context.collectionFactory.createOne({language, isPublic: false});
+
+            const response = await makeRequest(collection.id);
+
+            expect(response.statusCode).to.equal(404);
+        });
+        test<TestContext>("If the user is not author of private collection return 404", async (context) => {
+            const author = await context.userFactory.createOne();
+            const user = await context.userFactory.createOne();
+            const session = await context.sessionFactory.createOne({user});
+
+            const language = await context.languageFactory.createOne();
+            const collection = await context.collectionFactory.createOne({language, addedBy: author, isPublic: false});
+            await context.collectionRepo.annotateCollectionsWithUserData([collection], user);
+
+            const response = await makeRequest(collection.id, session.token);
+
+            expect(response.statusCode).to.equal(404);
+        });
+    })
     test<TestContext>("If the collection does not exist return 404", async () => {
         const response = await makeRequest(faker.datatype.number({min: 10000000}));
         expect(response.statusCode).to.equal(404);

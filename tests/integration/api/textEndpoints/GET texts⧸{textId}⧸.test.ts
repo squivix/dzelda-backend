@@ -45,36 +45,87 @@ describe("GET texts/{textId}/", () => {
         const response = await makeRequest(faker.random.alpha(8));
         expect(response.statusCode).to.equal(400);
     });
-    test<TestContext>("If the text is not public and the user is not logged in return 404", async (context) => {
-        const language = await context.languageFactory.createOne();
-        const text = await context.textFactory.createOne({language, isPublic: false});
+    describe("Hide private texts from non-authors", () => {
+        test<TestContext>("If the text is private and the user is not logged in return 404", async (context) => {
+            const language = await context.languageFactory.createOne();
+            const text = await context.textFactory.createOne({language, isPublic: false});
 
-        const response = await makeRequest(text.id);
+            const response = await makeRequest(text.id);
 
-        expect(response.statusCode).to.equal(404);
-    });
-    test<TestContext>("If the text is not public and the user is logged in as a non-author return 404", async (context) => {
-        const author = await context.userFactory.createOne();
-        const language = await context.languageFactory.createOne();
-        const text = await context.textFactory.createOne({language, isPublic: false, addedBy: author.profile});
-        const otherUser = await context.userFactory.createOne();
-        const session = await context.sessionFactory.createOne({user: otherUser});
+            expect(response.statusCode).to.equal(404);
+        });
+        test<TestContext>("If the text is private and the user is logged in as a non-author return 404", async (context) => {
+            const author = await context.userFactory.createOne();
+            const language = await context.languageFactory.createOne();
+            const text = await context.textFactory.createOne({language, isPublic: false, addedBy: author.profile});
+            const otherUser = await context.userFactory.createOne();
+            const session = await context.sessionFactory.createOne({user: otherUser});
 
-        const response = await makeRequest(text.id, session.token);
+            const response = await makeRequest(text.id, session.token);
 
-        expect(response.statusCode).to.equal(404);
-    });
-    test<TestContext>("If the text is not public and the user is logged in as author return text with vocabs by level", async (context) => {
-        const author = await context.userFactory.createOne();
-        const language = await context.languageFactory.createOne();
-        const text = await context.textFactory.createOne({language, isPublic: false, addedBy: author.profile});
-        const session = await context.sessionFactory.createOne({user: author});
+            expect(response.statusCode).to.equal(404);
+        });
+        test<TestContext>("If the text is private and the user is logged in as author return text", async (context) => {
+            const author = await context.userFactory.createOne();
+            const language = await context.languageFactory.createOne();
+            const text = await context.textFactory.createOne({language, isPublic: false, addedBy: author.profile});
+            const session = await context.sessionFactory.createOne({user: author});
 
-        const response = await makeRequest(text.id, session.token);
+            const response = await makeRequest(text.id, session.token);
 
-        await context.textRepo.annotateTextsWithUserData([text], author);
+            await context.textRepo.annotateTextsWithUserData([text], author);
 
-        expect(response.statusCode).to.equal(200);
-        expect(response.json()).toEqual(textSerializer.serialize(text));
-    });
+            expect(response.statusCode).to.equal(200);
+            expect(response.json()).toEqual(textSerializer.serialize(text));
+        });
+
+        test<TestContext>("If user is not logged in hide private text", async (context) => {
+
+        });
+        test<TestContext>("If user is not author hide private text", async (context) => {
+
+        });
+        test<TestContext>("If user is author show private text", async (context) => {
+
+        });
+    })
+    describe("Hide texts in private collections from non-authors", () => {
+        test<TestContext>("If the text is in private collection and the user is not logged in return 404", async (context) => {
+            const language = await context.languageFactory.createOne();
+            const collection = await context.collectionFactory.createOne({language, isPublic: false});
+            const text = await context.textFactory.createOne({language, collection});
+
+            const response = await makeRequest(text.id);
+
+            expect(response.statusCode).to.equal(404);
+        });
+        test<TestContext>("If the text is in private collection and the user is logged in as a non-author return 404", async (context) => {
+            const author = await context.userFactory.createOne();
+            const language = await context.languageFactory.createOne();
+            const collection = await context.collectionFactory.createOne({language, isPublic: false});
+            const text = await context.textFactory.createOne({language, collection, addedBy: author.profile});
+            const otherUser = await context.userFactory.createOne();
+            const session = await context.sessionFactory.createOne({user: otherUser});
+
+            const response = await makeRequest(text.id, session.token);
+
+            expect(response.statusCode).to.equal(404);
+        });
+        test<TestContext>("If the text is in private collection and the user is logged in as author return text", async (context) => {
+            const author = await context.userFactory.createOne();
+            const session = await context.sessionFactory.createOne({user: author});
+            const language = await context.languageFactory.createOne();
+            const collection = await context.collectionFactory.createOne({language, isPublic: false, addedBy: author.profile});
+            const text = await context.textFactory.createOne({language, collection});
+
+            const response = await makeRequest(text.id, session.token);
+
+            await context.textRepo.annotateTextsWithUserData([text], author);
+            await context.collectionRepo.annotateCollectionsWithUserData([collection], author);
+
+            expect(response.statusCode).to.equal(200);
+            expect(response.json()).toEqual(textSerializer.serialize(text));
+        });
+    })
+
 });

@@ -32,6 +32,9 @@ export class Collection extends CustomBaseEntity {
     @Property({type: types.datetime, defaultRaw: "now()"})
     addedOn!: Date;
 
+    @Property({type: types.boolean, default: true})
+    isPublic: boolean = true;
+
     @OneToMany({entity: () => Text, mappedBy: (text) => text.collection})
     texts: MikroOrmCollection<Text> = new MikroOrmCollection<Text>(this);
 
@@ -46,13 +49,12 @@ export class Collection extends CustomBaseEntity {
 
     [OptionalProps]?: "description" | "image" | "isPublic" | "addedOn" | "level" | "bookmarkers" | "avgPastViewersCountPerText";
 
-
+    //annotated properties
     @Formula((alias: string) => `(SELECT COUNT(DISTINCT text_history_entry.past_viewer_id)::float / GREATEST(COUNT(DISTINCT text.id), 1) FROM collection LEFT JOIN text on collection.id = text.collection_id LEFT JOIN text_history_entry on text_history_entry.text_id = text.id WHERE collection.id = ${alias}.id)`, {
         type: "number"
     })
     avgPastViewersCountPerText?: number;
 
-    //annotated properties
     @Property({persist: false, type: types.json})
     vocabsByLevel?: Record<VocabLevel, number>;
 

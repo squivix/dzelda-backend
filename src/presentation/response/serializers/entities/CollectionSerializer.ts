@@ -17,8 +17,9 @@ export class CollectionSerializer extends CustomEntitySerializer<Collection, Col
             texts: () => textSerializer.serializeList(collection.texts.getItems(), {ignore: ["collection"]}),
             addedOn: () => collection.addedOn.toISOString(),
             addedBy: () => collection.addedBy.user.username,
+            isPublic: () => collection.isPublic,
             vocabsByLevel: () => collection.vocabsByLevel,
-            isBookmarked: () => collection.isBookmarked
+            isBookmarked: () => collection.isBookmarked,
         };
     }
 

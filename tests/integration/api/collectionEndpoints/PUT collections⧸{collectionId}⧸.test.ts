@@ -96,15 +96,17 @@ describe("PUT collections/{collectionId}/", function () {
             const updatedCollection = context.collectionFactory.makeOne({
                 addedBy: author.profile,
                 language: language,
-                image: fileUploadRequest.fileUrl
+                image: fileUploadRequest.fileUrl,
+                isPublic: false,
             });
             const shuffledTextIds = shuffleArray(collectionTexts).map(l => l.id);
 
             const response = await makeRequest(collection.id, {
                 title: updatedCollection.title,
                 description: updatedCollection.description,
+                isPublic: updatedCollection.isPublic,
                 textsOrder: shuffledTextIds,
-                image: fileUploadRequest.objectKey
+                image: fileUploadRequest.objectKey,
             }, session.token);
 
             context.em.clear();
@@ -116,7 +118,7 @@ describe("PUT collections/{collectionId}/", function () {
             expect(response.statusCode).to.equal(200);
             expect(response.json()).toEqual(collectionSerializer.serialize(collection));
             expect(response.json().texts.map((l: TextSchema) => l.id)).toEqual(shuffledTextIds);
-            const updatedFields: (keyof CollectionSchema)[] = ["title", "description", "image"];
+            const updatedFields: (keyof CollectionSchema)[] = ["title", "description", "image", "isPublic"];
             expect(collectionSerializer.serialize(collection, {include: updatedFields})).toEqual(collectionSerializer.serialize(updatedCollection, {include: updatedFields}));
         });
     });
@@ -201,6 +203,33 @@ describe("PUT collections/{collectionId}/", function () {
         }, session.token);
 
         expect(response.statusCode).to.equal(403);
+    });
+    test<TestContext>("If collection is not public and user is not author return 404", async (context) => {
+        const author = await context.userFactory.createOne();
+        const otherUser = await context.userFactory.createOne();
+        const session = await context.sessionFactory.createOne({user: otherUser});
+        const language = await context.languageFactory.createOne();
+        const collection = await context.collectionFactory.createOne({
+            language, addedBy: author.profile,
+            isPublic: false,
+            texts: [],
+            image: ""
+        });
+
+        let textCounter = 0;
+        let collectionTexts = await context.textFactory.each(l => {
+            l.orderInCollection = textCounter;
+            textCounter++;
+        }).create(10, {collection, language, addedBy: author.profile});
+        const updatedCollection = await context.collectionFactory.makeOne({addedBy: author.profile, language});
+
+        const response = await makeRequest(collection.id, {
+            title: updatedCollection.title,
+            description: updatedCollection.description,
+            textsOrder: shuffleArray(collectionTexts).map(l => l.id)
+        }, session.token);
+
+        expect(response.statusCode).to.equal(404);
     });
     describe("If required fields are missing return 400", async () => {
         test<TestContext>("If title is missing return 400", async (context) => {
