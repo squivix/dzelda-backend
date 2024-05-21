@@ -9,6 +9,8 @@ RUN npm ci
 
 COPY . .
 
+RUN npm run clean
+
 EXPOSE 80
 
 CMD ["npm", "run", "prod"]

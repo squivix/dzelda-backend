@@ -18,7 +18,6 @@
     "predrop": "npm run clean",
     "drop": "mikro-orm schema:drop --run",
     "dev": "env-cmd -f ./env/dev.env concurrently -k \"tsx --watch ./src/main.ts\" \"tsx --watch ./src/workers/parseNewTextWorker.ts\" -n \"backend,parse-text-worker\"",
-    "preprod": "npm run clean",
     "prod": "node ./build/src/main.js",
     "seed": "tsx devtools/seeders/DatabaseSeeder.ts",
     "dump": "tsx devtools/dumpers/DatabaseDumper.ts",
