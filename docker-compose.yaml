@@ -94,9 +94,9 @@ services:
       - prod
     healthcheck:
       test: [ "CMD", "nc", "-z", "localhost", "5672" ]
-      interval: 5s
-      timeout: 15s
-      retries: 1
+      interval: 10s
+      timeout: 60s
+      retries: 3
 volumes:
   postgres-data: null
   certbot-etc: null
