@@ -252,6 +252,7 @@ class UserController {
 
     async getUserNotifications(request: FastifyRequest, reply: FastifyReply) {
         const userService = new UserService(request.em);
+        await userService.checkUserPendingJobs(request.user as User);
         const notifications = await userService.getUserNotifications(request.user as User);
 
         reply.status(200).send(notifications);

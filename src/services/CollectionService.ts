@@ -11,7 +11,7 @@ import {EntityField} from "@mikro-orm/core/drivers/IDatabaseDriver.js";
 import {CollectionBookmark} from "@/src/models/entities/CollectionBookmark.js";
 import {SqlEntityManager} from "@mikro-orm/postgresql";
 import {TextService} from "@/src/services/TextService.js";
-import {Notification} from "@/src/models/entities/Notification.js";
+import {PendingJob} from "@/src/models/entities/PendingJob.js";
 
 export class CollectionService {
     em: SqlEntityManager;
@@ -86,25 +86,22 @@ export class CollectionService {
         await this.em.flush();
 
         if (fields.texts) {
-            this.em.transactional(async tm => {
-                const textService = new TextService(tm);
-                for (const textData of fields.texts!) {
-                    await textService.createText({
-                        title: textData.title,
-                        content: textData.content,
-                        language: fields.language,
-                        collection: newCollection,
-                        isPublic: textData.isPublic,
-                        level: textData.level,
-                    }, user, false);
-                }
-            }).then(() => {
-                const notification = this.em.create(Notification, {
-                    recipient: user.profile,
-                    text: `Collection "${newCollection.title}" finished importing`,
-                });
-                this.em.persist(notification);
-                this.em.flush();
+            const textService = new TextService(this.em);
+            for (const textData of fields.texts!) {
+                await textService.createText({
+                    title: textData.title,
+                    content: textData.content,
+                    language: fields.language,
+                    collection: newCollection,
+                    isPublic: textData.isPublic,
+                    level: textData.level,
+                }, user, false);
+
+            }
+            await this.em.insert(PendingJob, {
+                jobType: "bulk-import-collection",
+                initiator: user.profile,
+                jobParams: {collectionId: newCollection.id}
             });
         }
         return newCollection;

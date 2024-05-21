@@ -35,6 +35,8 @@ import {MapVocabRootForm} from "@/src/models/entities/MapVocabRootForm.js";
 import {VocabTagCategory} from "@/src/models/entities/VocabTagCategory.js";
 import fs from "fs";
 import process from "process";
+import {Notification} from "@/src/models/entities/Notification.js";
+import {PendingJob} from "@/src/models/entities/PendingJob.js";
 
 
 const devOptions: Options = {
@@ -44,10 +46,10 @@ const devOptions: Options = {
         CustomBaseEntity, Collection, Dictionary, Language, Text, MapLearnerDictionary, CollectionBookmark,
         TextHistoryEntry, MapLearnerMeaning, MapLearnerVocab, MapTextVocab, MapLearnerLanguage, Meaning, Profile,
         Vocab, User, Session, PasswordResetToken, EmailConfirmationToken, FileUploadRequest, TTSVoice, TTSPronunciation,
-        HumanPronunciation, MapHiderText, FlaggedTextReport, TranslationLanguage, PreferredTranslationLanguageEntry, VocabTag, VocabTagCategory, MapVocabTag, MapVocabRootForm
+        HumanPronunciation, MapHiderText, FlaggedTextReport, TranslationLanguage, PreferredTranslationLanguageEntry, VocabTag, VocabTagCategory, MapVocabTag, MapVocabRootForm, Notification, PendingJob
     ],
     loadStrategy: LoadStrategy.SELECT_IN,       //populateWhere does not work with JOINED, also to-many joins are slow
-    debug: true,
+    debug: false,
     migrations: {
         path: "build/src/migrations",
         pathTs: "src/migrations",

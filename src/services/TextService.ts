@@ -16,6 +16,7 @@ import {TextBookmark} from "@/src/models/entities/TextBookmark.js";
 import {MapHiderText} from "@/src/models/entities/MapHiderText.js";
 import {FlaggedTextReport} from "@/src/models/entities/FlaggedTextReport.js";
 import {TEXT_REPORT_HIDING_THRESHOLD} from "@/src/constants.js";
+import amqp from "amqplib";
 
 export class TextService {
     em: SqlEntityManager;
@@ -160,21 +161,13 @@ export class TextService {
         image?: string;
         audio?: string;
     }, user: User, populate: boolean = true): Promise<Text> {
-        const parser = getParser(fields.language.code);
-        const textParsedTitle = parser.parseText(fields.title);
-        const textParsedContent = parser.parseText(fields.content);
-        const textWords: string[] = [
-            ...parser.splitWords(textParsedTitle, {keepDuplicates: false}),
-            ...parser.splitWords(textParsedContent, {keepDuplicates: false})
-        ];
-
         let newText = this.textRepo.create({
             title: fields.title,
             content: fields.content,
             language: fields.language,
             addedBy: user.profile,
-            parsedContent: textParsedContent,
-            parsedTitle: textParsedTitle,
+            // parsedContent: textParsedContent,
+            // parsedTitle: textParsedTitle,
             image: fields.image,
             audio: fields.audio,
             collection: fields.collection,
@@ -186,11 +179,12 @@ export class TextService {
             pastViewersCount: 0
         });
         await this.em.flush();
-        //TODO: test this a lot
-        await this.em.upsertMany(Vocab, textWords.map(word => ({text: word, language: fields.language.id})));
-        const textVocabs = await this.em.createQueryBuilder(Vocab).select("*").where({language: fields.language}).andWhere(`? LIKE '% ' || text || ' %'`, [` ${textParsedTitle} ${textParsedContent} `]);
-        await this.em.insertMany(MapTextVocab, textVocabs.map(vocab => ({text: newText.id, vocab: vocab.id})));
-        await this.em.nativeUpdate(Text, {id: newText.id}, {isProcessing: false});
+
+        const connection = await amqp.connect(process.env.RABBITMQ_CONNECTION_URL!);
+        const channel = await connection.createChannel();
+        const queueKey = "parseTextWorkerQueue";
+        await channel.assertQueue(queueKey, {durable: true});
+        channel.sendToQueue(queueKey, Buffer.from(JSON.stringify({textId: newText.id})), {persistent: true});
 
         if (populate) {
             await this.textRepo.annotateTextsWithUserData([newText], user);

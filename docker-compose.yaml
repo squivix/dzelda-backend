@@ -11,7 +11,7 @@ services:
     ports:
       - "54321:5432"
     profiles:
-      - 'default'
+      - default
       - dev
   dev-db:
     image: "postgres:15.3"
@@ -29,7 +29,7 @@ services:
     ports:
       - "54320:5432"
     profiles:
-      - 'default'
+      - default
       - dev
   email-server:
     image: mailhog/mailhog
@@ -37,7 +37,7 @@ services:
       - "8025:8025"  # Web interface for viewing emails
       - "1025:1025"  # SMTP server for receiving emails
     profiles:
-      - 'default'
+      - default
       - dev
   server:
     build:
@@ -49,6 +49,15 @@ services:
       PORT: 8080
     ports:
       - "8080:8080"
+    profiles:
+      - prod
+  parse-text-worker:
+    build:
+      dockerfile: backend.dockerfile
+      context: .
+    command: "node ./build/src/workers/parseNewTextWorker.js"
+    depends_on:
+      - rabbitmq
     profiles:
       - prod
   nginx-proxy:
@@ -66,9 +75,22 @@ services:
       - ./nginx-conf:/etc/nginx/conf.d
       - /etc/letsencrypt/ssl/fullchain.pem:/etc/nginx/ssl/fullchain.pem
       - /etc/letsencrypt/ssl/privkey.pem:/etc/nginx/ssl/privkey.pem
-
-
+  rabbitmq:
+    image: 'rabbitmq:management'
+    hostname: rabbitmq-host
+    volumes:
+      - "./secret/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf"
+      - "rabbitmq-data:/var/lib/rabbitmq"
+    ports:
+      - '5672:5672'  # RabbitMQ server
+      - '15672:15672' # RabbitMQ management UI
+    expose:
+      - 5672
+    profiles:
+      - default
+      - prod
 volumes:
   postgres-data: null
   certbot-etc: null
   certbot-var: null
+  rabbitmq-data: null

@@ -18,6 +18,8 @@ import {extractFieldFromUniqueConstraintError} from "@/src/utils/utils.js";
 import {FileFieldType} from "@/src/validators/fileValidator.js";
 import {FileUploadRequest} from "@/src/models/entities/FileUploadRequest.js";
 import {Notification} from "@/src/models/entities/Notification.js";
+import {PendingJob} from "@/src/models/entities/PendingJob.js";
+import {checkPendingJobs} from "@/src/utils/pending-jobs/checkPendingJobs.js";
 
 
 export class UserService {
@@ -231,6 +233,13 @@ export class UserService {
     async deleteFileUploadRequest(fileUploadRequest: FileUploadRequest) {
         this.em.remove(fileUploadRequest);
         await this.em.flush();
+    }
+
+    async checkUserPendingJobs(user: User) {
+        const pendingJobs = await this.em.find(PendingJob, {
+            initiator: user.profile
+        });
+        await checkPendingJobs(pendingJobs, this.em)
     }
 
     async getUserNotifications(user: User) {

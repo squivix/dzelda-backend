@@ -1031,6 +1031,98 @@
           "nullable": false,
           "mappedType": "integer"
         },
+        "job_type": {
+          "name": "job_type",
+          "type": "varchar(255)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "mappedType": "string"
+        },
+        "created_date": {
+          "name": "created_date",
+          "type": "timestamptz",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "length": 6,
+          "default": "now()",
+          "mappedType": "datetime"
+        },
+        "job_params": {
+          "name": "job_params",
+          "type": "jsonb",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "mappedType": "json"
+        },
+        "initiator_id": {
+          "name": "initiator_id",
+          "type": "int",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "mappedType": "integer"
+        }
+      },
+      "name": "pending_job",
+      "schema": "public",
+      "indexes": [
+        {
+          "keyName": "pending_job_initiator_id_index",
+          "columnNames": [
+            "initiator_id"
+          ],
+          "composite": false,
+          "constraint": false,
+          "primary": false,
+          "unique": false
+        },
+        {
+          "keyName": "pending_job_pkey",
+          "columnNames": [
+            "id"
+          ],
+          "composite": false,
+          "constraint": true,
+          "primary": true,
+          "unique": true
+        }
+      ],
+      "checks": [],
+      "foreignKeys": {
+        "pending_job_initiator_id_foreign": {
+          "constraintName": "pending_job_initiator_id_foreign",
+          "columnNames": [
+            "initiator_id"
+          ],
+          "localTableName": "public.pending_job",
+          "referencedColumnNames": [
+            "id"
+          ],
+          "referencedTableName": "public.profile",
+          "deleteRule": "cascade",
+          "updateRule": "cascade"
+        }
+      },
+      "nativeEnums": {}
+    },
+    {
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "int",
+          "unsigned": true,
+          "autoincrement": true,
+          "primary": true,
+          "nullable": false,
+          "mappedType": "integer"
+        },
         "text": {
           "name": "text",
           "type": "varchar(255)",

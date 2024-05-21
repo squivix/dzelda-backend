@@ -15,6 +15,7 @@ declare global {
             SPACES_BUCKET?: string;
             SPACES_REGION?: string;
             DB_SSL_CA_CERT_PATH?: string;
+            RABBITMQ_CONNECTION_URL?:string;
         }
     }
 }
