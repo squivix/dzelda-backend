@@ -56,6 +56,8 @@ services:
       dockerfile: backend.dockerfile
       context: .
     command: "node ./build/src/workers/parseNewTextWorker.js"
+    env_file:
+      - env/prod.env
     depends_on:
       - rabbitmq
     profiles:
