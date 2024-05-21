@@ -94,10 +94,9 @@ services:
       - prod
     healthcheck:
       test: rabbitmq-diagnostics -q ping
-      interval: 30s
-      timeout: 10s
-      retries: 5
-      start_period: 10s
+      interval: 20s
+      retries: 3
+      start_period: 3s
 volumes:
   postgres-data: null
   certbot-etc: null
