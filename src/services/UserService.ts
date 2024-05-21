@@ -17,6 +17,7 @@ import {ValidationAPIError} from "@/src/utils/errors/ValidationAPIError.js";
 import {extractFieldFromUniqueConstraintError} from "@/src/utils/utils.js";
 import {FileFieldType} from "@/src/validators/fileValidator.js";
 import {FileUploadRequest} from "@/src/models/entities/FileUploadRequest.js";
+import {Notification} from "@/src/models/entities/Notification.js";
 
 
 export class UserService {
@@ -229,6 +230,21 @@ export class UserService {
 
     async deleteFileUploadRequest(fileUploadRequest: FileUploadRequest) {
         this.em.remove(fileUploadRequest);
+        await this.em.flush();
+    }
+
+    async getUserNotifications(user: User) {
+        return await this.em.find(Notification, {
+            recipient: user.profile
+        });
+    }
+
+    async findUserNotification(where: FilterQuery<Notification>) {
+        return this.em.findOne(Notification, where);
+    }
+
+    async deleteUserNotification(notification: Notification) {
+        this.em.remove(notification);
         await this.em.flush();
     }
 }

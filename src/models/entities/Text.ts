@@ -37,6 +37,9 @@ export class Text extends CustomBaseEntity {
     @Property({type: types.string, length: 500, default: ""})
     image: string = "";
 
+    @Property({type: types.boolean, default: false})
+    isProcessing: boolean = false;
+
     @ManyToOne({entity: () => Language, inversedBy: (language) => language.texts, deleteRule: "cascade", updateRule: "cascade"})
     language!: Language;
 

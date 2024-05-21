@@ -7,7 +7,7 @@ import {UnauthenticatedAPIError} from "@/src/utils/errors/UnauthenticatedAPIErro
 import {booleanStringValidator, numericStringValidator} from "@/src/validators/utilValidators.js";
 import {ValidationAPIError} from "@/src/utils/errors/ValidationAPIError.js";
 import {CollectionService} from "@/src/services/CollectionService.js";
-import {textContentValidator, textTitleValidator} from "@/src/validators/textValidators.js";
+import {textContentValidator, textLevelValidator, textTitleValidator} from "@/src/validators/textValidators.js";
 import {ForbiddenAPIError} from "@/src/utils/errors/ForbiddenAPIError.js";
 import {NotFoundAPIError} from "@/src/utils/errors/NotFoundAPIError.js";
 import {textSerializer} from "@/src/presentation/response/serializers/entities/TextSerializer.js";
@@ -15,7 +15,7 @@ import {API_ROOT} from "@/src/server.js";
 import {textHistoryEntrySerializer} from "@/src/presentation/response/serializers/mappings/TextHistoryEntrySerializer.js";
 import {UserService} from "@/src/services/UserService.js";
 import {validateFileObjectKey} from "@/src/controllers/ControllerUtils.js";
-import {collectionLevelsFilterValidator, collectionLevelValidator} from "@/src/validators/collectionValidator.js";
+import {collectionLevelsFilterValidator} from "@/src/validators/collectionValidator.js";
 import {LanguageService} from "@/src/services/LanguageService.js";
 import {Collection} from "@/src/models/entities/Collection.js";
 import {APIError} from "@/src/utils/errors/APIError.js";
@@ -69,7 +69,7 @@ class TextController {
             title: textTitleValidator,
             content: textContentValidator,
             isPublic: z.boolean().optional().default(true),
-            level: collectionLevelValidator.optional(),
+            level: textLevelValidator.optional(),
             collectionId: z.number().min(0).or(z.literal(null)).optional().default(null),
             image: z.string().optional(),
             audio: z.string().optional(),
@@ -132,7 +132,7 @@ class TextController {
             title: textTitleValidator,
             content: textContentValidator,
             isPublic: z.boolean().optional(),
-            level: collectionLevelValidator.optional(),
+            level: textLevelValidator.optional(),
             image: z.string().optional(),
             audio: z.string().optional(),
         });

@@ -18,6 +18,7 @@ export class TextSerializer extends CustomEntitySerializer<Text, TextSchema> {
             collection: () => text.collection ? collectionSerializer.serialize(text.collection, {ignore: ["texts"]}) : null,
             orderInCollection: () => text.orderInCollection ?? undefined,
             isLastInCollection: () => text.isLastInCollection ?? undefined,
+            isProcessing: () => text.isProcessing,
             addedOn: () => text.addedOn.toISOString(),
             addedBy: () => text.addedBy.user.username,
             isPublic: () => text.isPublic,

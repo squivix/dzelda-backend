@@ -3,20 +3,23 @@ import {Collection} from "@/src/models/entities/Collection.js";
 import {CollectionRepo} from "@/src/models/repos/CollectionRepo.js";
 import {AnonymousUser, User} from "@/src/models/entities/auth/User.js";
 import {Language} from "@/src/models/entities/Language.js";
-import {defaultVocabsByLevel} from "dzelda-common";
+import {defaultVocabsByLevel, LanguageLevel} from "dzelda-common";
 import {Text} from "@/src/models/entities/Text.js";
 import {TextRepo} from "@/src/models/repos/TextRepo.js";
 import {QueryOrderMap} from "@mikro-orm/core/enums.js";
 import {EntityField} from "@mikro-orm/core/drivers/IDatabaseDriver.js";
 import {CollectionBookmark} from "@/src/models/entities/CollectionBookmark.js";
+import {SqlEntityManager} from "@mikro-orm/postgresql";
+import {TextService} from "@/src/services/TextService.js";
+import {Notification} from "@/src/models/entities/Notification.js";
 
 export class CollectionService {
-    em: EntityManager;
+    em: SqlEntityManager;
     collectionRepo: CollectionRepo;
     textRepo: TextRepo;
 
     constructor(em: EntityManager) {
-        this.em = em;
+        this.em = em as SqlEntityManager;
         this.collectionRepo = this.em.getRepository(Collection) as CollectionRepo;
         this.textRepo = this.em.getRepository(Text) as TextRepo;
     }
@@ -64,7 +67,12 @@ export class CollectionService {
     }
 
     async createCollection(fields: {
-        language: Language, isPublic: boolean, title: string, description?: string, image?: string
+        language: Language, isPublic: boolean, title: string, description?: string, image?: string, texts?: Array<{
+            title: string;
+            content: string;
+            isPublic: boolean,
+            level?: LanguageLevel,
+        }>
     }, user: User) {
         const newCollection = this.collectionRepo.create({
             title: fields.title,
@@ -76,6 +84,29 @@ export class CollectionService {
         });
         newCollection.vocabsByLevel = defaultVocabsByLevel();
         await this.em.flush();
+
+        if (fields.texts) {
+            this.em.transactional(async tm => {
+                const textService = new TextService(tm);
+                for (const textData of fields.texts!) {
+                    await textService.createText({
+                        title: textData.title,
+                        content: textData.content,
+                        language: fields.language,
+                        collection: newCollection,
+                        isPublic: textData.isPublic,
+                        level: textData.level,
+                    }, user, false);
+                }
+            }).then(() => {
+                const notification = this.em.create(Notification, {
+                    recipient: user.profile,
+                    text: `Collection "${newCollection.title}" finished importing`,
+                });
+                this.em.persist(notification);
+                this.em.flush();
+            });
+        }
         return newCollection;
     }
 

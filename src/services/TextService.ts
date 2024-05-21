@@ -159,7 +159,7 @@ export class TextService {
         level?: LanguageLevel,
         image?: string;
         audio?: string;
-    }, user: User): Promise<Text> {
+    }, user: User, populate: boolean = true): Promise<Text> {
         const parser = getParser(fields.language.code);
         const textParsedTitle = parser.parseText(fields.title);
         const textParsedContent = parser.parseText(fields.content);
@@ -182,6 +182,7 @@ export class TextService {
             level: fields.level,
             orderInCollection: fields.collection?.texts?.count(),
             isLastInCollection: true,
+            isProcessing: true,
             pastViewersCount: 0
         });
         await this.em.flush();
@@ -189,11 +190,14 @@ export class TextService {
         await this.em.upsertMany(Vocab, textWords.map(word => ({text: word, language: fields.language.id})));
         const textVocabs = await this.em.createQueryBuilder(Vocab).select("*").where({language: fields.language}).andWhere(`? LIKE '% ' || text || ' %'`, [` ${textParsedTitle} ${textParsedContent} `]);
         await this.em.insertMany(MapTextVocab, textVocabs.map(vocab => ({text: newText.id, vocab: vocab.id})));
+        await this.em.nativeUpdate(Text, {id: newText.id}, {isProcessing: false});
 
-        await this.textRepo.annotateTextsWithUserData([newText], user);
-        if (newText.collection)
-            await this.collectionRepo.annotateCollectionsWithUserData([newText.collection], user);
-        await this.em.refresh(newText, {populate: ["addedBy.user", "language", "collection.language", "collection.addedBy.user"]});
+        if (populate) {
+            await this.textRepo.annotateTextsWithUserData([newText], user);
+            if (newText.collection)
+                await this.collectionRepo.annotateCollectionsWithUserData([newText.collection], user);
+            await this.em.refresh(newText, {populate: ["addedBy.user", "language", "collection.language", "collection.addedBy.user"]});
+        }
         return newText;
     }
 

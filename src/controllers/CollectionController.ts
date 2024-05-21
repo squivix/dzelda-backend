@@ -15,6 +15,7 @@ import {APIError} from "@/src/utils/errors/APIError.js";
 import {StatusCodes} from "http-status-codes";
 import {UserService} from "@/src/services/UserService.js";
 import {validateFileObjectKey} from "@/src/controllers/ControllerUtils.js";
+import {textContentValidator, textLevelValidator, textTitleValidator} from "@/src/validators/textValidators.js";
 
 class CollectionController {
     async getCollections(request: FastifyRequest, reply: FastifyReply) {
@@ -57,6 +58,12 @@ class CollectionController {
             description: collectionDescriptionValidator.optional(),
             isPublic: z.boolean().optional().default(true),
             image: z.string().optional(),
+            texts: z.array(z.object({
+                title: textTitleValidator,
+                content: textContentValidator,
+                isPublic: z.boolean().optional().default(true),
+                level: textLevelValidator.optional(),
+            })).optional()
         });
         const body = bodyValidator.parse(request.body);
 
@@ -74,8 +81,9 @@ class CollectionController {
             description: body.description,
             isPublic: body.isPublic,
             image: body.image,
+            texts: body.texts,
         }, request.user as User);
-        reply.status(201).send(collectionSerializer.serialize(collection));
+        reply.status(201).send(collectionSerializer.serialize(collection, {ignore: ["texts"]}));
     }
 
     async getCollection(request: FastifyRequest, reply: FastifyReply) {
@@ -104,7 +112,7 @@ class CollectionController {
         const body = bodyValidator.parse(request.body);
 
         const collectionService = new CollectionService(request.em);
-        const collection = await collectionService.findCollection(pathParams.collectionId, ["id", "addedBy", "texts","isPublic"]);
+        const collection = await collectionService.findCollection(pathParams.collectionId, ["id", "addedBy", "texts", "isPublic"]);
 
         if (!collection)
             throw new NotFoundAPIError("Collection");

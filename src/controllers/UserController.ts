@@ -25,6 +25,7 @@ import {passwordChangedNotificationTemplate} from "@/src/presentation/response/t
 import {confirmEmailTemplate} from "@/src/presentation/response/templates/email/confirmEmailTemplate.js";
 import {passwordResetTemplate} from "@/src/presentation/response/templates/email/passwordResetTemplate.js";
 import urlJoin from "url-join";
+import {numericStringValidator} from "@/src/validators/utilValidators.js";
 
 class UserController {
     async signUp(request: FastifyRequest, reply: FastifyReply) {
@@ -247,6 +248,25 @@ class UserController {
             uploadFormFields: formFields,
             objectKey: objectKey
         });
+    }
+
+    async getUserNotifications(request: FastifyRequest, reply: FastifyReply) {
+        const userService = new UserService(request.em);
+        const notifications = await userService.getUserNotifications(request.user as User);
+
+        reply.status(200).send(notifications);
+    }
+
+    async deleteUserNotification(request: FastifyRequest, reply: FastifyReply) {
+        const pathParamsValidator = z.object({notificationId: numericStringValidator});
+        const pathParams = pathParamsValidator.parse(request.params);
+        const userService = new UserService(request.em);
+        const notification = await userService.findUserNotification({id: pathParams.notificationId});
+        if (!notification)
+            throw new NotFoundAPIError("Notification");
+        await userService.deleteUserNotification(notification);
+
+        reply.status(204).send();
     }
 }
 

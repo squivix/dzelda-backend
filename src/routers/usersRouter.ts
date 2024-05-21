@@ -22,6 +22,8 @@ export const userRouter: FastifyPluginCallback = function (fastify, options, don
         handler: userController.updateUserProfile,
     });
     fastify.post(`/file-upload-requests/`, {handler: userController.generateFileUploadPresignedUrl, preHandler: [requiresAuth, requiresEmailConfirmed]});
+    fastify.get(`/users/me/notifications/`, {preHandler: [requiresAuth, requiresEmailConfirmed], handler: userController.getUserNotifications});
+    fastify.delete(`/users/me/notifications/:notificationId/`, {preHandler: [requiresAuth, requiresEmailConfirmed], handler: userController.deleteUserNotification});
 
 
     done();
