@@ -59,7 +59,8 @@ services:
     env_file:
       - env/prod.env
     depends_on:
-      - rabbitmq
+      rabbitmq:
+        condition: service_healthy
     profiles:
       - prod
   nginx-proxy:
@@ -91,6 +92,11 @@ services:
     profiles:
       - default
       - prod
+    healthcheck:
+      test: [ "CMD", "nc", "-z", "localhost", "5672" ]
+      interval: 5s
+      timeout: 15s
+      retries: 1
 volumes:
   postgres-data: null
   certbot-etc: null
