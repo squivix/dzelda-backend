@@ -21,10 +21,11 @@ export class TextHistoryEntrySerializer extends CustomEntitySerializer<TextHisto
             orderInCollection: () => textHistoryEntry.text.orderInCollection ?? undefined,
             isLastInCollection: () => textHistoryEntry.text.isLastInCollection ?? undefined,
             addedOn: () => textHistoryEntry.text.addedOn.toISOString(),
+            isProcessing: () => textHistoryEntry.text.isProcessing,
             vocabsByLevel: () => textHistoryEntry.text.vocabsByLevel,
             pastViewersCount: () => Number(textHistoryEntry.text.pastViewersCount),
             timeViewed: () => textHistoryEntry.timeViewed.toISOString(),
-            pastViewer: () => textHistoryEntry.pastViewer.user.username
+            pastViewer: () => textHistoryEntry.pastViewer.user.username,
         };
     }
 

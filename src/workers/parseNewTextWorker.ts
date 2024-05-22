@@ -31,8 +31,13 @@ async function consume() {
             channel.ack(msg);
             return;
         }
-
         await em.transactional(async (tm) => {
+            await tm.nativeUpdate(Text, {id: text.id}, {
+                parsedContent: null,
+                parsedTitle: null,
+                isProcessing: true
+            });
+
             const parser = getParser(text.language.code);
             const textParsedTitle = parser.parseText(text.title);
             const textParsedContent = parser.parseText(text.content);
@@ -41,12 +46,12 @@ async function consume() {
                 ...parser.splitWords(textParsedContent, {keepDuplicates: false})
             ];
 
-            if (args.doClearPastParsing)
-                await tm.nativeDelete(MapTextVocab, {text: text.id, vocab: {text: {$nin: textWords}}});
-
+            await em.nativeDelete(MapTextVocab, {text: text.id, vocab: {text: {$nin: textWords}}});
             await tm.upsertMany(Vocab, textWords.map(word => ({text: word, language: text.language.id})));
+
             const textVocabs = await tm.createQueryBuilder(Vocab).select("*").where({language: text.language}).andWhere(`? LIKE '% ' || text || ' %'`, [` ${textParsedTitle} ${textParsedContent} `]);
-            await tm.insertMany(MapTextVocab, textVocabs.map(vocab => ({text: text.id, vocab: vocab.id})));
+            await tm.upsertMany(MapTextVocab, textVocabs.map(vocab => ({text: text.id, vocab: vocab.id})));
+
             await tm.nativeUpdate(Text, {id: text.id}, {
                 parsedContent: textParsedContent,
                 parsedTitle: textParsedTitle,
@@ -54,7 +59,7 @@ async function consume() {
             });
         }).then(() => {
             console.log(`Text(id=${args.textId}) parsed successfully`);
-            orm.close().then(() => channel.ack(msg))
+            orm.close().then(() => channel.ack(msg));
         }).catch((e) => {
             console.log(`Text(id=${args.textId}) parsing failed`);
             console.error(e);

@@ -18,6 +18,8 @@ import {FlaggedTextReport} from "@/src/models/entities/FlaggedTextReport.js";
 import {TEXT_REPORT_HIDING_THRESHOLD} from "@/src/constants.js";
 import amqp from "amqplib";
 
+const parseTextQueueKey = "parseTextWorkerQueue";
+
 export class TextService {
     em: SqlEntityManager;
     textRepo: TextRepo;
@@ -166,8 +168,6 @@ export class TextService {
             content: fields.content,
             language: fields.language,
             addedBy: user.profile,
-            // parsedContent: textParsedContent,
-            // parsedTitle: textParsedTitle,
             image: fields.image,
             audio: fields.audio,
             collection: fields.collection,
@@ -182,9 +182,8 @@ export class TextService {
 
         const connection = await amqp.connect(process.env.RABBITMQ_CONNECTION_URL!);
         const channel = await connection.createChannel();
-        const queueKey = "parseTextWorkerQueue";
-        await channel.assertQueue(queueKey, {durable: true});
-        channel.sendToQueue(queueKey, Buffer.from(JSON.stringify({textId: newText.id})), {persistent: true});
+        await channel.assertQueue(parseTextQueueKey, {durable: true});
+        channel.sendToQueue(parseTextQueueKey, Buffer.from(JSON.stringify({textId: newText.id})), {persistent: true});
 
         if (populate) {
             await this.textRepo.annotateTextsWithUserData([newText], user);
@@ -230,24 +229,13 @@ export class TextService {
         image?: string;
         audio?: string;
     }, user: User) {
-        if (text.title !== updatedTextData.title || text.content !== updatedTextData.content) {
-            const parser = getParser(text.language.code);
-            const textParsedTitle = parser.parseText(updatedTextData.title);
-            const textParsedContent = parser.parseText(updatedTextData.content);
-            const textWords: string[] = [
-                ...parser.splitWords(textParsedTitle, {keepDuplicates: false}),
-                ...parser.splitWords(textParsedContent, {keepDuplicates: false})
-            ];
-
+        const isTitleContentChanged = text.title !== updatedTextData.title || text.content !== updatedTextData.content;
+        if (isTitleContentChanged) {
             text.title = updatedTextData.title;
             text.content = updatedTextData.content;
-            text.parsedTitle = textParsedTitle;
-            text.parsedContent = textParsedContent;
-
-            await this.em.nativeDelete(MapTextVocab, {text: text, vocab: {text: {$nin: textWords}}});
-            await this.em.upsertMany(Vocab, textWords.map(word => ({text: word, language: text.language.id})));
-            const textVocabs = await this.em.createQueryBuilder(Vocab).select(["id"]).where(`? ~ text`, [` ${textParsedTitle} ${textParsedContent} `]).andWhere({language: text.language});
-            await this.em.upsertMany(MapTextVocab, textVocabs.map(vocab => ({text: text.id, vocab: vocab.id})));
+            text.isProcessing = true;
+            text.parsedContent = null;
+            text.parsedTitle = null;
         }
         if (updatedTextData.collection !== undefined) {
             if (updatedTextData.collection == null) {
@@ -270,8 +258,14 @@ export class TextService {
         if (updatedTextData.audio !== undefined)
             text.audio = updatedTextData.audio;
 
-        this.em.persist(text);
-        await this.em.flush();
+        await this.em.persistAndFlush(text);
+
+        if (isTitleContentChanged) {
+            const connection = await amqp.connect(process.env.RABBITMQ_CONNECTION_URL!);
+            const channel = await connection.createChannel();
+            await channel.assertQueue(parseTextQueueKey, {durable: true});
+            channel.sendToQueue(parseTextQueueKey, Buffer.from(JSON.stringify({textId: text.id, doClearPastParsing: true})), {persistent: true});
+        }
 
         if (user && !(user instanceof AnonymousUser)) {
             await this.textRepo.annotateTextsWithUserData([text], user);

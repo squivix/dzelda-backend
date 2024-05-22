@@ -26,10 +26,10 @@ export class Text extends CustomBaseEntity {
     content!: string;
 
     @Property({type: types.string, length: 248, nullable: true})
-    parsedTitle!: string;
+    parsedTitle!: string | null;
 
     @Property({type: types.text, length: 100_000, nullable: true})
-    parsedContent!: string;
+    parsedContent!: string | null;
 
     @Property({type: types.string, length: 500, default: ""})
     audio: string = "";
