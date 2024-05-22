@@ -148,8 +148,12 @@ export class CollectionService {
         return (await this.getCollection(collection.id, user))!;
     }
 
-    async deleteCollection(collection: Collection) {
-        await this.em.nativeDelete(Collection, {id: collection.id});
+    async deleteCollection(collection: Collection, options: { cascadeTexts: boolean }) {
+        await this.em.transactional(async tm => {
+            if (options.cascadeTexts)
+                await tm.nativeDelete(Text, {collection: collection});
+            await tm.nativeDelete(Collection, {id: collection.id});
+        });
     }
 
     async getNextTextInCollection(collection: Collection, textId: number, user: User | AnonymousUser | null) {

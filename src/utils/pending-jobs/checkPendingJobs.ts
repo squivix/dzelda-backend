@@ -14,8 +14,10 @@ export async function checkPendingJobs(jobs: PendingJob[], em: EntityManager) {
             const {collectionId} = job.jobParams as JobTypeToParams[typeof job.jobType];
 
             const collection = await em.findOne(Collection, {id: collectionId}, {populate: ["texts"], fields: ["title", "texts.isProcessing"]});
-            if (!collection)
+            if (!collection) {
+                await em.removeAndFlush(job);
                 return;
+            }
             if (!collection.texts.getItems().some(t => t.isProcessing)) {
                 em.create(Notification, {
                     recipient: job.initiator,

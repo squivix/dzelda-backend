@@ -9,7 +9,7 @@ import {NotFoundAPIError} from "@/src/utils/errors/NotFoundAPIError.js";
 import {ForbiddenAPIError} from "@/src/utils/errors/ForbiddenAPIError.js";
 import {ValidationAPIError} from "@/src/utils/errors/ValidationAPIError.js";
 import {LanguageService} from "@/src/services/LanguageService.js";
-import {numericStringValidator} from "@/src/validators/utilValidators.js";
+import {booleanStringValidator, numericStringValidator} from "@/src/validators/utilValidators.js";
 import {collectionSerializer} from "@/src/presentation/response/serializers/entities/CollectionSerializer.js";
 import {APIError} from "@/src/utils/errors/APIError.js";
 import {StatusCodes} from "http-status-codes";
@@ -139,6 +139,11 @@ class CollectionController {
     async deleteCollection(request: FastifyRequest, reply: FastifyReply) {
         const pathParamsValidator = z.object({collectionId: numericStringValidator});
         const pathParams = pathParamsValidator.parse(request.params);
+        const queryParamsValidator = z.object({
+            cascadeTexts: booleanStringValidator.default(false)
+        });
+        const queryParams = queryParamsValidator.parse(request.query);
+
         const user = request.user as User;
         const collectionService = new CollectionService(request.em);
         const collection = await collectionService.getCollection(pathParams.collectionId, request.user);
@@ -147,7 +152,7 @@ class CollectionController {
             throw new NotFoundAPIError("Collection");
         if (collection.addedBy !== user.profile)
             throw new ForbiddenAPIError("User is not authorized to delete collection");
-        await collectionService.deleteCollection(collection);
+        await collectionService.deleteCollection(collection, {cascadeTexts: queryParams.cascadeTexts});
         reply.status(204).send();
     }
 
