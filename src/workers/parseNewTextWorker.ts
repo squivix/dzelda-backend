@@ -53,12 +53,12 @@ async function consume() {
                 isProcessing: false
             });
         }).then(() => {
-            channel.ack(msg);
             console.log(`Text(id=${args.textId}) parsed successfully`);
+            orm.close().then(() => channel.ack(msg))
         }).catch((e) => {
             console.log(`Text(id=${args.textId}) parsing failed`);
             console.error(e);
-            channel.nack(msg);
+            orm.close().then(() => channel.nack(msg));
         });
     });
 }
