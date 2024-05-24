@@ -1,4 +1,4 @@
-import {cleanObject} from "@/src/utils/utils.js";
+import {cleanUndefined} from "dzelda-common";
 
 export type CustomCallbackObject<T> = {
     [Key in keyof T]: () => T[Key];
@@ -25,7 +25,7 @@ export abstract class CustomEntitySerializer<T, I extends object> {
                 if (!fieldsHidden[k])
                     pojo[k] = (definition as CustomCallbackObject<I>)[k]();
             });
-            entityPojos.push(cleanObject(pojo) as any);
+            entityPojos.push(cleanUndefined(pojo) as any);
         }
         return entityPojos;
     }
@@ -47,7 +47,7 @@ export abstract class CustomEntitySerializer<T, I extends object> {
             if (!fieldsHidden[k])
                 pojo[k] = (definition as CustomCallbackObject<I>)[k]();
         });
-        return cleanObject(pojo) as any;
+        return cleanUndefined(pojo) as any;
     }
 
 

@@ -20,7 +20,7 @@ async function consume() {
     await channel.consume(QUEUE_KEY, async (msg) => {
         if (!msg)
             return;
-        const args: { textId: number, doClearPastParsing?: boolean } = JSON.parse(msg.content.toString());
+        const args: { textId: number } = JSON.parse(msg.content.toString());
         console.log(`Received request to parse text(id=${args.textId})`);
 
         const orm = await MikroORM.init(options);
