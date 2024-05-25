@@ -107,7 +107,7 @@ class TextController {
             collection: collection,
             image: body.image,
             audio: body.audio,
-        }, user);
+        }, user, {parsingPriority: 2});
         reply.status(201).send(textSerializer.serialize(text));
     }
 

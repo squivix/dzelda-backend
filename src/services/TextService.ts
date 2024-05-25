@@ -5,9 +5,7 @@ import {SqlEntityManager} from "@mikro-orm/postgresql";
 import {TextRepo} from "@/src/models/repos/TextRepo.js";
 import {AnonymousUser, User} from "@/src/models/entities/auth/User.js";
 import {Collection} from "@/src/models/entities/Collection.js";
-import {getParser, LanguageLevel} from "dzelda-common";
-import {Vocab} from "@/src/models/entities/Vocab.js";
-import {MapTextVocab} from "@/src/models/entities/MapTextVocab.js";
+import {LanguageLevel} from "dzelda-common";
 import {CollectionRepo} from "@/src/models/repos/CollectionRepo.js";
 import {TextHistoryEntry} from "@/src/models/entities/TextHistoryEntry.js";
 import {QueryOrderMap} from "@mikro-orm/core/enums.js";
@@ -162,7 +160,7 @@ export class TextService {
         level?: LanguageLevel,
         image?: string;
         audio?: string;
-    }, user: User, populate: boolean = true): Promise<Text> {
+    }, user: User, {populate = true, parsingPriority = 2}: { populate?: boolean, parsingPriority?: 1 | 2 } = {}): Promise<Text> {
         let newText = this.textRepo.create({
             title: fields.title,
             content: fields.content,
@@ -182,8 +180,11 @@ export class TextService {
 
         const connection = await amqp.connect(process.env.RABBITMQ_CONNECTION_URL!);
         const channel = await connection.createChannel();
-        await channel.assertQueue(parseTextQueueKey, {durable: true});
-        channel.sendToQueue(parseTextQueueKey, Buffer.from(JSON.stringify({textId: newText.id})), {persistent: true});
+        await channel.assertQueue(parseTextQueueKey, {
+            durable: true,
+            maxPriority: 2
+        });
+        channel.sendToQueue(parseTextQueueKey, Buffer.from(JSON.stringify({textId: newText.id})), {persistent: true, priority: parsingPriority});
 
         if (populate) {
             await this.textRepo.annotateTextsWithUserData([newText], user);
@@ -263,8 +264,11 @@ export class TextService {
         if (isTitleContentChanged) {
             const connection = await amqp.connect(process.env.RABBITMQ_CONNECTION_URL!);
             const channel = await connection.createChannel();
-            await channel.assertQueue(parseTextQueueKey, {durable: true});
-            channel.sendToQueue(parseTextQueueKey, Buffer.from(JSON.stringify({textId: text.id, doClearPastParsing: true})), {persistent: true});
+            await channel.assertQueue(parseTextQueueKey, {
+                durable: true,
+                maxPriority: 2
+            });
+            channel.sendToQueue(parseTextQueueKey, Buffer.from(JSON.stringify({textId: text.id, doClearPastParsing: true})), {persistent: true, priority: 2});
         }
 
         if (user && !(user instanceof AnonymousUser)) {

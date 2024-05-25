@@ -12,7 +12,8 @@ async function consume() {
     const connection = await amqp.connect(process.env.RABBITMQ_CONNECTION_URL!);
     const channel = await connection.createChannel();
     await channel.assertQueue(QUEUE_KEY, {
-        durable: true
+        durable: true,
+        maxPriority: 2
     });
     await channel.prefetch(1);
     console.log(`Text parser worker listening on ${QUEUE_KEY}...`);

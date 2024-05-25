@@ -95,7 +95,7 @@ export class CollectionService {
                     collection: newCollection,
                     isPublic: textData.isPublic,
                     level: textData.level,
-                }, user, false);
+                }, user, {populate: false, parsingPriority: 1});
 
             }
             await this.em.insert(PendingJob, {
