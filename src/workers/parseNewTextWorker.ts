@@ -1,5 +1,5 @@
 import amqp from "amqplib";
-import {MikroORM, SqlEntityManager} from "@mikro-orm/postgresql";
+import {MikroORM, QueryOrder, SqlEntityManager} from "@mikro-orm/postgresql";
 import options from "@/src/mikro-orm.config.js";
 import {Text} from "@/src/models/entities/Text.js";
 import {getParser} from "dzelda-common";
@@ -15,7 +15,7 @@ async function consume() {
         durable: true,
         maxPriority: 2
     });
-    await channel.prefetch(1);
+    await channel.prefetch(10);
     console.log(`Text parser worker listening on ${QUEUE_KEY}...`);
 
     await channel.consume(QUEUE_KEY, async (msg) => {
@@ -46,11 +46,12 @@ async function consume() {
                 ...parser.splitWords(textParsedTitle, {keepDuplicates: false}),
                 ...parser.splitWords(textParsedContent, {keepDuplicates: false})
             ];
+            textWords.sort();   //important to avoid deadlocks
 
             await em.nativeDelete(MapTextVocab, {text: text.id, vocab: {text: {$nin: textWords}}});
             await tm.upsertMany(Vocab, textWords.map(word => ({text: word, language: text.language.id})));
 
-            const textVocabs = await tm.createQueryBuilder(Vocab).select("*").where({language: text.language}).andWhere(`? LIKE '% ' || text || ' %'`, [` ${textParsedTitle} ${textParsedContent} `]);
+            const textVocabs = await tm.createQueryBuilder(Vocab).select("*").where({language: text.language}).andWhere(`? LIKE '% ' || text || ' %'`, [` ${textParsedTitle} ${textParsedContent} `]).orderBy({id: QueryOrder.ASC});
             await tm.upsertMany(MapTextVocab, textVocabs.map(vocab => ({text: text.id, vocab: vocab.id})));
 
             await tm.nativeUpdate(Text, {id: text.id}, {
