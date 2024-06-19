@@ -76,8 +76,8 @@ services:
     volumes:
       - ./public/:/var/www/html
       - ./nginx-conf:/etc/nginx/conf.d
-      - /etc/letsencrypt/ssl/fullchain.pem:/etc/nginx/ssl/fullchain.pem
-      - /etc/letsencrypt/ssl/privkey.pem:/etc/nginx/ssl/privkey.pem
+      - /etc/letsencrypt/live/backend.dzelda.com/fullchain.pem:/etc/nginx/ssl/fullchain.pem
+      - /etc/letsencrypt/live/backend.dzelda.com/privkey.pem:/etc/nginx/ssl/privkey.pem
   rabbitmq:
     image: 'rabbitmq:management'
     hostname: rabbitmq-host
