@@ -69,25 +69,3 @@ export function createComparator<T>(entityName: EntityClass<T>,
         return properties.reduce((acc, prop) => acc[prop], obj);
     }
 }
-
-export function kibiBytes(sizeInKib: number) {
-    return sizeInKib * 1024;
-}
-
-export function mebiBytes(sizeInMib: number) {
-    return sizeInMib * 1048576;
-}
-
-//from https://stackoverflow.com/a/77249194
-export function extractValuesAsTuple<T extends Record<string, any>>(
-    obj: T
-): [T[keyof T], ...T[keyof T][]] {
-    const values = Object.values(obj) as T[keyof T][];
-    if (values.length === 0)
-        throw new Error("Object must have at least one value.");
-
-    // Explicitly extract the first value
-    const result: [T[keyof T], ...T[keyof T][]] = [values[0], ...values.slice(1)];
-
-    return result;
-}

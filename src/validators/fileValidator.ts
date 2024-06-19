@@ -1,17 +1,17 @@
-import {kibiBytes, mebiBytes} from "@/tests/integration/utils.js";
+import {mebiBytes} from "dzelda-common";
 
 export const fileFields = {
     collectionImage: {
         path: "uploads/collections/images",
         extensions: [".jpg", ".jpeg", ".png"],
         minSize: 1,
-        maxSize: kibiBytes(500)
+        maxSize: mebiBytes(1)
     },
     textImage: {
         path: "uploads/texts/images",
         extensions: [".jpg", ".jpeg", ".png"],
         minSize: 1,
-        maxSize: kibiBytes(500)
+        maxSize: mebiBytes(1)
     },
     textAudio: {
         path: "uploads/texts/audio",
