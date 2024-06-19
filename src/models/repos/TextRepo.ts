@@ -16,14 +16,14 @@ export class TextRepo extends EntityRepository<Text> {
         const query = `SELECT json_object_agg(outq.id, outq.vocabLevels) AS vocab_levels_by_text
 FROM (SELECT subq.text_id                                                   AS id,
              json_object_agg(COALESCE(subq.level, 0), subq.count) AS vocabLevels
-      FROM (SELECT mlv2.level,
+      FROM (SELECT mlv.level,
                    COUNT(*),
-                   mlv.text_id
-            FROM map_text_vocab mlv
-                     LEFT JOIN map_learner_vocab mlv2 on mlv.vocab_id = mlv2.vocab_id AND mlv2.learner_id = ${learnerId}
-            WHERE mlv.text_id IN (${texts.map(l=>l.id).join(",")})
-            GROUP BY mlv.text_id, mlv2.level
-            ORDER BY mlv.text_id) AS subq
+                   mtv.text_id
+            FROM map_text_vocab mtv
+                     LEFT JOIN map_learner_vocab mlv on mtv.vocab_id = mlv.vocab_id AND mlv.learner_id = ${learnerId}
+            WHERE mtv.text_id IN (${texts.map(l=>l.id).join(",")})
+            GROUP BY mtv.text_id, mlv.level
+            ORDER BY mtv.text_id) AS subq
       GROUP BY subq.text_id) as outq`;
 
         const vocabsLevelsByText = (await this.em.execute(query))[0].vocab_levels_by_text;
