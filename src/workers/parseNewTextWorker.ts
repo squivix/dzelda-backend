@@ -29,6 +29,7 @@ async function consume() {
         const text = await em.findOne(Text, {id: args.textId}, {populate: ["language"], fields: ["*", "language.code", "language.id"]});
         if (!text) {
             console.log(`Text (id=${args.textId}) not found`);
+            await orm.close()
             channel.ack(msg);
             return;
         }
