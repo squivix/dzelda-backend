@@ -15,7 +15,7 @@ async function consume() {
         durable: true,
         maxPriority: 2
     });
-    await channel.prefetch(10);
+    await channel.prefetch(4);
     console.log(`Text parser worker listening on ${QUEUE_KEY}...`);
 
     await channel.consume(QUEUE_KEY, async (msg) => {
