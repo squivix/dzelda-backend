@@ -9,7 +9,7 @@ import {MapTextVocab} from "@/src/models/entities/MapTextVocab.js";
 const QUEUE_KEY = "parseTextWorkerQueue";
 
 async function consume() {
-    const connection = await amqp.connect(process.env.RABBITMQ_CONNECTION_URL!);
+    const connection = await amqp.connect(process.env.RABBITMQ_CONNECTION_URL!, { heartbeat: 20 });
     const channel = await connection.createChannel();
     await channel.assertQueue(QUEUE_KEY, {
         durable: true,
