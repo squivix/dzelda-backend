@@ -2,7 +2,7 @@ import {FastifyPluginCallback} from "fastify/types/plugin.js";
 import {meaningController} from "@/src/controllers/MeaningController.js";
 import {requiresAuth} from "@/src/middlewares/requiresAuth.js";
 import {requiresEmailConfirmed} from "@/src/middlewares/requiresEmailConfirmed.js";
-import {requiresUnbannedAccount} from "@/src/middlewares/requiresUnbannedAccount";
+import {requiresUnbannedAccount} from "@/src/middlewares/requiresUnbannedAccount.js";
 
 export const meaningRouter: FastifyPluginCallback = function (fastify, options, done) {
     fastify.post(`/meanings/`, {preHandler: [requiresAuth, requiresUnbannedAccount, requiresEmailConfirmed], handler: meaningController.createMeaning});

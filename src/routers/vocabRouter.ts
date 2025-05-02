@@ -2,7 +2,7 @@ import {FastifyPluginCallback} from "fastify/types/plugin.js";
 import {vocabController} from "@/src/controllers/VocabController.js";
 import {requiresAuth} from "@/src/middlewares/requiresAuth.js";
 import {requiresEmailConfirmed} from "@/src/middlewares/requiresEmailConfirmed.js";
-import {requiresUnbannedAccount} from "@/src/middlewares/requiresUnbannedAccount";
+import {requiresUnbannedAccount} from "@/src/middlewares/requiresUnbannedAccount.js";
 
 export const vocabRouter: FastifyPluginCallback = function (fastify, options, done) {
     fastify.post(`/vocabs/`, {preHandler: [requiresAuth, requiresUnbannedAccount, requiresEmailConfirmed], handler: vocabController.createVocab});

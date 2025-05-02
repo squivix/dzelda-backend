@@ -2,7 +2,7 @@ import {FastifyPluginCallback} from "fastify/types/plugin.js";
 import {dictionaryController} from "@/src/controllers/DictionaryController.js";
 import {requiresAuth} from "@/src/middlewares/requiresAuth.js";
 import {requiresEmailConfirmed} from "@/src/middlewares/requiresEmailConfirmed.js";
-import {requiresUnbannedAccount} from "@/src/middlewares/requiresUnbannedAccount";
+import {requiresUnbannedAccount} from "@/src/middlewares/requiresUnbannedAccount.js";
 
 export const dictionaryRouter: FastifyPluginCallback = function (fastify, options, done) {
     fastify.get(`/dictionaries/`, dictionaryController.getDictionaries);
