@@ -2,7 +2,7 @@ import {userController} from "@/src/controllers/UserController.js";
 import {FastifyPluginCallback} from "fastify/types/plugin.js";
 import {requiresAuth} from "@/src/middlewares/requiresAuth.js";
 import {requiresEmailConfirmed} from "@/src/middlewares/requiresEmailConfirmed.js";
-import {requiresUnbannedAccount} from "@/src/middlewares/requiresUnbannedAccount";
+import {requiresUnbannedAccount} from "@/src/middlewares/requiresUnbannedAccount.js";
 
 // config: {rateLimit: {max: 10, timeWindow: "1m"}}
 export const userRouter: FastifyPluginCallback = function (fastify, options, done) {
