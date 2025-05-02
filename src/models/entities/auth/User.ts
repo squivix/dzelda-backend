@@ -37,6 +37,9 @@ export class User extends CustomBaseEntity {
     @Property({type: types.boolean, default: false})
     isEmailConfirmed!: boolean;
 
+    @Property({type: types.boolean, default: false})
+    isBanned!: boolean;
+
     @Property({type: types.string, length: 255, hidden: true})
     password!: string;
 

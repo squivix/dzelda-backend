@@ -11,6 +11,7 @@ class UserSerializer extends CustomEntitySerializer<User, UserSchema> {
             email: () => `${user.email.charAt(0)}${"*".repeat(10)}@${"*".repeat(8)}`,
             profile: () => profileSerializer.serialize(user.profile) as ProfileSchema,
             isEmailConfirmed: () => user.isEmailConfirmed,
+            isBanned: () => user.isBanned,
             isPendingEmailChange: () => user.isPendingEmailChange
         };
     }
