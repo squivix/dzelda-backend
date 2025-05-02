@@ -17,7 +17,7 @@ import {MapVocabRootForm} from "@/src/models/entities/MapVocabRootForm.js";
 @Unique({properties: ["language", "text"]})
 @Index({properties: ["language"]})
 export class Vocab extends CustomBaseEntity {
-    @Property({type: types.string, length: 255})
+    @Property({type: types.string, length: 1024})
     text!: string;
 
     @ManyToOne({
