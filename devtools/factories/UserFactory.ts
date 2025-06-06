@@ -18,7 +18,8 @@ export class UserFactory extends CustomFactory<User> {
             password: faker.random.alphaNumeric(128),    // password not hashed because hashing is async
             profile: profileFactory.makeDefinition(),
             isEmailConfirmed: true,
-            isPendingEmailChange: false
+            isPendingEmailChange: false,
+            isBanned: false
         };
     }
 }

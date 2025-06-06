@@ -160,7 +160,10 @@ export class TextService {
         level?: LanguageLevel,
         image?: string;
         audio?: string;
-    }, user: User, {populate = true, parsingPriority = 2}: { populate?: boolean, parsingPriority?: 1 | 2 } = {}): Promise<Text> {
+    }, user: User, {populate = true, parsingPriority = 2}: {
+        populate?: boolean,
+        parsingPriority?: 1 | 2
+    } = {}): Promise<Text> {
         let newText = this.textRepo.create({
             title: fields.title,
             content: fields.content,
@@ -177,14 +180,7 @@ export class TextService {
             pastViewersCount: 0
         });
         await this.em.flush();
-
-        const connection = await amqp.connect(process.env.RABBITMQ_CONNECTION_URL!);
-        const channel = await connection.createChannel();
-        await channel.assertQueue(parseTextQueueKey, {
-            durable: true,
-            maxPriority: 2
-        });
-        channel.sendToQueue(parseTextQueueKey, Buffer.from(JSON.stringify({textId: newText.id})), {persistent: true, priority: parsingPriority});
+        await TextService.sendTextToParsingQueue({textId: newText.id, parsingPriority: parsingPriority})
 
         if (populate) {
             await this.textRepo.annotateTextsWithUserData([newText], user);
@@ -261,15 +257,8 @@ export class TextService {
 
         await this.em.persistAndFlush(text);
 
-        if (isTitleContentChanged) {
-            const connection = await amqp.connect(process.env.RABBITMQ_CONNECTION_URL!);
-            const channel = await connection.createChannel();
-            await channel.assertQueue(parseTextQueueKey, {
-                durable: true,
-                maxPriority: 2
-            });
-            channel.sendToQueue(parseTextQueueKey, Buffer.from(JSON.stringify({textId: text.id, doClearPastParsing: true})), {persistent: true, priority: 2});
-        }
+        if (isTitleContentChanged)
+            await TextService.sendTextToParsingQueue({textId: text.id, parsingPriority: 2});
 
         if (user && !(user instanceof AnonymousUser)) {
             await this.textRepo.annotateTextsWithUserData([text], user);
@@ -311,7 +300,12 @@ export class TextService {
         await this.em.nativeDelete(MapHiderText, {text: text, hider: user.profile});
     }
 
-    async createFlaggedTextReport(fields: { text: Text, reportingUser: User, reasonForReporting: string, reportText?: string }) {
+    async createFlaggedTextReport(fields: {
+        text: Text,
+        reportingUser: User,
+        reasonForReporting: string,
+        reportText?: string
+    }) {
         const report = this.em.create(FlaggedTextReport, {
             text: fields.text,
             reporter: fields.reportingUser.profile,
@@ -342,4 +336,18 @@ export class TextService {
         return await this.em.findOne(FlaggedTextReport, where, {fields: fields as any});
     }
 
+    static async sendTextToParsingQueue({textId, parsingPriority}: { textId: number, parsingPriority: 1 | 2 }) {
+        const connection = await amqp.connect(process.env.RABBITMQ_CONNECTION_URL!);
+        const channel = await connection.createChannel();
+        await channel.assertQueue(parseTextQueueKey, {
+            durable: true,
+            maxPriority: 2
+        });
+        channel.sendToQueue(parseTextQueueKey, Buffer.from(JSON.stringify({textId: textId})), {
+            persistent: true,
+            priority: parsingPriority
+        });
+        await channel.close()
+        await connection.close()
+    }
 }

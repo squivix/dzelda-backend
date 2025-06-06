@@ -13,3 +13,4 @@ public
 .run
 tests/temp
 secret
+test-results

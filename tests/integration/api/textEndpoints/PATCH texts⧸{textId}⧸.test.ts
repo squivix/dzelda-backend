@@ -1,9 +1,8 @@
 import {describe, expect, test, TestContext, vi} from "vitest";
 import {fetchRequest} from "@/tests/integration/utils.js";
 import {textSerializer} from "@/src/presentation/response/serializers/entities/TextSerializer.js";
-import {parsers} from "dzelda-common";
-import {MapTextVocab} from "@/src/models/entities/MapTextVocab.js";
 import {faker} from "@faker-js/faker";
+import {TextService} from "@/src/services/TextService";
 
 /**{@link TextController#updateText}*/
 describe("PATCH texts/{textId}/", () => {
@@ -23,30 +22,31 @@ describe("PATCH texts/{textId}/", () => {
 
             const collection = await context.collectionFactory.createOne({addedBy: author.profile, language: language});
             const text = await context.textFactory.createOne({collection, language, addedBy: author.profile});
-
-            const updatedText = context.textFactory.makeOne({collection, language, level: text.level, addedBy: author.profile});
+            const updatedText = context.textFactory.makeOne({
+                collection, language, level: text.level, addedBy: author.profile,
+                isProcessing: true,
+                parsedContent: null,
+                parsedTitle: null,
+            });
+            const sendTextToParsingQueueSpy = vi.spyOn(TextService, "sendTextToParsingQueue").mockResolvedValue(undefined);
 
             const response = await makeRequest(text.id, {
                 title: updatedText.title,
                 content: updatedText.content
             }, session.token);
 
-            const dbRecord = await context.textRepo.findOneOrFail({id: text.id}, {populate: ["language", "addedBy.user", "collection.language", "collection.addedBy.user"]});
+            const dbRecord = await context.textRepo.findOneOrFail({id: text.id}, {populate: ["language", "addedBy.user", "collection.language", "collection.addedBy.user"], refresh:true});
             await context.textRepo.annotateTextsWithUserData([dbRecord], author);
             await context.collectionRepo.annotateCollectionsWithUserData([dbRecord.collection!], author);
 
             expect(response.statusCode).to.equal(200);
             expect(response.json()).toMatchObject(textSerializer.serialize(updatedText, {ignore: []}));
             expect(textSerializer.serialize(dbRecord)).toMatchObject(textSerializer.serialize(updatedText, {ignore: []}));
-
-            const parser = parsers["en"];
-            const textWords = parser.splitWords(parser.parseText(`${updatedText.title} ${updatedText.content}`), {keepDuplicates: false});
-            const textVocabs = await context.vocabRepo.find({text: textWords, language: collection.language});
-            const textVocabMappings = await context.em.find(MapTextVocab, {vocab: textVocabs, text: dbRecord});
-
-            expect(textVocabs.length).toEqual(textWords.length);
-            expect(textVocabs.map(v => v.text)).toEqual(expect.arrayContaining(textWords));
-            expect(textVocabMappings.length).toEqual(textWords.length);
+            expect(sendTextToParsingQueueSpy).toHaveBeenCalledOnce();
+            expect(sendTextToParsingQueueSpy).toHaveBeenCalledWith({
+                textId: dbRecord.id,
+                parsingPriority: 2
+            });
         });
         describe("If optional fields are provided, update their values", async () => {
             test<TestContext>("If new image and audio are provided, update them", async (context) => {
@@ -54,11 +54,32 @@ describe("PATCH texts/{textId}/", () => {
                 const session = await context.sessionFactory.createOne({user: author});
                 const language = await context.languageFactory.createOne();
 
-                const collection = await context.collectionFactory.createOne({addedBy: author.profile, language, texts: []});
+                const collection = await context.collectionFactory.createOne({
+                    addedBy: author.profile,
+                    language,
+                    texts: []
+                });
                 const text = await context.textFactory.createOne({collection, language, addedBy: author.profile});
-                const imageUploadRequest = await context.fileUploadRequestFactory.createOne({user: author, fileField: "textImage"});
-                const audioUploadRequest = await context.fileUploadRequestFactory.createOne({user: author, fileField: "textAudio"});
-                const updatedText = context.textFactory.makeOne({collection, language, image: imageUploadRequest.fileUrl, audio: audioUploadRequest.fileUrl, isPublic: !text.isPublic, addedBy: author.profile});
+                const imageUploadRequest = await context.fileUploadRequestFactory.createOne({
+                    user: author,
+                    fileField: "textImage"
+                });
+                const audioUploadRequest = await context.fileUploadRequestFactory.createOne({
+                    user: author,
+                    fileField: "textAudio"
+                });
+                const updatedText = context.textFactory.makeOne({
+                    collection,
+                    language,
+                    isProcessing: true,
+                    parsedContent: null,
+                    parsedTitle: null,
+                    image: imageUploadRequest.fileUrl,
+                    audio: audioUploadRequest.fileUrl,
+                    isPublic: !text.isPublic,
+                    addedBy: author.profile
+                });
+                const sendTextToParsingQueueSpy = vi.spyOn(TextService, "sendTextToParsingQueue").mockResolvedValue(undefined);
 
                 const response = await makeRequest(text.id, {
                     title: updatedText.title,
@@ -69,7 +90,7 @@ describe("PATCH texts/{textId}/", () => {
                     audio: audioUploadRequest.objectKey,
                 }, session.token);
 
-                const dbRecord = await context.textRepo.findOneOrFail({id: text.id}, {populate: ["language", "addedBy.user", "collection.language", "collection.addedBy.user"]});
+                const dbRecord = await context.textRepo.findOneOrFail({id: text.id}, {populate: ["language", "addedBy.user", "collection.language", "collection.addedBy.user"], refresh:true});
                 await context.em.populate(dbRecord, ["collection"]);
                 await context.textRepo.annotateTextsWithUserData([dbRecord], author);
                 await context.collectionRepo.annotateCollectionsWithUserData([updatedText.collection!], author);
@@ -78,23 +99,35 @@ describe("PATCH texts/{textId}/", () => {
                 expect(response.statusCode).to.equal(200);
                 expect(response.json()).toMatchObject(textSerializer.serialize(updatedText, {ignore: ["addedOn"]}));
                 expect(textSerializer.serialize(dbRecord)).toMatchObject(textSerializer.serialize(updatedText, {ignore: ["addedOn"]}));
-
-                const parser = parsers["en"];
-                const textWords = parser.splitWords(parser.parseText(`${updatedText.title} ${updatedText.content}`), {keepDuplicates: false});
-                const textVocabs = await context.vocabRepo.find({text: textWords, language: collection.language});
-                const textVocabMappings = await context.em.find(MapTextVocab, {vocab: textVocabs, text: dbRecord});
-
-                expect(textVocabs.length).toEqual(textWords.length);
-                expect(textVocabMappings.length).toEqual(textWords.length);
+                expect(sendTextToParsingQueueSpy).toHaveBeenCalledOnce();
+                expect(sendTextToParsingQueueSpy).toHaveBeenCalledWith({
+                    textId: dbRecord.id,
+                    parsingPriority: 2
+                });
             });
             test<TestContext>("If new image and audio are blank clear text image and audio", async (context) => {
                 const author = await context.userFactory.createOne();
                 const session = await context.sessionFactory.createOne({user: author});
                 const language = await context.languageFactory.createOne();
 
-                const collection = await context.collectionFactory.createOne({addedBy: author.profile, language: language, texts: []});
+                const collection = await context.collectionFactory.createOne({
+                    addedBy: author.profile,
+                    language: language,
+                    texts: []
+                });
                 const text = await context.textFactory.createOne({collection, language, addedBy: author.profile});
-                const updatedText = context.textFactory.makeOne({collection, language, image: "", audio: "", isPublic: !text.isPublic, addedBy: author.profile});
+                const updatedText = context.textFactory.makeOne({
+                    collection,
+                    language,
+                    image: "",
+                    audio: "",
+                    isProcessing: true,
+                    parsedContent: null,
+                    parsedTitle: null,
+                    isPublic: !text.isPublic,
+                    addedBy: author.profile
+                });
+                const sendTextToParsingQueueSpy = vi.spyOn(TextService, "sendTextToParsingQueue").mockResolvedValue(undefined);
 
                 const response = await makeRequest(text.id, {
                     title: updatedText.title,
@@ -105,7 +138,7 @@ describe("PATCH texts/{textId}/", () => {
                     audio: ""
                 }, session.token);
 
-                const dbRecord = await context.textRepo.findOneOrFail({id: text.id}, {populate: ["language", "addedBy.user", "collection", "collection.language", "collection.addedBy.user"]});
+                const dbRecord = await context.textRepo.findOneOrFail({id: text.id}, {populate: ["language", "addedBy.user", "collection", "collection.language", "collection.addedBy.user"], refresh:true});
                 await context.em.populate(dbRecord, ["collection"]);
                 await context.textRepo.annotateTextsWithUserData([dbRecord], author);
                 await context.collectionRepo.annotateCollectionsWithUserData([dbRecord.collection!], author);
@@ -114,25 +147,41 @@ describe("PATCH texts/{textId}/", () => {
                 expect(response.statusCode).to.equal(200);
                 expect(response.json()).toMatchObject(textSerializer.serialize(updatedText, {ignore: ["addedOn"]}));
                 expect(textSerializer.serialize(dbRecord)).toMatchObject(textSerializer.serialize(updatedText, {ignore: ["addedOn"]}));
-
-                const parser = parsers["en"];
-                const textWords = parser.splitWords(parser.parseText(`${updatedText.title} ${updatedText.content}`), {keepDuplicates: false});
-                const textVocabs = await context.vocabRepo.find({text: textWords, language: collection.language});
-                const textVocabMappings = await context.em.find(MapTextVocab, {vocab: textVocabs, text: dbRecord});
-
-                expect(textVocabs.length).toEqual(textWords.length);
-                expect(textVocabs.map(v => v.text)).toEqual(expect.arrayContaining(textWords));
-                expect(textVocabMappings.length).toEqual(textWords.length);
+                expect(sendTextToParsingQueueSpy).toHaveBeenCalledOnce();
+                expect(sendTextToParsingQueueSpy).toHaveBeenCalledWith({
+                    textId: dbRecord.id,
+                    parsingPriority: 2
+                });
             });
             test<TestContext>("If collectionId is provided change collection", async (context) => {
                 const author = await context.userFactory.createOne();
                 const session = await context.sessionFactory.createOne({user: author});
                 const language = await context.languageFactory.createOne();
 
-                const collection = await context.collectionFactory.createOne({addedBy: author.profile, language: language, texts: []});
-                const newCollection = await context.collectionFactory.createOne({addedBy: author.profile, language: language});
-                const text = await context.textFactory.createOne({collection: collection, language, addedBy: author.profile});
-                const updatedText = context.textFactory.makeOne({collection: newCollection, language, isPublic: !text.isPublic, addedBy: author.profile});
+                const collection = await context.collectionFactory.createOne({
+                    addedBy: author.profile,
+                    language: language,
+                    texts: []
+                });
+                const newCollection = await context.collectionFactory.createOne({
+                    addedBy: author.profile,
+                    language: language
+                });
+                const text = await context.textFactory.createOne({
+                    collection: collection,
+                    language,
+                    addedBy: author.profile
+                });
+                const updatedText = context.textFactory.makeOne({
+                    isProcessing: true,
+                    parsedContent: null,
+                    parsedTitle: null,
+                    collection: newCollection,
+                    language,
+                    isPublic: !text.isPublic,
+                    addedBy: author.profile
+                });
+                const sendTextToParsingQueueSpy = vi.spyOn(TextService, "sendTextToParsingQueue").mockResolvedValue(undefined);
 
                 const response = await makeRequest(text.id, {
                     collectionId: newCollection.id,
@@ -142,7 +191,7 @@ describe("PATCH texts/{textId}/", () => {
                     level: updatedText.level,
                 }, session.token);
 
-                const dbRecord = await context.textRepo.findOneOrFail({id: text.id}, {populate: ["language", "addedBy.user", "collection", "collection.language", "collection.addedBy.user"]});
+                const dbRecord = await context.textRepo.findOneOrFail({id: text.id}, {populate: ["language", "addedBy.user", "collection", "collection.language", "collection.addedBy.user"], refresh:true});
                 await context.em.populate(dbRecord, ["collection"]);
                 await context.textRepo.annotateTextsWithUserData([dbRecord], author);
                 await context.collectionRepo.annotateCollectionsWithUserData([updatedText.collection!], author);
@@ -152,23 +201,33 @@ describe("PATCH texts/{textId}/", () => {
                 expect(response.json()).toMatchObject(textSerializer.serialize(updatedText, {ignore: ["addedOn"]}));
                 expect(textSerializer.serialize(dbRecord)).toMatchObject(textSerializer.serialize(updatedText, {ignore: ["addedOn"]}));
                 expect(dbRecord.orderInCollection).toEqual(await newCollection.texts.loadCount() - 1);
-
-                const parser = parsers["en"];
-                const textWords = parser.splitWords(parser.parseText(`${updatedText.title} ${updatedText.content}`), {keepDuplicates: false});
-                const textVocabs = await context.vocabRepo.find({text: textWords, language: collection.language});
-                const textVocabMappings = await context.em.find(MapTextVocab, {vocab: textVocabs, text: dbRecord});
-
-                expect(textVocabs.length).toEqual(textWords.length);
-                expect(textVocabMappings.length).toEqual(textWords.length);
+                expect(sendTextToParsingQueueSpy).toHaveBeenCalledOnce();
+                expect(sendTextToParsingQueueSpy).toHaveBeenCalledWith({
+                    textId: dbRecord.id,
+                    parsingPriority: 2
+                });
             });
             test<TestContext>("If collectionId is null remove from collection", async (context) => {
                 const author = await context.userFactory.createOne();
                 const session = await context.sessionFactory.createOne({user: author});
                 const language = await context.languageFactory.createOne();
 
-                const collection = await context.collectionFactory.createOne({addedBy: author.profile, language: language, texts: []});
+                const collection = await context.collectionFactory.createOne({
+                    addedBy: author.profile,
+                    language: language,
+                    texts: []
+                });
                 const text = await context.textFactory.createOne({collection, language, addedBy: author.profile});
-                const updatedText = context.textFactory.makeOne({collection: null, language, isPublic: !text.isPublic, addedBy: author.profile});
+                const updatedText = context.textFactory.makeOne({
+                    collection: null,
+                    language,
+                    isPublic: !text.isPublic,
+                    addedBy: author.profile,
+                    isProcessing: true,
+                    parsedContent: null,
+                    parsedTitle: null,
+                });
+                const sendTextToParsingQueueSpy = vi.spyOn(TextService, "sendTextToParsingQueue").mockResolvedValue(undefined);
 
                 const response = await makeRequest(text.id, {
                     collectionId: null,
@@ -178,7 +237,10 @@ describe("PATCH texts/{textId}/", () => {
                     level: updatedText.level,
                 }, session.token);
 
-                const dbRecord = await context.textRepo.findOneOrFail({id: text.id}, {populate: ["language", "addedBy.user", "collection", "collection.language", "collection.addedBy.user"], refresh:true});
+                const dbRecord = await context.textRepo.findOneOrFail({id: text.id}, {
+                    populate: ["language", "addedBy.user", "collection", "collection.language", "collection.addedBy.user"],
+                    refresh: true
+                });
                 await context.em.populate(dbRecord, ["collection"]);
                 await context.textRepo.annotateTextsWithUserData([dbRecord], author);
 
@@ -186,21 +248,22 @@ describe("PATCH texts/{textId}/", () => {
                 expect(response.json()).toMatchObject(textSerializer.serialize(updatedText, {ignore: ["addedOn"]}));
                 expect(textSerializer.serialize(dbRecord)).toMatchObject(textSerializer.serialize(updatedText, {ignore: ["addedOn"]}));
                 expect(dbRecord.orderInCollection).toEqual(null);
-
-                const parser = parsers["en"];
-                const textWords = parser.splitWords(parser.parseText(`${updatedText.title} ${updatedText.content}`), {keepDuplicates: false});
-                const textVocabs = await context.vocabRepo.find({text: textWords, language: collection.language});
-                const textVocabMappings = await context.em.find(MapTextVocab, {vocab: textVocabs, text: dbRecord});
-
-                expect(textVocabs.length).toEqual(textWords.length);
-                expect(textVocabMappings.length).toEqual(textWords.length);
+                expect(sendTextToParsingQueueSpy).toHaveBeenCalledOnce();
+                expect(sendTextToParsingQueueSpy).toHaveBeenCalledWith({
+                    textId: dbRecord.id,
+                    parsingPriority: 2
+                });
             });
         });
     });
     test<TestContext>("If user is not logged in return 401", async (context) => {
         const author = await context.userFactory.createOne();
         const language = await context.languageFactory.createOne();
-        const collection = await context.collectionFactory.createOne({addedBy: author.profile, language: language, texts: []});
+        const collection = await context.collectionFactory.createOne({
+            addedBy: author.profile,
+            language: language,
+            texts: []
+        });
         const text = await context.textFactory.createOne({collection, language, addedBy: author.profile});
         const updatedText = context.textFactory.makeOne({collection});
 
@@ -216,7 +279,11 @@ describe("PATCH texts/{textId}/", () => {
         const session = await context.sessionFactory.createOne({user});
         const author = await context.userFactory.createOne();
         const language = await context.languageFactory.createOne();
-        const collection = await context.collectionFactory.createOne({addedBy: author.profile, language: language, texts: []});
+        const collection = await context.collectionFactory.createOne({
+            addedBy: author.profile,
+            language: language,
+            texts: []
+        });
         const text = await context.textFactory.createOne({collection, language, addedBy: author.profile});
         const updatedText = context.textFactory.makeOne({collection});
 
@@ -244,8 +311,17 @@ describe("PATCH texts/{textId}/", () => {
         const otherUser = await context.userFactory.createOne();
         const session = await context.sessionFactory.createOne({user: otherUser});
         const language = await context.languageFactory.createOne();
-        const collection = await context.collectionFactory.createOne({addedBy: author.profile, language: language, texts: []});
-        const text = await context.textFactory.createOne({collection, language, addedBy: author.profile, isPublic: false,});
+        const collection = await context.collectionFactory.createOne({
+            addedBy: author.profile,
+            language: language,
+            texts: []
+        });
+        const text = await context.textFactory.createOne({
+            collection,
+            language,
+            addedBy: author.profile,
+            isPublic: false,
+        });
         const updatedText = context.textFactory.makeOne();
 
         const response = await makeRequest(text.id, {
@@ -260,8 +336,17 @@ describe("PATCH texts/{textId}/", () => {
         const otherUser = await context.userFactory.createOne();
         const session = await context.sessionFactory.createOne({user: otherUser});
         const language = await context.languageFactory.createOne();
-        const collection = await context.collectionFactory.createOne({addedBy: author.profile, language: language, texts: []});
-        const text = await context.textFactory.createOne({collection, language, addedBy: author.profile, isPublic: true});
+        const collection = await context.collectionFactory.createOne({
+            addedBy: author.profile,
+            language: language,
+            texts: []
+        });
+        const text = await context.textFactory.createOne({
+            collection,
+            language,
+            addedBy: author.profile,
+            isPublic: true
+        });
         const updatedText = context.textFactory.makeOne();
 
         const response = await makeRequest(text.id, {
@@ -276,7 +361,11 @@ describe("PATCH texts/{textId}/", () => {
             const author = await context.userFactory.createOne();
             const session = await context.sessionFactory.createOne({user: author});
             const language = await context.languageFactory.createOne();
-            const collection = await context.collectionFactory.createOne({addedBy: author.profile, language, texts: []});
+            const collection = await context.collectionFactory.createOne({
+                addedBy: author.profile,
+                language,
+                texts: []
+            });
             const text = await context.textFactory.createOne({collection, language, addedBy: author.profile});
 
             const updatedText = context.textFactory.makeOne();
@@ -290,7 +379,11 @@ describe("PATCH texts/{textId}/", () => {
             const author = await context.userFactory.createOne();
             const session = await context.sessionFactory.createOne({user: author});
             const language = await context.languageFactory.createOne();
-            const collection = await context.collectionFactory.createOne({addedBy: author.profile, language, texts: []});
+            const collection = await context.collectionFactory.createOne({
+                addedBy: author.profile,
+                language,
+                texts: []
+            });
             const text = await context.textFactory.createOne({collection, language, addedBy: author.profile});
 
             const updatedText = context.textFactory.makeOne();
@@ -306,7 +399,11 @@ describe("PATCH texts/{textId}/", () => {
             const author = await context.userFactory.createOne();
             const session = await context.sessionFactory.createOne({user: author});
             const language = await context.languageFactory.createOne();
-            const collection = await context.collectionFactory.createOne({addedBy: author.profile, language, texts: []});
+            const collection = await context.collectionFactory.createOne({
+                addedBy: author.profile,
+                language,
+                texts: []
+            });
             const text = await context.textFactory.createOne({collection, language, addedBy: author.profile});
             const updatedText = context.textFactory.makeOne({collection});
 
@@ -320,7 +417,11 @@ describe("PATCH texts/{textId}/", () => {
             const author = await context.userFactory.createOne();
             const session = await context.sessionFactory.createOne({user: author});
             const language = await context.languageFactory.createOne();
-            const collection = await context.collectionFactory.createOne({addedBy: author.profile, language, texts: []});
+            const collection = await context.collectionFactory.createOne({
+                addedBy: author.profile,
+                language,
+                texts: []
+            });
             const text = await context.textFactory.createOne({collection, language, addedBy: author.profile});
             const updatedText = context.textFactory.makeOne({collection});
 
@@ -334,7 +435,11 @@ describe("PATCH texts/{textId}/", () => {
             const author = await context.userFactory.createOne();
             const session = await context.sessionFactory.createOne({user: author});
             const language = await context.languageFactory.createOne();
-            const collection = await context.collectionFactory.createOne({addedBy: author.profile, language, texts: []});
+            const collection = await context.collectionFactory.createOne({
+                addedBy: author.profile,
+                language,
+                texts: []
+            });
             const text = await context.textFactory.createOne({collection, language, addedBy: author.profile});
             const updatedText = context.textFactory.makeOne({collection});
 
@@ -349,7 +454,11 @@ describe("PATCH texts/{textId}/", () => {
             const author = await context.userFactory.createOne();
             const session = await context.sessionFactory.createOne({user: author});
             const language = await context.languageFactory.createOne();
-            const collection = await context.collectionFactory.createOne({addedBy: author.profile, language, texts: []});
+            const collection = await context.collectionFactory.createOne({
+                addedBy: author.profile,
+                language,
+                texts: []
+            });
             const text = await context.textFactory.createOne({collection, language, addedBy: author.profile});
             const updatedText = context.textFactory.makeOne({collection});
 
@@ -365,7 +474,11 @@ describe("PATCH texts/{textId}/", () => {
                 const author = await context.userFactory.createOne();
                 const session = await context.sessionFactory.createOne({user: author});
                 const language = await context.languageFactory.createOne();
-                const collection = await context.collectionFactory.createOne({addedBy: author.profile, language, texts: []});
+                const collection = await context.collectionFactory.createOne({
+                    addedBy: author.profile,
+                    language,
+                    texts: []
+                });
                 const text = await context.textFactory.createOne({collection, language, addedBy: author.profile});
                 const updatedText = context.textFactory.makeOne();
 
@@ -381,7 +494,11 @@ describe("PATCH texts/{textId}/", () => {
                 const author = await context.userFactory.createOne();
                 const session = await context.sessionFactory.createOne({user: author});
                 const language = await context.languageFactory.createOne();
-                const collection = await context.collectionFactory.createOne({addedBy: author.profile, language, texts: []});
+                const collection = await context.collectionFactory.createOne({
+                    addedBy: author.profile,
+                    language,
+                    texts: []
+                });
                 const text = await context.textFactory.createOne({collection, language, addedBy: author.profile});
                 const updatedText = context.textFactory.makeOne();
 
@@ -398,8 +515,16 @@ describe("PATCH texts/{textId}/", () => {
                 const author = await context.userFactory.createOne();
                 const session = await context.sessionFactory.createOne({user});
                 const language = await context.languageFactory.createOne();
-                const collection = await context.collectionFactory.createOne({addedBy: author.profile, language, texts: []});
-                const newCollection = await context.collectionFactory.createOne({addedBy: author.profile, language, texts: []});
+                const collection = await context.collectionFactory.createOne({
+                    addedBy: author.profile,
+                    language,
+                    texts: []
+                });
+                const newCollection = await context.collectionFactory.createOne({
+                    addedBy: author.profile,
+                    language,
+                    texts: []
+                });
                 const text = await context.textFactory.createOne({collection, language, addedBy: author.profile});
                 const updatedText = context.textFactory.makeOne();
 
@@ -415,9 +540,21 @@ describe("PATCH texts/{textId}/", () => {
                 const session = await context.sessionFactory.createOne({user: author});
                 const language1 = await context.languageFactory.createOne();
                 const language2 = await context.languageFactory.createOne();
-                const collection = await context.collectionFactory.createOne({addedBy: author.profile, language: language1, texts: []});
-                const newCollection = await context.collectionFactory.createOne({addedBy: author.profile, language: language2, texts: []});
-                const text = await context.textFactory.createOne({collection, language: language1, addedBy: author.profile});
+                const collection = await context.collectionFactory.createOne({
+                    addedBy: author.profile,
+                    language: language1,
+                    texts: []
+                });
+                const newCollection = await context.collectionFactory.createOne({
+                    addedBy: author.profile,
+                    language: language2,
+                    texts: []
+                });
+                const text = await context.textFactory.createOne({
+                    collection,
+                    language: language1,
+                    addedBy: author.profile
+                });
                 const updatedText = context.textFactory.makeOne();
 
                 const response = await makeRequest(text.id, {
@@ -433,9 +570,16 @@ describe("PATCH texts/{textId}/", () => {
                 const author = await context.userFactory.createOne();
                 const session = await context.sessionFactory.createOne({user: author});
                 const language = await context.languageFactory.createOne();
-                const collection = await context.collectionFactory.createOne({addedBy: author.profile, language, texts: []});
+                const collection = await context.collectionFactory.createOne({
+                    addedBy: author.profile,
+                    language,
+                    texts: []
+                });
                 const text = await context.textFactory.createOne({collection, language, addedBy: author.profile});
-                const imageUploadRequest = await context.fileUploadRequestFactory.makeOne({user: author, fileField: "textImage"});
+                const imageUploadRequest = await context.fileUploadRequestFactory.makeOne({
+                    user: author,
+                    fileField: "textImage"
+                });
                 const updatedText = context.textFactory.makeOne({collection, image: imageUploadRequest.fileUrl});
 
                 const response = await makeRequest(text.id, {
@@ -451,9 +595,16 @@ describe("PATCH texts/{textId}/", () => {
                 const otherUser = await context.userFactory.createOne();
                 const session = await context.sessionFactory.createOne({user: author});
                 const language = await context.languageFactory.createOne();
-                const collection = await context.collectionFactory.createOne({addedBy: author.profile, language, texts: []});
+                const collection = await context.collectionFactory.createOne({
+                    addedBy: author.profile,
+                    language,
+                    texts: []
+                });
                 const text = await context.textFactory.createOne({collection, language, addedBy: author.profile});
-                const imageUploadRequest = await context.fileUploadRequestFactory.createOne({user: otherUser, fileField: "textImage"});
+                const imageUploadRequest = await context.fileUploadRequestFactory.createOne({
+                    user: otherUser,
+                    fileField: "textImage"
+                });
                 const updatedText = context.textFactory.makeOne({collection, image: imageUploadRequest.fileUrl});
 
                 const response = await makeRequest(text.id, {
@@ -469,9 +620,16 @@ describe("PATCH texts/{textId}/", () => {
                 const otherUser = await context.userFactory.createOne();
                 const session = await context.sessionFactory.createOne({user: author});
                 const language = await context.languageFactory.createOne();
-                const collection = await context.collectionFactory.createOne({addedBy: author.profile, language, texts: []});
+                const collection = await context.collectionFactory.createOne({
+                    addedBy: author.profile,
+                    language,
+                    texts: []
+                });
                 const text = await context.textFactory.createOne({collection, language, addedBy: author.profile});
-                const imageUploadRequest = await context.fileUploadRequestFactory.createOne({user: otherUser, fileField: "collectionImage"});
+                const imageUploadRequest = await context.fileUploadRequestFactory.createOne({
+                    user: otherUser,
+                    fileField: "collectionImage"
+                });
                 const updatedText = context.textFactory.makeOne({collection, image: imageUploadRequest.fileUrl});
 
                 const response = await makeRequest(text.id, {
@@ -488,9 +646,16 @@ describe("PATCH texts/{textId}/", () => {
                 const author = await context.userFactory.createOne();
                 const session = await context.sessionFactory.createOne({user: author});
                 const language = await context.languageFactory.createOne();
-                const collection = await context.collectionFactory.createOne({addedBy: author.profile, language, texts: []});
+                const collection = await context.collectionFactory.createOne({
+                    addedBy: author.profile,
+                    language,
+                    texts: []
+                });
                 const text = await context.textFactory.createOne({collection, language, addedBy: author.profile});
-                const audioUploadRequest = await context.fileUploadRequestFactory.makeOne({user: author, fileField: "textAudio"});
+                const audioUploadRequest = await context.fileUploadRequestFactory.makeOne({
+                    user: author,
+                    fileField: "textAudio"
+                });
                 const updatedText = context.textFactory.makeOne({collection, audio: audioUploadRequest.fileUrl});
 
                 const response = await makeRequest(text.id, {
@@ -506,9 +671,16 @@ describe("PATCH texts/{textId}/", () => {
                 const otherUser = await context.userFactory.createOne();
                 const session = await context.sessionFactory.createOne({user: author});
                 const language = await context.languageFactory.createOne();
-                const collection = await context.collectionFactory.createOne({addedBy: author.profile, language, texts: []});
+                const collection = await context.collectionFactory.createOne({
+                    addedBy: author.profile,
+                    language,
+                    texts: []
+                });
                 const text = await context.textFactory.createOne({collection, language, addedBy: author.profile});
-                const audioUploadRequest = await context.fileUploadRequestFactory.createOne({user: otherUser, fileField: "textAudio"});
+                const audioUploadRequest = await context.fileUploadRequestFactory.createOne({
+                    user: otherUser,
+                    fileField: "textAudio"
+                });
                 const updatedText = context.textFactory.makeOne({collection, audio: audioUploadRequest.fileUrl});
 
                 const response = await makeRequest(text.id, {
@@ -524,9 +696,16 @@ describe("PATCH texts/{textId}/", () => {
                 const otherUser = await context.userFactory.createOne();
                 const session = await context.sessionFactory.createOne({user: author});
                 const language = await context.languageFactory.createOne();
-                const collection = await context.collectionFactory.createOne({addedBy: author.profile, language, texts: []});
+                const collection = await context.collectionFactory.createOne({
+                    addedBy: author.profile,
+                    language,
+                    texts: []
+                });
                 const text = await context.textFactory.createOne({collection, language, addedBy: author.profile});
-                const audioUploadRequest = await context.fileUploadRequestFactory.createOne({user: otherUser, fileField: "collectionAudio"});
+                const audioUploadRequest = await context.fileUploadRequestFactory.createOne({
+                    user: otherUser,
+                    fileField: "collectionAudio"
+                });
                 const updatedText = context.textFactory.makeOne({collection, audio: audioUploadRequest.fileUrl});
 
                 const response = await makeRequest(text.id, {

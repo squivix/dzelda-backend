@@ -111,7 +111,7 @@ class UserController {
         if (token == null)
             throw new APIError(StatusCodes.UNAUTHORIZED, "Email confirmation token is invalid or expired");
 
-        reply.status(204);
+        reply.status(204).send();
     }
 
     async getUser(request: FastifyRequest, reply: FastifyReply) {

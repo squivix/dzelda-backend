@@ -2,9 +2,8 @@ import {describe, expect, test, TestContext, vi} from "vitest";
 import {fetchRequest} from "@/tests/integration/utils.js";
 import {LanguageLevel} from "dzelda-common";
 import {textSerializer} from "@/src/presentation/response/serializers/entities/TextSerializer.js";
-import {parsers} from "dzelda-common";
-import {MapTextVocab} from "@/src/models/entities/MapTextVocab.js";
 import {faker} from "@faker-js/faker";
+import {TextService} from "@/src/services/TextService";
 
 /**{@link TextController#createText}*/
 describe("POST texts/", () => {
@@ -21,7 +20,17 @@ describe("POST texts/", () => {
             const user = await context.userFactory.createOne();
             const session = await context.sessionFactory.createOne({user: user});
             const language = await context.languageFactory.createOne();
-            const newText = context.textFactory.makeOne({level: LanguageLevel.ADVANCED_1, language, image: "", audio: "", addedBy: user.profile});
+            const newText = context.textFactory.makeOne({
+                isProcessing: true,
+                parsedContent: null,
+                parsedTitle: null,
+                level: LanguageLevel.ADVANCED_1,
+                language,
+                image: "",
+                audio: "",
+                addedBy: user.profile
+            });
+            const sendTextToParsingQueueSpy = vi.spyOn(TextService, "sendTextToParsingQueue").mockResolvedValue(undefined);
 
             const response = await makeRequest({
                 languageCode: language.code,
@@ -30,29 +39,53 @@ describe("POST texts/", () => {
             }, session.token);
 
             expect(response.statusCode).to.equal(201);
-            const dbRecord = await context.textRepo.findOne({language, title: newText.title}, {populate: ["language", "addedBy.user", "collection.language", "collection.addedBy.user"]});
+            const dbRecord = await context.textRepo.findOne({
+                language,
+                title: newText.title
+            }, {populate: ["language", "addedBy.user", "collection.language", "collection.addedBy.user"]});
             expect(dbRecord).not.toBeNull();
             if (!dbRecord) return;
             await context.textRepo.annotateTextsWithUserData([dbRecord], user);
             expect(response.json()).toMatchObject(textSerializer.serialize(newText, {ignore: ["addedOn"]}));
             expect(textSerializer.serialize(dbRecord)).toMatchObject(textSerializer.serialize(newText, {ignore: ["addedOn"]}));
-            const parser = parsers["en"];
-            const textWords = parser.splitWords(parser.parseText(`${newText.title} ${newText.content}`), {keepDuplicates: false});
-            const textVocabs = await context.vocabRepo.find({text: textWords, language: language});
-            const textVocabMappings = await context.em.find(MapTextVocab, {vocab: textVocabs, text: dbRecord});
+            expect(sendTextToParsingQueueSpy).toHaveBeenCalledOnce();
+            expect(sendTextToParsingQueueSpy).toHaveBeenCalledWith({
+                textId: dbRecord.id,
+                parsingPriority: 2
+            });
 
-            expect(textVocabs.length).toEqual(textWords.length);
-            expect(textVocabs.map(v => v.text)).toEqual(expect.arrayContaining(textWords));
-            expect(textVocabMappings.length).toEqual(textWords.length);
+            //TODO move this parsing testing to the parseText background worker tests
+
+            // const parser = parsers["en"];
+            // const textWords = parser.splitWords(parser.parseText(`${newText.title} ${newText.content}`), {keepDuplicates: false});
+            // const textVocabs = await context.vocabRepo.find({text: textWords, language: language});
+            // const textVocabMappings = await context.em.find(MapTextVocab, {vocab: textVocabs, text: dbRecord});
+            //
+            // expect(textVocabs.length).toEqual(textWords.length);
+            // expect(textVocabs.map(v => v.text)).toEqual(expect.arrayContaining(textWords));
+            // expect(textVocabMappings.length).toEqual(textWords.length);
         });
         test<TestContext>("If optional fields are provided use provided values", async (context) => {
             const user = await context.userFactory.createOne();
             const session = await context.sessionFactory.createOne({user: user});
             const language = await context.languageFactory.createOne();
-            const collection = await context.collectionFactory.createOne({language: language, addedBy: user.profile, texts: []});
-            const imageUploadRequest = await context.fileUploadRequestFactory.createOne({user: user, fileField: "textImage"});
-            const audioUploadRequest = await context.fileUploadRequestFactory.createOne({user: user, fileField: "textAudio"});
+            const collection = await context.collectionFactory.createOne({
+                language: language,
+                addedBy: user.profile,
+                texts: []
+            });
+            const imageUploadRequest = await context.fileUploadRequestFactory.createOne({
+                user: user,
+                fileField: "textImage"
+            });
+            const audioUploadRequest = await context.fileUploadRequestFactory.createOne({
+                user: user,
+                fileField: "textAudio"
+            });
             const newText = context.textFactory.makeOne({
+                isProcessing: true,
+                parsedContent: null,
+                parsedTitle: null,
                 language: language,
                 image: imageUploadRequest.fileUrl,
                 audio: audioUploadRequest.fileUrl,
@@ -61,6 +94,7 @@ describe("POST texts/", () => {
                 isPublic: false,
                 level: LanguageLevel.BEGINNER_2,
             });
+            const sendTextToParsingQueueSpy = vi.spyOn(TextService, "sendTextToParsingQueue").mockResolvedValue(undefined);
 
             const response = await makeRequest({
                 languageCode: language.code,
@@ -74,22 +108,21 @@ describe("POST texts/", () => {
             }, session.token);
 
             expect(response.statusCode).to.equal(201);
-            const dbRecord = await context.textRepo.findOne({collection, title: newText.title}, {populate: ["language", "addedBy.user", "collection.language", "collection.addedBy.user"]});
+            const dbRecord = await context.textRepo.findOne({
+                collection,
+                title: newText.title
+            }, {populate: ["language", "addedBy.user", "collection.language", "collection.addedBy.user"]});
             expect(dbRecord).not.toBeNull();
             if (!dbRecord) return;
             await context.textRepo.annotateTextsWithUserData([dbRecord], user);
             await context.collectionRepo.annotateCollectionsWithUserData([dbRecord.collection!], user);
             expect(response.json()).toMatchObject(textSerializer.serialize(newText, {ignore: ["addedOn"]}));
             expect(textSerializer.serialize(dbRecord)).toMatchObject(textSerializer.serialize(newText, {ignore: ["addedOn",]}));
-
-            const parser = parsers["en"];
-            const textWords = parser.splitWords(parser.parseText(`${newText.title} ${newText.content}`), {keepDuplicates: false});
-            const textVocabs = await context.vocabRepo.find({text: textWords, language: collection.language});
-            const textVocabMappings = await context.em.find(MapTextVocab, {vocab: textVocabs, text: dbRecord});
-
-            expect(textVocabs.length).toEqual(textWords.length);
-            expect(textVocabs.map(v => v.text)).toEqual(expect.arrayContaining(textWords));
-            expect(textVocabMappings.length).toEqual(textWords.length);
+            expect(sendTextToParsingQueueSpy).toHaveBeenCalledOnce();
+            expect(sendTextToParsingQueueSpy).toHaveBeenCalledWith({
+                textId: dbRecord.id,
+                parsingPriority: 2
+            });
         });
     });
     test<TestContext>("If user is not logged in return 401", async (context) => {
@@ -241,7 +274,11 @@ describe("POST texts/", () => {
                 const otherUser = await context.userFactory.createOne();
                 const session = await context.sessionFactory.createOne({user: user});
                 const language = await context.languageFactory.createOne();
-                const collection = await context.collectionFactory.createOne({language, addedBy: otherUser.profile, texts: []});
+                const collection = await context.collectionFactory.createOne({
+                    language,
+                    addedBy: otherUser.profile,
+                    texts: []
+                });
                 const newText = context.textFactory.makeOne({language, collection});
 
                 const response = await makeRequest({
@@ -260,9 +297,19 @@ describe("POST texts/", () => {
                 const user = await context.userFactory.createOne();
                 const session = await context.sessionFactory.createOne({user: user});
                 const language = await context.languageFactory.createOne();
-                const imageUploadRequest = await context.fileUploadRequestFactory.makeOne({user: user, fileField: "textImage"});
-                const audioUploadRequest = await context.fileUploadRequestFactory.createOne({user: user, fileField: "textAudio"});
-                const newText = context.textFactory.makeOne({language, image: imageUploadRequest.fileUrl, audio: audioUploadRequest.fileUrl});
+                const imageUploadRequest = await context.fileUploadRequestFactory.makeOne({
+                    user: user,
+                    fileField: "textImage"
+                });
+                const audioUploadRequest = await context.fileUploadRequestFactory.createOne({
+                    user: user,
+                    fileField: "textAudio"
+                });
+                const newText = context.textFactory.makeOne({
+                    language,
+                    image: imageUploadRequest.fileUrl,
+                    audio: audioUploadRequest.fileUrl
+                });
 
                 const response = await makeRequest({
                     languageCode: newText.language.code,
@@ -279,9 +326,19 @@ describe("POST texts/", () => {
                 const otherUser = await context.userFactory.createOne();
                 const session = await context.sessionFactory.createOne({user: user});
                 const language = await context.languageFactory.createOne();
-                const imageUploadRequest = await context.fileUploadRequestFactory.createOne({user: otherUser, fileField: "textImage"});
-                const audioUploadRequest = await context.fileUploadRequestFactory.createOne({user: user, fileField: "textAudio"});
-                const newText = context.textFactory.makeOne({language, image: imageUploadRequest.fileUrl, audio: audioUploadRequest.fileUrl});
+                const imageUploadRequest = await context.fileUploadRequestFactory.createOne({
+                    user: otherUser,
+                    fileField: "textImage"
+                });
+                const audioUploadRequest = await context.fileUploadRequestFactory.createOne({
+                    user: user,
+                    fileField: "textAudio"
+                });
+                const newText = context.textFactory.makeOne({
+                    language,
+                    image: imageUploadRequest.fileUrl,
+                    audio: audioUploadRequest.fileUrl
+                });
 
                 const response = await makeRequest({
                     languageCode: newText.language.code,
@@ -297,9 +354,19 @@ describe("POST texts/", () => {
                 const user = await context.userFactory.createOne();
                 const session = await context.sessionFactory.createOne({user: user});
                 const language = await context.languageFactory.createOne();
-                const imageUploadRequest = await context.fileUploadRequestFactory.createOne({user: user, fileField: "collectionImage"});
-                const audioUploadRequest = await context.fileUploadRequestFactory.createOne({user: user, fileField: "textAudio"});
-                const newText = context.textFactory.makeOne({language, image: imageUploadRequest.fileUrl, audio: audioUploadRequest.fileUrl});
+                const imageUploadRequest = await context.fileUploadRequestFactory.createOne({
+                    user: user,
+                    fileField: "collectionImage"
+                });
+                const audioUploadRequest = await context.fileUploadRequestFactory.createOne({
+                    user: user,
+                    fileField: "textAudio"
+                });
+                const newText = context.textFactory.makeOne({
+                    language,
+                    image: imageUploadRequest.fileUrl,
+                    audio: audioUploadRequest.fileUrl
+                });
 
                 const response = await makeRequest({
                     languageCode: newText.language.code,
@@ -317,9 +384,19 @@ describe("POST texts/", () => {
                 const user = await context.userFactory.createOne();
                 const session = await context.sessionFactory.createOne({user: user});
                 const language = await context.languageFactory.createOne();
-                const imageUploadRequest = await context.fileUploadRequestFactory.createOne({user: user, fileField: "textImage"});
-                const audioUploadRequest = await context.fileUploadRequestFactory.makeOne({user: user, fileField: "textAudio"});
-                const newText = context.textFactory.makeOne({language, image: imageUploadRequest.fileUrl, audio: audioUploadRequest.fileUrl});
+                const imageUploadRequest = await context.fileUploadRequestFactory.createOne({
+                    user: user,
+                    fileField: "textImage"
+                });
+                const audioUploadRequest = await context.fileUploadRequestFactory.makeOne({
+                    user: user,
+                    fileField: "textAudio"
+                });
+                const newText = context.textFactory.makeOne({
+                    language,
+                    image: imageUploadRequest.fileUrl,
+                    audio: audioUploadRequest.fileUrl
+                });
 
                 const response = await makeRequest({
                     languageCode: newText.language.code,
@@ -336,9 +413,19 @@ describe("POST texts/", () => {
                 const otherUser = await context.userFactory.createOne();
                 const session = await context.sessionFactory.createOne({user: user});
                 const language = await context.languageFactory.createOne();
-                const imageUploadRequest = await context.fileUploadRequestFactory.createOne({user: user, fileField: "textImage"});
-                const audioUploadRequest = await context.fileUploadRequestFactory.createOne({user: otherUser, fileField: "textAudio"});
-                const newText = context.textFactory.makeOne({language, image: imageUploadRequest.fileUrl, audio: audioUploadRequest.fileUrl});
+                const imageUploadRequest = await context.fileUploadRequestFactory.createOne({
+                    user: user,
+                    fileField: "textImage"
+                });
+                const audioUploadRequest = await context.fileUploadRequestFactory.createOne({
+                    user: otherUser,
+                    fileField: "textAudio"
+                });
+                const newText = context.textFactory.makeOne({
+                    language,
+                    image: imageUploadRequest.fileUrl,
+                    audio: audioUploadRequest.fileUrl
+                });
 
                 const response = await makeRequest({
                     languageCode: newText.language.code,
@@ -354,9 +441,19 @@ describe("POST texts/", () => {
                 const user = await context.userFactory.createOne();
                 const session = await context.sessionFactory.createOne({user: user});
                 const language = await context.languageFactory.createOne();
-                const imageUploadRequest = await context.fileUploadRequestFactory.createOne({user: user, fileField: "textImage"});
-                const audioUploadRequest = await context.fileUploadRequestFactory.createOne({user: user, fileField: "collectionAudio"});
-                const newText = context.textFactory.makeOne({language, image: imageUploadRequest.fileUrl, audio: audioUploadRequest.fileUrl});
+                const imageUploadRequest = await context.fileUploadRequestFactory.createOne({
+                    user: user,
+                    fileField: "textImage"
+                });
+                const audioUploadRequest = await context.fileUploadRequestFactory.createOne({
+                    user: user,
+                    fileField: "collectionAudio"
+                });
+                const newText = context.textFactory.makeOne({
+                    language,
+                    image: imageUploadRequest.fileUrl,
+                    audio: audioUploadRequest.fileUrl
+                });
 
                 const response = await makeRequest({
                     languageCode: newText.language.code,

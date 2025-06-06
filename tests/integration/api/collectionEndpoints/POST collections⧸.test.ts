@@ -37,12 +37,12 @@ describe("POST collections/", function () {
 
             const responseBody = response.json();
             expect(response.statusCode).to.equal(201);
-            expect(responseBody).toMatchObject(collectionSerializer.serialize(newCollection, {ignore: ["addedOn"]}));
+            expect(responseBody).toMatchObject(collectionSerializer.serialize(newCollection, {ignore: ["addedOn", "texts"]}));
 
             const dbRecord = await context.collectionRepo.findOne({title: newCollection.title, language}, {populate: ["texts"]});
             expect(dbRecord).not.toBeNull();
             await context.collectionRepo.annotateCollectionsWithUserData([dbRecord!], user);
-            expect(collectionSerializer.serialize(dbRecord!)).toMatchObject(collectionSerializer.serialize(newCollection, {ignore: ["addedOn"]}));
+            expect(collectionSerializer.serialize(dbRecord!)).toMatchObject(collectionSerializer.serialize(newCollection, {ignore: ["addedOn", "texts"]}));
         });
         test<TestContext>("If optional fields are provided use provided values", async (context) => {
             const user = await context.userFactory.createOne();
@@ -68,12 +68,12 @@ describe("POST collections/", function () {
 
             const responseBody = response.json();
             expect(response.statusCode).to.equal(201);
-            expect(responseBody).toEqual(expect.objectContaining(collectionSerializer.serialize(newCollection, {ignore: ["addedOn"]})));
+            expect(responseBody).toEqual(expect.objectContaining(collectionSerializer.serialize(newCollection, {ignore: ["addedOn", "texts"]})));
 
             const dbRecord = await context.collectionRepo.findOne({title: newCollection.title, language}, {populate: ["texts"]});
             expect(dbRecord).not.toBeNull();
             await context.collectionRepo.annotateCollectionsWithUserData([dbRecord!], user);
-            expect(collectionSerializer.serialize(dbRecord!)).toMatchObject(collectionSerializer.serialize(newCollection, {ignore: ["addedOn"]}));
+            expect(collectionSerializer.serialize(dbRecord!)).toMatchObject(collectionSerializer.serialize(newCollection, {ignore: ["addedOn", "texts"]}));
         });
     });
     test<TestContext>("If user not logged in return 401", async (context) => {

@@ -173,7 +173,7 @@ describe("GET users/{username}/languages/", function () {
                 expect(response.statusCode).to.equal(200);
                 expect(response.json()).toEqual(learnerLanguageSerializer.serializeList(expectedMappings));
             });
-            test<TestContext>("If sortOrder is desc return the languages in ascending order", async (context) => {
+            test<TestContext>("If sortOrder is desc return the languages in descending order", async (context) => {
                 const user = await context.userFactory.createOne({profile: {isPublic: true}});
                 const expectedLanguages = [
                     await context.languageFactory.createOne({name: "def"}),
