@@ -16,6 +16,8 @@ import {Vocab} from "@/src/models/entities/Vocab.js";
 import {Collection} from "@/src/models/entities/Collection.js";
 import {TranslationLanguageFactory} from "@/devtools/factories/TranslationLanguageFactory.js";
 import {parsers} from "dzelda-common";
+import {NotificationFactory} from "@/devtools/factories/NotificationFactory";
+import {PendingJobFactory} from "@/devtools/factories/PendingJobFactory";
 
 vi.mock("dzelda-common", async () => {
     return {
@@ -39,6 +41,8 @@ beforeEach(async (context: TestContext) => {
     context.vocabFactory = new VocabFactory(context.em);
     context.meaningFactory = new MeaningFactory(context.em);
     context.fileUploadRequestFactory = new FileUploadRequestFactory(context.em);
+    context.notificationFactory = new NotificationFactory(context.em);
+    context.pendingJobFactory = new PendingJobFactory(context.em);
 
     //repos
     context.collectionRepo = context.em.getRepository(Collection);

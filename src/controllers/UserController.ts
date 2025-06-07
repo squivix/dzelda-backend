@@ -26,6 +26,7 @@ import {confirmEmailTemplate} from "@/src/presentation/response/templates/email/
 import {passwordResetTemplate} from "@/src/presentation/response/templates/email/passwordResetTemplate.js";
 import urlJoin from "url-join";
 import {numericStringValidator} from "@/src/validators/utilValidators.js";
+import {notificationSerializer} from "@/src/presentation/response/serializers/entities/NotificationSerializer";
 
 class UserController {
     async signUp(request: FastifyRequest, reply: FastifyReply) {
@@ -255,14 +256,18 @@ class UserController {
         await userService.checkUserPendingJobs(request.user as User);
         const notifications = await userService.getUserNotifications(request.user as User);
 
-        reply.status(200).send(notifications);
+        reply.status(200).send(notificationSerializer.serializeList(notifications));
     }
 
     async deleteUserNotification(request: FastifyRequest, reply: FastifyReply) {
         const pathParamsValidator = z.object({notificationId: numericStringValidator});
         const pathParams = pathParamsValidator.parse(request.params);
         const userService = new UserService(request.em);
-        const notification = await userService.findUserNotification({id: pathParams.notificationId});
+
+        const notification = await userService.findUserNotification({
+            id: pathParams.notificationId,
+            recipient: request.user as User
+        });
         if (!notification)
             throw new NotFoundAPIError("Notification");
         await userService.deleteUserNotification(notification);

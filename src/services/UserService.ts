@@ -130,7 +130,10 @@ export class UserService {
             await this.em.nativeDelete(EmailConfirmationToken, {id: tokenRecord.id});
             return null;
         }
-        await this.em.nativeUpdate(User, {emailConfirmToken: tokenRecord}, {isEmailConfirmed: true, email: tokenRecord.email});
+        await this.em.nativeUpdate(User, {emailConfirmToken: tokenRecord}, {
+            isEmailConfirmed: true,
+            email: tokenRecord.email
+        });
         await this.em.nativeDelete(EmailConfirmationToken, {id: tokenRecord.id});
 
         return tokenRecord;
@@ -212,7 +215,12 @@ export class UserService {
         await this.em.flush();
     }
 
-    async generateFileUploadRequest(fileUploadRequestData: { user: User, fileField: keyof FileFieldType, fileUrl: string, objectKey: string }) {
+    async generateFileUploadRequest(fileUploadRequestData: {
+        user: User,
+        fileField: keyof FileFieldType,
+        fileUrl: string,
+        objectKey: string
+    }) {
         this.em.create(FileUploadRequest, {
             user: fileUploadRequestData.user,
             fileField: fileUploadRequestData.fileField,
@@ -222,7 +230,11 @@ export class UserService {
         await this.em.flush();
     }
 
-    async findFileUploadRequest({user, fileField, objectKey}: { user: User, fileField: keyof FileFieldType, objectKey: string }) {
+    async findFileUploadRequest({user, fileField, objectKey}: {
+        user: User,
+        fileField: keyof FileFieldType,
+        objectKey: string
+    }) {
         return await this.em.findOne(FileUploadRequest, {
             user: user,
             fileField: fileField,
@@ -245,7 +257,7 @@ export class UserService {
     async getUserNotifications(user: User) {
         return await this.em.find(Notification, {
             recipient: user.profile
-        });
+        }, {orderBy: {createdDate: "desc"}});
     }
 
     async findUserNotification(where: FilterQuery<Notification>) {

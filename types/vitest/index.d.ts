@@ -8,19 +8,13 @@ import {LanguageFactory} from "@/devtools/factories/LanguageFactory.js";
 import {CollectionFactory} from "@/devtools/factories/CollectionFactory.js";
 import {TextFactory} from "@/devtools/factories/TextFactory.js";
 import {FileUploadRequestFactory} from "@/devtools/factories/FileUploadRequestFactory.js";
-import {Dictionary} from "@/src/models/entities/Dictionary.js";
 import {DictionaryFactory} from "@/devtools/factories/DictionaryFactory.js";
-import {Language} from "@/src/models/entities/Language.js";
-import {MapLearnerLanguage} from "@/src/models/entities/MapLearnerLanguage.js";
 import {VocabFactory} from "@/devtools/factories/VocabFactory.js";
 import {MeaningFactory} from "@/devtools/factories/MeaningFactory.js";
-import {Vocab} from "@/src/models/entities/Vocab.js";
 import {Meaning} from "@/src/models/entities/Meaning.js";
-import {Session} from "@/src/models/entities/auth/Session.js";
-import {User} from "@/src/models/entities/auth/User.js";
-import {Profile} from "@/src/models/entities/Profile.js";
 import {VocabRepo} from "@/src/models/repos/VocabRepo.js";
 import {TranslationLanguageFactory} from "@/devtools/factories/TranslationLanguageFactory.js";
+import {NotificationFactory} from "@/devtools/factories/NotificationFactory";
 
 declare module "vitest" {
     export interface TestContext {
@@ -37,6 +31,9 @@ declare module "vitest" {
         dictionaryFactory: DictionaryFactory;
         vocabFactory: VocabFactory;
         meaningFactory: MeaningFactory;
+        notificationFactory: NotificationFactory;
+        pendingJobFactory: PendingJobFactory;
+
         //repos
         collectionRepo: CollectionRepo;
         textRepo: TextRepo;
