@@ -385,6 +385,9 @@ class TextController {
         const text = await textService.findText({id: body.textId});
         if (!text)
             throw new NotFoundAPIError("Text");
+        if (text.addedBy == user.profile)
+            throw new APIError(400, "You cannot hide texts you created");
+
         const existingMapping = await textService.findHiderTextMapping({hider: user.profile, text: text});
         if (existingMapping)
             throw new APIError(400, "Text is already hidden by user");
