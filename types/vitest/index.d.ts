@@ -15,6 +15,7 @@ import {Meaning} from "@/src/models/entities/Meaning.js";
 import {VocabRepo} from "@/src/models/repos/VocabRepo.js";
 import {TranslationLanguageFactory} from "@/devtools/factories/TranslationLanguageFactory.js";
 import {NotificationFactory} from "@/devtools/factories/NotificationFactory";
+import {HumanPronunciationFactory} from "@/devtools/factories/HumanPronunciationFactory";
 
 declare module "vitest" {
     export interface TestContext {
@@ -33,6 +34,7 @@ declare module "vitest" {
         meaningFactory: MeaningFactory;
         notificationFactory: NotificationFactory;
         pendingJobFactory: PendingJobFactory;
+        humanPronunciationFactory:HumanPronunciationFactory;
 
         //repos
         collectionRepo: CollectionRepo;

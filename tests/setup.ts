@@ -18,6 +18,7 @@ import {TranslationLanguageFactory} from "@/devtools/factories/TranslationLangua
 import {parsers} from "dzelda-common";
 import {NotificationFactory} from "@/devtools/factories/NotificationFactory";
 import {PendingJobFactory} from "@/devtools/factories/PendingJobFactory";
+import {HumanPronunciationFactory} from "@/devtools/factories/HumanPronunciationFactory";
 
 vi.mock("dzelda-common", async () => {
     return {
@@ -43,7 +44,7 @@ beforeEach(async (context: TestContext) => {
     context.fileUploadRequestFactory = new FileUploadRequestFactory(context.em);
     context.notificationFactory = new NotificationFactory(context.em);
     context.pendingJobFactory = new PendingJobFactory(context.em);
-
+    context.humanPronunciationFactory = new HumanPronunciationFactory(context.em);
     //repos
     context.collectionRepo = context.em.getRepository(Collection);
     context.textRepo = context.em.getRepository(Text);

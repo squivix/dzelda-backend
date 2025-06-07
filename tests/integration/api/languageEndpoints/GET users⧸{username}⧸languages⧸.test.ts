@@ -37,7 +37,6 @@ describe("GET users/{username}/languages/", function () {
         expect(response.statusCode).to.equal(200);
         expect(response.json()).toEqual(learnerLanguageSerializer.serializeList(expectedMappings));
     });
-
     test<TestContext>("If username does not exist return 404", async () => {
         const response = await makeRequest(faker.random.alphaNumeric(20));
         expect(response.statusCode).to.equal(404);
