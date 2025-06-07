@@ -53,7 +53,17 @@ describe("GET languages/", function () {
                 expect(response.statusCode).to.equal(200);
                 expect(response.json()).toEqual(languageSerializer.serializeList(expectedLanguages));
             });
-            test.todo<TestContext>("test sortBy secondSpeakersCount", async (context) => {});
+            test<TestContext>("test sortBy secondSpeakersCount", async (context) => {
+                const expectedLanguages = [
+                    await context.languageFactory.createOne({secondSpeakersCount: 1}),
+                    await context.languageFactory.createOne({secondSpeakersCount: 2}),
+                ];
+
+                const response = await makeRequest({sortBy: "secondSpeakersCount"});
+
+                expect(response.statusCode).to.equal(200);
+                expect(response.json()).toEqual(languageSerializer.serializeList(expectedLanguages));
+            });
             test<TestContext>("if sortBy is invalid return 400", async (context) => {
                 const response = await makeRequest({sortBy: "flag"});
                 expect(response.statusCode).to.equal(400);
