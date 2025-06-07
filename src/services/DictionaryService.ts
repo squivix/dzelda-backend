@@ -49,8 +49,10 @@ export class DictionaryService {
     }
 
     async updateUserLanguageDictionaries(orderedDictionaryIds: number[], user: User) {
-        await this.em.nativeDelete(MapLearnerDictionary, {learner: user.profile});
-        await this.em.insertMany(MapLearnerDictionary, orderedDictionaryIds.map((d, i) => ({learner: user.profile, dictionary: d, order: i})));
+        await this.em.transactional(async (tm) => {
+            await tm.nativeDelete(MapLearnerDictionary, {learner: user.profile});
+            await tm.insertMany(MapLearnerDictionary, orderedDictionaryIds.map((d, i) => ({learner: user.profile, dictionary: d, order: i})));
+        })
     }
 
     async findDictionaries(where: FilterQuery<Dictionary>, fields: EntityField<Dictionary>[] = ["id", "language"]) {

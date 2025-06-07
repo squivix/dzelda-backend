@@ -6,6 +6,8 @@ import {languageCodeValidator} from "@/src/validators/languageValidators.js";
 import {User} from "@/src/models/entities/auth/User.js";
 import {booleanStringValidator} from "@/src/validators/utilValidators.js";
 import {ValidationAPIError} from "@/src/utils/errors/ValidationAPIError.js";
+import {APIError} from "@/src/utils/errors/APIError";
+import {LanguageService} from "@/src/services/LanguageService";
 
 class DictionaryController {
     async getDictionaries(request: FastifyRequest, reply: FastifyReply) {
@@ -42,10 +44,20 @@ class DictionaryController {
         const bodyValidator = z.object({dictionaryIds: z.array(z.number().min(0))});
         const body = bodyValidator.parse(request.body);
         const user = request.user as User;
+        const languageService = new LanguageService(request.em);
+        const language = await languageService.findLearningLanguage({
+            learners: user.profile,
+            code: pathParams.languageCode
+        });
+        if (!language)
+            throw new APIError(400, "Language not found or user is not learning language");
+
         const dictionaryService = new DictionaryService(request.em);
         const dictionaries = await dictionaryService.findDictionaries({id: body.dictionaryIds});
+        if (dictionaries.length < body.dictionaryIds.length)
+            throw new APIError(404, "Dictionary(s) not found with corresponding ids");
         for (const dictionary of dictionaries) {
-            if (dictionary.language.code != pathParams.languageCode)
+            if (dictionary.language != language)
                 throw new ValidationAPIError({dictionaryIds: `Dictionary with id ${dictionary.id} is not in language ${pathParams.languageCode}`});
         }
         await dictionaryService.updateUserLanguageDictionaries(body.dictionaryIds, user);
