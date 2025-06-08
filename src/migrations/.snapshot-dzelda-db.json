@@ -216,20 +216,22 @@
         },
         "text": {
           "name": "text",
-          "type": "varchar(255)",
+          "type": "varchar(512)",
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
           "nullable": false,
+          "length": 512,
           "mappedType": "string"
         },
         "parsed_text": {
           "name": "parsed_text",
-          "type": "varchar(255)",
+          "type": "varchar(512)",
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
           "nullable": false,
+          "length": 512,
           "mappedType": "string"
         },
         "language_id": {
@@ -1925,8 +1927,8 @@
           "default": "now()",
           "mappedType": "datetime"
         },
-        "is_hidden": {
-          "name": "is_hidden",
+        "is_removed_by_mods": {
+          "name": "is_removed_by_mods",
           "type": "boolean",
           "unsigned": false,
           "autoincrement": false,

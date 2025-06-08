@@ -62,7 +62,7 @@ export class Text extends CustomBaseEntity {
     addedOn!: Date;
 
     @Property({type: types.boolean, default: false})
-    isHidden!: boolean;
+    isRemovedByMods!: boolean;
 
     @ManyToMany({
         entity: () => Vocab,
@@ -89,7 +89,7 @@ export class Text extends CustomBaseEntity {
     })
     bookmarkers!: Profile;
 
-    [OptionalProps]?: "image" | "audio" | "addedOn" | "level" | "orderInCollection" | "pastViewersCount" | "parsedContent" | "parsedTitle" | "isLastInCollection" | "bookmarkers" | "isHidden";
+    [OptionalProps]?: "image" | "audio" | "addedOn" | "level" | "orderInCollection" | "pastViewersCount" | "parsedContent" | "parsedTitle" | "isLastInCollection" | "bookmarkers" | "isRemovedByMods";
 
     //annotated properties
     @Property({persist: false, type: types.json})

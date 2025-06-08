@@ -42,7 +42,7 @@ export class TextService {
                             pagination: { page: number, pageSize: number },
                             user: User | AnonymousUser | null): Promise<[Text[], number]> {
         const dbFilters: FilterQuery<Text> = {$and: []};
-        dbFilters.$and!.push({isHidden: false});
+        dbFilters.$and!.push({isRemovedByMods: false});
         if (user && user instanceof User) {
             dbFilters.$and!.push({
                 $and: [
@@ -106,7 +106,7 @@ export class TextService {
                                   pagination: { page: number, pageSize: number },
                                   user: User): Promise<[TextHistoryEntry[], number]> {
         const dbFilters: FilterQuery<TextHistoryEntry> = {$and: []};
-        dbFilters.$and!.push({text: {isHidden: false}});
+        dbFilters.$and!.push({text: {isRemovedByMods: false}});
         dbFilters.$and!.push({text: {hiddenBy: {$none: user.profile}}});
         dbFilters.$and!.push({
             $and: [
@@ -193,7 +193,7 @@ export class TextService {
 
     async getText(textId: number, user: User | AnonymousUser | null) {
         const dbFilters: FilterQuery<Text> = {$and: [{id: textId}]};
-        dbFilters.$and!.push({isHidden: false});
+        dbFilters.$and!.push({isRemovedByMods: false});
         if (user instanceof User) {
             dbFilters.$and!.push({
                 $and: [
@@ -314,14 +314,14 @@ export class TextService {
         });
         await this.em.flush();
         if (fields.reportingUser.isAdmin || await fields.text.flaggedReports.loadCount({where: {isValid: true}}) >= TEXT_REPORT_HIDING_THRESHOLD) {
-            fields.text.isHidden = true;
+            fields.text.isRemovedByMods = true;
             await this.em.flush();
         }
         return report;
     }
 
     async findText(where: FilterQuery<Text>, fields: EntityField<Text>[] = ["id", "collection", "isPublic", "addedBy"]) {
-        return await this.textRepo.findOne({$and: [where, {isHidden: false}]}, {fields: fields as any}) as Text;
+        return await this.textRepo.findOne({$and: [where, {isRemovedByMods: false}]}, {fields: fields as any}) as Text;
     }
 
     async findLatestTextHistoryEntry(user: User) {

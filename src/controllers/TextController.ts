@@ -239,7 +239,7 @@ class TextController {
 
         const textService = new TextService(request.em);
         const text = await textService.getText(body.textId, request.user);
-        if (!text || (!text.isPublic && user.profile !== text.addedBy))
+        if (!text)
             throw new ValidationAPIError({text: "Not found"});
         // TODO: explicitly fetch request.user.profile.languagesLearning instead of populating in middleware
         if (!user.profile.languagesLearning.contains(text.language))
@@ -315,7 +315,7 @@ class TextController {
 
         const textService = new TextService(request.em);
         const text = await textService.getText(body.textId, request.user);
-        if (!text || (!text.isPublic && user.profile !== text.addedBy))
+        if (!text)
             throw new ValidationAPIError({text: "Not found"});
         if (!user.profile.languagesLearning.contains(text.language))
             throw new ValidationAPIError({text: "not in a language the user is learning"});

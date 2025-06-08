@@ -1,4 +1,4 @@
-import {Entity, Index, ManyToOne, Property, types} from "@mikro-orm/core";
+import {Entity, Index, ManyToOne, OptionalProps, Property, types} from "@mikro-orm/core";
 import {CustomBaseEntity} from "@/src/models/entities/CustomBaseEntity.js";
 import {Language} from "@/src/models/entities/Language.js";
 import {Attribution} from "@/src/models/interfaces/Attribution.js";
@@ -12,10 +12,10 @@ export class HumanPronunciation extends CustomBaseEntity {
     @Property({type: types.string, length: 500})
     url: string = "";
 
-    @Property({type: types.string})
+    @Property({type: types.string, length: 512})
     text!: string;
 
-    @Property({type: types.string})
+    @Property({type: types.string, length: 512})
     parsedText!: string;
 
     @ManyToOne({entity: () => Language, inversedBy: (language: Language) => language.humanPronunciations, deleteRule: "cascade", updateRule: "cascade"})
@@ -32,4 +32,6 @@ export class HumanPronunciation extends CustomBaseEntity {
 
     @Property({type: types.json, nullable: true})
     attribution!: Attribution;
+
+    [OptionalProps]?: "attribution";
 }

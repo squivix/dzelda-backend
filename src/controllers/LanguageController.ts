@@ -118,7 +118,6 @@ class LanguageController {
         reply.status(204).send();
     }
 
-
     async resetUserLanguageProgress(request: FastifyRequest, reply: FastifyReply) {
         const user = request.user as User;
         const pathParamsValidator = z.object({
