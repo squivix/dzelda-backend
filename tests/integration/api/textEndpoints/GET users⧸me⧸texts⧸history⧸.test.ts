@@ -120,7 +120,7 @@ describe("GET users/me/texts/history/", () => {
                 data: textHistoryEntrySerializer.serializeList(expectedHistoryEntries)
             });
         });
-        test<TestContext>("If addedBy is me and signed in return texts added by that user", async (context) => {
+        test<TestContext>("If addedBy is me return texts added by that user", async (context) => {
             const user = await context.userFactory.createOne();
             const session = await context.sessionFactory.createOne({user: user});
             const otherUser = await context.userFactory.createOne();

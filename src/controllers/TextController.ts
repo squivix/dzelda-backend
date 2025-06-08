@@ -354,7 +354,7 @@ class TextController {
         const queryParams = queryParamsValidator.parse(request.query);
         const user = request.user as User;
         if (queryParams.addedBy == "me")
-            queryParams.addedBy = user.username;
+            throw new ValidationAPIError({addedBy: "You cannot hide texts you created"})
 
         const filters = {
             languageCode: queryParams.languageCode,
@@ -362,12 +362,12 @@ class TextController {
             searchQuery: queryParams.searchQuery,
             level: queryParams.level,
             hasAudio: queryParams.hasAudio,
-            isHidden: true,
+            isHiddenByUser: true,
         };
         const sort = {sortBy: queryParams.sortBy, sortOrder: queryParams.sortOrder};
         const pagination = {page: queryParams.page, pageSize: queryParams.pageSize};
         const textService = new TextService(request.em);
-        const [texts, recordsCount] = await textService.getPaginatedTexts(filters, sort, pagination, request.user);
+        const [texts, recordsCount] = await textService.getPaginatedTexts(filters, sort, pagination, user);
         reply.send({
             page: pagination.page,
             pageSize: pagination.pageSize,
