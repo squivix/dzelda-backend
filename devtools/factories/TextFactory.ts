@@ -4,7 +4,7 @@ import {Text} from "@/src/models/entities/Text.js";
 import {LanguageLevel, parsers} from "dzelda-common";
 import {ProfileFactory} from "@/devtools/factories/ProfileFactory.js";
 import {UserFactory} from "@/devtools/factories/UserFactory.js";
-import {randomEnum} from "@/tests/utils.js";
+import {randomEnum} from "@/test/utils.js";
 import {faker} from "@faker-js/faker";
 
 export class TextFactory extends CustomFactory<Text> {

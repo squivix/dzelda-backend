@@ -3,8 +3,9 @@
 // Configure Vitest (https://vitest.dev/config/)
 
 import {defineConfig} from "vite";
-import {defaultExclude} from "vitest/config";
+import {defaultExclude, coverageConfigDefaults} from "vitest/config";
 import path from "path";
+
 
 export default defineConfig({
     plugins: [],
@@ -19,11 +20,16 @@ export default defineConfig({
     test: {
         exclude: [...defaultExclude, "build/**"],
         fileParallelism: false,
-        globalSetup: ["./tests/globalSetup.ts",],
+        globalSetup: ["./test/globalSetup.ts",],
         setupFiles: [
-            "./tests/setup.ts"
+            "./test/setup.ts"
         ],
         restoreMocks: true,
-        testTimeout: 10_000
+        testTimeout: 10_000,
+        coverage: {
+            enabled: true,
+            reporter: ['html'],
+            exclude: ['test-results/**', 'src/migrations', '**/*.test.ts', ...coverageConfigDefaults.exclude]
+        }
     },
 });

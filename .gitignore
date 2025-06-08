@@ -11,6 +11,7 @@ public
 .idea
 .directory
 .run
-tests/temp
+test/temp
 secret
 test-results
+coverage
