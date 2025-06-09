@@ -28,8 +28,8 @@ export default defineConfig({
         testTimeout: 10_000,
         coverage: {
             enabled: true,
-            reporter: ['html'],
-            exclude: ['test-results/**', 'src/migrations', '**/*.test.ts', ...coverageConfigDefaults.exclude]
+            reporter: ["text", 'html'],
+            exclude: ['test-results/**', 'src/migrations/**', ...coverageConfigDefaults.exclude]
         }
     },
 });

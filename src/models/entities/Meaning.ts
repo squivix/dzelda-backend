@@ -6,10 +6,12 @@ import {MapLearnerMeaning} from "@/src/models/entities/MapLearnerMeaning.js";
 import {Attribution} from "@/src/models/interfaces/Attribution.js";
 import {TranslationLanguage} from "@/src/models/entities/TranslationLanguage.js";
 import {AttributionSource} from "@/src/models/entities/AttributionSource.js";
+import {VocabVariant} from "@/src/models/entities/VocabVariant.js";
 
 @Entity()
 @Unique({properties: ["vocab", "text", "language"]})
 @Index({properties: ["vocab"]})
+@Index({properties: ["vocabVariant"]})
 @Index({properties: ["language"]})
 @Index({properties: ["addedBy"]})
 @Index({properties: ["attributionSource"]})
@@ -19,6 +21,9 @@ export class Meaning extends CustomBaseEntity {
 
     @ManyToOne({entity: () => Vocab, inversedBy: (vocab) => vocab.meanings, deleteRule: "cascade", updateRule: "cascade"})
     vocab!: Vocab;
+
+    @ManyToOne({entity: () => VocabVariant, inversedBy: (vocabVariant) => vocabVariant.meanings, deleteRule: "set null", updateRule: "cascade", nullable:true, default:null})
+    vocabVariant!: VocabVariant;
 
     @ManyToOne({
         entity: () => Profile,
