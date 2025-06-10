@@ -1,6 +1,6 @@
 services:
   test-db:
-    image: "postgres:15.3"
+    image: "postgres:16"
     tmpfs: "/var/lib/postgresql/data"
     environment:
       POSTGRES_USER: "devin"
@@ -14,7 +14,7 @@ services:
       - default
       - dev
   dev-db:
-    image: "postgres:15.3"
+    image: "postgres:16.9"
     command: "postgres -c log_statement=all"
     environment:
       POSTGRES_USER: "devin"
