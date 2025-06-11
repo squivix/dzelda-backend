@@ -70,7 +70,7 @@ class VocabController {
 
         const vocabText = parser.combineWords(words);
         const vocabService = new VocabService(request.em);
-        const existingVocab = await vocabService.getVocabByText({language: language, text: vocabText,});
+        const existingVocab = await vocabService.getVocabByStringSearch({language: language, text: vocabText,});
         if (existingVocab) {
             reply.status(200).send(vocabSerializer.serialize(existingVocab));
             return;

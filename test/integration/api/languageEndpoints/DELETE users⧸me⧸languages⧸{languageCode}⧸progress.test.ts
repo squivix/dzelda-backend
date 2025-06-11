@@ -1,11 +1,11 @@
 import {describe, expect, test, TestContext} from "vitest";
-import {TextHistoryEntry} from "@/src/models/entities/TextHistoryEntry";
-import {MapLearnerDictionary} from "@/src/models/entities/MapLearnerDictionary";
-import {MapLearnerVocab} from "@/src/models/entities/MapLearnerVocab";
-import {MapLearnerMeaning} from "@/src/models/entities/MapLearnerMeaning";
-import {MapLearnerLanguage} from "@/src/models/entities/MapLearnerLanguage";
+import {TextHistoryEntry} from "@/src/models/entities/TextHistoryEntry.js";
+import {MapLearnerDictionary} from "@/src/models/entities/MapLearnerDictionary.js";
+import {MapLearnerVocab} from "@/src/models/entities/MapLearnerVocab.js";
+import {MapLearnerMeaning} from "@/src/models/entities/MapLearnerMeaning.js";
+import {MapLearnerLanguage} from "@/src/models/entities/MapLearnerLanguage.js";
 import {InjectOptions} from "light-my-request";
-import {fetchRequest} from "@/test/integration/utils";
+import {fetchRequest} from "@/test/integration/utils.js";
 
 /**{@link LanguageController#resetUserLanguageProgress}*/
 describe("DELETE users/me/languages/{languageCode}/progress", () => {

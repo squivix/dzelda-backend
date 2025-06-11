@@ -9,13 +9,13 @@ import {MapTextVocab} from "@/src/models/entities/MapTextVocab.js";
 const QUEUE_KEY = "parseTextWorkerQueue";
 
 async function consume() {
-    const connection = await amqp.connect(process.env.RABBITMQ_CONNECTION_URL!, { heartbeat: 20 });
+    const connection = await amqp.connect(process.env.RABBITMQ_CONNECTION_URL!, {heartbeat: 20});
     const channel = await connection.createChannel();
     await channel.assertQueue(QUEUE_KEY, {
         durable: true,
         maxPriority: 2
     });
-    await channel.prefetch(4);
+    await channel.prefetch(Number(process.env.PARSE_TEXT_WORKER_PREFETCH) || 4);
     console.log(`Text parser worker listening on ${QUEUE_KEY}...`);
 
     await channel.consume(QUEUE_KEY, async (msg) => {

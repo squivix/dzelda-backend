@@ -45,7 +45,7 @@ async function seedDatabase() {
     const em = orm.em.fork() as EntityManager;
     const tableNames = Object.values(em.getMetadata().getAll()).map(m => m.tableName);
     await em.begin();
-    const reorderedTableNames = bringForthArrayElements(tableNames, ["language", "user", "profile", "collection", "attribution_source","dictionary","translation_language","map_learner_language"]);
+    const reorderedTableNames = bringForthArrayElements(tableNames, ["language", "user", "profile", "collection", "attribution_source","dictionary","translation_language","map_learner_language", "text"]);
     for (const tableName of reorderedTableNames) {
         await batchSeed({
             em,

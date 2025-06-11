@@ -16,9 +16,9 @@ import {Vocab} from "@/src/models/entities/Vocab.js";
 import {Collection} from "@/src/models/entities/Collection.js";
 import {TranslationLanguageFactory} from "@/devtools/factories/TranslationLanguageFactory.js";
 import {parsers} from "dzelda-common";
-import {NotificationFactory} from "@/devtools/factories/NotificationFactory";
-import {PendingJobFactory} from "@/devtools/factories/PendingJobFactory";
-import {HumanPronunciationFactory} from "@/devtools/factories/HumanPronunciationFactory";
+import {NotificationFactory} from "@/devtools/factories/NotificationFactory.js";
+import {PendingJobFactory} from "@/devtools/factories/PendingJobFactory.js";
+import {HumanPronunciationFactory} from "@/devtools/factories/HumanPronunciationFactory.js";
 
 vi.mock("dzelda-common", async () => {
     return {

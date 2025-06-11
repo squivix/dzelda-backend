@@ -2,7 +2,7 @@ import {describe, expect, test, TestContext, vi} from "vitest";
 import {fetchRequest} from "@/test/integration/utils.js";
 import {textSerializer} from "@/src/presentation/response/serializers/entities/TextSerializer.js";
 import {faker} from "@faker-js/faker";
-import {TextService} from "@/src/services/TextService";
+import {TextService} from "@/src/services/TextService.js";
 
 /**{@link TextController#updateText}*/
 describe("PATCH texts/{textId}/", () => {

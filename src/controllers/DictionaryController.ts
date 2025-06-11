@@ -6,8 +6,8 @@ import {languageCodeValidator} from "@/src/validators/languageValidators.js";
 import {User} from "@/src/models/entities/auth/User.js";
 import {booleanStringValidator} from "@/src/validators/utilValidators.js";
 import {ValidationAPIError} from "@/src/utils/errors/ValidationAPIError.js";
-import {APIError} from "@/src/utils/errors/APIError";
-import {LanguageService} from "@/src/services/LanguageService";
+import {APIError} from "@/src/utils/errors/APIError.js";
+import {LanguageService} from "@/src/services/LanguageService.js";
 
 class DictionaryController {
     async getDictionaries(request: FastifyRequest, reply: FastifyReply) {

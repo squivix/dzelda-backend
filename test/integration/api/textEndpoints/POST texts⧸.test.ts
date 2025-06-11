@@ -3,7 +3,8 @@ import {fetchRequest} from "@/test/integration/utils.js";
 import {LanguageLevel} from "dzelda-common";
 import {textSerializer} from "@/src/presentation/response/serializers/entities/TextSerializer.js";
 import {faker} from "@faker-js/faker";
-import {TextService} from "@/src/services/TextService";
+import {TextService} from "@/src/services/TextService.js";
+
 
 /**{@link TextController#createText}*/
 describe("POST texts/", () => {

@@ -26,7 +26,7 @@ import {confirmEmailTemplate} from "@/src/presentation/response/templates/email/
 import {passwordResetTemplate} from "@/src/presentation/response/templates/email/passwordResetTemplate.js";
 import urlJoin from "url-join";
 import {numericStringValidator} from "@/src/validators/utilValidators.js";
-import {notificationSerializer} from "@/src/presentation/response/serializers/entities/NotificationSerializer";
+import {notificationSerializer} from "@/src/presentation/response/serializers/entities/NotificationSerializer.js";
 
 class UserController {
     async signUp(request: FastifyRequest, reply: FastifyReply) {

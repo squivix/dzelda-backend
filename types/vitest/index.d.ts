@@ -14,8 +14,9 @@ import {MeaningFactory} from "@/devtools/factories/MeaningFactory.js";
 import {Meaning} from "@/src/models/entities/Meaning.js";
 import {VocabRepo} from "@/src/models/repos/VocabRepo.js";
 import {TranslationLanguageFactory} from "@/devtools/factories/TranslationLanguageFactory.js";
-import {NotificationFactory} from "@/devtools/factories/NotificationFactory";
-import {HumanPronunciationFactory} from "@/devtools/factories/HumanPronunciationFactory";
+import {NotificationFactory} from "@/devtools/factories/NotificationFactory.js";
+import {HumanPronunciationFactory} from "@/devtools/factories/HumanPronunciationFactory.js";
+
 
 declare module "vitest" {
     export interface TestContext {
