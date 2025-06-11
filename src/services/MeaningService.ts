@@ -1,4 +1,4 @@
-import {EntityManager, EntityRepository, FilterQuery} from "@mikro-orm/core";
+import {EntityManager, EntityRepository, FilterQuery, raw} from "@mikro-orm/core";
 import {Meaning} from "@/src/models/entities/Meaning.js";
 import {Vocab} from "@/src/models/entities/Vocab.js";
 import {Text} from "@/src/models/entities/Text.js";
@@ -68,7 +68,8 @@ export class MeaningService {
         const meanings = await this.em.find(Meaning, {
             vocab: {textsAppearingIn: text}
         }, {
-            populate: ["language", "addedBy.user"]
+            populate: ["language", "addedBy.user"],
+            orderBy: [{vocab: {id: "asc"}}, {learnersCount: "desc"}, {[raw(alias => `length(${alias}.text)`)]: "asc"}, {id: "asc"}]
         })
         if (!(user instanceof User)) {
             return {
@@ -80,7 +81,8 @@ export class MeaningService {
             vocab: {textsAppearingIn: text},
             learners: user.profile
         }, {
-            populate: ["language", "addedBy.user"]
+            populate: ["language", "addedBy.user"],
+            orderBy: [{vocab: {id: "asc"}}, {learnersCount: "desc"}, {[raw(alias => `length(${alias}.text)`)]: "asc"}, {id: "asc"}]
         });
         return {
             meanings: meanings,
