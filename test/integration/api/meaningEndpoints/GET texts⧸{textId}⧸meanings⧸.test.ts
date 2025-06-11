@@ -47,7 +47,7 @@ describe("GET texts/{textId}/meanings/", () => {
         expect(response.statusCode).to.equal(200);
         const body = response.json();
         expect(body.meanings).toEqual(meaningSerializer.serializeList(expectedMeanings, {idOnlyFields: ["vocab"]}));
-        expect(body.learnerMeanings).toEqual(meaningSerializer.serializeList(expectedLearnerMeanings, {idOnlyFields: ["vocab"]}));
+        expect(body.learnerMeanings).toEqual(expectedLearnerMeanings.map(m => m.id))
     });
 
     test<TestContext>("If user is not logged in return meanings of vocabs in text", async (context) => {
@@ -131,6 +131,6 @@ describe("GET texts/{textId}/meanings/", () => {
         expect(response.statusCode).to.equal(200);
         const body = response.json();
         expect(body.meanings).toEqual(meaningSerializer.serializeList(expectedMeanings, {idOnlyFields: ["vocab"]}));
-        expect(body.learnerMeanings).toEqual(meaningSerializer.serializeList(expectedLearnerMeanings, {idOnlyFields: ["vocab"]}));
+        expect(body.learnerMeanings).toEqual(expectedLearnerMeanings.map(m => m.id))
     });
 });

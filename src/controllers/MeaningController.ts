@@ -11,6 +11,7 @@ import {NotFoundAPIError} from "@/src/utils/errors/NotFoundAPIError.js";
 import {numericStringValidator} from "@/src/validators/utilValidators.js";
 import {meaningSerializer} from "@/src/presentation/response/serializers/entities/MeaningSerializer.js";
 import {TextService} from "@/src/services/TextService.js";
+import {attributionSourceSerializer} from "@/src/presentation/response/serializers/entities/AttributionSourceSerializer.js";
 
 class MeaningController {
     async createMeaning(request: FastifyRequest, reply: FastifyReply) {
@@ -83,8 +84,8 @@ class MeaningController {
 
         const {meanings, learnerMeanings} = await meaningService.getTextMeanings(text, request.user);
         reply.send({
-            meanings: meaningSerializer.serializeList(meanings, {idOnlyFields: ["vocab"]}),
-            learnerMeanings: learnerMeanings ? meaningSerializer.serializeList(learnerMeanings, {idOnlyFields: ["vocab"]}) : undefined,
+            meanings: meaningSerializer.serializeList(meanings, {idOnlyFields: ["vocab", "attributionSource"]}),
+            learnerMeanings: learnerMeanings ? learnerMeanings.map(m => m.id) : undefined//meaningSerializer.serializeList(learnerMeanings, {idOnlyFields: ["vocab", "attributionSource"]}) : undefined,
         });
     }
 
@@ -123,6 +124,17 @@ class MeaningController {
 
         await meaningService.removeMeaningFromUser(meaningMapping);
         reply.status(204).send();
+    }
+
+    async getAttributionSource(request: FastifyRequest, reply: FastifyReply) {
+        const pathParamsValidator = z.object({attributionSourcesId: numericStringValidator});
+        const pathParams = pathParamsValidator.parse(request.params);
+        const meaningService = new MeaningService(request.em);
+        const attributionSource = await meaningService.getAttributionSource(pathParams.attributionSourcesId);
+        if (!attributionSource)
+            throw new NotFoundAPIError("Attribution source");
+
+        reply.send(attributionSourceSerializer.serialize(attributionSource));
     }
 }
 

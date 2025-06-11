@@ -8,6 +8,7 @@ import {QueryOrderMap} from "@mikro-orm/core/enums.js";
 import {MapLearnerVocab} from "@/src/models/entities/MapLearnerVocab.js";
 import {VocabLevel} from "dzelda-common";
 import {TranslationLanguage} from "@/src/models/entities/TranslationLanguage.js";
+import {AttributionSource} from "@/src/models/entities/AttributionSource.js";
 
 export class MeaningService {
 
@@ -113,5 +114,9 @@ export class MeaningService {
     async removeMeaningFromUser(meaningMapping: MapLearnerMeaning) {
         this.em.remove(meaningMapping);
         await this.em.flush();
+    }
+
+    async getAttributionSource(attributionSourceId: number) {
+        return this.em.findOne(AttributionSource, {id: attributionSourceId})
     }
 }

@@ -17,7 +17,7 @@ class MeaningSerializer extends CustomEntitySerializer<Meaning, MeaningSchema> {
             addedBy: () => meaning.addedBy == null ? "anonymous" : meaning.addedBy.user.username,
             language: () => meaning.language.code,
             addedOn: () => meaning.addedOn.toISOString(),
-            attributionSource: () => meaning.attributionSource ? attributionSourceSerializer.serialize(meaning.attributionSource) : null,
+            attributionSource: (idOnly) => meaning.attributionSource ? (idOnly ? meaning.attributionSource.id : attributionSourceSerializer.serialize(meaning.attributionSource)) : null,
             attribution: () => meaning.attribution,
         };
     }

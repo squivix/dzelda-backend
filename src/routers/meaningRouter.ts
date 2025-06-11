@@ -22,6 +22,6 @@ export const meaningRouter: FastifyPluginCallback = function (fastify, options, 
         preHandler: [requiresAuth, requiresUnbannedAccount, requiresEmailConfirmed],
         handler: meaningController.removeMeaningFromUser
     });
-
+    fastify.get(`/attribution-sources/:attributionSourcesId/`, meaningController.getAttributionSource);
     done();
 };
