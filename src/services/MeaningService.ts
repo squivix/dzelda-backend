@@ -1,7 +1,8 @@
 import {EntityManager, EntityRepository, FilterQuery} from "@mikro-orm/core";
 import {Meaning} from "@/src/models/entities/Meaning.js";
 import {Vocab} from "@/src/models/entities/Vocab.js";
-import {User} from "@/src/models/entities/auth/User.js";
+import {Text} from "@/src/models/entities/Text.js";
+import {AnonymousUser, User} from "@/src/models/entities/auth/User.js";
 import {MapLearnerMeaning} from "@/src/models/entities/MapLearnerMeaning.js";
 import {QueryOrderMap} from "@mikro-orm/core/enums.js";
 import {MapLearnerVocab} from "@/src/models/entities/MapLearnerVocab.js";
@@ -61,6 +62,30 @@ export class MeaningService {
             limit: pagination.pageSize,
             offset: pagination.pageSize * (pagination.page - 1),
         });
+    }
+
+    async getTextMeanings(text: Text, user: User | AnonymousUser | null) {
+        const meanings = await this.em.find(Meaning, {
+            vocab: {textsAppearingIn: text}
+        }, {
+            populate: ["language", "addedBy.user"]
+        })
+        if (!(user instanceof User)) {
+            return {
+                meanings: meanings,
+                learnerMeanings: null
+            }
+        }
+        const learnerMeanings = await this.em.find(Meaning, {
+            vocab: {textsAppearingIn: text},
+            learners: user.profile
+        }, {
+            populate: ["language", "addedBy.user"]
+        });
+        return {
+            meanings: meanings,
+            learnerMeanings: learnerMeanings
+        }
     }
 
     async getUserMeaning(meaningId: number, user: User) {

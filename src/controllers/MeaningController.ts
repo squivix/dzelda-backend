@@ -10,6 +10,7 @@ import {User} from "@/src/models/entities/auth/User.js";
 import {NotFoundAPIError} from "@/src/utils/errors/NotFoundAPIError.js";
 import {numericStringValidator} from "@/src/validators/utilValidators.js";
 import {meaningSerializer} from "@/src/presentation/response/serializers/entities/MeaningSerializer.js";
+import {TextService} from "@/src/services/TextService.js";
 
 class MeaningController {
     async createMeaning(request: FastifyRequest, reply: FastifyReply) {
@@ -67,6 +68,23 @@ class MeaningController {
             pageSize: pagination.pageSize,
             pageCount: Math.ceil(recordsCount / pagination.pageSize),
             data: meaningSerializer.serializeList(meanings)
+        });
+    }
+
+    async getTextMeanings(request: FastifyRequest, reply: FastifyReply) {
+        const pathParamsValidator = z.object({textId: numericStringValidator});
+        const pathParams = pathParamsValidator.parse(request.params);
+        const textService = new TextService(request.em);
+        const text = await textService.findText({id: pathParams.textId});
+        if (!text || (!text.isPublic && request?.user?.profile !== text.addedBy))
+            throw new NotFoundAPIError("Text");
+
+        const meaningService = new MeaningService(request.em);
+
+        const {meanings, learnerMeanings} = await meaningService.getTextMeanings(text, request.user);
+        reply.send({
+            meanings: meaningSerializer.serializeList(meanings, {ignore: ["vocab"]}),
+            learnerMeanings: learnerMeanings ? meaningSerializer.serializeList(learnerMeanings, {ignore: ["vocab"]}) : undefined,
         });
     }
 
