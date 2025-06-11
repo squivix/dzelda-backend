@@ -14,7 +14,10 @@ export class CollectionSerializer extends CustomEntitySerializer<Collection, Col
             image: () => collection.image,
             language: () => collection.language.code,
             //@ts-ignore
-            texts: () => textSerializer.serializeList(collection.texts.getItems(), {ignore: ["collection"]}),
+            texts: () => textSerializer.serializeList(collection.texts.getItems(), {
+                ignore: ["content", "parsedTitle", "parsedContent"],
+                idOnlyFields: ["collection"]
+            }),
             addedOn: () => collection.addedOn.toISOString(),
             addedBy: () => collection.addedBy.user.username,
             isPublic: () => collection.isPublic,
