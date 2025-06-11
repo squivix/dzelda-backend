@@ -26,8 +26,8 @@
   "author": "squivix <devintheamateurdevin@gmail.com> (https://github.com/squivix)",
   "license": "MIT",
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.489.0",
-    "@aws-sdk/s3-presigned-post": "^3.489.0",
+    "@aws-sdk/client-s3": "^3.631.0",
+    "@aws-sdk/s3-presigned-post": "^3.631.0",
     "@fastify/cors": "^8.3.0",
     "@fastify/helmet": "^11.1.1",
     "@fastify/one-line-logger": "^1.0.0",
