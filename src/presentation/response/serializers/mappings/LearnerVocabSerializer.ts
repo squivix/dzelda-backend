@@ -20,7 +20,7 @@ export class LearnerVocabSerializer extends CustomEntitySerializer<Vocab | MapLe
                 language: () => newVocab.language.code,
                 learnerMeanings: () => [],
                 //@ts-ignore
-                meanings: () => meaningSerializer.serializeList(newVocab.meanings.getItems(), {ignore: ["vocab"]}),
+                meanings: () => meaningSerializer.serializeList(newVocab.meanings.getItems(), {ignore: ["vocab"], idOnlyFields: ["attributionSource"]}),
                 ttsPronunciationUrl: () => newVocab.ttsPronunciations.getItems().pop()?.url ?? null,
                 tags: () => vocabTagSerializer.serializeList(newVocab.tags.getItems()),
                 learnersCount: () => Number(newVocab.learnersCount),
@@ -38,7 +38,7 @@ export class LearnerVocabSerializer extends CustomEntitySerializer<Vocab | MapLe
                 // @ts-ignore
                 learnerMeanings: () => meaningSerializer.serializeList(mapping.vocab.learnerMeanings.getItems(), {ignore: ["vocab"]}),
                 // @ts-ignore
-                meanings: () => meaningSerializer.serializeList(mapping.vocab.meanings.getItems(), {ignore: ["vocab"]}),
+                meanings: () => meaningSerializer.serializeList(mapping.vocab.meanings.getItems(), {ignore: ["vocab"], idOnlyFields: ["attributionSource"]}),
                 learnersCount: () => Number(mapping.vocab.learnersCount),
                 ttsPronunciationUrl: () => mapping.vocab.ttsPronunciations.getItems().pop()?.url ?? null,
                 tags: () => vocabTagSerializer.serializeList(mapping.vocab.tags.getItems()),

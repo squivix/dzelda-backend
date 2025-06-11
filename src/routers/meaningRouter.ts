@@ -10,6 +10,10 @@ export const meaningRouter: FastifyPluginCallback = function (fastify, options, 
         preHandler: [requiresAuth, requiresUnbannedAccount, requiresEmailConfirmed],
         handler: meaningController.getUserMeanings
     });
+    fastify.get(`/texts/:textId/meanings/`, {
+        preHandler: [],
+        handler: meaningController.getTextMeanings
+    });
     fastify.post(`/users/me/meanings/`, {
         preHandler: [requiresAuth, requiresUnbannedAccount, requiresEmailConfirmed],
         handler: meaningController.addMeaningToUser
@@ -18,5 +22,6 @@ export const meaningRouter: FastifyPluginCallback = function (fastify, options, 
         preHandler: [requiresAuth, requiresUnbannedAccount, requiresEmailConfirmed],
         handler: meaningController.removeMeaningFromUser
     });
+    fastify.get(`/attribution-sources/:attributionSourcesId/`, meaningController.getAttributionSource);
     done();
 };

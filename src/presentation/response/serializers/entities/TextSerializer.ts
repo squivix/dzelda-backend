@@ -15,7 +15,7 @@ export class TextSerializer extends CustomEntitySerializer<Text, TextSchema> {
             audio: () => text.audio,
             image: () => text.image,
             //@ts-ignore
-            collection: () => text.collection ? collectionSerializer.serialize(text.collection, {ignore: ["texts"]}) : null,
+            collection: (idOnly) => text.collection ? (idOnly ? text.collection.id : collectionSerializer.serialize(text.collection, {ignore: ["texts"]})) : null,
             orderInCollection: () => text.orderInCollection ?? undefined,
             isLastInCollection: () => text.isLastInCollection ?? undefined,
             isProcessing: () => text.isProcessing,

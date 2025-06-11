@@ -195,7 +195,7 @@ class VocabController {
         const vocabService = new VocabService(request.em);
 
         const vocabs = await vocabService.getTextVocabs(text, request.user as User);
-        reply.send(learnerVocabSerializer.serializeList(vocabs));
+        reply.send(learnerVocabSerializer.serializeList(vocabs, {ignore: ["meanings", "learnerMeanings"]}));
     }
 
     async getUserSavedVocabsCount(request: FastifyRequest, reply: FastifyReply) {

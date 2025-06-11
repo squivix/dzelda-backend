@@ -32,7 +32,7 @@ export class Meaning extends CustomBaseEntity {
     @Property({type: types.datetime, defaultRaw: "now()"})
     addedOn!: Date;
 
-    @ManyToOne({entity: () => AttributionSource, nullable: true, deleteRule: "set null", updateRule: "cascade", eager: true})
+    @ManyToOne({entity: () => AttributionSource, nullable: true, deleteRule: "set null", updateRule: "cascade"})
     attributionSource?: AttributionSource;
 
     @Property({type: types.json, nullable: true})

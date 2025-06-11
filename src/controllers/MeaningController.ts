@@ -10,6 +10,8 @@ import {User} from "@/src/models/entities/auth/User.js";
 import {NotFoundAPIError} from "@/src/utils/errors/NotFoundAPIError.js";
 import {numericStringValidator} from "@/src/validators/utilValidators.js";
 import {meaningSerializer} from "@/src/presentation/response/serializers/entities/MeaningSerializer.js";
+import {TextService} from "@/src/services/TextService.js";
+import {attributionSourceSerializer} from "@/src/presentation/response/serializers/entities/AttributionSourceSerializer.js";
 
 class MeaningController {
     async createMeaning(request: FastifyRequest, reply: FastifyReply) {
@@ -70,6 +72,23 @@ class MeaningController {
         });
     }
 
+    async getTextMeanings(request: FastifyRequest, reply: FastifyReply) {
+        const pathParamsValidator = z.object({textId: numericStringValidator});
+        const pathParams = pathParamsValidator.parse(request.params);
+        const textService = new TextService(request.em);
+        const text = await textService.findText({id: pathParams.textId});
+        if (!text || (!text.isPublic && request?.user?.profile !== text.addedBy))
+            throw new NotFoundAPIError("Text");
+
+        const meaningService = new MeaningService(request.em);
+
+        const {meanings, learnerMeanings} = await meaningService.getTextMeanings(text, request.user);
+        reply.send({
+            meanings: meaningSerializer.serializeList(meanings, {idOnlyFields: ["vocab", "attributionSource"]}),
+            learnerMeanings: learnerMeanings ? learnerMeanings.map(m => m.id) : undefined//meaningSerializer.serializeList(learnerMeanings, {idOnlyFields: ["vocab", "attributionSource"]}) : undefined,
+        });
+    }
+
     async addMeaningToUser(request: FastifyRequest, reply: FastifyReply) {
         const user = request.user as User;
 
@@ -105,6 +124,17 @@ class MeaningController {
 
         await meaningService.removeMeaningFromUser(meaningMapping);
         reply.status(204).send();
+    }
+
+    async getAttributionSource(request: FastifyRequest, reply: FastifyReply) {
+        const pathParamsValidator = z.object({attributionSourcesId: numericStringValidator});
+        const pathParams = pathParamsValidator.parse(request.params);
+        const meaningService = new MeaningService(request.em);
+        const attributionSource = await meaningService.getAttributionSource(pathParams.attributionSourcesId);
+        if (!attributionSource)
+            throw new NotFoundAPIError("Attribution source");
+
+        reply.send(attributionSourceSerializer.serialize(attributionSource));
     }
 }
 

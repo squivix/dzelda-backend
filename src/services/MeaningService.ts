@@ -1,12 +1,14 @@
-import {EntityManager, EntityRepository, FilterQuery} from "@mikro-orm/core";
+import {EntityManager, EntityRepository, FilterQuery, raw} from "@mikro-orm/core";
 import {Meaning} from "@/src/models/entities/Meaning.js";
 import {Vocab} from "@/src/models/entities/Vocab.js";
-import {User} from "@/src/models/entities/auth/User.js";
+import {Text} from "@/src/models/entities/Text.js";
+import {AnonymousUser, User} from "@/src/models/entities/auth/User.js";
 import {MapLearnerMeaning} from "@/src/models/entities/MapLearnerMeaning.js";
 import {QueryOrderMap} from "@mikro-orm/core/enums.js";
 import {MapLearnerVocab} from "@/src/models/entities/MapLearnerVocab.js";
 import {VocabLevel} from "dzelda-common";
 import {TranslationLanguage} from "@/src/models/entities/TranslationLanguage.js";
+import {AttributionSource} from "@/src/models/entities/AttributionSource.js";
 
 export class MeaningService {
 
@@ -63,6 +65,32 @@ export class MeaningService {
         });
     }
 
+    async getTextMeanings(text: Text, user: User | AnonymousUser | null) {
+        const meanings = await this.em.find(Meaning, {
+            vocab: {textsAppearingIn: text}
+        }, {
+            populate: ["language", "addedBy.user"],
+            orderBy: [{vocab: {id: "asc"}}, {learnersCount: "desc"}, {[raw(alias => `length(${alias}.text)`)]: "asc"}, {id: "asc"}]
+        })
+        if (!(user instanceof User)) {
+            return {
+                meanings: meanings,
+                learnerMeanings: null
+            }
+        }
+        const learnerMeanings = await this.em.find(Meaning, {
+            vocab: {textsAppearingIn: text},
+            learners: user.profile
+        }, {
+            populate: ["language", "addedBy.user"],
+            orderBy: [{vocab: {id: "asc"}}, {learnersCount: "desc"}, {[raw(alias => `length(${alias}.text)`)]: "asc"}, {id: "asc"}]
+        });
+        return {
+            meanings: meanings,
+            learnerMeanings: learnerMeanings
+        }
+    }
+
     async getUserMeaning(meaningId: number, user: User) {
         return await this.em.findOne(MapLearnerMeaning, {meaning: meaningId, learner: user.profile});
     }
@@ -86,5 +114,9 @@ export class MeaningService {
     async removeMeaningFromUser(meaningMapping: MapLearnerMeaning) {
         this.em.remove(meaningMapping);
         await this.em.flush();
+    }
+
+    async getAttributionSource(attributionSourceId: number) {
+        return this.em.findOne(AttributionSource, {id: attributionSourceId})
     }
 }
