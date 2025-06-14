@@ -515,12 +515,63 @@ describe("GET users/me/texts/hidden/", () => {
         });
     });
     describe("test privacy", () => {
-        test.todo<TestContext>("If user hid text but it is private, do not include it in hidden texts list", async (context) => {
+        test<TestContext>("If user hid text but it is private, do not include it in hidden texts list", async (context) => {
+            const user = await context.userFactory.createOne();
+            const session = await context.sessionFactory.createOne({user});
+            const language = await context.languageFactory.createOne();
+            await context.textFactory.create(3, {language, isPublic: false, hiddenBy: user.profile});
+
+            const response = await makeRequest({}, session.token);
+
+            expect(response.statusCode).to.equal(200);
+            expect(response.json()).toEqual({
+                page: queryDefaults.pagination.page,
+                pageSize: queryDefaults.pagination.pageSize,
+                pageCount: 0,
+                data: []
+            });
         });
         describe("Texts in collection inherit its privacy setting", () => {
-            test.todo<TestContext>("If user hid text but it is in private collection, do not include it in hidden texts list", async (context) => {
+            test<TestContext>("If user hid text but it is in private collection, do not include it in hidden texts list", async (context) => {
+                const user = await context.userFactory.createOne();
+                const session = await context.sessionFactory.createOne({user});
+                const language = await context.languageFactory.createOne();
+                const collection = await context.collectionFactory.createOne({language, isPublic: false});
+                await context.textFactory.create(3, {language, collection, isPublic: true, hiddenBy: user.profile});
+
+                const response = await makeRequest({}, session.token);
+
+                expect(response.statusCode).to.equal(200);
+                expect(response.json()).toEqual({
+                    page: queryDefaults.pagination.page,
+                    pageSize: queryDefaults.pagination.pageSize,
+                    pageCount: 0,
+                    data: []
+                });
             });
-            test.todo<TestContext>("If user hid text and it is in public collection, include it in hidden texts list", async (context) => {
+            test<TestContext>("If user hid text and it is in public collection, include it in hidden texts list", async (context) => {
+                const user = await context.userFactory.createOne();
+                const session = await context.sessionFactory.createOne({user});
+                const language = await context.languageFactory.createOne();
+                const publicCollection = await context.collectionFactory.createOne({language, isPublic: true});
+                const expectedTexts = [
+                    ...await context.textFactory.create(3, {language, hiddenBy: user.profile, isPublic: true}),
+                    ...await context.textFactory.create(3, {language, collection: publicCollection, isPublic: false, hiddenBy: user.profile}),
+                ];
+                await context.textRepo.annotateTextsWithUserData(expectedTexts, user);
+                await context.textFactory.create(3, {language, isPublic: false});
+                expectedTexts.sort(defaultSortComparator);
+                const recordsCount = expectedTexts.length;
+
+                const response = await makeRequest({}, session.token);
+
+                expect(response.statusCode).to.equal(200);
+                expect(response.json()).toEqual({
+                    page: queryDefaults.pagination.page,
+                    pageSize: queryDefaults.pagination.pageSize,
+                    pageCount: Math.ceil(recordsCount / queryDefaults.pagination.pageSize),
+                    data: textSerializer.serializeList(expectedTexts)
+                });
             });
         })
     });

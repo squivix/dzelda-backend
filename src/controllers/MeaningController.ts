@@ -76,8 +76,15 @@ class MeaningController {
         const pathParamsValidator = z.object({textId: numericStringValidator});
         const pathParams = pathParamsValidator.parse(request.params);
         const textService = new TextService(request.em);
-        const user=request.user as User;
-        const text = await textService.findText({id: pathParams.textId, $or: [{addedBy: user.profile}, {isPublic: true}, {collection: {isPublic: true}}]});
+        const user = request.user as User;
+        const text = await textService.findText({
+            id: pathParams.textId,
+            $or: [
+                {$and: [{collection: {$eq: null}}, {isPublic: true}]},
+                {collection: {isPublic: true}},
+                {addedBy: user.profile},
+            ]
+        });
         if (!text)
             throw new NotFoundAPIError("Text");
 
