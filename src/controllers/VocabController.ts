@@ -19,6 +19,7 @@ import {PronunciationService} from "@/src/services/PronunciationService.js";
 import {humanPronunciationSerializer} from "@/src/presentation/response/serializers/entities/HumanPronunciationSerializer.js";
 import {ttsPronunciationSerializer} from "@/src/presentation/response/serializers/entities/TTSPronunciationSerializer.js";
 import {enableTTSSynthesize} from "@/src/constants.js";
+import {textVisibilityFilter} from "@/src/filters/textVisibilityFilter.js";
 
 class VocabController {
 
@@ -188,15 +189,7 @@ class VocabController {
         const pathParamsValidator = z.object({textId: numericStringValidator});
         const pathParams = pathParamsValidator.parse(request.params);
         const textService = new TextService(request.em);
-        const user = request.user as User;
-        const text = await textService.findText({
-            id: pathParams.textId,
-            $or: [
-                {$and: [{collection: {$eq: null}}, {isPublic: true}]},
-                {collection: {isPublic: true}},
-                {addedBy: user.profile},
-            ]
-        });
+        const text = await textService.findText({$and: [{id: pathParams.textId,}, textVisibilityFilter(request.user)]});
         if (!text)
             throw new NotFoundAPIError("Text");
 

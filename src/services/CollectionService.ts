@@ -1,4 +1,4 @@
-import {EntityManager, FilterQuery, raw} from "@mikro-orm/core";
+import {EntityManager, FilterQuery, QBFilterQuery, raw} from "@mikro-orm/core";
 import {Collection} from "@/src/models/entities/Collection.js";
 import {CollectionRepo} from "@/src/models/repos/CollectionRepo.js";
 import {AnonymousUser, User} from "@/src/models/entities/auth/User.js";
@@ -12,6 +12,8 @@ import {CollectionBookmark} from "@/src/models/entities/CollectionBookmark.js";
 import {SqlEntityManager} from "@mikro-orm/postgresql";
 import {TextService} from "@/src/services/TextService.js";
 import {PendingJob} from "@/src/models/entities/PendingJob.js";
+import {collectionVisibilityFilter} from "@/src/filters/collectionVisibilityFilter.js";
+import {textVisibilityFilter} from "@/src/filters/textVisibilityFilter.js"
 
 export class CollectionService {
     em: SqlEntityManager;
@@ -31,13 +33,10 @@ export class CollectionService {
         sortOrder: "asc" | "desc"
     }, pagination: { page: number, pageSize: number }, user: User | AnonymousUser | null): Promise<[Collection[], number]> {
         const dbFilters: FilterQuery<Collection> = {$and: []};
+        dbFilters.$and!.push(collectionVisibilityFilter(user));
 
-        if (user && user instanceof User) {
-            if (filters.isBookmarked)
-                dbFilters.$and!.push({bookmarkers: user.profile});
-            dbFilters.$and!.push({$or: [{isPublic: true}, {addedBy: user.profile}]});
-        } else
-            dbFilters.$and!.push({isPublic: true});
+        if (user && user instanceof User && filters.isBookmarked)
+            dbFilters.$and!.push({bookmarkers: user.profile});
         if (filters.languageCode !== undefined)
             dbFilters.$and!.push({language: {code: filters.languageCode}});
         if (filters.addedBy !== undefined)
@@ -108,9 +107,9 @@ export class CollectionService {
     }
 
     async getCollection(collectionId: number, user: User | AnonymousUser | null) {
-        const privateFilter: FilterQuery<Collection> = user instanceof User ? {$or: [{isPublic: true}, {addedBy: user.profile}]} : {isPublic: true};
-
-        const collection = await this.collectionRepo.findOne({$and: [{id: collectionId}, privateFilter]}, {populate: ["language", "addedBy", "addedBy.user"]});
+        const collection = await this.collectionRepo.findOne({
+            $and: [{id: collectionId}, collectionVisibilityFilter(user)]
+        }, {populate: ["language", "addedBy", "addedBy.user"]});
         if (collection) {
             await collection.texts.init({orderBy: {orderInCollection: "asc"}, populate: ["addedBy.user"]});
             if (user && !(user instanceof AnonymousUser)) {
@@ -159,12 +158,11 @@ export class CollectionService {
     async getNextTextInCollection(collection: Collection, textId: number, user: User | AnonymousUser | null) {
         const queryBuilder = this.textRepo.createQueryBuilder("l0");
         const subQueryBuilder = this.textRepo.createQueryBuilder("l1").select("orderInCollection").where({id: textId}).getKnexQuery();
-        const privateFilter: FilterQuery<Text> = user instanceof User ? {$or: [{collection: {isPublic: true}}, {collection: {addedBy: user.profile}}]} : {collection: {isPublic: true}};
 
         return await queryBuilder.select("*")
             .where({collection: collection.id})
             .andWhere({"orderInCollection": {$gt: raw(`(${subQueryBuilder})`)}})
-            .andWhere(privateFilter)
+            .andWhere(textVisibilityFilter(user) as QBFilterQuery<Text>)
             .orderBy({orderInCollection: "asc"})
             .limit(1)
             .execute("get");

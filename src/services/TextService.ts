@@ -15,6 +15,7 @@ import {MapHiderText} from "@/src/models/entities/MapHiderText.js";
 import {FlaggedTextReport} from "@/src/models/entities/FlaggedTextReport.js";
 import {TEXT_REPORT_HIDING_THRESHOLD} from "@/src/constants.js";
 import amqp from "amqplib";
+import {textVisibilityFilter} from "@/src/filters/textVisibilityFilter.js";
 
 const parseTextQueueKey = "parseTextWorkerQueue";
 
@@ -43,29 +44,16 @@ export class TextService {
                             user: User | AnonymousUser | null): Promise<[Text[], number]> {
         const dbFilters: FilterQuery<Text> = {$and: []};
         dbFilters.$and!.push({isRemovedByMods: false});
-        if (user && user instanceof User) {
-            dbFilters.$and!.push({
-                $or: [
-                    {$and: [{collection: {$eq: null}}, {isPublic: true}]},
-                    {collection: {isPublic: true}},
-                    {addedBy: user.profile},
-                ]
-            });
+        dbFilters.$and!.push(textVisibilityFilter(user));
 
+        if (user && user instanceof User) {
             if (!filters.isHiddenByUser)
                 dbFilters.$and!.push({hiddenBy: {$none: user.profile}});
             else
                 dbFilters.$and!.push({hiddenBy: {$some: user.profile}});
             if (filters.isBookmarked)
                 dbFilters.$and!.push({bookmarkers: user.profile});
-        } else
-            dbFilters.$and!.push({
-                $or: [
-                    {$and: [{collection: {$eq: null}}, {isPublic: true}]},
-                    {collection: {isPublic: true}},
-                ]
-            });
-
+        }
         if (filters.languageCode !== undefined)
             dbFilters.$and!.push({language: {code: filters.languageCode}});
         if (filters.addedBy !== undefined)
@@ -114,13 +102,8 @@ export class TextService {
         const dbFilters: FilterQuery<TextHistoryEntry> = {$and: []};
         dbFilters.$and!.push({text: {isRemovedByMods: false}});
         dbFilters.$and!.push({text: {hiddenBy: {$none: user.profile}}});
-        dbFilters.$and!.push({
-            $or: [
-                {text: {$and: [{collection: {$eq: null}}, {isPublic: true}]}},
-                {text: {collection: {isPublic: true}}},
-                {text: {addedBy: user.profile}},
-            ]
-        });
+        dbFilters.$and!.push({text: textVisibilityFilter(user)});
+
 
         dbFilters.$and!.push({pastViewer: user.profile});
 
@@ -201,22 +184,9 @@ export class TextService {
     async getText(textId: number, user: User | AnonymousUser | null) {
         const dbFilters: FilterQuery<Text> = {$and: [{id: textId}]};
         dbFilters.$and!.push({isRemovedByMods: false});
-        if (user instanceof User) {
-            dbFilters.$and!.push({
-                $or: [
-                    {$and: [{collection: {$eq: null}}, {isPublic: true}]},
-                    {collection: {isPublic: true}},
-                    {addedBy: user.profile},
-                ]
-            });
+        dbFilters.$and!.push(textVisibilityFilter(user));
+        if (user instanceof User)
             dbFilters.$and!.push({hiddenBy: {$none: user.profile}});
-        } else
-            dbFilters.$and!.push({
-                $or: [
-                    {$and: [{collection: {$eq: null}}, {isPublic: true}]},
-                    {collection: {isPublic: true}},
-                ]
-            });
 
         let text = await this.textRepo.findOne(dbFilters, {populate: ["language", "addedBy.user", "collection", "collection.language", "collection.addedBy.user"]});
 

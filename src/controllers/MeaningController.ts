@@ -12,6 +12,7 @@ import {numericStringValidator} from "@/src/validators/utilValidators.js";
 import {meaningSerializer} from "@/src/presentation/response/serializers/entities/MeaningSerializer.js";
 import {TextService} from "@/src/services/TextService.js";
 import {attributionSourceSerializer} from "@/src/presentation/response/serializers/entities/AttributionSourceSerializer.js";
+import {textVisibilityFilter} from "@/src/filters/textVisibilityFilter.js";
 
 class MeaningController {
     async createMeaning(request: FastifyRequest, reply: FastifyReply) {
@@ -76,15 +77,7 @@ class MeaningController {
         const pathParamsValidator = z.object({textId: numericStringValidator});
         const pathParams = pathParamsValidator.parse(request.params);
         const textService = new TextService(request.em);
-        const user = request.user as User;
-        const text = await textService.findText({
-            id: pathParams.textId,
-            $or: [
-                {$and: [{collection: {$eq: null}}, {isPublic: true}]},
-                {collection: {isPublic: true}},
-                {addedBy: user.profile},
-            ]
-        });
+        const text = await textService.findText({$and: [{id: pathParams.textId,}, textVisibilityFilter(request.user)]});
         if (!text)
             throw new NotFoundAPIError("Text");
 
