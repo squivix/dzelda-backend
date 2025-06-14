@@ -632,4 +632,22 @@ describe("GET users/me/texts/history/", () => {
         const response = await makeRequest({}, session.token);
         expect(response.statusCode).to.equal(403);
     });
+    describe("test privacy", () => {
+        describe("Hide private texts from non-authors", () => {
+            test.todo<TestContext>("If user is not author hide private texts", async (context) => {
+            });
+            test.todo<TestContext>("If user is author show private texts", async (context) => {
+            });
+        })
+        describe("Texts in collection inherit its privacy setting", () => {
+            describe("If collection is private, text is private", async () => {
+                test.todo<TestContext>("If user is not author hide texts in private collection", async (context) => {
+                });
+                test.todo<TestContext>("If user is author show texts in a private collection", async (context) => {
+                });
+            });
+            test.todo<TestContext>("If collection is public, text is public", async (context) => {
+            });
+        })
+    });
 });

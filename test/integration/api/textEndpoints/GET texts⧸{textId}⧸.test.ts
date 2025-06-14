@@ -116,7 +116,7 @@ describe("GET texts/{textId}/", () => {
             const session = await context.sessionFactory.createOne({user: author});
             const language = await context.languageFactory.createOne();
             const collection = await context.collectionFactory.createOne({language, isPublic: false, addedBy: author.profile});
-            const text = await context.textFactory.createOne({language, collection});
+            const text = await context.textFactory.createOne({language, collection, addedBy:author.profile});
 
             const response = await makeRequest(text.id, session.token);
 

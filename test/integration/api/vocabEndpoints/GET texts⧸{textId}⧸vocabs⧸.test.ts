@@ -83,6 +83,30 @@ describe("GET texts/{textId}/vocabs/", () => {
 
         expect(response.statusCode).to.equal(404);
     });
+    test<TestContext>("If text is part of public collection return text vocabs", async (context) => {
+        const user = await context.userFactory.createOne();
+        const session = await context.sessionFactory.createOne({user: user});
+        const language = await context.languageFactory.createOne();
+        const collection = await context.collectionFactory.createOne({language, isPublic: true});
+        const text = await context.textFactory.createOne({language, collection:collection,  isPublic: false});
+        const expectedNewVocabs = await context.vocabFactory.create(3, {language, textsAppearingIn: text});
+        const expectedExistingVocabs = await context.vocabFactory.create(3, {language, textsAppearingIn: text});
+        const expectedExistingMappings = [];
+        for (let vocab of expectedExistingVocabs)
+            expectedExistingMappings.push(context.em.create(MapLearnerVocab, {learner: user.profile, vocab}));
+        await context.em.flush();
+        const expectedTextVocabs = [...expectedExistingMappings, ...expectedNewVocabs];
+        await context.vocabFactory.create(10, {language});
+        const response = await makeRequest(text.id, session.token);
+        await context.em.find(Vocab, expectedExistingVocabs, {refresh: true});
+
+        expect(response.statusCode).to.equal(200);
+        const responseBody = response.json();
+        const expectedBody = learnerVocabSerializer.serializeList(expectedTextVocabs, {ignore: ["meanings", "learnerMeanings"]});
+        //ignore order
+        expect(responseBody.length).toEqual(expectedBody.length);
+        expect(responseBody).toEqual(expect.arrayContaining(expectedBody));
+    });
     test<TestContext>("If text is not public and user is author return text vocabs", async (context) => {
         const user = await context.userFactory.createOne();
         const session = await context.sessionFactory.createOne({user: user});

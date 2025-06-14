@@ -331,7 +331,7 @@ describe("PATCH texts/{textId}/", () => {
 
         expect(response.statusCode).to.equal(404);
     });
-    test<TestContext>("If text is public and user is not author of text collection return 403", async (context) => {
+    test<TestContext>("If text is public and user is not author return 403", async (context) => {
         const author = await context.userFactory.createOne();
         const otherUser = await context.userFactory.createOne();
         const session = await context.sessionFactory.createOne({user: otherUser});

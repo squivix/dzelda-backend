@@ -45,9 +45,10 @@ export class TextService {
         dbFilters.$and!.push({isRemovedByMods: false});
         if (user && user instanceof User) {
             dbFilters.$and!.push({
-                $and: [
-                    {$or: [{isPublic: true}, {addedBy: user.profile}]},
-                    {$or: [{collection: {$eq: null}}, {collection: {$or: [{isPublic: true}, {addedBy: user.profile}]}}]},
+                $or: [
+                    {$and: [{collection: {$eq: null}}, {isPublic: true}]},
+                    {collection: {isPublic: true}},
+                    {addedBy: user.profile},
                 ]
             });
 
@@ -58,7 +59,12 @@ export class TextService {
             if (filters.isBookmarked)
                 dbFilters.$and!.push({bookmarkers: user.profile});
         } else
-            dbFilters.$and!.push({$and: [{isPublic: true}, {$or: [{collection: {$eq: null}}, {collection: {isPublic: true}}]}]});
+            dbFilters.$and!.push({
+                $or: [
+                    {$and: [{collection: {$eq: null}}, {isPublic: true}]},
+                    {collection: {isPublic: true}},
+                ]
+            });
 
         if (filters.languageCode !== undefined)
             dbFilters.$and!.push({language: {code: filters.languageCode}});
@@ -109,9 +115,10 @@ export class TextService {
         dbFilters.$and!.push({text: {isRemovedByMods: false}});
         dbFilters.$and!.push({text: {hiddenBy: {$none: user.profile}}});
         dbFilters.$and!.push({
-            $and: [
-                {$or: [{text: {isPublic: true}}, {text: {addedBy: user.profile}}]},
-                {$or: [{text: {collection: {$eq: null}}}, {text: {collection: {$or: [{isPublic: true}, {addedBy: user.profile}]}}}]},
+            $or: [
+                {text: {$and: [{collection: {$eq: null}}, {isPublic: true}]}},
+                {text: {collection: {isPublic: true}}},
+                {text: {addedBy: user.profile}},
             ]
         });
 
@@ -196,14 +203,20 @@ export class TextService {
         dbFilters.$and!.push({isRemovedByMods: false});
         if (user instanceof User) {
             dbFilters.$and!.push({
-                $and: [
-                    {$or: [{isPublic: true}, {addedBy: user.profile}]},
-                    {$or: [{collection: {$eq: null}}, {collection: {$or: [{isPublic: true}, {addedBy: user.profile}]}}]},
+                $or: [
+                    {$and: [{collection: {$eq: null}}, {isPublic: true}]},
+                    {collection: {isPublic: true}},
+                    {addedBy: user.profile},
                 ]
             });
             dbFilters.$and!.push({hiddenBy: {$none: user.profile}});
         } else
-            dbFilters.$and!.push({$and: [{isPublic: true}, {$or: [{collection: {$eq: null}}, {collection: {isPublic: true}}]}]});
+            dbFilters.$and!.push({
+                $or: [
+                    {$and: [{collection: {$eq: null}}, {isPublic: true}]},
+                    {collection: {isPublic: true}},
+                ]
+            });
 
         let text = await this.textRepo.findOne(dbFilters, {populate: ["language", "addedBy.user", "collection", "collection.language", "collection.addedBy.user"]});
 

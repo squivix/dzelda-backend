@@ -112,7 +112,7 @@ describe("GET users/me/texts/hidden/", () => {
             const user = await context.userFactory.createOne();
             const session = await context.sessionFactory.createOne({user});
             const language = await context.languageFactory.createOne();
-            await context.textFactory.create(3, {language,hiddenBy: user.profile});
+            await context.textFactory.create(3, {language, hiddenBy: user.profile});
 
             const response = await makeRequest({addedBy: "me"}, session.token);
 
@@ -513,6 +513,16 @@ describe("GET users/me/texts/hidden/", () => {
                 });
             });
         });
+    });
+    describe("test privacy", () => {
+        test.todo<TestContext>("If user hid text but it is private, do not include it in hidden texts list", async (context) => {
+        });
+        describe("Texts in collection inherit its privacy setting", () => {
+            test.todo<TestContext>("If user hid text but it is in private collection, do not include it in hidden texts list", async (context) => {
+            });
+            test.todo<TestContext>("If user hid text and it is in public collection, include it in hidden texts list", async (context) => {
+            });
+        })
     });
     test<TestContext>("If user is not logged in return 401", async () => {
         const response = await makeRequest();

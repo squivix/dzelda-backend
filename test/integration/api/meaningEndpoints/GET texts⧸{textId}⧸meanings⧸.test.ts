@@ -49,7 +49,6 @@ describe("GET texts/{textId}/meanings/", () => {
         expect(body.meanings).toEqual(meaningSerializer.serializeList(expectedMeanings, {idOnlyFields: ["vocab"]}));
         expect(body.learnerMeanings).toEqual(expectedLearnerMeanings.map(m => m.id))
     });
-
     test<TestContext>("If user is not logged in return meanings of vocabs in text", async (context) => {
         const user1 = await context.userFactory.createOne();
         const user2 = await context.userFactory.createOne();
@@ -74,17 +73,14 @@ describe("GET texts/{textId}/meanings/", () => {
         expect(body.meanings).toEqual(meaningSerializer.serializeList(expectedMeanings, {idOnlyFields: ["vocab"]}));
         expect(body.learnerMeanings).toBeUndefined();
     });
-
     test<TestContext>("If text does not exist return 404", async () => {
         const response = await makeRequest(faker.datatype.number({min: 1000000}));
         expect(response.statusCode).to.equal(404);
     });
-
     test<TestContext>("If text id is invalid return 400", async () => {
         const response = await makeRequest(faker.random.alpha(8));
         expect(response.statusCode).to.equal(400);
     });
-
     test<TestContext>("If text is not public and user is not logged in return 404", async (context) => {
         const language = await context.languageFactory.createOne();
         const text = await context.textFactory.createOne({language, isPublic: false});
@@ -93,7 +89,6 @@ describe("GET texts/{textId}/meanings/", () => {
 
         expect(response.statusCode).to.equal(404);
     });
-
     test<TestContext>("If text is not public and user is logged in as non-author return 404", async (context) => {
         const author = await context.userFactory.createOne();
         const user = await context.userFactory.createOne();
@@ -132,5 +127,30 @@ describe("GET texts/{textId}/meanings/", () => {
         const body = response.json();
         expect(body.meanings).toEqual(meaningSerializer.serializeList(expectedMeanings, {idOnlyFields: ["vocab"]}));
         expect(body.learnerMeanings).toEqual(expectedLearnerMeanings.map(m => m.id))
+    });
+    test<TestContext>("If text is part of public collection return text meanings", async (context) => {
+        const user1 = await context.userFactory.createOne();
+        const user2 = await context.userFactory.createOne();
+        const language = await context.languageFactory.createOne();
+        const translationLanguage = await context.translationLanguageFactory.createOne();
+        const collection = await context.collectionFactory.createOne({language});
+        const text = await context.textFactory.createOne({language, collection, isPublic: false});
+        const vocabs = await context.vocabFactory.create(2, {language, textsAppearingIn: text});
+        const expectedMeanings = [
+            await context.meaningFactory.createOne({vocab: vocabs[0], language: translationLanguage}),
+            await context.meaningFactory.createOne({vocab: vocabs[1], language: translationLanguage}),
+            await context.meaningFactory.createOne({vocab: vocabs[0], language: translationLanguage, learners: user1.profile}),
+            await context.meaningFactory.createOne({vocab: vocabs[1], language: translationLanguage, learners: user2.profile}),
+        ];
+        expectedMeanings.sort(defaultSortComparator);
+        const otherText = await context.textFactory.createOne({language, isPublic: true});
+        const otherVocab = await context.vocabFactory.createOne({language, textsAppearingIn: otherText});
+        await context.meaningFactory.create(3, {vocab: otherVocab, language: translationLanguage});
+
+        const response = await makeRequest(text.id);
+        const body = response.json();
+        expect(response.statusCode).to.equal(200);
+        expect(body.meanings).toEqual(meaningSerializer.serializeList(expectedMeanings, {idOnlyFields: ["vocab"]}));
+        expect(body.learnerMeanings).toBeUndefined();
     });
 });

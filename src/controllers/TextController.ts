@@ -261,10 +261,10 @@ class TextController {
         const collectionService = new CollectionService(request.em);
         const collection = await collectionService.findCollection({id: pathParams.collectionId});
 
-        if (!collection)
+        if (!collection || (!collection.isPublic && request?.user?.profile !== collection.addedBy))
             throw new NotFoundAPIError("Collection");
         const nextText = await collectionService.getNextTextInCollection(collection, pathParams.textId, request.user);
-        if (!nextText || (!nextText.isPublic && request?.user?.profile !== collection.addedBy))
+        if (!nextText)
             throw new NotFoundAPIError("Next text");
 
         reply.header("Location", `${API_ROOT}/texts/${nextText.id}/`).status(303).send();

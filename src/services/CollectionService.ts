@@ -108,11 +108,11 @@ export class CollectionService {
     }
 
     async getCollection(collectionId: number, user: User | AnonymousUser | null) {
-        const privateFilter: FilterQuery<Text & Collection> = user instanceof User ? {$or: [{isPublic: true}, {addedBy: user.profile}]} : {isPublic: true};
+        const privateFilter: FilterQuery<Collection> = user instanceof User ? {$or: [{isPublic: true}, {addedBy: user.profile}]} : {isPublic: true};
 
         const collection = await this.collectionRepo.findOne({$and: [{id: collectionId}, privateFilter]}, {populate: ["language", "addedBy", "addedBy.user"]});
         if (collection) {
-            await collection.texts.init({where: privateFilter, orderBy: {orderInCollection: "asc"}, populate: ["addedBy.user"]});
+            await collection.texts.init({orderBy: {orderInCollection: "asc"}, populate: ["addedBy.user"]});
             if (user && !(user instanceof AnonymousUser)) {
                 await this.collectionRepo.annotateCollectionsWithUserData([collection], user);
                 await this.textRepo.annotateTextsWithUserData(collection.texts.getItems(), user);
@@ -159,7 +159,7 @@ export class CollectionService {
     async getNextTextInCollection(collection: Collection, textId: number, user: User | AnonymousUser | null) {
         const queryBuilder = this.textRepo.createQueryBuilder("l0");
         const subQueryBuilder = this.textRepo.createQueryBuilder("l1").select("orderInCollection").where({id: textId}).getKnexQuery();
-        const privateFilter: FilterQuery<Text> = user instanceof User ? {$or: [{isPublic: true}, {addedBy: user.profile}]} : {isPublic: true};
+        const privateFilter: FilterQuery<Text> = user instanceof User ? {$or: [{collection: {isPublic: true}}, {collection: {addedBy: user.profile}}]} : {collection: {isPublic: true}};
 
         return await queryBuilder.select("*")
             .where({collection: collection.id})
