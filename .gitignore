@@ -15,3 +15,5 @@ test/temp
 secret
 test-results
 coverage
+.yalc
+yalc.lock
