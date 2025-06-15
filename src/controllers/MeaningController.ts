@@ -86,7 +86,7 @@ class MeaningController {
         const {meanings, learnerMeanings} = await meaningService.getTextMeanings(text, request.user);
         reply.send({
             meanings: meaningSerializer.serializeList(meanings, {idOnlyFields: ["vocab", "attributionSource"]}),
-            learnerMeanings: learnerMeanings ? learnerMeanings.map(m => m.id) : undefined//meaningSerializer.serializeList(learnerMeanings, {idOnlyFields: ["vocab", "attributionSource"]}) : undefined,
+            learnerMeanings: learnerMeanings ? learnerMeanings.map(m => m.id) : undefined
         });
     }
 
