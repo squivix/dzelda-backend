@@ -328,7 +328,8 @@ export class TextService {
         });
         channel.sendToQueue(parseTextQueueKey, Buffer.from(JSON.stringify({textId: textId})), {
             persistent: true,
-            priority: parsingPriority
+            priority: parsingPriority,
+            headers: {attempts: 0}
         });
         await channel.close()
         await connection.close()

@@ -7,6 +7,8 @@ import {Vocab} from "@/src/models/entities/Vocab.js";
 import {MapTextVocab} from "@/src/models/entities/MapTextVocab.js";
 
 const QUEUE_KEY = "parseTextWorkerQueue";
+const PARSE_TEXT_WORKER_MAX_RETRIES = 50;
+const DEAD_LETTER_QUEUE_KEY = "parseTextWorkerDeadLetterQueue";
 
 async function consume() {
     const connection = await amqp.connect(process.env.RABBITMQ_CONNECTION_URL!, {heartbeat: 20});
@@ -15,6 +17,9 @@ async function consume() {
         durable: true,
         maxPriority: 2
     });
+    await channel.assertQueue(DEAD_LETTER_QUEUE_KEY, {
+        durable: true
+    });
     await channel.prefetch(Number(process.env.PARSE_TEXT_WORKER_PREFETCH) || 4);
     console.log(`Text parser worker listening on ${QUEUE_KEY}...`);
 
@@ -22,7 +27,8 @@ async function consume() {
         if (!msg)
             return;
         const args: { textId: number } = JSON.parse(msg.content.toString());
-        console.log(`Received request to parse text(id=${args.textId})`);
+        const attempts = msg.properties.headers?.attempts ? Number(msg.properties.headers.attempts) : 0;
+        console.log(`Received request to parse text(id=${args.textId}), attempt ${attempts + 1}`);
 
         const orm = await MikroORM.init(options);
         const em = orm.em.fork() as SqlEntityManager;
@@ -66,7 +72,24 @@ async function consume() {
         }).catch((e) => {
             console.log(`Text(id=${args.textId}) parsing failed`);
             console.error(e);
-            orm.close().then(() => channel.nack(msg));
+            orm.close().then(() => {
+                const nextAttempts = attempts + 1;
+                if (nextAttempts >= PARSE_TEXT_WORKER_MAX_RETRIES) {
+                    console.log(`Moving text(id=${args.textId}) to dead letter queue`);
+                    channel.sendToQueue(DEAD_LETTER_QUEUE_KEY, msg.content, {
+                        persistent: true,
+                        headers: {attempts: nextAttempts},
+                        priority: msg.properties.priority
+                    });
+                } else {
+                    channel.sendToQueue(QUEUE_KEY, msg.content, {
+                        persistent: true,
+                        headers: {attempts: nextAttempts},
+                        priority: msg.properties.priority
+                    });
+                }
+                channel.ack(msg);
+            });
         });
     });
 }
