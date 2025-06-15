@@ -3,7 +3,7 @@ import {InjectOptions} from "light-my-request";
 import {fetchRequest} from "@/test/integration/utils.js";
 import {vocabSerializer} from "@/src/presentation/response/serializers/entities/VocabSerializer.js";
 import {faker} from "@faker-js/faker";
-import {parsers} from "dzelda-common";
+import {MapTextVocab} from "@/src/models/entities/MapTextVocab.js";
 
 /**{@link VocabController#createVocab}*/
 describe("POST vocabs/", () => {
@@ -20,8 +20,15 @@ describe("POST vocabs/", () => {
         const user = await context.userFactory.createOne();
         const session = await context.sessionFactory.createOne({user: user});
         const language = await context.languageFactory.createOne();
-
-        const newVocab = context.vocabFactory.makeOne({language: language});
+        const otherLanguage = await context.languageFactory.createOne();
+        const vocabText = faker.random.alpha(20);
+        const expectedTextsAppearingIn = [
+            await context.textFactory.createOne({language, parsedTitle: `this is a title that contains ${vocabText}`}),
+            await context.textFactory.createOne({language, parsedContent: `this is a content that contains ${vocabText}`})
+        ];
+        await context.textFactory.createOne({language: otherLanguage, parsedTitle: `this is a title that contains ${vocabText} but wrong language`})
+        await context.textFactory.createOne({language: otherLanguage, parsedContent: `this is a content that contains ${vocabText} but wrong language`})
+        const newVocab = context.vocabFactory.makeOne({text: vocabText, language});
         const response = await makeRequest({
             languageCode: language.code,
             text: newVocab.text,
@@ -30,7 +37,9 @@ describe("POST vocabs/", () => {
 
         expect(response.statusCode).toEqual(201);
         expect(response.json()).toEqual(expect.objectContaining(vocabSerializer.serialize(newVocab)));
-        expect(await context.vocabRepo.findOne({text: newVocab.text, isPhrase: newVocab.isPhrase, language})).not.toBeNull();
+        const dbRecord= await context.vocabRepo.findOne({text: newVocab.text, isPhrase: newVocab.isPhrase, language})
+        expect(dbRecord).not.toBeNull();
+        expect(new Set((await context.em.find(MapTextVocab, {vocab: dbRecord})).map(m => m.text.id))).toEqual(new Set(expectedTextsAppearingIn.map(t => t.id)))
     });
     test<TestContext>("If user is not logged in return 401", async (context) => {
         const language = await context.languageFactory.createOne();
