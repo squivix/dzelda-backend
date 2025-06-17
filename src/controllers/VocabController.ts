@@ -62,7 +62,7 @@ class VocabController {
             throw new ValidationAPIError({language: "not found"});
 
         const parser = getParser(language.code);
-        const words = parser.splitWords(parser.parseText(body.text));
+        const words = parser.parseText(body.text).normalizedWords;
 
         if (words.length == 0)
             throw new ValidationAPIError({text: "vocab is invalid for this language"});
@@ -296,6 +296,7 @@ class VocabController {
             reply.status(503).send();
         const bodyValidator = z.object({
             vocabId: z.number().min(0),
+            variantText: vocabTextValidator.optional(),
             voiceCode: z.string().min(1).optional()
         });
         const body = bodyValidator.parse(request.body);

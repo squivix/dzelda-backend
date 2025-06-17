@@ -5,6 +5,8 @@ import {Text} from "@/src/models/entities/Text.js";
 import {getParser} from "dzelda-common";
 import {Vocab} from "@/src/models/entities/Vocab.js";
 import {MapTextVocab} from "@/src/models/entities/MapTextVocab.js";
+import {VocabVariant} from "@/src/models/entities/VocabVariant.js";
+import {EntityData} from "@mikro-orm/core";
 
 const QUEUE_KEY = "parseTextWorkerQueue";
 const PARSE_TEXT_WORKER_MAX_RETRIES = 50;
@@ -41,29 +43,40 @@ async function consume() {
         }
         await em.transactional(async (tm) => {
             await tm.nativeUpdate(Text, {id: text.id}, {
-                parsedContent: null,
                 parsedTitle: null,
+                parsedContent: null,
                 isProcessing: true
             });
 
             const parser = getParser(text.language.code);
-            const textParsedTitle = parser.parseText(text.title);
-            const textParsedContent = parser.parseText(text.content);
-            const textWords: string[] = [
-                ...parser.splitWords(textParsedTitle, {keepDuplicates: false}),
-                ...parser.splitWords(textParsedContent, {keepDuplicates: false})
-            ];
+            const titleParseResult = parser.parseText(text.title);
+            const contentParseResult = parser.parseText(text.content);
+
+            const textWords: string[] = Array.from(new Set([
+                ...titleParseResult.normalizedWords,
+                ...contentParseResult.normalizedWords
+            ]));
             textWords.sort();   //important to avoid deadlocks
 
             await em.nativeDelete(MapTextVocab, {text: text.id, vocab: {text: {$nin: textWords}}});
             await tm.upsertMany(Vocab, textWords.map(word => ({text: word, language: text.language.id})));
 
-            const textVocabs = await tm.createQueryBuilder(Vocab).select("*").where({language: text.language}).andWhere(`? LIKE '% ' || text || ' %'`, [` ${textParsedTitle} ${textParsedContent} `]).orderBy({id: QueryOrder.ASC});
+            const textVocabs = await tm.createQueryBuilder(Vocab).select("*").where({language: text.language}).andWhere(`? LIKE '% ' || text || ' %'`, [` ${titleParseResult.normalizedText} ${contentParseResult.normalizedText} `]).orderBy({id: QueryOrder.ASC});
             await tm.upsertMany(MapTextVocab, textVocabs.map(vocab => ({text: text.id, vocab: vocab.id})));
 
+            const variants = [] as EntityData<VocabVariant>[];
+            for (const vocab of textVocabs) {
+                if (!titleParseResult.wordToVariantsMap[vocab.text] && !contentParseResult.wordToVariantsMap[vocab.text])
+                    continue;
+                const variantsMap = titleParseResult.wordToVariantsMap[vocab.text] ?? contentParseResult.wordToVariantsMap[vocab.text];
+                for (const variantText of variantsMap)
+                    variants.push({vocab: vocab.id, text: variantText});
+            }
+            await tm.upsertMany(VocabVariant, variants);
+
             await tm.nativeUpdate(Text, {id: text.id}, {
-                parsedContent: textParsedContent,
-                parsedTitle: textParsedTitle,
+                parsedTitle: titleParseResult.normalizedText,
+                parsedContent: contentParseResult.normalizedText,
                 isProcessing: false
             });
         }).then(() => {

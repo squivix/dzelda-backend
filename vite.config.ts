@@ -18,7 +18,7 @@ export default defineConfig({
         hmr: false      //debugging line numbers wrong with hmr :(
     },
     test: {
-        exclude: [...defaultExclude, "build/**"],
+        exclude: [...defaultExclude, "build/**", ".yalc/**"],
         fileParallelism: false,
         globalSetup: ["./test/globalSetup.ts",],
         setupFiles: [

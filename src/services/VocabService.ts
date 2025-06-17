@@ -195,27 +195,26 @@ export class VocabService {
             vocab: {textsAppearingIn: text},
             learner: user.profile
         }, {
-            populate: ["vocab.language", "vocab.tags.category", "vocab.rootForms"],
+            populate: ["vocab.language", "vocab.tags.category", "vocab.rootForms", "vocab.vocabVariants"],
         });
         await this.em.populate(existingMappings, ["vocab.ttsPronunciations", "vocab.ttsPronunciations.voice"], {
             where: {vocab: {ttsPronunciations: {voice: {$or: [{prefererLanguageMappings: {learner: user.profile}}, {isDefault: true}]}}}}
         });
-        // await this.em.populate(existingMappings, ["vocab.meanings", "vocab.meanings.language", "vocab.meanings.addedBy.user"], {
-        //     where: {vocab: {meanings: {language: {prefererEntries: {learnerLanguageMapping: {learner: user.profile}}}}}}
-        // });
-        // await this.em.populate(existingMappings, ["vocab.learnerMeanings", "vocab.learnerMeanings.language", "vocab.learnerMeanings.addedBy.user"], {
-        //     where: {vocab: {learnerMeanings: {learners: user.profile}}},
-        // });
+        await this.em.populate(existingMappings, ["vocab.vocabVariants.ttsPronunciations", "vocab.vocabVariants.ttsPronunciations.voice"], {
+            where: {vocab: {vocabVariants: {ttsPronunciations: {voice: {$or: [{prefererLanguageMappings: {learner: user.profile}}, {isDefault: true}]}}}}}
+        });
         const newVocabs = await this.em.find(Vocab, {
             textsAppearingIn: text,
             $nin: existingMappings.map(m => m.vocab)
         }, {
-            populate: ["language", "ttsPronunciations", "ttsPronunciations.voice", "tags.category", "rootForms"],
+            populate: ["language", "ttsPronunciations", "ttsPronunciations.voice", "tags.category", "rootForms", "vocabVariants"],
             populateWhere: {meanings: {language: {prefererEntries: {learnerLanguageMapping: {learner: user.profile}}}}}
         });
-        // "meanings", "meanings.language", "meanings.addedBy.user"
         await this.em.populate(newVocabs, ["ttsPronunciations", "ttsPronunciations.voice"], {
             where: {ttsPronunciations: {voice: {$or: [{prefererLanguageMappings: {learner: user.profile}}, {isDefault: true}]}}}
+        });
+        await this.em.populate(newVocabs, ["vocabVariants.ttsPronunciations", "vocabVariants.ttsPronunciations.voice"], {
+            where: {vocabVariants: {ttsPronunciations: {voice: {$or: [{prefererLanguageMappings: {learner: user.profile}}, {isDefault: true}]}}}}
         });
         return [...existingMappings, ...newVocabs];
     }
