@@ -13,7 +13,7 @@ export class VocabTag extends CustomBaseEntity {
     name!: string;
 
     @ManyToOne({entity: () => VocabTagCategory, inversedBy: (category) => category.tags, nullable: true, deleteRule: "set null", updateRule: "cascade"})
-    category!: VocabTagCategory;
+    category!: VocabTagCategory|null;
 
     @ManyToMany({
         entity: () => Vocab,

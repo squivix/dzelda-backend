@@ -2,6 +2,7 @@ import {CustomCallbackObject, CustomEntitySerializer} from "@/src/presentation/r
 import {TextHistoryEntrySchema} from "dzelda-common";
 import {TextHistoryEntry} from "@/src/models/entities/TextHistoryEntry.js";
 import {collectionSerializer} from "@/src/presentation/response/serializers/entities/CollectionSerializer.js";
+import {AnonymousUser} from "@/src/models/entities/auth/User.js";
 
 export class TextHistoryEntrySerializer extends CustomEntitySerializer<TextHistoryEntry, TextHistoryEntrySchema> {
     definition(textHistoryEntry: TextHistoryEntry): CustomCallbackObject<Partial<TextHistoryEntrySchema>> {
@@ -25,7 +26,7 @@ export class TextHistoryEntrySerializer extends CustomEntitySerializer<TextHisto
             vocabsByLevel: () => textHistoryEntry.text.vocabsByLevel,
             pastViewersCount: () => Number(textHistoryEntry.text.pastViewersCount),
             timeViewed: () => textHistoryEntry.timeViewed.toISOString(),
-            pastViewer: () => textHistoryEntry.pastViewer.user.username,
+            pastViewer: () => textHistoryEntry.pastViewer?.user.username ?? AnonymousUser.name,
         };
     }
 

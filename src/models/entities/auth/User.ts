@@ -56,7 +56,7 @@ export class User extends CustomBaseEntity {
     accountCreatedAt!: Date;
 
     @Property({type: types.datetime, hidden: true, nullable: true, default: null})
-    lastLogin?: Date;
+    lastLogin!: Date | null;
 
     @OneToOne({
         entity: () => PasswordResetToken,

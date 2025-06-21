@@ -20,6 +20,8 @@ import {humanPronunciationSerializer} from "@/src/presentation/response/serializ
 import {ttsPronunciationSerializer} from "@/src/presentation/response/serializers/entities/TTSPronunciationSerializer.js";
 import {enableTTSSynthesize} from "@/src/constants.js";
 import {textVisibilityFilter} from "@/src/filters/textVisibilityFilter.js";
+import {VocabVariant} from "@/src/models/entities/VocabVariant.js";
+import {vocabVariantSerializer} from "@/src/presentation/response/serializers/entities/VocabVariantSerializer.js";
 
 class VocabController {
 
@@ -52,6 +54,7 @@ class VocabController {
         const bodyValidator = z.object({
             languageCode: languageCodeValidator,
             text: vocabTextValidator,
+            variantText: vocabTextValidator.optional(),
             isPhrase: z.boolean()
         });
         const body = bodyValidator.parse(request.body);
@@ -62,7 +65,8 @@ class VocabController {
             throw new ValidationAPIError({language: "not found"});
 
         const parser = getParser(language.code);
-        const words = parser.parseText(body.text).normalizedWords;
+        const parseResult = parser.parseText(body.text);
+        const words = parseResult.normalizedWords;
 
         if (words.length == 0)
             throw new ValidationAPIError({text: "vocab is invalid for this language"});
@@ -71,17 +75,19 @@ class VocabController {
 
         const vocabText = parser.combineWords(words);
         const vocabService = new VocabService(request.em);
-        const existingVocab = await vocabService.getVocabByStringSearch({language: language, text: vocabText,});
-        if (existingVocab) {
-            reply.status(200).send(vocabSerializer.serialize(existingVocab));
-            return;
-        }
-        const newVocab = await vocabService.createVocab({
+        const existingVocab = await vocabService.getVocabByStringSearch({language: language, text: vocabText});
+
+        const vocab = existingVocab ? existingVocab : await vocabService.createVocab({
             language: language,
             text: vocabText,
             isPhrase: body.isPhrase,
         });
-        reply.status(201).send(vocabSerializer.serialize(newVocab));
+        if (body.variantText !== undefined && body.variantText != parseResult.normalizedText && parser.transformWord(body.variantText) === parseResult.normalizedText)
+            await vocabService.createOrGetVocabVariant(vocab, body.variantText);
+        if (existingVocab)
+            reply.status(200).send(vocabSerializer.serialize(vocab));
+        else
+            reply.status(201).send(vocabSerializer.serialize(vocab));
     }
 
     async getUserVocabs(request: FastifyRequest, reply: FastifyReply) {
@@ -184,7 +190,6 @@ class VocabController {
         reply.status(204).send();
     }
 
-
     async getTextVocabs(request: FastifyRequest, reply: FastifyReply) {
         const pathParamsValidator = z.object({textId: numericStringValidator});
         const pathParams = pathParamsValidator.parse(request.params);
@@ -275,6 +280,49 @@ class VocabController {
         reply.send(ttsPronunciationSerializer.serializeList(ttsPronunciations));
     }
 
+    async getVocabVariants(request: FastifyRequest, reply: FastifyReply) {
+        const pathParamsValidator = z.object({
+            vocabId: numericStringValidator
+        });
+        const pathParams = pathParamsValidator.parse(request.params);
+
+        const vocabService = new VocabService(request.em);
+        const vocab = await vocabService.findVocab({id: pathParams.vocabId});
+        if (!vocab)
+            throw new NotFoundAPIError("vocab");
+
+        const vocabVariants = await vocabService.getVocabVariants(vocab);
+        reply.send(vocabVariantSerializer.serializeList(vocabVariants));
+    }
+
+    async createVocabVariant(request: FastifyRequest, reply: FastifyReply) {
+        const bodyValidator = z.object({
+            vocabId: z.number().min(0),
+            text: vocabTextValidator,
+        });
+        const body = bodyValidator.parse(request.body);
+
+        const vocabService = new VocabService(request.em);
+        const vocab = await vocabService.getVocab(body.vocabId);
+        if (!vocab)
+            throw new NotFoundAPIError("vocab");
+        const parser = getParser(vocab.language.code);
+        const parseResult = parser.parseText(body.text);
+        if (body.text === vocab.text)
+            throw new ValidationAPIError({text: "Same as normalized vocab text"});
+        if (parseResult.normalizedText !== vocab.text)
+            throw new ValidationAPIError({text: "Does not normalize to vocab text"});
+
+        const existingVariant = await vocabService.findVocabVariant({vocab: vocab, text: body.text}, ["ttsPronunciations"]);
+        if (existingVariant) {
+            reply.status(200).send(vocabVariantSerializer.serialize(existingVariant));
+            return;
+        }
+
+        const newVariant = await vocabService.createVocabVariant(vocab, body.text);
+        reply.status(201).send(vocabVariantSerializer.serialize(newVariant));
+    }
+
     async getVocabHumanPronunciations(request: FastifyRequest, reply: FastifyReply) {
         const pathParamsValidator = z.object({
             vocabId: numericStringValidator
@@ -296,7 +344,7 @@ class VocabController {
             reply.status(503).send();
         const bodyValidator = z.object({
             vocabId: z.number().min(0),
-            variantText: vocabTextValidator.optional(),
+            vocabVariantId: z.number().min(0).optional(),
             voiceCode: z.string().min(1).optional()
         });
         const body = bodyValidator.parse(request.body);
@@ -307,13 +355,19 @@ class VocabController {
         const voice = await vocabService.findTTSVoice({$or: [{code: body.voiceCode}, {isDefault: true}], language: vocab.language});
         if (!voice)
             throw new ValidationAPIError({voice: "Not found"});
+        let variant: VocabVariant | null = null;
+        if (body.vocabVariantId !== undefined) {
+            variant = await vocabService.findVocabVariant({id: body.vocabVariantId});
+            if (!variant)
+                throw new ValidationAPIError({vocabVariantId: "Not found"});
+        }
 
-        const existingPronunciation = vocab.ttsPronunciations.find(p => p.voice == voice);
+        const existingPronunciation = (variant ? variant : vocab).ttsPronunciations.find(p => p.voice == voice);
         if (existingPronunciation) {
             reply.status(200).send(ttsPronunciationSerializer.serialize(existingPronunciation));
             return;
         }
-        const newPronunciation = await vocabService.createVocabTTSPronunciation(vocab, voice);
+        const newPronunciation = await vocabService.createVocabTTSPronunciation(vocab, variant, voice);
         reply.status(200).send(ttsPronunciationSerializer.serialize(newPronunciation));
     }
 }

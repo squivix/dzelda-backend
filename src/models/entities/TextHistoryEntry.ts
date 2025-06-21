@@ -12,7 +12,7 @@ export class TextHistoryEntry extends CustomBaseEntity {
     text!: Text;
 
     @ManyToOne({entity: () => Profile, nullable: true, deleteRule: "set null", updateRule: "cascade"})
-    pastViewer!: Profile;
+    pastViewer!: Profile | null;
 
     @Property({type: types.datetime, defaultRaw: "now()"})
     timeViewed!: Date;

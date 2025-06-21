@@ -12,6 +12,8 @@ class TTSPronunciationSerializer extends CustomEntitySerializer<TTSPronunciation
             url: () => ttsPronunciation.url,
             addedOn: () => ttsPronunciation.addedOn.toISOString(),
             voice: () => ttsVoiceSerializer.serialize(ttsPronunciation.voice) as TTSVoiceSchema,
+            vocabId: () => ttsPronunciation.vocab?.id ?? null,
+            variantId: () => ttsPronunciation.vocabVariant?.id ?? null,
         };
     }
 

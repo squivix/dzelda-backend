@@ -10,7 +10,7 @@ export async function batchSeed<T>({em, tableName, filePath, batchSize}: {
     filePath: string,
     batchSize: number,
 }): Promise<void> {
-    if (!await fs.exists(filePath)) {
+    if (!fs.existsSync(filePath)) {
         console.log(`${filePath} not found`);
         return;
     }
@@ -28,8 +28,6 @@ export async function batchSeed<T>({em, tableName, filePath, batchSize}: {
 
     for await (const line of fileHandle.readLines()) {
         if (batch.length >= batchSize) {
-            const keys = Object.keys(batch[0]);
-            // await em.execute(`insert into ${tableName}(${keys.join(",")}) values (${batch.map((b:Record<string,any>)=>keys.map(k=>b[k]).join(",")).join(",")})`);
             await em.insertMany(tableName, batch, {ctx: em.getTransactionContext()});
             loadingBar.increment(batch.length);
             batch = [];

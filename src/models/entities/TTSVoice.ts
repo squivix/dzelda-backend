@@ -33,5 +33,5 @@ export class TTSVoice extends CustomBaseEntity {
     prefererLanguageMappings: Collection<MapLearnerLanguage> = new Collection<MapLearnerLanguage>(this);
 
     @Property({type: types.json, nullable: true})
-    synthesizeParams!: Record<string, any>;
+    synthesizeParams!: Record<string, any> | null;
 }

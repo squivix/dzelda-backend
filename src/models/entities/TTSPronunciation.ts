@@ -18,11 +18,11 @@ export class TTSPronunciation extends CustomBaseEntity {
     @ManyToOne({entity: () => TTSVoice, deleteRule: "restrict", updateRule: "cascade"})
     voice!: TTSVoice;
 
-    @ManyToOne({entity: () => Vocab, deleteRule: "cascade", updateRule: "cascade"})
-    vocab!: Vocab;
+    @ManyToOne({entity: () => Vocab, deleteRule: "cascade", updateRule: "cascade", nullable: true, default: null})
+    vocab!: Vocab | null;
 
     @ManyToOne({entity: () => VocabVariant, deleteRule: "set null", updateRule: "cascade", nullable: true, default: null})
-    vocabVariant!: VocabVariant;
+    vocabVariant!: VocabVariant | null;
 
-    [OptionalProps]?: "addedOn"|"vocabVariant"
+    [OptionalProps]?: "addedOn" | "vocabVariant"
 }

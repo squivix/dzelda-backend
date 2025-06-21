@@ -21,7 +21,7 @@ export class LearnerVocabSerializer extends CustomEntitySerializer<Vocab | MapLe
                 language: () => newVocab.language.code,
                 learnerMeanings: () => [],
                 //@ts-ignore
-                meanings: () => meaningSerializer.serializeList(newVocab.meanings.getItems(), {ignore: ["vocab"], idOnlyFields: ["attributionSource"]}),
+                meanings: () => meaningSerializer.serializeList(newVocab.meanings.getItems(), {ignore: ["vocab"], idOnlyFields: ["attributionSource", "vocabVariant"]}),
                 ttsPronunciationUrl: () => newVocab.ttsPronunciations.getItems().pop()?.url ?? null,
                 tags: () => vocabTagSerializer.serializeList(newVocab.tags.getItems()),
                 learnersCount: () => Number(newVocab.learnersCount),
@@ -38,9 +38,9 @@ export class LearnerVocabSerializer extends CustomEntitySerializer<Vocab | MapLe
                 notes: () => mapping.notes,
                 language: () => mapping.vocab.language.code,
                 // @ts-ignore
-                learnerMeanings: () => meaningSerializer.serializeList(mapping.vocab.learnerMeanings.getItems(), {ignore: ["vocab"]}),
+                learnerMeanings: () => meaningSerializer.serializeList(mapping.vocab.learnerMeanings.getItems(), {ignore: ["vocab"], idOnlyFields: ["vocabVariant"]}),
                 // @ts-ignore
-                meanings: () => meaningSerializer.serializeList(mapping.vocab.meanings.getItems(), {ignore: ["vocab"], idOnlyFields: ["attributionSource"]}),
+                meanings: () => meaningSerializer.serializeList(mapping.vocab.meanings.getItems(), {ignore: ["vocab"], idOnlyFields: ["attributionSource", "vocabVariant"]}),
                 learnersCount: () => Number(mapping.vocab.learnersCount),
                 ttsPronunciationUrl: () => mapping.vocab.ttsPronunciations.getItems().pop()?.url ?? null,
                 tags: () => vocabTagSerializer.serializeList(mapping.vocab.tags.getItems()),

@@ -9,6 +9,7 @@ import {MapLearnerVocab} from "@/src/models/entities/MapLearnerVocab.js";
 import {VocabLevel} from "dzelda-common";
 import {TranslationLanguage} from "@/src/models/entities/TranslationLanguage.js";
 import {AttributionSource} from "@/src/models/entities/AttributionSource.js";
+import {VocabVariant} from "@/src/models/entities/VocabVariant.js";
 
 export class MeaningService {
 
@@ -26,19 +27,20 @@ export class MeaningService {
             vocab: meaningData.vocab,
             text: meaningData.text,
             language: meaningData.language
-        }, {populate: ["addedBy.user", "vocab.language"]});
+        }, {populate: ["addedBy.user", "vocab.language", "vocab.vocabVariants"]});
     }
 
-    async createMeaning(meaningData: { vocab: Vocab; language: TranslationLanguage; text: string }, user: User) {
+    async createMeaning(meaningData: { vocab: Vocab, vocabVariant: VocabVariant | null; language: TranslationLanguage; text: string }, user: User) {
         const newMeaning = this.meaningRepo.create({
             text: meaningData.text,
             language: meaningData.language,
             vocab: meaningData.vocab,
             addedBy: user.profile,
-            learnersCount: 0
+            learnersCount: 0,
+            vocabVariant: meaningData.vocabVariant
         });
         await this.em.flush();
-        await this.em.populate(newMeaning, ["addedBy.user", "vocab.language"]);
+        await this.em.populate(newMeaning, ["addedBy.user", "vocab.language", "vocab.vocabVariants"]);
         return newMeaning;
     }
 

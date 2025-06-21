@@ -72,7 +72,7 @@ async function consume() {
                 for (const variantText of variantsMap)
                     variants.push({vocab: vocab.id, text: variantText});
             }
-            await tm.upsertMany(VocabVariant, variants);
+            await tm.upsertMany(VocabVariant, variants, {onConflictAction: "ignore"});
 
             await tm.nativeUpdate(Text, {id: text.id}, {
                 parsedTitle: titleParseResult.normalizedText,

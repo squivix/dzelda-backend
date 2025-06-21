@@ -1,6 +1,6 @@
 import { Migration } from '@mikro-orm/migrations';
 
-export class Migration20250617090437 extends Migration {
+export class Migration20250621091209 extends Migration {
 
   async up(): Promise<void> {
     this.addSql('create table "vocab_variant" ("id" serial primary key, "text" varchar(1024) not null, "vocab_id" int not null);');
@@ -17,6 +17,8 @@ export class Migration20250617090437 extends Migration {
     this.addSql('alter table "map_vocab_variant_tag" add constraint "map_vocab_variant_tag_tag_id_foreign" foreign key ("tag_id") references "vocab_tag" ("id") on update cascade on delete cascade;');
     this.addSql('alter table "map_vocab_variant_tag" add constraint "map_vocab_variant_tag_vocab_variant_id_foreign" foreign key ("vocab_variant_id") references "vocab_variant" ("id") on update cascade on delete cascade;');
 
+    this.addSql('alter table "language" add column "is_rtl" boolean not null default false;');
+
     this.addSql('alter table "session" alter column "expires_on" type timestamptz using ("expires_on"::timestamptz);');
     this.addSql('alter table "session" alter column "expires_on" set default now() + interval \'1 month\';');
 
@@ -30,6 +32,8 @@ export class Migration20250617090437 extends Migration {
     this.addSql('alter table "email_confirmation_token" alter column "expires_on" set default now() + interval \'24 hours\';');
 
     this.addSql('alter table "tts_pronunciation" add column "vocab_variant_id" int null;');
+    this.addSql('alter table "tts_pronunciation" alter column "vocab_id" type int using ("vocab_id"::int);');
+    this.addSql('alter table "tts_pronunciation" alter column "vocab_id" drop not null;');
     this.addSql('alter table "tts_pronunciation" add constraint "tts_pronunciation_vocab_variant_id_foreign" foreign key ("vocab_variant_id") references "vocab_variant" ("id") on update cascade on delete set null;');
     this.addSql('create index "tts_pronunciation_vocab_variant_id_index" on "tts_pronunciation" ("vocab_variant_id");');
 
@@ -55,6 +59,8 @@ export class Migration20250617090437 extends Migration {
     this.addSql('alter table "file_upload_request" alter column "expires_on" type timestamptz(6) using ("expires_on"::timestamptz(6));');
     this.addSql('alter table "file_upload_request" alter column "expires_on" set default (now() + \'00:05:00\'::interval);');
 
+    this.addSql('alter table "language" drop column "is_rtl";');
+
     this.addSql('drop index "meaning_vocab_variant_id_index";');
     this.addSql('alter table "meaning" drop column "vocab_variant_id";');
 
@@ -66,6 +72,9 @@ export class Migration20250617090437 extends Migration {
 
     this.addSql('drop index "tts_pronunciation_vocab_variant_id_index";');
     this.addSql('alter table "tts_pronunciation" drop column "vocab_variant_id";');
+
+    this.addSql('alter table "tts_pronunciation" alter column "vocab_id" type int4 using ("vocab_id"::int4);');
+    this.addSql('alter table "tts_pronunciation" alter column "vocab_id" set not null;');
   }
 
 }

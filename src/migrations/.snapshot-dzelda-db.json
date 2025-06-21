@@ -153,6 +153,16 @@
           "length": 32,
           "mappedType": "string"
         },
+        "is_rtl": {
+          "name": "is_rtl",
+          "type": "boolean",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "default": "false",
+          "mappedType": "boolean"
+        },
         "level_thresholds": {
           "name": "level_thresholds",
           "type": "jsonb",
@@ -3690,7 +3700,8 @@
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
-          "nullable": false,
+          "nullable": true,
+          "default": "null",
           "mappedType": "integer"
         },
         "vocab_variant_id": {

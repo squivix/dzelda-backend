@@ -16,7 +16,7 @@ export class PendingJob extends CustomBaseEntity {
     jobParams!: Record<string, any>;
 
     @ManyToOne({entity: () => Profile, nullable: true, deleteRule: "cascade", updateRule: "cascade"})
-    initiator!: Profile;
+    initiator!: Profile | null;
 
     [OptionalProps]?: "createdDate";
 }

@@ -20,7 +20,7 @@ export async function checkPendingJobs(jobs: PendingJob[], em: EntityManager) {
             }
             if (!collection.texts.getItems().some(t => t.isProcessing)) {
                 em.create(Notification, {
-                    recipient: job.initiator,
+                    recipient: job.initiator!,
                     text: `Collection "${collection.title}" finished importing`,
                 });
                 em.remove(job);

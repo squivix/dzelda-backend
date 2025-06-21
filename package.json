@@ -40,7 +40,7 @@
     "aws-sdk": "^2.1533.0",
     "bcrypt": "^5.1.1",
     "concurrently": "^8.2.2",
-    "dzelda-common": "github:squivix/dzelda-common#v1.22.0",
+    "dzelda-common": "file:.yalc/dzelda-common",
     "fastify": "4.23.0",
     "fs-extra": "^11.1.0",
     "http-status-codes": "^2.2.0",
