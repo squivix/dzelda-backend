@@ -38,9 +38,9 @@ export class LearnerVocabSerializer extends CustomEntitySerializer<Vocab | MapLe
                 notes: () => mapping.notes,
                 language: () => mapping.vocab.language.code,
                 // @ts-ignore
-                learnerMeanings: () => meaningSerializer.serializeList(mapping.vocab.learnerMeanings.getItems(), {ignore: ["vocab"], idOnlyFields: ["vocabVariant"]}),
+                learnerMeanings: () => meaningSerializer.serializeList(mapping.vocab.learnerMeanings.getItems(), {idOnlyFields: ["vocab", "vocabVariant"]}),
                 // @ts-ignore
-                meanings: () => meaningSerializer.serializeList(mapping.vocab.meanings.getItems(), {ignore: ["vocab"], idOnlyFields: ["attributionSource", "vocabVariant"]}),
+                meanings: () => meaningSerializer.serializeList(mapping.vocab.meanings.getItems(), {idOnlyFields: ["vocab", "attributionSource", "vocabVariant"]}),
                 learnersCount: () => Number(mapping.vocab.learnersCount),
                 ttsPronunciationUrl: () => mapping.vocab.ttsPronunciations.getItems().pop()?.url ?? null,
                 tags: () => vocabTagSerializer.serializeList(mapping.vocab.tags.getItems()),

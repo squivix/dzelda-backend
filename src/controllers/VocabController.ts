@@ -11,17 +11,18 @@ import {NotFoundAPIError} from "@/src/utils/errors/NotFoundAPIError.js";
 import {User} from "@/src/models/entities/auth/User.js";
 import {booleanStringValidator, numericStringValidator} from "@/src/validators/utilValidators.js";
 import {TextService} from "@/src/services/TextService.js";
-import {vocabSerializer} from "@/src/presentation/response/serializers/entities/VocabSerializer.js";
-import {learnerVocabSerializer} from "@/src/presentation/response/serializers/mappings/LearnerVocabSerializer.js";
 import {APIError} from "@/src/utils/errors/APIError.js";
 import {StatusCodes} from "http-status-codes";
 import {PronunciationService} from "@/src/services/PronunciationService.js";
-import {humanPronunciationSerializer} from "@/src/presentation/response/serializers/entities/HumanPronunciationSerializer.js";
-import {ttsPronunciationSerializer} from "@/src/presentation/response/serializers/entities/TTSPronunciationSerializer.js";
 import {enableTTSSynthesize} from "@/src/constants.js";
 import {textVisibilityFilter} from "@/src/filters/textVisibilityFilter.js";
 import {VocabVariant} from "@/src/models/entities/VocabVariant.js";
-import {vocabVariantSerializer} from "@/src/presentation/response/serializers/entities/VocabVariantSerializer.js";
+import {humanPronunciationDTO} from "@/src/presentation/response/dtos/HumanPronunciation/HumanPronunciationDTO.js";
+import {vocabVariantDTO} from "@/src/presentation/response/dtos/VocabVariant/VocabVariantDTO.js";
+import {learnerVocabDTO} from "@/src/presentation/response/dtos/Vocab/LearnerVocabDTO.js";
+import {learnerVocabForTextDTO} from "@/src/presentation/response/dtos/Vocab/LearnerVocabForTextDTO.js";
+import {vocabDTO} from "@/src/presentation/response/dtos/Vocab/VocabDTO.js";
+import {ttsPronunciationDTO} from "@/src/presentation/response/dtos/TTSPronunciation/TTSPronunciationDTO.js";
 
 class VocabController {
 
@@ -46,7 +47,7 @@ class VocabController {
             page: pagination.page,
             pageSize: pagination.pageSize,
             pageCount: Math.ceil(recordsCount / pagination.pageSize),
-            data: vocabSerializer.serializeList(vocabs)
+            data: vocabDTO.serializeList(vocabs)
         });
     }
 
@@ -84,10 +85,8 @@ class VocabController {
         });
         if (body.variantText !== undefined && body.variantText != parseResult.normalizedText && parser.normalizeText(body.variantText) === parseResult.normalizedText)
             await vocabService.createOrGetVocabVariant(vocab, body.variantText);
-        if (existingVocab)
-            reply.status(200).send(vocabSerializer.serialize(vocab));
-        else
-            reply.status(201).send(vocabSerializer.serialize(vocab));
+
+        reply.status(existingVocab ? 200 : 201).send(vocabDTO.serialize(vocab));
     }
 
     async getUserVocabs(request: FastifyRequest, reply: FastifyReply) {
@@ -113,7 +112,7 @@ class VocabController {
             page: pagination.page,
             pageSize: pagination.pageSize,
             pageCount: Math.ceil(recordsCount / pagination.pageSize),
-            data: learnerVocabSerializer.serializeList(vocabs)
+            data: learnerVocabDTO.serializeList(vocabs)
         });
     }
 
@@ -134,10 +133,10 @@ class VocabController {
 
         const existingVocabMapping = await vocabService.getUserVocab(vocab.id, user.profile);
         if (existingVocabMapping)
-            reply.status(200).send(learnerVocabSerializer.serialize(existingVocabMapping));
+            reply.status(200).send(learnerVocabDTO.serialize(existingVocabMapping));
 
         const newVocabMapping = await vocabService.addVocabToUserLearning(vocab, user, body.level);
-        reply.status(201).send(learnerVocabSerializer.serialize(newVocabMapping));
+        reply.status(201).send(learnerVocabDTO.serialize(newVocabMapping));
     }
 
     async getUserVocab(request: FastifyRequest, reply: FastifyReply) {
@@ -151,7 +150,7 @@ class VocabController {
         const mapping = await vocabService.getUserVocab(pathParams.vocabId, user.profile);
         if (!mapping)
             throw new APIError(StatusCodes.NOT_FOUND, "User is not learning vocab", "The user is not learning this vocab.");
-        reply.send(learnerVocabSerializer.serialize(mapping));
+        reply.send(learnerVocabDTO.serialize(mapping));
     }
 
     async updateUserVocab(request: FastifyRequest, reply: FastifyReply) {
@@ -172,7 +171,7 @@ class VocabController {
         if (!mapping)
             throw new APIError(StatusCodes.NOT_FOUND, "User is not learning vocab", "The user is not learning this vocab.");
         const updatedMapping = await vocabService.updateUserVocab(mapping, body);
-        reply.send(learnerVocabSerializer.serialize(updatedMapping));
+        reply.send(learnerVocabDTO.serialize(updatedMapping));
     }
 
     async deleteUserVocab(request: FastifyRequest, reply: FastifyReply) {
@@ -201,7 +200,7 @@ class VocabController {
         const vocabService = new VocabService(request.em);
 
         const vocabs = await vocabService.getTextVocabs(text, request.user as User);
-        reply.send(learnerVocabSerializer.serializeList(vocabs, {ignore: ["meanings", "learnerMeanings"]}));
+        reply.send(learnerVocabForTextDTO.serializeList(vocabs));
     }
 
     async getUserSavedVocabsCount(request: FastifyRequest, reply: FastifyReply) {
@@ -277,7 +276,7 @@ class VocabController {
 
         const pronunciationService = new PronunciationService(request.em);
         const ttsPronunciations = await pronunciationService.getVocabTTSPronunciations(vocab);
-        reply.send(ttsPronunciationSerializer.serializeList(ttsPronunciations));
+        reply.send(ttsPronunciationDTO.serializeList(ttsPronunciations));
     }
 
     async getVocabVariants(request: FastifyRequest, reply: FastifyReply) {
@@ -292,7 +291,7 @@ class VocabController {
             throw new NotFoundAPIError("vocab");
 
         const vocabVariants = await vocabService.getVocabVariants(vocab);
-        reply.send(vocabVariantSerializer.serializeList(vocabVariants));
+        reply.send(vocabVariantDTO.serializeList(vocabVariants));
     }
 
     async createVocabVariant(request: FastifyRequest, reply: FastifyReply) {
@@ -315,12 +314,12 @@ class VocabController {
 
         const existingVariant = await vocabService.findVocabVariant({vocab: vocab, text: body.text}, ["ttsPronunciations"]);
         if (existingVariant) {
-            reply.status(200).send(vocabVariantSerializer.serialize(existingVariant));
+            reply.status(200).send(vocabVariantDTO.serialize(existingVariant));
             return;
         }
 
         const newVariant = await vocabService.createVocabVariant(vocab, body.text);
-        reply.status(201).send(vocabVariantSerializer.serialize(newVariant));
+        reply.status(201).send(vocabVariantDTO.serialize(newVariant));
     }
 
     async getVocabHumanPronunciations(request: FastifyRequest, reply: FastifyReply) {
@@ -336,7 +335,7 @@ class VocabController {
 
         const pronunciationService = new PronunciationService(request.em);
         const humanPronunciations = await pronunciationService.getHumanPronunciations(vocab.text, vocab.language);
-        reply.send(humanPronunciationSerializer.serializeList(humanPronunciations));
+        reply.send(humanPronunciationDTO.serializeList(humanPronunciations));
     }
 
     async synthesizeTTSPronunciation(request: FastifyRequest, reply: FastifyReply) {
@@ -364,11 +363,11 @@ class VocabController {
 
         const existingPronunciation = (variant ? variant : vocab).ttsPronunciations.find(p => p.voice == voice);
         if (existingPronunciation) {
-            reply.status(200).send(ttsPronunciationSerializer.serialize(existingPronunciation));
+            reply.status(200).send(ttsPronunciationDTO.serialize(existingPronunciation));
             return;
         }
         const newPronunciation = await vocabService.createVocabTTSPronunciation(vocab, variant, voice);
-        reply.status(200).send(ttsPronunciationSerializer.serialize(newPronunciation));
+        reply.status(200).send(ttsPronunciationDTO.serialize(newPronunciation));
     }
 }
 

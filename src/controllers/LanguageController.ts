@@ -6,13 +6,13 @@ import {UserService} from "@/src/services/UserService.js";
 import {ValidationAPIError} from "@/src/utils/errors/ValidationAPIError.js";
 import {languageCodeValidator} from "@/src/validators/languageValidators.js";
 import {User} from "@/src/models/entities/auth/User.js";
-import {languageSerializer} from "@/src/presentation/response/serializers/entities/LanguageSerializer.js";
-import {learnerLanguageSerializer} from "@/src/presentation/response/serializers/mappings/LearnerLanguageSerializer.js";
 import {APIError} from "@/src/utils/errors/APIError.js";
 import {StatusCodes} from "http-status-codes";
 import {TranslationLanguage} from "@/src/models/entities/TranslationLanguage.js";
-import {translationLanguageSerializer} from "@/src/presentation/response/serializers/entities/TranslationLanguageSerializer.js";
 import {booleanStringValidator} from "@/src/validators/utilValidators.js";
+import {languageDTO} from "@/src/presentation/response/dtos/Language/LanguageDTO.js";
+import {translationLanguageDTO} from "@/src/presentation/response/dtos/TranslationLanguage/TranslationLanguageDTO.js";
+import {learnerLanguageDTO} from "@/src/presentation/response/dtos/Language/LearnerLanguageDTO.js";
 
 class LanguageController {
     async getLanguages(request: FastifyRequest, reply: FastifyReply) {
@@ -25,7 +25,7 @@ class LanguageController {
         const languageService = new LanguageService(request.em);
         const sort = {sortBy: queryParams.sortBy, sortOrder: queryParams.sortOrder};
         const languages = await languageService.getLanguages(sort);
-        reply.send(languageSerializer.serializeList(languages));
+        reply.send(languageDTO.serializeList(languages));
     }
 
     async getUserLanguages(request: FastifyRequest, reply: FastifyReply) {
@@ -44,7 +44,7 @@ class LanguageController {
         const filters = {};
         const sort = {sortBy: queryParams.sortBy, sortOrder: queryParams.sortOrder};
         const languageMappings = await languageService.getUserLanguages(user, filters, sort);
-        reply.send(learnerLanguageSerializer.serializeList(languageMappings));
+        reply.send(learnerLanguageDTO.serializeList(languageMappings));
     }
 
     async addLanguageToUser(request: FastifyRequest, reply: FastifyReply) {
@@ -67,9 +67,9 @@ class LanguageController {
         }
         const existingLanguageMapping = await languageService.getUserLanguage(language.code, user);
         if (existingLanguageMapping)
-            reply.status(200).send(learnerLanguageSerializer.serialize(existingLanguageMapping));
+            reply.status(200).send(learnerLanguageDTO.serialize(existingLanguageMapping));
         const newLanguageMapping = await languageService.addLanguageToUser({user, language, preferredTranslationLanguages});
-        reply.status(201).send(learnerLanguageSerializer.serialize(newLanguageMapping));
+        reply.status(201).send(learnerLanguageDTO.serialize(newLanguageMapping));
     }
 
     async updateUserLanguage(request: FastifyRequest, reply: FastifyReply) {
@@ -100,7 +100,7 @@ class LanguageController {
             preferredTranslationLanguages = body.preferredTranslationLanguageCodes.map(c => codeToTl[c]);
         }
         const updatedLanguageMapping = await languageService.updateUserLanguage(languageMapping, {lastOpened: body.lastOpened, preferredTranslationLanguages: preferredTranslationLanguages});
-        reply.status(200).send(learnerLanguageSerializer.serialize(updatedLanguageMapping));
+        reply.status(200).send(learnerLanguageDTO.serialize(updatedLanguageMapping));
     }
 
     async deleteUserLanguage(request: FastifyRequest, reply: FastifyReply) {
@@ -142,7 +142,7 @@ class LanguageController {
         const queryParams = queryParamsValidator.parse(request.query);
         const languageService = new LanguageService(request.em);
         const translationLanguages = await languageService.getTranslationLanguages({isDefault: queryParams.isDefault});
-        reply.send(translationLanguageSerializer.serializeList(translationLanguages));
+        reply.send(translationLanguageDTO.serializeList(translationLanguages));
     }
 }
 

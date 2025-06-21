@@ -10,12 +10,13 @@ import {ForbiddenAPIError} from "@/src/utils/errors/ForbiddenAPIError.js";
 import {ValidationAPIError} from "@/src/utils/errors/ValidationAPIError.js";
 import {LanguageService} from "@/src/services/LanguageService.js";
 import {booleanStringValidator, numericStringValidator} from "@/src/validators/utilValidators.js";
-import {collectionSerializer} from "@/src/presentation/response/serializers/entities/CollectionSerializer.js";
 import {APIError} from "@/src/utils/errors/APIError.js";
 import {StatusCodes} from "http-status-codes";
 import {UserService} from "@/src/services/UserService.js";
-import {validateFileObjectKey} from "@/src/controllers/ControllerUtils.js";
+import {validateFileObjectKey} from "@/src/controllers/controllerUtils.js";
 import {textContentValidator, textLevelValidator, textTitleValidator} from "@/src/validators/textValidators.js";
+import {collectionDTO} from "@/src/presentation/response/dtos/Collection/CollectionDTO.js";
+import {collectionSummaryDTO} from "@/src/presentation/response/dtos/Collection/CollectionSummaryDTO.js";
 
 class CollectionController {
     async getCollections(request: FastifyRequest, reply: FastifyReply) {
@@ -47,7 +48,7 @@ class CollectionController {
             page: pagination.page,
             pageSize: pagination.pageSize,
             pageCount: Math.ceil(recordsCount / pagination.pageSize),
-            data: collectionSerializer.serializeList(collections)
+            data: collectionSummaryDTO.serializeList(collections)
         });
     }
 
@@ -83,7 +84,7 @@ class CollectionController {
             image: body.image,
             texts: body.texts,
         }, request.user as User);
-        reply.status(201).send(collectionSerializer.serialize(collection, {ignore: ["texts"]}));
+        reply.status(201).send(collectionSummaryDTO.serialize(collection));
     }
 
     async getCollection(request: FastifyRequest, reply: FastifyReply) {
@@ -95,7 +96,7 @@ class CollectionController {
 
         if (!collection)
             throw new NotFoundAPIError("Collection");
-        reply.status(200).send(collectionSerializer.serialize(collection));
+        reply.status(200).send(collectionDTO.serialize(collection));
     }
 
     async updateCollection(request: FastifyRequest, reply: FastifyReply) {
@@ -133,7 +134,7 @@ class CollectionController {
             textsOrder: body.textsOrder,
             isPublic: body.isPublic
         }, request.user as User);
-        reply.status(200).send(collectionSerializer.serialize(updatedCollection));
+        reply.status(200).send(collectionDTO.serialize(updatedCollection));
     }
 
     async deleteCollection(request: FastifyRequest, reply: FastifyReply) {
@@ -183,7 +184,7 @@ class CollectionController {
             page: pagination.page,
             pageSize: pagination.pageSize,
             pageCount: Math.ceil(recordsCount / pagination.pageSize),
-            data: collectionSerializer.serializeList(collections)
+            data: collectionSummaryDTO.serializeList(collections)
         });
     }
 
@@ -200,11 +201,11 @@ class CollectionController {
             throw new ValidationAPIError({collection: "not in a language the user is learning"});
         const existingCollectionMapping = await collectionService.findBookMarkerCollectionMapping({collection: collection, bookmarker: user.profile});
         if (existingCollectionMapping) {
-            reply.status(200).send(collectionSerializer.serialize(existingCollectionMapping.collection));
+            reply.status(200).send(collectionDTO.serialize(existingCollectionMapping.collection));
             return;
         }
         const newCollectionMapping = await collectionService.addCollectionToUserBookmarks(collection, request.user as User);
-        reply.status(201).send(collectionSerializer.serialize(newCollectionMapping.collection));
+        reply.status(201).send(collectionDTO.serialize(newCollectionMapping.collection));
     }
 
     async removeCollectionFromUserBookmarks(request: FastifyRequest, reply: FastifyReply) {

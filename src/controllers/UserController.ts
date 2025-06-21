@@ -3,11 +3,9 @@ import {UserService} from "@/src/services/UserService.js";
 import {FastifyReply, FastifyRequest} from "fastify";
 import {NotFoundAPIError} from "@/src/utils/errors/NotFoundAPIError.js";
 import {emailValidator, passwordValidator, usernameValidator} from "@/src/validators/userValidator.js";
-import {userSerializer} from "@/src/presentation/response/serializers/entities/UserSerializer.js";
 import {emailTransporter} from "@/src/nodemailer.config.js";
 import {APIError} from "@/src/utils/errors/APIError.js";
 import {StatusCodes} from "http-status-codes";
-import {profileSerializer} from "@/src/presentation/response/serializers/entities/ProfileSerializer.js";
 import {User} from "@/src/models/entities/auth/User.js";
 import {Session} from "@/src/models/entities/auth/Session.js";
 import {ValidationAPIError} from "@/src/utils/errors/ValidationAPIError.js";
@@ -19,14 +17,18 @@ import {s3Client} from "@/src/storageClient.js";
 import * as process from "process";
 import mime from "mime-types";
 import {fileFields, fileFieldsKeys, FileFieldType} from "@/src/validators/fileValidator.js";
-import {validateFileObjectKey} from "@/src/controllers/ControllerUtils.js";
+import {validateFileObjectKey} from "@/src/controllers/controllerUtils.js";
 import {confirmEmailChangeTemplate} from "@/src/presentation/response/templates/email/confirmEmailChangeTemplate.js";
 import {passwordChangedNotificationTemplate} from "@/src/presentation/response/templates/email/passwordChangedNotificationTemplate.js";
 import {confirmEmailTemplate} from "@/src/presentation/response/templates/email/confirmEmailTemplate.js";
 import {passwordResetTemplate} from "@/src/presentation/response/templates/email/passwordResetTemplate.js";
 import urlJoin from "url-join";
 import {numericStringValidator} from "@/src/validators/utilValidators.js";
-import {notificationSerializer} from "@/src/presentation/response/serializers/entities/NotificationSerializer.js";
+import {profileDTO} from "@/src/presentation/response/dtos/Profile/ProfileDTO.js";
+import {notificationDTO} from "@/src/presentation/response/dtos/Notification/NotificationDTO.js";
+import {userPublicDTO} from "@/src/presentation/response/dtos/User/UserPublicDTO.js";
+import {userPrivateDTO} from "@/src/presentation/response/dtos/User/UserPrivateDTO.js";
+import {userSignUpDTO} from "@/src/presentation/response/dtos/User/UserSignUpDTO.js";
 
 class UserController {
     async signUp(request: FastifyRequest, reply: FastifyReply) {
@@ -40,7 +42,7 @@ class UserController {
         const newUser = await userService.createUser(body.username, body.email, body.password);
         const token = await userService.generateEmailConfirmToken({user: newUser, email: newUser.email});
         await emailTransporter.sendMail(confirmEmailTemplate(newUser.email, {token}));
-        reply.status(201).send(userSerializer.serialize(newUser, {ignore: ["profile"]}));
+        reply.status(201).send(userSignUpDTO.serialize(newUser));
     }
 
     async login(request: FastifyRequest, reply: FastifyReply) {
@@ -123,7 +125,10 @@ class UserController {
         // private user don't exist to the outside
         if (!user || (!user.profile.isPublic && user !== request.user))
             throw new NotFoundAPIError("User");
-        reply.status(200).send(userSerializer.serialize(user, {ignore: request.user !== user ? ["email", "isEmailConfirmed", "isPendingEmailChange"] : []}));
+        if (request.user !== user)
+            reply.status(200).send(userPublicDTO.serialize(user));
+        else
+            reply.status(200).send(userPrivateDTO.serialize(user));
     }
 
     async requestPasswordReset(request: FastifyRequest, reply: FastifyReply) {
@@ -202,7 +207,7 @@ class UserController {
             body.profilePicture = await validateFileObjectKey(userService, request.user as User, body.profilePicture, "profilePicture", "profilePicture");
         await userService.updateUserProfile(user, {bio: body.bio, profilePicture: body.profilePicture});
 
-        reply.status(200).send(profileSerializer.serialize(user.profile));
+        reply.status(200).send(profileDTO.serialize(user.profile));
     }
 
     async generateFileUploadPresignedUrl(request: FastifyRequest, reply: FastifyReply) {
@@ -256,7 +261,7 @@ class UserController {
         await userService.checkUserPendingJobs(request.user as User);
         const notifications = await userService.getUserNotifications(request.user as User);
 
-        reply.status(200).send(notificationSerializer.serializeList(notifications));
+        reply.status(200).send(notificationDTO.serializeList(notifications));
     }
 
     async deleteUserNotification(request: FastifyRequest, reply: FastifyReply) {

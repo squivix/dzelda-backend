@@ -10,6 +10,7 @@ import {faker} from "@faker-js/faker";
 import {PreferredTranslationLanguageEntry} from "@/src/models/entities/PreferredTranslationLanguageEntry.js";
 import {MapLearnerLanguage} from "@/src/models/entities/MapLearnerLanguage.js";
 import {Vocab} from "@/src/models/entities/Vocab.js";
+import {Collection} from "@mikro-orm/core";
 
 /**{@link VocabController#updateUserVocab}*/
 describe("PATCH users/me/vocabs/{vocabId}/", () => {
@@ -54,25 +55,33 @@ describe("PATCH users/me/vocabs/{vocabId}/", () => {
         await context.em.flush();
         const vocab = await context.vocabFactory.createOne({
             language, learners: user.profile,
-            meanings: context.meaningFactory.makeDefinitions(3, {
-                learners: [user.profile],
-                addedBy: user.profile,
-                language: translationLanguage
-            }).sort(meaningSortComparator)
+            meanings: [
+                ...context.meaningFactory.makeDefinitions(3, {
+                    learners: [],
+                    language: translationLanguage
+                }),
+                ...context.meaningFactory.makeDefinitions(3, {
+                    learners: [user.profile],
+                    addedBy: user.profile,
+                    language: translationLanguage
+                }),
+            ].sort(meaningSortComparator)
         });
 
         const updatedMapping = context.em.create(MapLearnerVocab,
             {learner: user.profile, vocab, level: VocabLevel.IGNORED, notes: ""}, {persist: false});
         updatedMapping.vocab.meanings.getItems().forEach(m => {
+            m.vocab = vocab;
             m.learners.set([]);
             m.learnersCount = 0;
         });
-        updatedMapping.vocab.learnerMeanings.set([]);
+        updatedMapping.vocab.learnerMeanings = new Collection([]);  //little trick because we don't want all vocab.meanings to have vocab set to null as mikroorm considers them the same
 
         const response = await makeRequest(vocab.id, {
             level: updatedMapping.level,
             notes: updatedMapping.notes
         }, session.token);
+
         await context.em.find(Vocab, vocab, {refresh: true});
 
         const dbRecord = await context.em.findOneOrFail(MapLearnerVocab, {learner: user.profile, vocab});

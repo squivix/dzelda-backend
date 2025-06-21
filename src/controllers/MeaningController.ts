@@ -8,12 +8,13 @@ import {MeaningService} from "@/src/services/MeaningService.js";
 import {User} from "@/src/models/entities/auth/User.js";
 import {NotFoundAPIError} from "@/src/utils/errors/NotFoundAPIError.js";
 import {numericStringValidator} from "@/src/validators/utilValidators.js";
-import {meaningSerializer} from "@/src/presentation/response/serializers/entities/MeaningSerializer.js";
 import {TextService} from "@/src/services/TextService.js";
-import {attributionSourceSerializer} from "@/src/presentation/response/serializers/entities/AttributionSourceSerializer.js";
 import {textVisibilityFilter} from "@/src/filters/textVisibilityFilter.js";
 import {meaningTextValidator} from "@/src/validators/meaningValidators.js";
 import {VocabVariant} from "@/src/models/entities/VocabVariant.js";
+import {attributionSourceDTO} from "@/src/presentation/response/dtos/AttributionSource/AttributionSourceDTO.js";
+import {meaningDTO} from "@/src/presentation/response/dtos/Meaning/MeaningDTO.js";
+import {meaningSummeryDTO} from "@/src/presentation/response/dtos/Meaning/MeaningSummeryDTO.js";
 
 class MeaningController {
     async createMeaning(request: FastifyRequest, reply: FastifyReply) {
@@ -43,7 +44,7 @@ class MeaningController {
         const meaningService = new MeaningService(request.em);
         const existingMeaning = await meaningService.getMeaningByText({vocab: vocab, language: language, text: body.text});
         if (existingMeaning) {
-            reply.status(200).send(meaningSerializer.serialize(existingMeaning));
+            reply.status(200).send(meaningDTO.serialize(existingMeaning));
             return;
         }
 
@@ -53,7 +54,7 @@ class MeaningController {
             vocab: vocab,
             vocabVariant: vocabVariant
         }, request.user as User);
-        reply.status(201).send(meaningSerializer.serialize(newMeaning));
+        reply.status(201).send(meaningDTO.serialize(newMeaning));
     }
 
     async getUserMeanings(request: FastifyRequest, reply: FastifyReply) {
@@ -78,7 +79,7 @@ class MeaningController {
             page: pagination.page,
             pageSize: pagination.pageSize,
             pageCount: Math.ceil(recordsCount / pagination.pageSize),
-            data: meaningSerializer.serializeList(meanings)
+            data: meaningDTO.serializeList(meanings)
         });
     }
 
@@ -94,7 +95,7 @@ class MeaningController {
 
         const {meanings, learnerMeanings} = await meaningService.getTextMeanings(text, request.user);
         reply.send({
-            meanings: meaningSerializer.serializeList(meanings, {idOnlyFields: ["vocab", "attributionSource"]}),
+            meanings: meaningSummeryDTO.serializeList(meanings),
             learnerMeanings: learnerMeanings ? learnerMeanings.map(m => m.id) : undefined
         });
     }
@@ -114,10 +115,10 @@ class MeaningController {
 
         const existingMeaningMapping = await meaningService.getUserMeaning(meaning.id, user);
         if (existingMeaningMapping)
-            reply.status(200).send(meaningSerializer.serialize(existingMeaningMapping.meaning));
+            reply.status(200).send(meaningDTO.serialize(existingMeaningMapping.meaning));
 
         const newMeaningMapping = await meaningService.addMeaningToUserLearning(meaning, user);
-        reply.status(201).send(meaningSerializer.serialize(newMeaningMapping.meaning));
+        reply.status(201).send(meaningDTO.serialize(newMeaningMapping.meaning));
     }
 
     async removeMeaningFromUser(request: FastifyRequest, reply: FastifyReply) {
@@ -144,7 +145,7 @@ class MeaningController {
         if (!attributionSource)
             throw new NotFoundAPIError("Attribution source");
 
-        reply.send(attributionSourceSerializer.serialize(attributionSource));
+        reply.send(attributionSourceDTO.serialize(attributionSource));
     }
 }
 
