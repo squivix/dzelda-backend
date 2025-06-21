@@ -82,7 +82,7 @@ class VocabController {
             text: vocabText,
             isPhrase: body.isPhrase,
         });
-        if (body.variantText !== undefined && body.variantText != parseResult.normalizedText && parser.transformWord(body.variantText) === parseResult.normalizedText)
+        if (body.variantText !== undefined && body.variantText != parseResult.normalizedText && parser.normalizeText(body.variantText) === parseResult.normalizedText)
             await vocabService.createOrGetVocabVariant(vocab, body.variantText);
         if (existingVocab)
             reply.status(200).send(vocabSerializer.serialize(vocab));

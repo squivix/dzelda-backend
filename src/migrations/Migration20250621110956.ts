@@ -1,6 +1,6 @@
 import { Migration } from '@mikro-orm/migrations';
 
-export class Migration20250621091209 extends Migration {
+export class Migration20250621110956 extends Migration {
 
   async up(): Promise<void> {
     this.addSql('create table "vocab_variant" ("id" serial primary key, "text" varchar(1024) not null, "vocab_id" int not null);');
@@ -17,7 +17,7 @@ export class Migration20250621091209 extends Migration {
     this.addSql('alter table "map_vocab_variant_tag" add constraint "map_vocab_variant_tag_tag_id_foreign" foreign key ("tag_id") references "vocab_tag" ("id") on update cascade on delete cascade;');
     this.addSql('alter table "map_vocab_variant_tag" add constraint "map_vocab_variant_tag_vocab_variant_id_foreign" foreign key ("vocab_variant_id") references "vocab_variant" ("id") on update cascade on delete cascade;');
 
-    this.addSql('alter table "language" add column "is_rtl" boolean not null default false;');
+    this.addSql('alter table "language" add column "is_rtl" boolean not null default false, add column "is_abjad" boolean not null default false;');
 
     this.addSql('alter table "session" alter column "expires_on" type timestamptz using ("expires_on"::timestamptz);');
     this.addSql('alter table "session" alter column "expires_on" set default now() + interval \'1 month\';');
@@ -60,6 +60,7 @@ export class Migration20250621091209 extends Migration {
     this.addSql('alter table "file_upload_request" alter column "expires_on" set default (now() + \'00:05:00\'::interval);');
 
     this.addSql('alter table "language" drop column "is_rtl";');
+    this.addSql('alter table "language" drop column "is_abjad";');
 
     this.addSql('drop index "meaning_vocab_variant_id_index";');
     this.addSql('alter table "meaning" drop column "vocab_variant_id";');

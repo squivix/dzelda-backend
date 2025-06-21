@@ -39,6 +39,9 @@ export class Language extends CustomBaseEntity {
     @Property({type: types.boolean, default: false})
     isRtl!: boolean;
 
+    @Property({type: types.boolean, default: false})
+    isAbjad!: boolean;
+
     @Property({
         type: types.json,
         defaultRaw: `'{"beginner1": 0,"beginner2": 1000,"intermediate1": 5000,"intermediate2": 12000,"advanced1": 20000,"advanced2": 30000}'::jsonb`
