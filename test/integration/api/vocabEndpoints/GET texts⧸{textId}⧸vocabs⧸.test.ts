@@ -1,11 +1,10 @@
 import {describe, expect, test, TestContext} from "vitest";
 import {InjectOptions} from "light-my-request";
-import {createComparator, fetchRequest} from "@/test/integration/utils.js";
+import {fetchRequest} from "@/test/integration/utils.js";
 import {Vocab} from "@/src/models/entities/Vocab.js";
 import {MapLearnerVocab} from "@/src/models/entities/MapLearnerVocab.js";
 import {learnerVocabSerializer} from "@/src/presentation/response/serializers/mappings/LearnerVocabSerializer.js";
 import {faker} from "@faker-js/faker";
-import {textSerializer} from "@/src/presentation/response/serializers/entities/TextSerializer.js";
 
 /**{@link VocabController#getTextVocabs}*/
 describe("GET texts/{textId}/vocabs/", () => {
@@ -16,10 +15,6 @@ describe("GET texts/{textId}/vocabs/", () => {
         };
         return await fetchRequest(options, authToken);
     };
-    const defaultSortComparator = createComparator(Vocab, [
-        {property: "text", order: "asc"},
-        {property: "id", order: "asc"}]
-    );
     // TODO write more realistic tests involving multiple learners and non-learners.
     //  This test failed and still fails to catch 2 HUGE logical errors with SQL bad queries:
     //  1) non-null-safe != for map_learner_vocab.learner_id

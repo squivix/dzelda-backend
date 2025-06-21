@@ -21,7 +21,8 @@ export class LearnerLanguageSerializer extends CustomEntitySerializer<Language |
             startedLearningOn: () => mapping.startedLearningOn.toISOString(),
             lastOpened: () => mapping.lastOpened.toISOString(),
             preferredTtsVoice: () => mapping.preferredTtsVoice ? ttsVoiceSerializer.serialize(mapping.preferredTtsVoice) as TTSVoiceSchema : null,
-            preferredTranslationLanguages: () => translationLanguageSerializer.serializeList(mapping.preferredTranslationLanguages.getItems().map(m => m.translationLanguage)) as TranslationLanguageSchema[]
+            preferredTranslationLanguages: () => translationLanguageSerializer.serializeList(mapping.preferredTranslationLanguages.getItems().map(m => m.translationLanguage)) as TranslationLanguageSchema[],
+            isRtl: () => mapping.language.isRtl,
         };
     }
 

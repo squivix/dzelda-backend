@@ -260,7 +260,7 @@ describe("GET collections/", function () {
                 });
             });
             test<TestContext>("if sortBy is invalid return 400", async (context) => {
-                const response = await makeRequest({sortBy: "somethin"});
+                const response = await makeRequest({sortBy: "something"});
                 expect(response.statusCode).to.equal(400);
             });
         });

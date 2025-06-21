@@ -3,6 +3,8 @@ import {Collection, Entity, Index, ManyToMany, ManyToOne, Property, types} from 
 import {Vocab} from "@/src/models/entities/Vocab.js";
 import {MapVocabTag} from "@/src/models/entities/MapVocabTag.js";
 import {VocabTagCategory} from "@/src/models/entities/VocabTagCategory.js";
+import {VocabVariant} from "@/src/models/entities/VocabVariant.js";
+import {MapVocabVariantTag} from "@/src/models/entities/MapVocabVariantTag.js";
 
 @Entity()
 @Index({properties: ["category"]})
@@ -11,7 +13,7 @@ export class VocabTag extends CustomBaseEntity {
     name!: string;
 
     @ManyToOne({entity: () => VocabTagCategory, inversedBy: (category) => category.tags, nullable: true, deleteRule: "set null", updateRule: "cascade"})
-    category!: VocabTagCategory;
+    category!: VocabTagCategory|null;
 
     @ManyToMany({
         entity: () => Vocab,
@@ -21,4 +23,16 @@ export class VocabTag extends CustomBaseEntity {
         inverseJoinColumn: "vocab_id"
     })
     vocabs: Collection<Vocab> = new Collection<Vocab>(this);
+
+
+    @ManyToMany({
+        entity: () => VocabVariant,
+        inversedBy: (vocabVariant: VocabVariant) => vocabVariant.tags,
+        pivotEntity: () => MapVocabVariantTag,
+        joinColumn: "tag_id",
+        inverseJoinColumn: "vocab_variant_id"
+    })
+    vocabVariants: Collection<VocabVariant> = new Collection<VocabVariant>(this);
+
+
 }

@@ -1,4 +1,4 @@
-import {describe, expect, test, TestContext, vi} from "vitest";
+import {describe, expect, test, TestContext} from "vitest";
 import {InjectOptions} from "light-my-request";
 import {fetchRequest} from "@/test/integration/utils.js";
 import {vocabSerializer} from "@/src/presentation/response/serializers/entities/VocabSerializer.js";

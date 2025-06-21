@@ -7,8 +7,8 @@ export class AttributionSource extends CustomBaseEntity {
     name!: string;
 
     @Property({type: types.string, nullable: true})
-    url?: string;
+    url!: string | null;
 
     @Property({type: types.string, nullable: true})
-    logoUrl?: string;
+    logoUrl!: string | null;
 }

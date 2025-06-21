@@ -11,7 +11,8 @@ export class VocabFactory extends CustomFactory<Vocab> {
             text: faker.random.alpha(20),
             isPhrase: faker.datatype.boolean(),
             learnersCount: 0,
-            textsCount: 0
+            textsCount: 0,
+            vocabVariants: [],
         };
     }
 

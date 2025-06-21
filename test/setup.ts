@@ -1,5 +1,5 @@
 import {afterAll, beforeEach, TestContext, vi} from "vitest";
-import {orm, server} from "@/src/server.js";
+import {orm} from "@/src/server.js";
 import {UserFactory} from "@/devtools/factories/UserFactory.js";
 import {ProfileFactory} from "@/devtools/factories/ProfileFactory.js";
 import {SessionFactory} from "@/devtools/factories/SessionFactory.js";

@@ -28,7 +28,7 @@ export class HumanPronunciation extends CustomBaseEntity {
     speakerRegion!: string | null;
 
     @ManyToOne({entity: () => AttributionSource, nullable: true, deleteRule: "set null", updateRule: "cascade", eager: true})
-    attributionSource?: AttributionSource;
+    attributionSource!: AttributionSource | null;
 
     @Property({type: types.json, nullable: true})
     attribution!: Attribution;

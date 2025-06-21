@@ -1,7 +1,6 @@
 import {FastifyReply, FastifyRequest} from "fastify";
 import {z} from "zod";
 import {languageCodeValidator} from "@/src/validators/languageValidators.js";
-import {vocabTextValidator} from "@/src/validators/vocabValidators.js";
 import {LanguageService} from "@/src/services/LanguageService.js";
 import {ValidationAPIError} from "@/src/utils/errors/ValidationAPIError.js";
 import {VocabService} from "@/src/services/VocabService.js";
@@ -13,13 +12,16 @@ import {meaningSerializer} from "@/src/presentation/response/serializers/entitie
 import {TextService} from "@/src/services/TextService.js";
 import {attributionSourceSerializer} from "@/src/presentation/response/serializers/entities/AttributionSourceSerializer.js";
 import {textVisibilityFilter} from "@/src/filters/textVisibilityFilter.js";
+import {meaningTextValidator} from "@/src/validators/meaningValidators.js";
+import {VocabVariant} from "@/src/models/entities/VocabVariant.js";
 
 class MeaningController {
     async createMeaning(request: FastifyRequest, reply: FastifyReply) {
         const bodyValidator = z.object({
             languageCode: languageCodeValidator,
-            text: vocabTextValidator,
-            vocabId: z.number().min(0)
+            text: meaningTextValidator,
+            vocabId: z.number().min(0),
+            vocabVariantId: z.number().min(0).optional(),
         });
         const body = bodyValidator.parse(request.body);
 
@@ -32,17 +34,24 @@ class MeaningController {
         const vocab = await vocabService.getVocab(body.vocabId);
         if (!vocab)
             throw new ValidationAPIError({vocab: "not found"});
-
+        let vocabVariant: VocabVariant | null = null;
+        if (body.vocabVariantId !== undefined) {
+            vocabVariant = await vocabService.findVocabVariant({id: body.vocabVariantId});
+            if (!vocabVariant)
+                throw new ValidationAPIError({vocabVariantId: "Not found"});
+        }
         const meaningService = new MeaningService(request.em);
         const existingMeaning = await meaningService.getMeaningByText({vocab: vocab, language: language, text: body.text});
         if (existingMeaning) {
             reply.status(200).send(meaningSerializer.serialize(existingMeaning));
             return;
         }
+
         const newMeaning = await meaningService.createMeaning({
             language: language,
             text: body.text,
-            vocab: vocab
+            vocab: vocab,
+            vocabVariant: vocabVariant
         }, request.user as User);
         reply.status(201).send(meaningSerializer.serialize(newMeaning));
     }

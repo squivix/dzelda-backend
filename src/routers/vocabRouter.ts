@@ -9,6 +9,7 @@ export const vocabRouter: FastifyPluginCallback = function (fastify, options, do
     fastify.get(`/vocabs/`, vocabController.getVocabs);
     fastify.get(`/vocabs/:vocabId/tts-pronunciations/`, vocabController.getVocabTTSPronunciations);
     fastify.get(`/vocabs/:vocabId/human-pronunciations/`, vocabController.getVocabHumanPronunciations);
+    fastify.get(`/vocabs/:vocabId/variants/`, vocabController.getVocabVariants);
     fastify.get(`/users/me/vocabs/`, {
         preHandler: [requiresAuth, requiresUnbannedAccount, requiresEmailConfirmed],
         handler: vocabController.getUserVocabs
@@ -39,6 +40,10 @@ export const vocabRouter: FastifyPluginCallback = function (fastify, options, do
     fastify.post(`/tts-pronunciations/`, {
         preHandler: [requiresAuth, requiresUnbannedAccount, requiresEmailConfirmed],
         handler: vocabController.synthesizeTTSPronunciation
+    });
+    fastify.post(`/vocab-variants/`, {
+        preHandler: [requiresAuth, requiresUnbannedAccount, requiresEmailConfirmed],
+        handler: vocabController.createVocabVariant
     });
     done();
 };

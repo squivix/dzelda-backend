@@ -12,6 +12,7 @@ import {TTSPronunciation} from "@/src/models/entities/TTSPronunciation.js";
 import {VocabTag} from "@/src/models/entities/VocabTag.js";
 import {MapVocabTag} from "@/src/models/entities/MapVocabTag.js";
 import {MapVocabRootForm} from "@/src/models/entities/MapVocabRootForm.js";
+import {VocabVariant} from "@/src/models/entities/VocabVariant.js";
 
 @Entity({repository: () => VocabRepo})
 @Unique({properties: ["language", "text"]})
@@ -84,6 +85,9 @@ export class Vocab extends CustomBaseEntity {
 
     @OneToMany({entity: () => TTSPronunciation, mappedBy: (ttsPronunciation: TTSPronunciation) => ttsPronunciation.vocab})
     ttsPronunciations: Collection<TTSPronunciation> = new Collection<TTSPronunciation>(this);
+
+    @OneToMany({entity: () => VocabVariant, mappedBy: (vocabVariant: VocabVariant) => vocabVariant.vocab})
+    vocabVariants: Collection<VocabVariant> = new Collection<VocabVariant>(this);
 
     [OptionalProps]?: "isPhrase";
 

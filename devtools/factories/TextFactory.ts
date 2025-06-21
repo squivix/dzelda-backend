@@ -19,8 +19,8 @@ export class TextFactory extends CustomFactory<Text> {
         return {
             title: title,
             content: content,
-            parsedTitle: parsers["en"].parseText(title),
-            parsedContent: parsers["en"].parseText(content),
+            parsedTitle: parsers["en"].parseText(title).normalizedText,
+            parsedContent: parsers["en"].parseText(content).normalizedText,
             isPublic: true,
             level: randomEnum(LanguageLevel),
             image: faker.image.imageUrl(100, 100),

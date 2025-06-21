@@ -12,7 +12,7 @@ export class HumanPronunciationFactory extends CustomFactory<HumanPronunciation>
 
         return {
             text: text,
-            parsedText: parsers["en"].parseText(text),
+            parsedText: parsers["en"].parseText(text).normalizedText,
             url: faker.internet.url(),
             attribution: null,
         };

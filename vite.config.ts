@@ -18,7 +18,7 @@ export default defineConfig({
         hmr: false      //debugging line numbers wrong with hmr :(
     },
     test: {
-        exclude: [...defaultExclude, "build/**"],
+        exclude: [...defaultExclude, "build/**", ".yalc/**"],
         fileParallelism: false,
         globalSetup: ["./test/globalSetup.ts",],
         setupFiles: [
@@ -28,8 +28,8 @@ export default defineConfig({
         testTimeout: 10_000,
         coverage: {
             enabled: true,
-            reporter: ['html'],
-            exclude: ['test-results/**', 'src/migrations', '**/*.test.ts', ...coverageConfigDefaults.exclude]
+            reporter: ["text", 'html'],
+            exclude: ['test-results/**', 'src/migrations/**', ...coverageConfigDefaults.exclude]
         }
     },
 });

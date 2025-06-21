@@ -586,7 +586,7 @@ describe("GET texts/", () => {
                         addedBy: user.profile
                     }),
                 ];
-                context.textRepo.annotateTextsWithUserData(expectedTexts, user);
+                await context.textRepo.annotateTextsWithUserData(expectedTexts, user);
                 await context.textFactory.create(3, {language: language, isPublic: false});
                 expectedTexts.sort(defaultSortComparator);
                 const recordsCount = expectedTexts.length;
@@ -649,7 +649,7 @@ describe("GET texts/", () => {
                         ...await context.textFactory.create(3, {language, collection: publicCollection}),
                         ...await context.textFactory.create(3, {language, collection: privateCollection, addedBy: author.profile}),
                     ];
-                    context.textRepo.annotateTextsWithUserData(expectedTexts, author);
+                    await context.textRepo.annotateTextsWithUserData(expectedTexts, author);
                     await context.textFactory.create(3, {language: language, isPublic: false});
                     expectedTexts.sort(defaultSortComparator);
                     const recordsCount = expectedTexts.length;
@@ -677,7 +677,7 @@ describe("GET texts/", () => {
                         isPublic: false,
                     }),
                 ];
-                context.textRepo.annotateTextsWithUserData(expectedTexts, user);
+                await context.textRepo.annotateTextsWithUserData(expectedTexts, user);
                 await context.textFactory.create(3, {language: language, isPublic: false});
                 expectedTexts.sort(defaultSortComparator);
                 const recordsCount = expectedTexts.length;
@@ -702,7 +702,7 @@ describe("GET texts/", () => {
             language: language,
             isPublic: true
         });
-        context.textRepo.annotateTextsWithUserData(expectedTexts, user);
+        await context.textRepo.annotateTextsWithUserData(expectedTexts, user);
         await context.textFactory.create(3, {language: language, isPublic: false});
         expectedTexts.sort(defaultSortComparator);
         const recordsCount = expectedTexts.length;

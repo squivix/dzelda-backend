@@ -19,6 +19,7 @@ import {s3Client} from "@/src/storageClient.js";
 import process from "process";
 import {TTSPronunciation} from "@/src/models/entities/TTSPronunciation.js";
 import urlJoin from "url-join";
+import {VocabVariant} from "@/src/models/entities/VocabVariant.js";
 
 export class VocabService {
     em: EntityManager;
@@ -49,7 +50,7 @@ export class VocabService {
         dbOrderBy.push({id: "asc"});
 
         return await this.vocabRepo.findAndCount(dbFilters, {
-            populate: ["language", "meanings", "meanings.language", "meanings.addedBy.user", "learnersCount", "textsCount", "tags.category", "rootForms"],
+            populate: ["language", "meanings", "meanings.language", "meanings.addedBy.user", "learnersCount", "textsCount", "tags.category", "rootForms", "vocabVariants.ttsPronunciations.voice"],
             orderBy: dbOrderBy,
             limit: pagination.pageSize,
             offset: pagination.pageSize * (pagination.page - 1),
@@ -88,7 +89,7 @@ export class VocabService {
         return await this.vocabRepo.findOne({
             text: vocabData.text,
             language: vocabData.language
-        }, {populate: ["meanings", "meanings.addedBy.user", "tags.category"]});
+        }, {populate: ["meanings", "meanings.addedBy.user", "tags.category", "vocabVariants.ttsPronunciations.voice"]});
     }
 
     async getPaginatedLearnerVocabs(filters: { languageCode?: string, level?: VocabLevel[], searchQuery?: string },
@@ -114,7 +115,7 @@ export class VocabService {
         dbOrderBy.push({vocab: {id: "asc"}});
 
         const [mappings, totalCount] = await this.em.findAndCount(MapLearnerVocab, dbFilters, {
-            populate: ["vocab", "vocab.language", "vocab.ttsPronunciations", "vocab.ttsPronunciations.voice", "vocab.tags.category", "vocab.rootForms"],
+            populate: ["vocab", "vocab.language", "vocab.ttsPronunciations", "vocab.ttsPronunciations.voice", "vocab.tags.category", "vocab.rootForms", "vocab.vocabVariants.ttsPronunciations.voice"],
             orderBy: dbOrderBy,
             limit: pagination.pageSize,
             offset: pagination.pageSize * (pagination.page - 1),
@@ -150,7 +151,7 @@ export class VocabService {
             refresh: true
         });
         if (mapping) {
-            await this.em.populate(mapping, ["vocab.meanings", "vocab.meanings.learnersCount", "vocab.meanings.addedBy.user", "vocab.meanings.language"], {
+            await this.em.populate(mapping, ["vocab.meanings", "vocab.meanings.learnersCount", "vocab.meanings.addedBy.user", "vocab.meanings.language", "vocab.vocabVariants.ttsPronunciations.voice"], {
                 where: {vocab: {meanings: {language: {prefererEntries: {learnerLanguageMapping: {learner: learner}}}}}},
             });
             await this.em.populate(mapping, ["vocab.learnerMeanings", "vocab.learnerMeanings.addedBy.user"], {
@@ -195,27 +196,24 @@ export class VocabService {
             vocab: {textsAppearingIn: text},
             learner: user.profile
         }, {
-            populate: ["vocab.language", "vocab.tags.category", "vocab.rootForms"],
+            populate: ["vocab.language", "vocab.tags.category", "vocab.rootForms", "vocab.vocabVariants"],
         });
         await this.em.populate(existingMappings, ["vocab.ttsPronunciations", "vocab.ttsPronunciations.voice"], {
             where: {vocab: {ttsPronunciations: {voice: {$or: [{prefererLanguageMappings: {learner: user.profile}}, {isDefault: true}]}}}}
         });
-        // await this.em.populate(existingMappings, ["vocab.meanings", "vocab.meanings.language", "vocab.meanings.addedBy.user"], {
-        //     where: {vocab: {meanings: {language: {prefererEntries: {learnerLanguageMapping: {learner: user.profile}}}}}}
-        // });
-        // await this.em.populate(existingMappings, ["vocab.learnerMeanings", "vocab.learnerMeanings.language", "vocab.learnerMeanings.addedBy.user"], {
-        //     where: {vocab: {learnerMeanings: {learners: user.profile}}},
-        // });
+        await this.em.populate(existingMappings, ["vocab.vocabVariants.ttsPronunciations.voice"], {
+            where: {vocab: {vocabVariants: {ttsPronunciations: {voice: {$or: [{prefererLanguageMappings: {learner: user.profile}}, {isDefault: true}]}}}}}
+        });
         const newVocabs = await this.em.find(Vocab, {
             textsAppearingIn: text,
             $nin: existingMappings.map(m => m.vocab)
         }, {
-            populate: ["language", "ttsPronunciations", "ttsPronunciations.voice", "tags.category", "rootForms"],
-            populateWhere: {meanings: {language: {prefererEntries: {learnerLanguageMapping: {learner: user.profile}}}}}
+            populate: ["language", "tags.category", "rootForms", "vocabVariants"],
+            populateWhere: {meanings: {language: {prefererEntries: {learnerLanguageMapping: {learner: user.profile}}}},}
         });
-        // "meanings", "meanings.language", "meanings.addedBy.user"
-        await this.em.populate(newVocabs, ["ttsPronunciations", "ttsPronunciations.voice"], {
-            where: {ttsPronunciations: {voice: {$or: [{prefererLanguageMappings: {learner: user.profile}}, {isDefault: true}]}}}
+        await this.em.populate(newVocabs, ["ttsPronunciations", "ttsPronunciations.voice"], {where: {ttsPronunciations: {voice: {$or: [{prefererLanguageMappings: {learner: user.profile}}, {isDefault: true}]}}}});
+        await this.em.populate(newVocabs, ["vocabVariants.ttsPronunciations.voice"], {
+            where: {vocabVariants: {ttsPronunciations: {voice: {$or: [{prefererLanguageMappings: {learner: user.profile}}, {isDefault: true}]}}}}
         });
         return [...existingMappings, ...newVocabs];
     }
@@ -240,7 +238,7 @@ export class VocabService {
         return await this.vocabRepo.countSavedVocabsTimeSeries(user.profile, options);
     }
 
-    async createVocabTTSPronunciation(vocab: Vocab, voice: TTSVoice) {
+    async createVocabTTSPronunciation(vocab: Vocab, variant: VocabVariant | null, voice: TTSVoice) {
         //TODO move to separate synthesize speech function which selects for provider
         if (voice.provider !== TTSProvider.GOOGLE_CLOUD)
             throw new Error("Unidentified TTS voice provider");
@@ -248,7 +246,7 @@ export class VocabService {
         const ttsClient = new textToSpeech.TextToSpeechClient();
         const voiceParams = voice.synthesizeParams as GoogleTTSSynthesizeParams;
         const [response] = await ttsClient.synthesizeSpeech({
-            input: {text: vocab.text},
+            input: {text: variant ? variant.text : vocab.text},
             voice: {languageCode: voiceParams.languageCode, name: voiceParams.voiceName},
             audioConfig: {audioEncoding: "MP3"},
         });
@@ -257,7 +255,8 @@ export class VocabService {
             throw new Error("Error generating TTS");
         const newTTSPronunciations = this.em.create(TTSPronunciation, {
             url: "",
-            vocab: vocab,
+            vocab: variant === null ? vocab : null,
+            vocabVariant: variant,
             voice: voice,
         });
         await this.em.flush();
@@ -279,6 +278,22 @@ export class VocabService {
         }
     }
 
+    async createOrGetVocabVariant(vocab: Vocab, variantText: string) {
+        const variant = await this.em.upsert(VocabVariant, {vocab: vocab, text: variantText}, {onConflictAction: "ignore"});
+        await this.em.populate(vocab, ["vocabVariants.ttsPronunciations"])
+        return variant;
+    }
+
+    async getVocabVariants(vocab: Vocab) {
+        return await this.em.find(VocabVariant, {vocab: vocab}, {populate: ["ttsPronunciations"]});
+    }
+
+    async createVocabVariant(vocab: Vocab, text: string) {
+        const variant = await this.em.upsert(VocabVariant, {vocab: vocab, text: text}, {onConflictAction: "ignore"});
+        await this.em.populate(variant, ["ttsPronunciations"])
+        return variant;
+    }
+
     async findVocab(where: FilterQuery<Vocab>, fields: EntityField<Vocab>[] = ["*", "language"]) {
         return await this.vocabRepo.findOne(where, {fields: fields as any});
     }
@@ -289,5 +304,9 @@ export class VocabService {
 
     async findTTSVoice(where: FilterQuery<TTSVoice>, fields?: EntityField<TTSVoice>[]) {
         return await this.em.findOne(TTSVoice, where, {fields});
+    }
+
+    async findVocabVariant(where: FilterQuery<VocabVariant>, fields: EntityField<VocabVariant>[] = ["id", "text", "ttsPronunciations"]) {
+        return await this.em.findOne(VocabVariant, where, {fields});
     }
 }

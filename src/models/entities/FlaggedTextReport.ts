@@ -12,7 +12,7 @@ export class FlaggedTextReport extends CustomBaseEntity {
     text!: Text;
 
     @ManyToOne({entity: () => Profile, nullable: true, deleteRule: "set null", updateRule: "cascade"})
-    reporter!: Profile;
+    reporter!: Profile | null;
 
     @Property({type: types.string, length: 512})
     reasonForReporting!: string;

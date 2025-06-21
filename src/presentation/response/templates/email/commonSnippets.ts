@@ -13,7 +13,7 @@ export function commonEmailTemplate(title: string, bodySlot: string, headSlot: s
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>${title}</title>
     <style>
-        /* http://meyerweb.com/eric/tools/css/reset/ 
+        /* https://meyerweb.com/eric/tools/css/reset/ 
            v2.0 | 20110126
            License: none (public domain)
         */
