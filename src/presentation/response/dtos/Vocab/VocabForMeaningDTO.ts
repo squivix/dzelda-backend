@@ -10,7 +10,7 @@ class VocabForMeaningDTO extends CustomDTO<Vocab> {
             language: vocab.language.code,
             learnersCount: Number(vocab.learnersCount!),
             textsCount: Number(vocab.textsCount!),
-        }
+        };
     }
 }
 

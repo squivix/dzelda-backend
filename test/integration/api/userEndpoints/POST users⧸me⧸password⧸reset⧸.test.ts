@@ -1,5 +1,5 @@
 import {describe, expect, test, TestContext, vi} from "vitest";
-import {fetchRequest} from "@/test/integration/utils.js";
+import {fetchRequest} from "@/test/integration/integrationTestUtils.js";
 import crypto from "crypto";
 import {PASSWORD_RESET_TOKEN_LENGTH} from "@/src/constants.js";
 import {PasswordResetToken} from "@/src/models/entities/auth/PasswordResetToken.js";

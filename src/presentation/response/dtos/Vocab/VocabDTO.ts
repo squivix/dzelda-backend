@@ -16,7 +16,7 @@ class VocabDTO extends CustomDTO<Vocab> {
             variants: vocabVariantDTO.serializeList(vocab.vocabVariants.getItems()),
             learnersCount: Number(vocab.learnersCount!),
             textsCount: Number(vocab.textsCount!),
-        }
+        };
     }
 }
 

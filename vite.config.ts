@@ -3,7 +3,7 @@
 // Configure Vitest (https://vitest.dev/config/)
 
 import {defineConfig} from "vite";
-import {defaultExclude, coverageConfigDefaults} from "vitest/config";
+import {coverageConfigDefaults, defaultExclude} from "vitest/config";
 import path from "path";
 
 

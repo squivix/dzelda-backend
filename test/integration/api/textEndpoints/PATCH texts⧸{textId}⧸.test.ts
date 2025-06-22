@@ -1,8 +1,9 @@
 import {describe, expect, test, TestContext, vi} from "vitest";
-import {fetchRequest} from "@/test/integration/utils.js";
-import {textSerializer} from "@/src/presentation/response/serializers/entities/TextSerializer.js";
+import {fetchRequest, omit} from "@/test/integration/integrationTestUtils.js";
 import {faker} from "@faker-js/faker";
 import {TextService} from "@/src/services/TextService.js";
+import {textLoggedInDTO} from "@/src/presentation/response/dtos/Text/TextLoggedInDTO.js";
+import {defaultVocabsByLevel} from "dzelda-common";
 
 /**{@link TextController#updateText}*/
 describe("PATCH texts/{textId}/", () => {
@@ -27,6 +28,9 @@ describe("PATCH texts/{textId}/", () => {
                 isProcessing: true,
                 parsedContent: null,
                 parsedTitle: null,
+                id: text.id,
+                isBookmarked: false,
+                vocabsByLevel: defaultVocabsByLevel(),
             });
             const sendTextToParsingQueueSpy = vi.spyOn(TextService, "sendTextToParsingQueue").mockResolvedValue(undefined);
 
@@ -35,13 +39,12 @@ describe("PATCH texts/{textId}/", () => {
                 content: updatedText.content
             }, session.token);
 
-            const dbRecord = await context.textRepo.findOneOrFail({id: text.id}, {populate: ["language", "addedBy.user", "collection.language", "collection.addedBy.user"], refresh:true});
+            const dbRecord = await context.textRepo.findOneOrFail({id: text.id}, {populate: ["language", "addedBy.user", "collection.language", "collection.addedBy.user"], refresh: true});
             await context.textRepo.annotateTextsWithUserData([dbRecord], author);
-            await context.collectionRepo.annotateCollectionsWithUserData([dbRecord.collection!], author);
 
             expect(response.statusCode).to.equal(200);
-            expect(response.json()).toMatchObject(textSerializer.serialize(updatedText, {ignore: []}));
-            expect(textSerializer.serialize(dbRecord)).toMatchObject(textSerializer.serialize(updatedText, {ignore: []}));
+            expect(response.json()).toMatchObject(textLoggedInDTO.serialize(updatedText));
+            expect(textLoggedInDTO.serialize(dbRecord)).toMatchObject(textLoggedInDTO.serialize(updatedText));
             expect(sendTextToParsingQueueSpy).toHaveBeenCalledOnce();
             expect(sendTextToParsingQueueSpy).toHaveBeenCalledWith({
                 textId: dbRecord.id,
@@ -77,7 +80,10 @@ describe("PATCH texts/{textId}/", () => {
                     image: imageUploadRequest.fileUrl,
                     audio: audioUploadRequest.fileUrl,
                     isPublic: !text.isPublic,
-                    addedBy: author.profile
+                    addedBy: author.profile,
+                    id: text.id,
+                    isBookmarked: false,
+                    vocabsByLevel: defaultVocabsByLevel(),
                 });
                 const sendTextToParsingQueueSpy = vi.spyOn(TextService, "sendTextToParsingQueue").mockResolvedValue(undefined);
 
@@ -90,15 +96,13 @@ describe("PATCH texts/{textId}/", () => {
                     audio: audioUploadRequest.objectKey,
                 }, session.token);
 
-                const dbRecord = await context.textRepo.findOneOrFail({id: text.id}, {populate: ["language", "addedBy.user", "collection.language", "collection.addedBy.user"], refresh:true});
+                const dbRecord = await context.textRepo.findOneOrFail({id: text.id}, {populate: ["language", "addedBy.user", "collection.language", "collection.addedBy.user"], refresh: true});
                 await context.em.populate(dbRecord, ["collection"]);
                 await context.textRepo.annotateTextsWithUserData([dbRecord], author);
-                await context.collectionRepo.annotateCollectionsWithUserData([updatedText.collection!], author);
-                await context.collectionRepo.annotateCollectionsWithUserData([dbRecord.collection!], author);
 
                 expect(response.statusCode).to.equal(200);
-                expect(response.json()).toMatchObject(textSerializer.serialize(updatedText, {ignore: ["addedOn"]}));
-                expect(textSerializer.serialize(dbRecord)).toMatchObject(textSerializer.serialize(updatedText, {ignore: ["addedOn"]}));
+                expect(response.json()).toMatchObject(omit(textLoggedInDTO.serialize(updatedText), ["addedOn"]));
+                expect(textLoggedInDTO.serialize(dbRecord)).toMatchObject(omit(textLoggedInDTO.serialize(updatedText), ["addedOn"]));
                 expect(sendTextToParsingQueueSpy).toHaveBeenCalledOnce();
                 expect(sendTextToParsingQueueSpy).toHaveBeenCalledWith({
                     textId: dbRecord.id,
@@ -125,7 +129,10 @@ describe("PATCH texts/{textId}/", () => {
                     parsedContent: null,
                     parsedTitle: null,
                     isPublic: !text.isPublic,
-                    addedBy: author.profile
+                    addedBy: author.profile,
+                    id: text.id,
+                    isBookmarked: false,
+                    vocabsByLevel: defaultVocabsByLevel(),
                 });
                 const sendTextToParsingQueueSpy = vi.spyOn(TextService, "sendTextToParsingQueue").mockResolvedValue(undefined);
 
@@ -138,15 +145,16 @@ describe("PATCH texts/{textId}/", () => {
                     audio: ""
                 }, session.token);
 
-                const dbRecord = await context.textRepo.findOneOrFail({id: text.id}, {populate: ["language", "addedBy.user", "collection", "collection.language", "collection.addedBy.user"], refresh:true});
+                const dbRecord = await context.textRepo.findOneOrFail({id: text.id}, {
+                    populate: ["language", "addedBy.user", "collection", "collection.language", "collection.addedBy.user"],
+                    refresh: true
+                });
                 await context.em.populate(dbRecord, ["collection"]);
                 await context.textRepo.annotateTextsWithUserData([dbRecord], author);
-                await context.collectionRepo.annotateCollectionsWithUserData([dbRecord.collection!], author);
-                await context.collectionRepo.annotateCollectionsWithUserData([updatedText.collection!], author);
 
                 expect(response.statusCode).to.equal(200);
-                expect(response.json()).toMatchObject(textSerializer.serialize(updatedText, {ignore: ["addedOn"]}));
-                expect(textSerializer.serialize(dbRecord)).toMatchObject(textSerializer.serialize(updatedText, {ignore: ["addedOn"]}));
+                expect(response.json()).toMatchObject(omit(textLoggedInDTO.serialize(updatedText), ["addedOn"]));
+                expect(textLoggedInDTO.serialize(dbRecord)).toMatchObject(omit(textLoggedInDTO.serialize(updatedText), ["addedOn"]));
                 expect(sendTextToParsingQueueSpy).toHaveBeenCalledOnce();
                 expect(sendTextToParsingQueueSpy).toHaveBeenCalledWith({
                     textId: dbRecord.id,
@@ -165,7 +173,8 @@ describe("PATCH texts/{textId}/", () => {
                 });
                 const newCollection = await context.collectionFactory.createOne({
                     addedBy: author.profile,
-                    language: language
+                    language: language,
+                    texts: []
                 });
                 const text = await context.textFactory.createOne({
                     collection: collection,
@@ -177,9 +186,14 @@ describe("PATCH texts/{textId}/", () => {
                     parsedContent: null,
                     parsedTitle: null,
                     collection: newCollection,
+                    orderInCollection: 0,
+                    isLastInCollection: true,
                     language,
                     isPublic: !text.isPublic,
-                    addedBy: author.profile
+                    addedBy: author.profile,
+                    id: text.id,
+                    isBookmarked: false,
+                    vocabsByLevel: defaultVocabsByLevel(),
                 });
                 const sendTextToParsingQueueSpy = vi.spyOn(TextService, "sendTextToParsingQueue").mockResolvedValue(undefined);
 
@@ -191,16 +205,17 @@ describe("PATCH texts/{textId}/", () => {
                     level: updatedText.level,
                 }, session.token);
 
-                const dbRecord = await context.textRepo.findOneOrFail({id: text.id}, {populate: ["language", "addedBy.user", "collection", "collection.language", "collection.addedBy.user"], refresh:true});
+                const dbRecord = await context.textRepo.findOneOrFail({id: text.id}, {
+                    populate: ["language", "addedBy.user", "collection", "collection.language", "collection.addedBy.user"],
+                    refresh: true
+                });
                 await context.em.populate(dbRecord, ["collection"]);
                 await context.textRepo.annotateTextsWithUserData([dbRecord], author);
-                await context.collectionRepo.annotateCollectionsWithUserData([updatedText.collection!], author);
-                await context.collectionRepo.annotateCollectionsWithUserData([dbRecord.collection!], author);
 
                 expect(response.statusCode).to.equal(200);
-                expect(response.json()).toMatchObject(textSerializer.serialize(updatedText, {ignore: ["addedOn"]}));
-                expect(textSerializer.serialize(dbRecord)).toMatchObject(textSerializer.serialize(updatedText, {ignore: ["addedOn"]}));
-                expect(dbRecord.orderInCollection).toEqual(await newCollection.texts.loadCount() - 1);
+                expect(response.json()).toMatchObject(omit(textLoggedInDTO.serialize(updatedText), ["addedOn"]));
+                expect(textLoggedInDTO.serialize(dbRecord)).toMatchObject(omit(textLoggedInDTO.serialize(updatedText), ["addedOn"]));
+                expect(dbRecord.orderInCollection).toEqual(await newCollection.texts.loadCount(true) - 1);
                 expect(sendTextToParsingQueueSpy).toHaveBeenCalledOnce();
                 expect(sendTextToParsingQueueSpy).toHaveBeenCalledWith({
                     textId: dbRecord.id,
@@ -226,6 +241,9 @@ describe("PATCH texts/{textId}/", () => {
                     isProcessing: true,
                     parsedContent: null,
                     parsedTitle: null,
+                    id: text.id,
+                    isBookmarked: false,
+                    vocabsByLevel: defaultVocabsByLevel(),
                 });
                 const sendTextToParsingQueueSpy = vi.spyOn(TextService, "sendTextToParsingQueue").mockResolvedValue(undefined);
 
@@ -245,8 +263,8 @@ describe("PATCH texts/{textId}/", () => {
                 await context.textRepo.annotateTextsWithUserData([dbRecord], author);
 
                 expect(response.statusCode).to.equal(200);
-                expect(response.json()).toMatchObject(textSerializer.serialize(updatedText, {ignore: ["addedOn"]}));
-                expect(textSerializer.serialize(dbRecord)).toMatchObject(textSerializer.serialize(updatedText, {ignore: ["addedOn"]}));
+                expect(response.json()).toMatchObject(omit(textLoggedInDTO.serialize(updatedText), ["addedOn"]));
+                expect(textLoggedInDTO.serialize(dbRecord)).toMatchObject(omit(textLoggedInDTO.serialize(updatedText), ["addedOn"]));
                 expect(dbRecord.orderInCollection).toEqual(null);
                 expect(sendTextToParsingQueueSpy).toHaveBeenCalledOnce();
                 expect(sendTextToParsingQueueSpy).toHaveBeenCalledWith({

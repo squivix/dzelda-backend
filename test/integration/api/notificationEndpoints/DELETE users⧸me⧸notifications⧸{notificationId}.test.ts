@@ -1,6 +1,6 @@
 import {describe, expect, test, TestContext} from "vitest";
 import {InjectOptions} from "light-my-request";
-import {fetchRequest} from "@/test/integration/utils.js";
+import {fetchRequest} from "@/test/integration/integrationTestUtils.js";
 import {faker} from "@faker-js/faker";
 import {Notification} from "@/src/models/entities/Notification.js";
 

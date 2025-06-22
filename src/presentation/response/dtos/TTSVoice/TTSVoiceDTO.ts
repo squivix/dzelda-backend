@@ -12,7 +12,7 @@ class TTSVoiceDTO extends CustomDTO<TTSVoice> {
             accentCountryCode: ttsVoice.accentCountryCode,
             language: ttsVoice.language.code,
             isDefault: ttsVoice.isDefault,
-        }
+        };
     }
 }
 

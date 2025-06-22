@@ -1,7 +1,7 @@
 /**{@link MeaningController#removeMeaningFromUser}*/
 import {describe, expect, test, TestContext} from "vitest";
 import {InjectOptions} from "light-my-request";
-import {fetchRequest} from "@/test/integration/utils.js";
+import {fetchRequest} from "@/test/integration/integrationTestUtils.js";
 import {MapLearnerMeaning} from "@/src/models/entities/MapLearnerMeaning.js";
 import {faker} from "@faker-js/faker";
 

@@ -8,17 +8,18 @@ export const authMiddleware: preParsingAsyncHookHandler = async (request) => {
 
     if (!tokenArray || tokenArray.length !== 2 || tokenArray[0] !== BEARER_TOKEN_PREFIX || !tokenArray[1]) {
         request.user = new AnonymousUser();
-        return;
+        request.isLoggedIn = false;
+    } else {
+        const token = tokenArray[1];
+
+        const userService = new UserService(request.em);
+        const session = await userService.getLoginSession(token);
+
+        if (session) {
+            request.session = session;
+            request.user = session.user;
+        }
     }
-
-    const token = tokenArray[1];
-
-    const userService = new UserService(request.em);
-    const session = await userService.getLoginSession(token);
-
-    if (session) {
-        request.session = session;
-        request.user = session.user;
-    }
+    request.isLoggedIn = !!request.user && !(request.user instanceof AnonymousUser);
 };
 

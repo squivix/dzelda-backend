@@ -7,7 +7,7 @@ class VocabTagDTO extends CustomDTO<VocabTag> {
             id: vocabTag.id,
             name: vocabTag.name,
             category: vocabTag.category?.name ?? null,
-        }
+        };
     }
 }
 

@@ -1,6 +1,6 @@
 import {describe, expect, test, TestContext} from "vitest";
 import {InjectOptions} from "light-my-request";
-import {fetchRequest} from "@/test/integration/utils.js";
+import {fetchRequest} from "@/test/integration/integrationTestUtils.js";
 import {API_ROOT} from "@/src/server.js";
 import {faker} from "@faker-js/faker";
 

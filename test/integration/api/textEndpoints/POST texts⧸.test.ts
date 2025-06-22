@@ -1,9 +1,9 @@
 import {describe, expect, test, TestContext, vi} from "vitest";
-import {fetchRequest} from "@/test/integration/utils.js";
-import {LanguageLevel} from "dzelda-common";
-import {textSerializer} from "@/src/presentation/response/serializers/entities/TextSerializer.js";
+import {fetchRequest, omit} from "@/test/integration/integrationTestUtils.js";
+import {defaultVocabsByLevel, LanguageLevel} from "dzelda-common";
 import {faker} from "@faker-js/faker";
 import {TextService} from "@/src/services/TextService.js";
+import {textLoggedInDTO} from "@/src/presentation/response/dtos/Text/TextLoggedInDTO.js";
 
 
 /**{@link TextController#createText}*/
@@ -29,7 +29,9 @@ describe("POST texts/", () => {
                 language,
                 image: "",
                 audio: "",
-                addedBy: user.profile
+                addedBy: user.profile,
+                isBookmarked: false,
+                vocabsByLevel: defaultVocabsByLevel(),
             });
             const sendTextToParsingQueueSpy = vi.spyOn(TextService, "sendTextToParsingQueue").mockResolvedValue(undefined);
 
@@ -47,8 +49,8 @@ describe("POST texts/", () => {
             expect(dbRecord).not.toBeNull();
             if (!dbRecord) return;
             await context.textRepo.annotateTextsWithUserData([dbRecord], user);
-            expect(response.json()).toMatchObject(textSerializer.serialize(newText, {ignore: ["addedOn"]}));
-            expect(textSerializer.serialize(dbRecord)).toMatchObject(textSerializer.serialize(newText, {ignore: ["addedOn"]}));
+            expect(response.json()).toMatchObject(omit(textLoggedInDTO.serialize(newText), ["id", "addedOn"]));
+            expect(textLoggedInDTO.serialize(dbRecord)).toMatchObject(omit(textLoggedInDTO.serialize(newText), ["id", "addedOn"]));
             expect(sendTextToParsingQueueSpy).toHaveBeenCalledOnce();
             expect(sendTextToParsingQueueSpy).toHaveBeenCalledWith({
                 textId: dbRecord.id,
@@ -87,6 +89,8 @@ describe("POST texts/", () => {
                 isProcessing: true,
                 parsedContent: null,
                 parsedTitle: null,
+                orderInCollection: 0,
+                isLastInCollection: true,
                 language: language,
                 image: imageUploadRequest.fileUrl,
                 audio: audioUploadRequest.fileUrl,
@@ -94,6 +98,8 @@ describe("POST texts/", () => {
                 collection: collection,
                 isPublic: false,
                 level: LanguageLevel.BEGINNER_2,
+                isBookmarked: false,
+                vocabsByLevel: defaultVocabsByLevel(),
             });
             const sendTextToParsingQueueSpy = vi.spyOn(TextService, "sendTextToParsingQueue").mockResolvedValue(undefined);
 
@@ -116,9 +122,8 @@ describe("POST texts/", () => {
             expect(dbRecord).not.toBeNull();
             if (!dbRecord) return;
             await context.textRepo.annotateTextsWithUserData([dbRecord], user);
-            await context.collectionRepo.annotateCollectionsWithUserData([dbRecord.collection!], user);
-            expect(response.json()).toMatchObject(textSerializer.serialize(newText, {ignore: ["addedOn"]}));
-            expect(textSerializer.serialize(dbRecord)).toMatchObject(textSerializer.serialize(newText, {ignore: ["addedOn",]}));
+            expect(response.json()).toMatchObject(omit(textLoggedInDTO.serialize(newText), ["id", "addedOn"]));
+            expect(textLoggedInDTO.serialize(dbRecord)).toMatchObject(omit(textLoggedInDTO.serialize(newText), ["id", "addedOn",]));
             expect(sendTextToParsingQueueSpy).toHaveBeenCalledOnce();
             expect(sendTextToParsingQueueSpy).toHaveBeenCalledWith({
                 textId: dbRecord.id,
@@ -298,7 +303,7 @@ describe("POST texts/", () => {
                 const user = await context.userFactory.createOne();
                 const session = await context.sessionFactory.createOne({user: user});
                 const language = await context.languageFactory.createOne();
-                const imageUploadRequest = await context.fileUploadRequestFactory.makeOne({
+                const imageUploadRequest = context.fileUploadRequestFactory.makeOne({
                     user: user,
                     fileField: "textImage"
                 });
@@ -389,7 +394,7 @@ describe("POST texts/", () => {
                     user: user,
                     fileField: "textImage"
                 });
-                const audioUploadRequest = await context.fileUploadRequestFactory.makeOne({
+                const audioUploadRequest = context.fileUploadRequestFactory.makeOne({
                     user: user,
                     fileField: "textAudio"
                 });

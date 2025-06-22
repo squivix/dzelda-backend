@@ -1,10 +1,11 @@
 import {describe, expect, test, TestContext} from "vitest";
 import {InjectOptions} from "light-my-request";
-import {buildQueryString, createComparator, fetchRequest} from "@/test/integration/utils.js";
+import {buildQueryString, createComparator, fetchRequest} from "@/test/integration/integrationTestUtils.js";
 import {Collection} from "@/src/models/entities/Collection.js";
-import {collectionSerializer} from "@/src/presentation/response/serializers/entities/CollectionSerializer.js";
 import {faker} from "@faker-js/faker";
 import {randomCase} from "@/test/utils.js";
+import {collectionSummaryDTO} from "@/src/presentation/response/dtos/Collection/CollectionSummaryDTO.js";
+import {collectionSummaryLoggedInDTO} from "@/src/presentation/response/dtos/Collection/CollectionSummaryLoggedInDTO.js";
 
 /**{@link CollectionController#getCollections}*/
 describe("GET collections/", function () {
@@ -34,7 +35,7 @@ describe("GET collections/", function () {
             page: queryDefaults.pagination.page,
             pageSize: queryDefaults.pagination.pageSize,
             pageCount: Math.ceil(recordsCount / queryDefaults.pagination.pageSize),
-            data: collectionSerializer.serializeList(expectedCollection)
+            data: collectionSummaryDTO.serializeList(expectedCollection)
         });
     });
     describe("test languageCode filter", () => {
@@ -54,7 +55,7 @@ describe("GET collections/", function () {
                 page: queryDefaults.pagination.page,
                 pageSize: queryDefaults.pagination.pageSize,
                 pageCount: Math.ceil(recordsCount / queryDefaults.pagination.pageSize),
-                data: collectionSerializer.serializeList(expectedCollections)
+                data: collectionSummaryDTO.serializeList(expectedCollections)
             });
         });
         test<TestContext>("If language does not exist return empty list", async (context) => {
@@ -90,7 +91,7 @@ describe("GET collections/", function () {
                 page: queryDefaults.pagination.page,
                 pageSize: queryDefaults.pagination.pageSize,
                 pageCount: Math.ceil(recordsCount / queryDefaults.pagination.pageSize),
-                data: collectionSerializer.serializeList(expectedCollections)
+                data: collectionSummaryDTO.serializeList(expectedCollections)
             });
         });
         test<TestContext>("If addedBy is me and signed in return collections added by that user", async (context) => {
@@ -111,7 +112,7 @@ describe("GET collections/", function () {
                 page: queryDefaults.pagination.page,
                 pageSize: queryDefaults.pagination.pageSize,
                 pageCount: Math.ceil(recordsCount / queryDefaults.pagination.pageSize),
-                data: collectionSerializer.serializeList(expectedCollections)
+                data: collectionSummaryLoggedInDTO.serializeList(expectedCollections)
             });
         });
         test<TestContext>("If addedBy is me and not signed in return 401", async (context) => {
@@ -161,7 +162,7 @@ describe("GET collections/", function () {
                 page: queryDefaults.pagination.page,
                 pageSize: queryDefaults.pagination.pageSize,
                 pageCount: Math.ceil(recordsCount / queryDefaults.pagination.pageSize),
-                data: collectionSerializer.serializeList(expectedCollections)
+                data: collectionSummaryDTO.serializeList(expectedCollections)
             });
         });
         test<TestContext>("If searchQuery is invalid return 400", async (context) => {
@@ -200,7 +201,7 @@ describe("GET collections/", function () {
                     page: queryDefaults.pagination.page,
                     pageSize: queryDefaults.pagination.pageSize,
                     pageCount: Math.ceil(recordsCount / queryDefaults.pagination.pageSize),
-                    data: collectionSerializer.serializeList(expectedCollections)
+                    data: collectionSummaryDTO.serializeList(expectedCollections)
                 });
             });
             test<TestContext>("test sortBy createdDate", async (context) => {
@@ -224,7 +225,7 @@ describe("GET collections/", function () {
                     page: queryDefaults.pagination.page,
                     pageSize: queryDefaults.pagination.pageSize,
                     pageCount: Math.ceil(recordsCount / queryDefaults.pagination.pageSize),
-                    data: collectionSerializer.serializeList(expectedCollections)
+                    data: collectionSummaryDTO.serializeList(expectedCollections)
                 });
             });
             test<TestContext>("test sortBy avgPastViewersCountPerText", async (context) => {
@@ -256,7 +257,7 @@ describe("GET collections/", function () {
                     page: queryDefaults.pagination.page,
                     pageSize: queryDefaults.pagination.pageSize,
                     pageCount: Math.ceil(recordsCount / queryDefaults.pagination.pageSize),
-                    data: collectionSerializer.serializeList(expectedCollections)
+                    data: collectionSummaryDTO.serializeList(expectedCollections)
                 });
             });
             test<TestContext>("if sortBy is invalid return 400", async (context) => {
@@ -280,7 +281,7 @@ describe("GET collections/", function () {
                     page: queryDefaults.pagination.page,
                     pageSize: queryDefaults.pagination.pageSize,
                     pageCount: Math.ceil(recordsCount / queryDefaults.pagination.pageSize),
-                    data: collectionSerializer.serializeList(expectedCollections)
+                    data: collectionSummaryDTO.serializeList(expectedCollections)
                 });
             });
             test<TestContext>("test sortOrder descending", async (context) => {
@@ -298,7 +299,7 @@ describe("GET collections/", function () {
                     page: queryDefaults.pagination.page,
                     pageSize: queryDefaults.pagination.pageSize,
                     pageCount: Math.ceil(recordsCount / queryDefaults.pagination.pageSize),
-                    data: collectionSerializer.serializeList(expectedCollections)
+                    data: collectionSummaryDTO.serializeList(expectedCollections)
                 });
             });
             test<TestContext>("if sortBy is invalid return 400", async (context) => {
@@ -323,7 +324,7 @@ describe("GET collections/", function () {
                     page: page,
                     pageSize: pageSize,
                     pageCount: Math.ceil(recordsCount / pageSize),
-                    data: collectionSerializer.serializeList(expectedCollections)
+                    data: collectionSummaryDTO.serializeList(expectedCollections)
                 });
             });
             test<TestContext>("If page is 2 return the second page of results", async (context) => {
@@ -340,7 +341,7 @@ describe("GET collections/", function () {
                     page: page,
                     pageSize: pageSize,
                     pageCount: Math.ceil(recordsCount / pageSize),
-                    data: collectionSerializer.serializeList(expectedCollections)
+                    data: collectionSummaryDTO.serializeList(expectedCollections)
                 });
             });
             test<TestContext>("If page is last return the last page of results", async (context) => {
@@ -358,7 +359,7 @@ describe("GET collections/", function () {
                     page: page,
                     pageSize: pageSize,
                     pageCount: Math.ceil(recordsCount / pageSize),
-                    data: collectionSerializer.serializeList(expectedCollections)
+                    data: collectionSummaryDTO.serializeList(expectedCollections)
                 });
             });
             test<TestContext>("If page is more than last return empty page", async (context) => {
@@ -407,7 +408,7 @@ describe("GET collections/", function () {
                     page: page,
                     pageSize: pageSize,
                     pageCount: Math.ceil(recordsCount / pageSize),
-                    data: collectionSerializer.serializeList(expectedCollections)
+                    data: collectionSummaryDTO.serializeList(expectedCollections)
                 });
                 expect(response.json().data.length).toBeLessThanOrEqual(pageSize);
             });
@@ -446,7 +447,7 @@ describe("GET collections/", function () {
             page: queryDefaults.pagination.page,
             pageSize: queryDefaults.pagination.pageSize,
             pageCount: Math.ceil(recordsCount / queryDefaults.pagination.pageSize),
-            data: collectionSerializer.serializeList(expectedCollections)
+            data: collectionSummaryLoggedInDTO.serializeList(expectedCollections)
         });
     });
     test<TestContext>("If logged in as author of collections return private collections", async (context) => {
@@ -469,7 +470,7 @@ describe("GET collections/", function () {
             page: queryDefaults.pagination.page,
             pageSize: queryDefaults.pagination.pageSize,
             pageCount: Math.ceil(recordsCount / queryDefaults.pagination.pageSize),
-            data: collectionSerializer.serializeList(expectedCollections)
+            data: collectionSummaryLoggedInDTO.serializeList(expectedCollections)
         });
     });
 });

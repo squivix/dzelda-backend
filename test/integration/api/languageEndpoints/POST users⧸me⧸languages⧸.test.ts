@@ -1,9 +1,9 @@
 import {describe, expect, test, TestContext} from "vitest";
 import {InjectOptions} from "light-my-request";
-import {fetchRequest} from "@/test/integration/utils.js";
+import {fetchRequest, omit} from "@/test/integration/integrationTestUtils.js";
 import {MapLearnerLanguage} from "@/src/models/entities/MapLearnerLanguage.js";
-import {learnerLanguageSerializer} from "@/src/presentation/response/serializers/mappings/LearnerLanguageSerializer.js";
 import {faker} from "@faker-js/faker";
+import {learnerLanguageDTO} from "@/src/presentation/response/dtos/Language/LearnerLanguageDTO.js";
 
 /**{@link LanguageController#addLanguageToUser}*/
 describe("POST users/me/languages/", function () {
@@ -20,16 +20,16 @@ describe("POST users/me/languages/", function () {
         const user = await context.userFactory.createOne();
         const session = await context.sessionFactory.createOne({user});
         const language = await context.languageFactory.createOne({learnersCount: 1});
-        const expectedMapping = context.em.create(MapLearnerLanguage, {language, learner: user.profile}, {persist: false});
+        const expectedMapping = context.em.create(MapLearnerLanguage, {language, learner: user.profile, startedLearningOn: new Date(), lastOpened: new Date()}, {persist: false});
 
         const response = await makeRequest({languageCode: language.code}, session.token);
 
         const responseBody = response.json();
         expect(response.statusCode).to.equal(201);
-        expect(responseBody).toMatchObject(learnerLanguageSerializer.serialize(expectedMapping, {ignore: ["startedLearningOn", "lastOpened"]}));
+        expect(responseBody).toMatchObject(omit(learnerLanguageDTO.serialize(expectedMapping), ["startedLearningOn", "lastOpened"]));
         const dbRecord = await context.em.findOne(MapLearnerLanguage, {language, learner: user.profile}, {populate: ["preferredTranslationLanguages"]});
         expect(dbRecord).not.toBeNull();
-        expect(learnerLanguageSerializer.serialize(dbRecord!)).toMatchObject(learnerLanguageSerializer.serialize(expectedMapping, {ignore: ["startedLearningOn", "lastOpened"]}));
+        expect(learnerLanguageDTO.serialize(dbRecord!)).toMatchObject(omit(learnerLanguageDTO.serialize(expectedMapping), ["startedLearningOn", "lastOpened"]));
     });
     test<TestContext>("If user is already learning language return 200", async (context) => {
         const user = await context.userFactory.createOne();
@@ -41,7 +41,7 @@ describe("POST users/me/languages/", function () {
         const response = await makeRequest({languageCode: language.code}, session.token);
 
         expect(response.statusCode).to.equal(200);
-        expect(response.json()).toEqual(learnerLanguageSerializer.serialize(expectedMapping));
+        expect(response.json()).toEqual(learnerLanguageDTO.serialize(expectedMapping));
     });
     test<TestContext>("If user is not logged in return 401", async (context) => {
         const language = await context.languageFactory.createOne();

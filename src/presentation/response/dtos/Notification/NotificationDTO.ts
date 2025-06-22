@@ -7,7 +7,7 @@ class NotificationDTO extends CustomDTO<Notification> {
             id: notification.id,
             text: notification.text,
             createdDate: notification.createdDate.toISOString(),
-        }
+        };
     }
 }
 

@@ -7,6 +7,7 @@ declare module "fastify" {
     interface FastifyRequest {
         session: Session | null,
         user: User | AnonymousUser | null,
+        isLoggedIn: boolean,
         em: EntityManager,
         files?: FilesObject
     }

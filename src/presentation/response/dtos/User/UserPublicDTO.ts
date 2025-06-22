@@ -8,7 +8,7 @@ class UserPublicDTO extends CustomDTO<User> {
             username: user.username,
             profile: profileDTO.serialize(user.profile),
             isBanned: user.isBanned,
-        }
+        };
     }
 }
 

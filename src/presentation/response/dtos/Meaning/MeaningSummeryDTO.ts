@@ -15,7 +15,7 @@ class MeaningSummeryDTO extends CustomDTO<Meaning> {
             attributionSource: meaning.attributionSource ? meaning.attributionSource.id : null,
             attribution: meaning.attribution,
             vocabVariant: meaning.vocabVariant ? vocabVariantDTO.serialize(meaning.vocabVariant) : null
-        }
+        };
     }
 }
 

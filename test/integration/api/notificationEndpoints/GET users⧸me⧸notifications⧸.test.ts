@@ -1,11 +1,11 @@
 import {describe, expect, test, TestContext, vi} from "vitest";
 import {InjectOptions} from "light-my-request";
-import {createComparator, fetchRequest} from "@/test/integration/utils.js";
+import {createComparator, fetchRequest} from "@/test/integration/integrationTestUtils.js";
 import {Notification} from "@/src/models/entities/Notification.js";
 import * as checkPendingJobsModule from "@/src/utils/pending-jobs/checkPendingJobs.js";
 import {PendingJob} from "@/src/models/entities/PendingJob.js";
-import {notificationSerializer} from "@/src/presentation/response/serializers/entities/NotificationSerializer.js";
 import {faker} from "@faker-js/faker";
+import {notificationDTO} from "@/src/presentation/response/dtos/Notification/NotificationDTO.js";
 
 /**{@link UserController#getUserNotifications}*/
 describe("GET users/me/notifications/", function () {
@@ -33,7 +33,7 @@ describe("GET users/me/notifications/", function () {
         const response = await makeRequest(session.token);
 
         expect(response.statusCode).to.equal(200);
-        expect(response.json()).toEqual(notificationSerializer.serializeList(expectedNotifications));
+        expect(response.json()).toEqual(notificationDTO.serializeList(expectedNotifications));
         expect(checkPendingJobsSpy).toHaveBeenCalledOnce();
     });
     describe("test pending jobs check", function () {
@@ -73,8 +73,8 @@ describe("GET users/me/notifications/", function () {
 
                 const dbNotifications = await context.em.find(Notification, {recipient: user.profile,});
                 expect(response.statusCode).to.equal(200);
-                expect(response.json()).toEqual(notificationSerializer.serializeList(dbNotifications));
-                expect(notificationSerializer.serializeList(dbNotifications)).toEqual(expect.arrayContaining([expect.objectContaining({
+                expect(response.json()).toEqual(notificationDTO.serializeList(dbNotifications));
+                expect(notificationDTO.serializeList(dbNotifications)).toEqual(expect.arrayContaining([expect.objectContaining({
                     text: `Collection "${collection.title}" finished importing`,
                 })]));
                 expect(await context.em.findOne(PendingJob, {id: pendingJob.id})).toBeNull();

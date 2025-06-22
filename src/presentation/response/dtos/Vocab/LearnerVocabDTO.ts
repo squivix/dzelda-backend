@@ -20,7 +20,7 @@ class LearnerVocabDTO extends CustomDTO<MapLearnerVocab> {
             tags: vocabTagDTO.serializeList(mapping.vocab.tags.getItems()),
             rootForms: mapping.vocab.rootForms.getItems().map(v => v.text),
             variants: vocabVariantDTO.serializeList(mapping.vocab.vocabVariants.getItems())
-        }
+        };
     }
 }
 

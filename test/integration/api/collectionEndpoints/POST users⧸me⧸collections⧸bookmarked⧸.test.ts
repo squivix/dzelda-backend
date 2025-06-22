@@ -1,9 +1,9 @@
 import {describe, expect, test, TestContext} from "vitest";
 import {InjectOptions} from "light-my-request";
-import {fetchRequest} from "@/test/integration/utils.js";
-import {collectionSerializer} from "@/src/presentation/response/serializers/entities/CollectionSerializer.js";
+import {fetchRequest} from "@/test/integration/integrationTestUtils.js";
 import {CollectionBookmark} from "@/src/models/entities/CollectionBookmark.js";
 import {faker} from "@faker-js/faker";
+import {collectionLoggedInDTO} from "@/src/presentation/response/dtos/Collection/CollectionLoggedInDTO.js";
 
 /**{@link CollectionController#addCollectionToUserBookmarks}*/
 describe("POST users/me/collections/bookmarked/", function () {
@@ -27,10 +27,10 @@ describe("POST users/me/collections/bookmarked/", function () {
 
         expectedCollection.isBookmarked = true;
         expect(response.statusCode).to.equal(201);
-        expect(response.json()).toEqual(collectionSerializer.serialize(expectedCollection));
+        expect(response.json()).toEqual(collectionLoggedInDTO.serialize(expectedCollection));
         const dbRecord = await context.em.findOne(CollectionBookmark, {bookmarker: user.profile, collection: expectedCollection});
         expect(dbRecord).not.toBeNull();
-        expect(collectionSerializer.serialize(dbRecord!.collection)).toEqual(collectionSerializer.serialize(expectedCollection));
+        expect(collectionLoggedInDTO.serialize(dbRecord!.collection)).toEqual(collectionLoggedInDTO.serialize(expectedCollection));
     });
     test<TestContext>("If the collection is already bookmarked do nothing, return 200", async (context) => {
         const user = await context.userFactory.createOne();
@@ -42,7 +42,7 @@ describe("POST users/me/collections/bookmarked/", function () {
         const response = await makeRequest({collectionId: expectedCollection.id}, session.token);
 
         expect(response.statusCode).to.equal(200);
-        expect(response.json()).toEqual(collectionSerializer.serialize(expectedCollection));
+        expect(response.json()).toEqual(collectionLoggedInDTO.serialize(expectedCollection));
     });
     describe("If required fields are missing return 400", function () {
         test<TestContext>("If the collectionId is missing return 400", async (context) => {

@@ -1,8 +1,8 @@
 import {CustomDTO} from "@/src/presentation/response/dtos/CustomDTO.js";
 import {Collection} from "@/src/models/entities/Collection.js";
-import {textSummaryDTO} from "@/src/presentation/response/dtos/Text/TextSummaryDTO.js";
+import {textSummaryLoggedInDTO} from "@/src/presentation/response/dtos/Text/TextSummaryLoggedInDTO.js";
 
-class CollectionDTO extends CustomDTO<Collection> {
+class CollectionLoggedInDTO extends CustomDTO<Collection> {
     serialize(collection: Collection): any {
         return {
             id: collection.id,
@@ -13,9 +13,12 @@ class CollectionDTO extends CustomDTO<Collection> {
             addedOn: collection.addedOn.toISOString(),
             addedBy: collection.addedBy.user.username,
             isPublic: collection.isPublic,
-            texts: textSummaryDTO.serializeList(collection.texts.getItems()),
+            texts: textSummaryLoggedInDTO.serializeList(collection.texts.getItems()),
+
+            vocabsByLevel: collection.vocabsByLevel,
+            isBookmarked: collection.isBookmarked,
         };
     }
 }
 
-export const collectionDTO = new CollectionDTO();
+export const collectionLoggedInDTO = new CollectionLoggedInDTO();

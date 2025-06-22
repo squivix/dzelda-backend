@@ -11,7 +11,7 @@ class TTSPronunciationDTO extends CustomDTO<TTSPronunciation> {
             voice: ttsVoiceDTO.serialize(ttsPronunciation.voice),
             vocabId: ttsPronunciation.vocab?.id ?? null,
             variantId: ttsPronunciation.vocabVariant?.id ?? null,
-        }
+        };
     }
 }
 

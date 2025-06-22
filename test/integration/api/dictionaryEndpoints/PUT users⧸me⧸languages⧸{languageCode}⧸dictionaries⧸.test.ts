@@ -1,6 +1,6 @@
 import {describe, expect, test, TestContext} from "vitest";
 import {InjectOptions} from "light-my-request";
-import {fetchRequest} from "@/test/integration/utils.js";
+import {fetchRequest} from "@/test/integration/integrationTestUtils.js";
 import {MapLearnerDictionary} from "@/src/models/entities/MapLearnerDictionary.js";
 import {shuffleArray} from "@/test/utils.js";
 import {faker} from "@faker-js/faker";

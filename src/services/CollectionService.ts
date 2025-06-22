@@ -82,6 +82,7 @@ export class CollectionService {
             isPublic: fields.isPublic
         });
         newCollection.vocabsByLevel = defaultVocabsByLevel();
+        newCollection.isBookmarked = false;
         await this.em.flush();
 
         if (fields.texts) {
@@ -111,7 +112,7 @@ export class CollectionService {
             $and: [{id: collectionId}, collectionVisibilityFilter(user)]
         }, {populate: ["language", "addedBy", "addedBy.user"]});
         if (collection) {
-            await collection.texts.init({orderBy: {orderInCollection: "asc"}, populate: ["addedBy.user"]});
+            await collection.texts.init({orderBy: {orderInCollection: "asc"}, populate: ["orderInCollection", "addedBy.user"]});
             if (user && !(user instanceof AnonymousUser)) {
                 await this.collectionRepo.annotateCollectionsWithUserData([collection], user);
                 await this.textRepo.annotateTextsWithUserData(collection.texts.getItems(), user);

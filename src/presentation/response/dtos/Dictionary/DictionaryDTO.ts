@@ -10,7 +10,7 @@ class DictionaryDTO extends CustomDTO<Dictionary> {
             dictionaryLink: dictionary.dictionaryLink,
             language: dictionary.language.code,
             isPronunciation: dictionary.isPronunciation,
-        }
+        };
     }
 }
 

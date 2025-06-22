@@ -5,7 +5,7 @@ import {MapLearnerVocab} from "@/src/models/entities/MapLearnerVocab.js";
 import {MapLearnerMeaning} from "@/src/models/entities/MapLearnerMeaning.js";
 import {MapLearnerLanguage} from "@/src/models/entities/MapLearnerLanguage.js";
 import {InjectOptions} from "light-my-request";
-import {fetchRequest} from "@/test/integration/utils.js";
+import {fetchRequest} from "@/test/integration/integrationTestUtils.js";
 
 /**{@link LanguageController#resetUserLanguageProgress}*/
 describe("DELETE users/me/languages/{languageCode}/progress", () => {

@@ -21,7 +21,7 @@ class LearnerLanguageDTO extends CustomDTO<MapLearnerLanguage> {
             preferredTtsVoice: mapping.preferredTtsVoice ? ttsVoiceDTO.serialize(mapping.preferredTtsVoice) : null,
             preferredTranslationLanguages: translationLanguageDTO.serializeList(mapping.preferredTranslationLanguages.getItems().map(m => m.translationLanguage)),
             isRtl: mapping.language.isRtl,
-        }
+        };
     }
 }
 

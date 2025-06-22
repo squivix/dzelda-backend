@@ -1,8 +1,8 @@
 import {describe, expect, test, TestContext} from "vitest";
 import {InjectOptions} from "light-my-request";
-import {fetchRequest} from "@/test/integration/utils.js";
+import {fetchRequest, omit} from "@/test/integration/integrationTestUtils.js";
 import {MapLearnerLanguage} from "@/src/models/entities/MapLearnerLanguage.js";
-import {learnerLanguageSerializer} from "@/src/presentation/response/serializers/mappings/LearnerLanguageSerializer.js";
+import {learnerLanguageDTO} from "@/src/presentation/response/dtos/Language/LearnerLanguageDTO.js";
 
 /**{@link LanguageController#updateUserLanguage}*/
 describe("PATCH users/me/languages/{languageCode}/", () => {
@@ -33,8 +33,8 @@ describe("PATCH users/me/languages/{languageCode}/", () => {
         const dbRecord = await context.em.findOneOrFail(MapLearnerLanguage, {language, learner: user.profile});
 
         expect(response.statusCode).to.equal(200);
-        expect(responseBody).toMatchObject(learnerLanguageSerializer.serialize(expectedMapping, {ignore: ["startedLearningOn", "lastOpened"]}));
-        expect(responseBody).toMatchObject(learnerLanguageSerializer.serialize(dbRecord));
+        expect(responseBody).toMatchObject(omit(learnerLanguageDTO.serialize(expectedMapping), ["startedLearningOn", "lastOpened"]));
+        expect(responseBody).toMatchObject(learnerLanguageDTO.serialize(dbRecord));
         const {addedOn: newAddedOn, lastOpened: newLastOpened} = responseBody;
         expect(newAddedOn).not.toEqual(oldAddedOn);
         expect(newLastOpened).not.toEqual(oldLastOpened);

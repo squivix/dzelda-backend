@@ -69,3 +69,26 @@ export function createComparator<T>(entityName: EntityClass<T>,
         return properties.reduce((acc, prop) => acc[prop], obj);
     }
 }
+
+export function omit<T extends Record<string, unknown>>(obj: T | T[], keys: (keyof T)[]) {
+    const omitKeys = (item: T) => {
+        const clone = structuredClone(item);
+        keys.forEach(k => delete clone[k]);
+        return clone;
+    };
+
+    return Array.isArray(obj) ? obj.map(omitKeys) : omitKeys(obj);
+}
+
+export function onlyKeep<T extends Record<string, unknown>>(obj: T | T[], keys: (keyof T)[]) {
+    const keyset = new Set(keys);
+    const keepKeys = (item: T) => {
+        const clone = structuredClone(item);
+        Object.keys(item).forEach(k => {
+            if (!keyset.has(k as keyof T)) delete clone[k as keyof T];
+        });
+        return clone;
+    };
+
+    return Array.isArray(obj) ? obj.map(keepKeys) : keepKeys(obj);
+}

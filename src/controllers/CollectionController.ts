@@ -17,6 +17,8 @@ import {validateFileObjectKey} from "@/src/controllers/controllerUtils.js";
 import {textContentValidator, textLevelValidator, textTitleValidator} from "@/src/validators/textValidators.js";
 import {collectionDTO} from "@/src/presentation/response/dtos/Collection/CollectionDTO.js";
 import {collectionSummaryDTO} from "@/src/presentation/response/dtos/Collection/CollectionSummaryDTO.js";
+import {collectionLoggedInDTO} from "@/src/presentation/response/dtos/Collection/CollectionLoggedInDTO.js";
+import {collectionSummaryLoggedInDTO} from "@/src/presentation/response/dtos/Collection/CollectionSummaryLoggedInDTO.js";
 
 class CollectionController {
     async getCollections(request: FastifyRequest, reply: FastifyReply) {
@@ -31,8 +33,8 @@ class CollectionController {
         });
         const queryParams = queryParamsValidator.parse(request.query);
         if (queryParams.addedBy == "me") {
-            if (!request.user || request.user instanceof AnonymousUser)
-                throw new UnauthenticatedAPIError(request.user);
+            if (!request.isLoggedIn)
+                throw new UnauthenticatedAPIError(request.user as AnonymousUser | null);
             queryParams.addedBy = request.user?.username;
         }
         const filters = {
@@ -48,7 +50,7 @@ class CollectionController {
             page: pagination.page,
             pageSize: pagination.pageSize,
             pageCount: Math.ceil(recordsCount / pagination.pageSize),
-            data: collectionSummaryDTO.serializeList(collections)
+            data: (request.isLoggedIn ? collectionSummaryLoggedInDTO : collectionSummaryDTO).serializeList(collections)
         });
     }
 
@@ -84,7 +86,7 @@ class CollectionController {
             image: body.image,
             texts: body.texts,
         }, request.user as User);
-        reply.status(201).send(collectionSummaryDTO.serialize(collection));
+        reply.status(201).send(collectionSummaryLoggedInDTO.serialize(collection));
     }
 
     async getCollection(request: FastifyRequest, reply: FastifyReply) {
@@ -96,7 +98,10 @@ class CollectionController {
 
         if (!collection)
             throw new NotFoundAPIError("Collection");
-        reply.status(200).send(collectionDTO.serialize(collection));
+        if (request.user && !(request.user instanceof AnonymousUser))
+            reply.status(200).send(collectionLoggedInDTO.serialize(collection));
+        else
+            reply.status(200).send(collectionDTO.serialize(collection));
     }
 
     async updateCollection(request: FastifyRequest, reply: FastifyReply) {
@@ -134,7 +139,7 @@ class CollectionController {
             textsOrder: body.textsOrder,
             isPublic: body.isPublic
         }, request.user as User);
-        reply.status(200).send(collectionDTO.serialize(updatedCollection));
+        reply.status(200).send(collectionLoggedInDTO.serialize(updatedCollection));
     }
 
     async deleteCollection(request: FastifyRequest, reply: FastifyReply) {
@@ -184,7 +189,7 @@ class CollectionController {
             page: pagination.page,
             pageSize: pagination.pageSize,
             pageCount: Math.ceil(recordsCount / pagination.pageSize),
-            data: collectionSummaryDTO.serializeList(collections)
+            data: collectionSummaryLoggedInDTO.serializeList(collections)
         });
     }
 
@@ -201,11 +206,11 @@ class CollectionController {
             throw new ValidationAPIError({collection: "not in a language the user is learning"});
         const existingCollectionMapping = await collectionService.findBookMarkerCollectionMapping({collection: collection, bookmarker: user.profile});
         if (existingCollectionMapping) {
-            reply.status(200).send(collectionDTO.serialize(existingCollectionMapping.collection));
+            reply.status(200).send(collectionLoggedInDTO.serialize(existingCollectionMapping.collection));
             return;
         }
         const newCollectionMapping = await collectionService.addCollectionToUserBookmarks(collection, request.user as User);
-        reply.status(201).send(collectionDTO.serialize(newCollectionMapping.collection));
+        reply.status(201).send(collectionLoggedInDTO.serialize(newCollectionMapping.collection));
     }
 
     async removeCollectionFromUserBookmarks(request: FastifyRequest, reply: FastifyReply) {

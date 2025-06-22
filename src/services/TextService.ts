@@ -75,7 +75,7 @@ export class TextService {
         dbOrderBy.push({id: "asc"});
 
         let [texts, totalCount] = await this.textRepo.findAndCount(dbFilters, {
-            populate: ["language", "addedBy.user", "collection", "collection.language", "collection.addedBy.user"],
+            populate: ["language", "orderInCollection", "addedBy.user", "collection", "collection.language", "collection.addedBy.user"],
             orderBy: dbOrderBy,
             limit: pagination.pageSize,
             offset: pagination.pageSize * (pagination.page - 1),
@@ -136,8 +136,7 @@ export class TextService {
             offset: pagination.pageSize * (pagination.page - 1),
         });
 
-        if (user && !(user instanceof AnonymousUser))
-            await this.textRepo.annotateTextsWithUserData(textHistoryEntries.map(e => e.text), user);
+        await this.textRepo.annotateTextsWithUserData(textHistoryEntries.map(e => e.text), user);
         return [textHistoryEntries, totalCount];
     }
 
@@ -221,9 +220,11 @@ export class TextService {
             if (updatedTextData.collection == null) {
                 text.collection = null;
                 text.orderInCollection = null;
+                text.isLastInCollection = null;
             } else if (text.collection?.id !== updatedTextData.collection.id) {
-                text.collection = updatedTextData.collection;
                 text.orderInCollection = await updatedTextData.collection.texts.loadCount(true);
+                text.isLastInCollection = true;
+                text.collection = updatedTextData.collection;
             }
         }
         if (updatedTextData.isPublic !== undefined)
@@ -258,7 +259,7 @@ export class TextService {
     async addTextToUserHistory(text: Text, user: User) {
         const historyEntry = this.em.create(TextHistoryEntry, {pastViewer: user.profile, text: text});
         await this.em.flush();
-        await this.em.refresh(historyEntry.text, {populate: ["addedBy.user"]});
+        await this.em.refresh(historyEntry.text, {populate: ["orderInCollection", "addedBy.user"]});
         return historyEntry;
     }
 

@@ -22,6 +22,7 @@ import {emailTransporter} from "@/src/nodemailer.config.js";
 import {DOMAIN_NAME} from "@/src/constants.js";
 import {textDTO} from "@/src/presentation/response/dtos/Text/TextDTO.js";
 import {textHistoryEntryDTO} from "@/src/presentation/response/dtos/TextHistoryEntry/TextHistoryEntryDTO.js";
+import {textLoggedInDTO} from "@/src/presentation/response/dtos/Text/TextLoggedInDTO.js";
 
 class TextController {
     async getTexts(request: FastifyRequest, reply: FastifyReply) {
@@ -58,7 +59,7 @@ class TextController {
             page: pagination.page,
             pageSize: pagination.pageSize,
             pageCount: Math.ceil(recordsCount / pagination.pageSize),
-            data: textDTO.serializeList(texts)
+            data: (request.isLoggedIn ? textLoggedInDTO : textDTO).serializeList(texts)
         });
     }
 
@@ -108,7 +109,7 @@ class TextController {
             image: body.image,
             audio: body.audio,
         }, user, {parsingPriority: 2});
-        reply.status(201).send(textDTO.serialize(text));
+        reply.status(201).send(textLoggedInDTO.serialize(text));
     }
 
     async getText(request: FastifyRequest, reply: FastifyReply) {
@@ -120,7 +121,7 @@ class TextController {
 
         if (!text)
             throw new NotFoundAPIError("Text");
-        reply.status(200).send(textDTO.serialize(text));
+        reply.status(200).send((request.isLoggedIn ? textLoggedInDTO : textDTO).serialize(text));
     }
 
     async updateText(request: FastifyRequest, reply: FastifyReply) {
@@ -173,7 +174,7 @@ class TextController {
             image: body.image,
             audio: body.audio
         }, request.user as User);
-        reply.status(200).send(textDTO.serialize(updatedText));
+        reply.status(200).send(textLoggedInDTO.serialize(updatedText));
     }
 
     async deleteText(request: FastifyRequest, reply: FastifyReply) {
@@ -217,7 +218,6 @@ class TextController {
             searchQuery: queryParams.searchQuery,
             level: queryParams.level,
             hasAudio: queryParams.hasAudio,
-            isInHistory: true
         };
         const sort = {sortBy: queryParams.sortBy, sortOrder: queryParams.sortOrder};
         const pagination = {page: queryParams.page, pageSize: queryParams.pageSize};
@@ -303,7 +303,7 @@ class TextController {
             page: pagination.page,
             pageSize: pagination.pageSize,
             pageCount: Math.ceil(recordsCount / pagination.pageSize),
-            data: textDTO.serializeList(texts)
+            data: textLoggedInDTO.serializeList(texts)
         });
     }
 
@@ -320,7 +320,7 @@ class TextController {
         if (!user.profile.languagesLearning.contains(text.language))
             throw new ValidationAPIError({text: "not in a language the user is learning"});
         const textBookmark = await textService.addTextToUserBookmarks(text, user);
-        reply.status(201).send(textDTO.serialize(textBookmark.text));
+        reply.status(201).send(textLoggedInDTO.serialize(textBookmark.text));
     }
 
     async removeTextFromUserBookmarks(request: FastifyRequest, reply: FastifyReply) {
@@ -372,7 +372,7 @@ class TextController {
             page: pagination.page,
             pageSize: pagination.pageSize,
             pageCount: Math.ceil(recordsCount / pagination.pageSize),
-            data: textDTO.serializeList(texts)
+            data: textLoggedInDTO.serializeList(texts)
         });
     }
 

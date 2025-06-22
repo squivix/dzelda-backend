@@ -1,6 +1,6 @@
 import {describe, expect, test, TestContext} from "vitest";
 import {InjectOptions} from "light-my-request";
-import {fetchRequest} from "@/test/integration/utils.js";
+import {fetchRequest} from "@/test/integration/integrationTestUtils.js";
 import {TextHistoryEntry} from "@/src/models/entities/TextHistoryEntry.js";
 import {MapLearnerDictionary} from "@/src/models/entities/MapLearnerDictionary.js";
 import {MapLearnerVocab} from "@/src/models/entities/MapLearnerVocab.js";

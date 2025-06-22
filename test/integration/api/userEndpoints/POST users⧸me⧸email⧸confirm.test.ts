@@ -1,5 +1,5 @@
 import {describe, expect, test, TestContext} from "vitest";
-import {fetchRequest} from "@/test/integration/utils.js";
+import {fetchRequest} from "@/test/integration/integrationTestUtils.js";
 import crypto from "crypto";
 import {EMAIL_CONFIRM_TOKEN_LENGTH} from "@/src/constants.js";
 import {EmailConfirmationToken} from "@/src/models/entities/auth/EmailConfirmationToken.js";

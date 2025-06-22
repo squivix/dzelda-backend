@@ -10,7 +10,7 @@ class ProfileDTO extends CustomDTO<Profile> {
             profilePicture: profile.profilePicture,
             bio: profile.bio,
             isPublic: profile.isPublic
-        }
+        };
     }
 }
 

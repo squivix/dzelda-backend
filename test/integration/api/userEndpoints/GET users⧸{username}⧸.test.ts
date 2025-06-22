@@ -1,9 +1,10 @@
 import {describe, expect, test, TestContext} from "vitest";
 import {InjectOptions} from "light-my-request";
-import {fetchRequest} from "@/test/integration/utils.js";
+import {fetchRequest} from "@/test/integration/integrationTestUtils.js";
 import {Session} from "@/src/models/entities/auth/Session.js";
-import {userSerializer} from "@/src/presentation/response/serializers/entities/UserSerializer.js";
 import {faker} from "@faker-js/faker";
+import {userPrivateDTO} from "@/src/presentation/response/dtos/User/UserPrivateDTO.js";
+import {userPublicDTO} from "@/src/presentation/response/dtos/User/UserPublicDTO.js";
 
 /**{@link UserController#getUser}*/
 describe("GET users/{username}/", function () {
@@ -35,15 +36,15 @@ describe("GET users/{username}/", function () {
 
         const response = await makeRequest("me", session.token);
         expect(response.statusCode).to.equal(200);
-        expect(response.json()).toEqual(userSerializer.serialize(user));
+        expect(response.json()).toEqual(userPrivateDTO.serialize(user));
     });
-    test<TestContext>("If username is not me and authenticated as user return user with email", async (context) => {
+    test<TestContext>("If username is same as authenticated as user's return user with email", async (context) => {
         const user = await context.userFactory.createOne();
         const session = await context.sessionFactory.createOne({user: user});
 
         const response = await makeRequest(user.username, session.token);
         expect(response.statusCode).to.equal(200);
-        expect(response.json()).toEqual(userSerializer.serialize(user));
+        expect(response.json()).toEqual(userPrivateDTO.serialize(user));
     });
     describe("If profile is not public and not authenticated as user return 404", () => {
         test<TestContext>("If not authenticated return 404", async (context) => {
@@ -67,7 +68,7 @@ describe("GET users/{username}/", function () {
 
             const response = await makeRequest(user.username);
             expect(response.statusCode).to.equal(200);
-            expect(response.json()).toEqual(userSerializer.serialize(user, {ignore: ["email", "isEmailConfirmed", "isPendingEmailChange"]}));
+            expect(response.json()).toEqual(userPublicDTO.serialize(user));
         });
         test<TestContext>("If authenticated as other user return user without email", async (context) => {
             const user = await context.userFactory.createOne({profile: {isPublic: true}});
@@ -76,7 +77,7 @@ describe("GET users/{username}/", function () {
 
             const response = await makeRequest(user.username, session.token);
             expect(response.statusCode).to.equal(200);
-            expect(response.json()).toEqual(userSerializer.serialize(user, {ignore: ["email", "isEmailConfirmed", "isPendingEmailChange"]}));
+            expect(response.json()).toEqual(userPublicDTO.serialize(user));
         });
     });
     test<TestContext>("If username does not exist return 404", async (context) => {

@@ -7,7 +7,7 @@ class VocabVariantDTO extends CustomDTO<VocabVariant> {
             id: vocabVariant.id,
             text: vocabVariant.text,
             ttsPronunciationUrl: vocabVariant.ttsPronunciations.getItems().pop()?.url ?? null,
-        }
+        };
     }
 }
 

@@ -1,13 +1,13 @@
 import {describe, expect, test, TestContext, vi} from "vitest";
-import {fetchRequest, parseUrlQueryString} from "@/test/integration/utils.js";
+import {fetchRequest, parseUrlQueryString} from "@/test/integration/integrationTestUtils.js";
 import {DOMAIN_NAME} from "@/src/constants.js";
 import {emailTransporter} from "@/src/nodemailer.config.js";
-import {userSerializer} from "@/src/presentation/response/serializers/entities/UserSerializer.js";
 import {User} from "@/src/models/entities/auth/User.js";
 import {EmailConfirmationToken} from "@/src/models/entities/auth/EmailConfirmationToken.js";
 import {expiringTokenHasher} from "@/src/utils/security/ExpiringTokenHasher.js";
 import {faker} from "@faker-js/faker";
 import {BANNED_LITERAL_USERNAMES} from "@/src/validators/userValidator.js";
+import {userSignUpDTO} from "@/src/presentation/response/dtos/User/UserSignUpDTO.js";
 
 /**{@link UserController#signUp}*/
 describe("POST users/", function () {
@@ -29,7 +29,7 @@ describe("POST users/", function () {
             email: newUserData.email
         });
         expect(response.statusCode).to.equal(201);
-        expect(response.json()).toEqual(userSerializer.serialize(newUserData, {ignore: ["profile"]}));
+        expect(response.json()).toEqual(userSignUpDTO.serialize(newUserData));
 
         const newUser = await context.em.findOne(User, {username: newUserData.username}, {populate: ["profile"]});
         expect(newUser).not.toBeNull();

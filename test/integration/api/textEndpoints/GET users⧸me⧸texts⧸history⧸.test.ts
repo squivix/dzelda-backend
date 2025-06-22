@@ -1,10 +1,10 @@
 import {describe, expect, test, TestContext} from "vitest";
 import {InjectOptions} from "light-my-request";
-import {buildQueryString, createComparator, fetchRequest} from "@/test/integration/utils.js";
+import {buildQueryString, createComparator, fetchRequest} from "@/test/integration/integrationTestUtils.js";
 import {TextHistoryEntry} from "@/src/models/entities/TextHistoryEntry.js";
-import {textHistoryEntrySerializer} from "@/src/presentation/response/serializers/mappings/TextHistoryEntrySerializer.js";
 import {faker} from "@faker-js/faker";
 import {randomCase} from "@/test/utils.js";
+import {textHistoryEntryDTO} from "@/src/presentation/response/dtos/TextHistoryEntry/TextHistoryEntryDTO.js";
 
 /**{@link TextController#getUserTextsHistory}*/
 describe("GET users/me/texts/history/", () => {
@@ -39,7 +39,7 @@ describe("GET users/me/texts/history/", () => {
             page: queryDefaults.pagination.page,
             pageSize: queryDefaults.pagination.pageSize,
             pageCount: Math.ceil(recordsCount / queryDefaults.pagination.pageSize),
-            data: textHistoryEntrySerializer.serializeList(expectedHistoryEntries)
+            data: textHistoryEntryDTO.serializeList(expectedHistoryEntries)
         });
     });
     describe("test languageCode filter", () => {
@@ -64,7 +64,7 @@ describe("GET users/me/texts/history/", () => {
                 page: queryDefaults.pagination.page,
                 pageSize: queryDefaults.pagination.pageSize,
                 pageCount: Math.ceil(recordsCount / queryDefaults.pagination.pageSize),
-                data: textHistoryEntrySerializer.serializeList(expectedHistoryEntries)
+                data: textHistoryEntryDTO.serializeList(expectedHistoryEntries)
             });
         });
         test<TestContext>("If language does not exist return empty list", async (context) => {
@@ -117,7 +117,7 @@ describe("GET users/me/texts/history/", () => {
                 page: queryDefaults.pagination.page,
                 pageSize: queryDefaults.pagination.pageSize,
                 pageCount: Math.ceil(recordsCount / queryDefaults.pagination.pageSize),
-                data: textHistoryEntrySerializer.serializeList(expectedHistoryEntries)
+                data: textHistoryEntryDTO.serializeList(expectedHistoryEntries)
             });
         });
         test<TestContext>("If addedBy is me return texts added by that user", async (context) => {
@@ -142,7 +142,7 @@ describe("GET users/me/texts/history/", () => {
                 page: queryDefaults.pagination.page,
                 pageSize: queryDefaults.pagination.pageSize,
                 pageCount: Math.ceil(recordsCount / queryDefaults.pagination.pageSize),
-                data: textHistoryEntrySerializer.serializeList(expectedHistoryEntries)
+                data: textHistoryEntryDTO.serializeList(expectedHistoryEntries)
             });
         });
         test<TestContext>("If user does not exist return empty list", async (context) => {
@@ -195,7 +195,7 @@ describe("GET users/me/texts/history/", () => {
                 page: queryDefaults.pagination.page,
                 pageSize: queryDefaults.pagination.pageSize,
                 pageCount: Math.ceil(recordsCount / queryDefaults.pagination.pageSize),
-                data: textHistoryEntrySerializer.serializeList(expectedHistoryEntries)
+                data: textHistoryEntryDTO.serializeList(expectedHistoryEntries)
             });
         });
         test<TestContext>("If searchQuery is invalid return 400", async (context) => {
@@ -245,7 +245,7 @@ describe("GET users/me/texts/history/", () => {
                 page: queryDefaults.pagination.page,
                 pageSize: queryDefaults.pagination.pageSize,
                 pageCount: Math.ceil(recordsCount / queryDefaults.pagination.pageSize),
-                data: textHistoryEntrySerializer.serializeList(expectedHistoryEntries)
+                data: textHistoryEntryDTO.serializeList(expectedHistoryEntries)
             });
         });
         test<TestContext>("If hasAudio is false return texts with no audio", async (context) => {
@@ -269,7 +269,7 @@ describe("GET users/me/texts/history/", () => {
                 page: queryDefaults.pagination.page,
                 pageSize: queryDefaults.pagination.pageSize,
                 pageCount: Math.ceil(recordsCount / queryDefaults.pagination.pageSize),
-                data: textHistoryEntrySerializer.serializeList(expectedHistoryEntries)
+                data: textHistoryEntryDTO.serializeList(expectedHistoryEntries)
             });
         });
         test<TestContext>("If hasAudio is invalid return 400", async (context) => {
@@ -301,7 +301,7 @@ describe("GET users/me/texts/history/", () => {
                     page: queryDefaults.pagination.page,
                     pageSize: queryDefaults.pagination.pageSize,
                     pageCount: Math.ceil(recordsCount / queryDefaults.pagination.pageSize),
-                    data: textHistoryEntrySerializer.serializeList(expectedHistoryEntries)
+                    data: textHistoryEntryDTO.serializeList(expectedHistoryEntries)
                 });
             });
             test<TestContext>("test sortBy createdDate", async (context) => {
@@ -331,7 +331,7 @@ describe("GET users/me/texts/history/", () => {
                     page: queryDefaults.pagination.page,
                     pageSize: queryDefaults.pagination.pageSize,
                     pageCount: Math.ceil(recordsCount / queryDefaults.pagination.pageSize),
-                    data: textHistoryEntrySerializer.serializeList(expectedHistoryEntries)
+                    data: textHistoryEntryDTO.serializeList(expectedHistoryEntries)
                 });
             });
             test<TestContext>("test sortBy pastViewersCount", async (context) => {
@@ -357,7 +357,7 @@ describe("GET users/me/texts/history/", () => {
                     page: queryDefaults.pagination.page,
                     pageSize: queryDefaults.pagination.pageSize,
                     pageCount: Math.ceil(recordsCount / queryDefaults.pagination.pageSize),
-                    data: textHistoryEntrySerializer.serializeList(expectedHistoryEntries)
+                    data: textHistoryEntryDTO.serializeList(expectedHistoryEntries)
                 });
             });
             test<TestContext>("test sortBy timeViewed", async (context) => {
@@ -386,7 +386,7 @@ describe("GET users/me/texts/history/", () => {
                     page: queryDefaults.pagination.page,
                     pageSize: queryDefaults.pagination.pageSize,
                     pageCount: Math.ceil(recordsCount / queryDefaults.pagination.pageSize),
-                    data: textHistoryEntrySerializer.serializeList(expectedHistoryEntries)
+                    data: textHistoryEntryDTO.serializeList(expectedHistoryEntries)
                 });
             });
             test<TestContext>("if sortBy is invalid return 400", async (context) => {
@@ -418,7 +418,7 @@ describe("GET users/me/texts/history/", () => {
                     page: queryDefaults.pagination.page,
                     pageSize: queryDefaults.pagination.pageSize,
                     pageCount: Math.ceil(recordsCount / queryDefaults.pagination.pageSize),
-                    data: textHistoryEntrySerializer.serializeList(expectedHistoryEntries)
+                    data: textHistoryEntryDTO.serializeList(expectedHistoryEntries)
                 });
             });
             test<TestContext>("If sortOrder is desc return the texts in descending order", async (context) => {
@@ -441,7 +441,7 @@ describe("GET users/me/texts/history/", () => {
                     page: queryDefaults.pagination.page,
                     pageSize: queryDefaults.pagination.pageSize,
                     pageCount: Math.ceil(recordsCount / queryDefaults.pagination.pageSize),
-                    data: textHistoryEntrySerializer.serializeList(expectedHistoryEntries)
+                    data: textHistoryEntryDTO.serializeList(expectedHistoryEntries)
                 });
             });
             test<TestContext>("If sortBy is invalid return 400", async (context) => {
@@ -477,7 +477,7 @@ describe("GET users/me/texts/history/", () => {
                     page: page,
                     pageSize: pageSize,
                     pageCount: Math.ceil(recordsCount / pageSize),
-                    data: textHistoryEntrySerializer.serializeList(expectedHistoryEntries)
+                    data: textHistoryEntryDTO.serializeList(expectedHistoryEntries)
                 });
             });
             test<TestContext>("If page is 2 return the second page of results", async (context) => {
@@ -502,7 +502,7 @@ describe("GET users/me/texts/history/", () => {
                     page: page,
                     pageSize: pageSize,
                     pageCount: Math.ceil(recordsCount / pageSize),
-                    data: textHistoryEntrySerializer.serializeList(expectedHistoryEntries)
+                    data: textHistoryEntryDTO.serializeList(expectedHistoryEntries)
                 });
             });
             test<TestContext>("If page is last return the last page of results", async (context) => {
@@ -528,7 +528,7 @@ describe("GET users/me/texts/history/", () => {
                     page: page,
                     pageSize: pageSize,
                     pageCount: Math.ceil(recordsCount / pageSize),
-                    data: textHistoryEntrySerializer.serializeList(expectedHistoryEntries)
+                    data: textHistoryEntryDTO.serializeList(expectedHistoryEntries)
                 });
             });
             test<TestContext>("If page is more than last return empty page", async (context) => {
@@ -596,7 +596,7 @@ describe("GET users/me/texts/history/", () => {
                     page: page,
                     pageSize: pageSize,
                     pageCount: Math.ceil(recordsCount / pageSize),
-                    data: textHistoryEntrySerializer.serializeList(expectedHistoryEntries)
+                    data: textHistoryEntryDTO.serializeList(expectedHistoryEntries)
                 });
                 expect(response.json().data.length).toBeLessThanOrEqual(pageSize);
             });
@@ -662,7 +662,7 @@ describe("GET users/me/texts/history/", () => {
                     page: queryDefaults.pagination.page,
                     pageSize: queryDefaults.pagination.pageSize,
                     pageCount: Math.ceil(recordsCount / queryDefaults.pagination.pageSize),
-                    data: textHistoryEntrySerializer.serializeList(expectedHistoryEntries)
+                    data: textHistoryEntryDTO.serializeList(expectedHistoryEntries)
                 });
             });
         })
@@ -710,7 +710,7 @@ describe("GET users/me/texts/history/", () => {
                         page: queryDefaults.pagination.page,
                         pageSize: queryDefaults.pagination.pageSize,
                         pageCount: Math.ceil(recordsCount / queryDefaults.pagination.pageSize),
-                        data: textHistoryEntrySerializer.serializeList(expectedEntries)
+                        data: textHistoryEntryDTO.serializeList(expectedEntries)
                     });
                 });
             });
@@ -737,7 +737,7 @@ describe("GET users/me/texts/history/", () => {
                     page: queryDefaults.pagination.page,
                     pageSize: queryDefaults.pagination.pageSize,
                     pageCount: Math.ceil(recordsCount / queryDefaults.pagination.pageSize),
-                    data: textHistoryEntrySerializer.serializeList(expectedEntries)
+                    data: textHistoryEntryDTO.serializeList(expectedEntries)
                 });
             });
         })

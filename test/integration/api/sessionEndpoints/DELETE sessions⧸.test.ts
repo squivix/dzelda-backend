@@ -1,5 +1,5 @@
 import {describe, expect, test, TestContext} from "vitest";
-import {fetchRequest} from "@/test/integration/utils.js";
+import {fetchRequest} from "@/test/integration/integrationTestUtils.js";
 import {Session} from "@/src/models/entities/auth/Session.js";
 
 /**{@link UserController#logout}*/

@@ -15,7 +15,7 @@ class LanguageDTO extends CustomDTO<Language> {
             color: language.color,
             levelThresholds: language.levelThresholds,
             learnersCount: Number(language.learnersCount),
-        }
+        };
     }
 }
 

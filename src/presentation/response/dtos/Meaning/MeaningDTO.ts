@@ -17,7 +17,7 @@ class MeaningDTO extends CustomDTO<Meaning> {
             attributionSource: meaning.attributionSource ? (attributionSourceDTO.serialize(meaning.attributionSource)) : null,
             attribution: meaning.attribution,
             vocabVariant: meaning.vocabVariant ? (vocabVariantDTO.serialize(meaning.vocabVariant)) : null
-        }
+        };
     }
 }
 

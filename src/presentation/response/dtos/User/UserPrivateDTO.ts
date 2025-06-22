@@ -11,7 +11,7 @@ class UserPrivateDTO extends CustomDTO<User> {
             isEmailConfirmed: user.isEmailConfirmed,
             isBanned: user.isBanned,
             isPendingEmailChange: user.isPendingEmailChange
-        }
+        };
     }
 }
 

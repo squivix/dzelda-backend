@@ -1,6 +1,6 @@
 import {describe, expect, test, TestContext} from "vitest";
 import {InjectOptions} from "light-my-request";
-import {buildQueryString, fetchRequest} from "@/test/integration/utils.js";
+import {buildQueryString, fetchRequest} from "@/test/integration/integrationTestUtils.js";
 import {faker} from "@faker-js/faker";
 
 /**{@link CollectionController#deleteCollection}*/

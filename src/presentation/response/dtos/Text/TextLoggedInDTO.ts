@@ -3,7 +3,7 @@ import {Text} from "@/src/models/entities/Text.js";
 import {collectionSummaryDTO} from "@/src/presentation/response/dtos/Collection/CollectionSummaryDTO.js";
 
 
-class TextDTO extends CustomDTO<Text> {
+class TextLoggedInDTO extends CustomDTO<Text> {
     serialize(text: Text): any {
         return {
             id: text.id,
@@ -23,8 +23,11 @@ class TextDTO extends CustomDTO<Text> {
             level: text.level,
             language: text.language.code,
             pastViewersCount: Number(text.pastViewersCount),
+
+            vocabsByLevel: text.vocabsByLevel,
+            isBookmarked: text.isBookmarked
         };
     }
 }
 
-export const textDTO = new TextDTO()
+export const textLoggedInDTO = new TextLoggedInDTO()

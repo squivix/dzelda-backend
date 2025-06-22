@@ -14,7 +14,7 @@ class HumanPronunciationDTO extends CustomDTO<HumanPronunciation> {
             speakerRegion: humanPronunciation.speakerRegion,
             attributionSource: humanPronunciation.attributionSource ? attributionSourceDTO.serialize(humanPronunciation.attributionSource) : null,
             attribution: humanPronunciation.attribution,
-        }
+        };
     }
 }
 

@@ -1,10 +1,10 @@
 import {describe, expect, test, TestContext} from "vitest";
 import {InjectOptions} from "light-my-request";
-import {buildQueryString, createComparator, fetchRequest} from "@/test/integration/utils.js";
+import {buildQueryString, createComparator, fetchRequest} from "@/test/integration/integrationTestUtils.js";
 import {Vocab} from "@/src/models/entities/Vocab.js";
-import {vocabSerializer} from "@/src/presentation/response/serializers/entities/VocabSerializer.js";
 import {randomCase} from "@/test/utils.js";
 import {faker} from "@faker-js/faker";
+import {vocabDTO} from "@/src/presentation/response/dtos/Vocab/VocabDTO.js";
 
 /**{@link VocabController#getVocabs}*/
 describe("GET vocabs/", () => {
@@ -32,7 +32,7 @@ describe("GET vocabs/", () => {
             page: queryDefaults.pagination.page,
             pageSize: queryDefaults.pagination.pageSize,
             pageCount: Math.ceil(recordsCount / queryDefaults.pagination.pageSize),
-            data: vocabSerializer.serializeList(expectedVocabs)
+            data: vocabDTO.serializeList(expectedVocabs)
         });
     });
     describe("test filters", () => {
@@ -51,7 +51,7 @@ describe("GET vocabs/", () => {
                     page: queryDefaults.pagination.page,
                     pageSize: queryDefaults.pagination.pageSize,
                     pageCount: Math.ceil(recordsCount / queryDefaults.pagination.pageSize),
-                    data: vocabSerializer.serializeList(expectedVocabs)
+                    data: vocabDTO.serializeList(expectedVocabs)
                 });
             });
             test<TestContext>("If language does not exist return empty vocab list", async (context) => {
@@ -96,7 +96,7 @@ describe("GET vocabs/", () => {
                     page: queryDefaults.pagination.page,
                     pageSize: queryDefaults.pagination.pageSize,
                     pageCount: Math.ceil(recordsCount / queryDefaults.pagination.pageSize),
-                    data: vocabSerializer.serializeList(expectedVocabs)
+                    data: vocabDTO.serializeList(expectedVocabs)
                 });
             })
             ;
@@ -137,7 +137,7 @@ describe("GET vocabs/", () => {
                     page: queryDefaults.pagination.page,
                     pageSize: queryDefaults.pagination.pageSize,
                     pageCount: Math.ceil(recordsCount / queryDefaults.pagination.pageSize),
-                    data: vocabSerializer.serializeList(expectedVocabs)
+                    data: vocabDTO.serializeList(expectedVocabs)
                 });
             });
             test<TestContext>("test sortBy learnersCount", async (context) => {
@@ -157,7 +157,7 @@ describe("GET vocabs/", () => {
                     page: queryDefaults.pagination.page,
                     pageSize: queryDefaults.pagination.pageSize,
                     pageCount: Math.ceil(recordsCount / queryDefaults.pagination.pageSize),
-                    data: vocabSerializer.serializeList(expectedVocabs)
+                    data: vocabDTO.serializeList(expectedVocabs)
                 });
             });
             test<TestContext>("test sortBy textsCount", async (context) => {
@@ -177,7 +177,7 @@ describe("GET vocabs/", () => {
                     page: queryDefaults.pagination.page,
                     pageSize: queryDefaults.pagination.pageSize,
                     pageCount: Math.ceil(recordsCount / queryDefaults.pagination.pageSize),
-                    data: vocabSerializer.serializeList(expectedVocabs)
+                    data: vocabDTO.serializeList(expectedVocabs)
                 });
             });
             test<TestContext>("If sortBy is invalid return 400", async (context) => {
@@ -201,7 +201,7 @@ describe("GET vocabs/", () => {
                     page: queryDefaults.pagination.page,
                     pageSize: queryDefaults.pagination.pageSize,
                     pageCount: Math.ceil(recordsCount / queryDefaults.pagination.pageSize),
-                    data: vocabSerializer.serializeList(expectedVocabs)
+                    data: vocabDTO.serializeList(expectedVocabs)
                 });
             });
             test<TestContext>("If sortOrder is desc return the vocabs in descending order", async (context) => {
@@ -219,7 +219,7 @@ describe("GET vocabs/", () => {
                     page: queryDefaults.pagination.page,
                     pageSize: queryDefaults.pagination.pageSize,
                     pageCount: Math.ceil(recordsCount / queryDefaults.pagination.pageSize),
-                    data: vocabSerializer.serializeList(expectedVocabs)
+                    data: vocabDTO.serializeList(expectedVocabs)
                 });
             });
             test<TestContext>("If sortOrder is invalid return 400", async (context) => {
@@ -245,7 +245,7 @@ describe("GET vocabs/", () => {
                     page: page,
                     pageSize: pageSize,
                     pageCount: Math.ceil(recordsCount / pageSize),
-                    data: vocabSerializer.serializeList(expectedVocabs)
+                    data: vocabDTO.serializeList(expectedVocabs)
                 });
                 expect(response.json().data.length).toBeLessThanOrEqual(pageSize);
             });
@@ -264,7 +264,7 @@ describe("GET vocabs/", () => {
                     page: page,
                     pageSize: pageSize,
                     pageCount: Math.ceil(recordsCount / pageSize),
-                    data: vocabSerializer.serializeList(expectedVocabs)
+                    data: vocabDTO.serializeList(expectedVocabs)
                 });
                 expect(response.json().data.length).toBeLessThanOrEqual(pageSize);
             });
@@ -284,7 +284,7 @@ describe("GET vocabs/", () => {
                     page: page,
                     pageSize: pageSize,
                     pageCount: Math.ceil(recordsCount / pageSize),
-                    data: vocabSerializer.serializeList(expectedVocabs)
+                    data: vocabDTO.serializeList(expectedVocabs)
                 });
                 expect(response.json().data.length).toBeLessThanOrEqual(pageSize);
             });
@@ -336,7 +336,7 @@ describe("GET vocabs/", () => {
                     page: page,
                     pageSize: pageSize,
                     pageCount: Math.ceil(recordsCount / pageSize),
-                    data: vocabSerializer.serializeList(expectedVocabs)
+                    data: vocabDTO.serializeList(expectedVocabs)
                 });
                 expect(response.json().data.length).toBeLessThanOrEqual(pageSize);
             });

@@ -1,5 +1,5 @@
 import {describe, expect, test, TestContext, vi} from "vitest";
-import {fetchRequest, parseUrlQueryString} from "@/test/integration/utils.js";
+import {fetchRequest, parseUrlQueryString} from "@/test/integration/integrationTestUtils.js";
 import {BASE_URL, PASSWORD_RESET_TOKEN_LENGTH} from "@/src/constants.js";
 import {emailTransporter} from "@/src/nodemailer.config.js";
 import {PasswordResetToken} from "@/src/models/entities/auth/PasswordResetToken.js";

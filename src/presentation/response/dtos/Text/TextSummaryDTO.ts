@@ -10,18 +10,16 @@ class TextSummaryDTO extends CustomDTO<Text> {
             audio: text.audio,
             image: text.image,
             collection: text.collection ? text.collection.id : null,
-            orderInCollection: text.orderInCollection ?? undefined,
-            isLastInCollection: text.isLastInCollection ?? undefined,
+            orderInCollection: text.orderInCollection,
+            isLastInCollection: text.isLastInCollection,
             isProcessing: text.isProcessing,
             addedOn: text.addedOn.toISOString(),
             addedBy: text.addedBy.user.username,
             isPublic: text.isPublic,
             level: text.level,
             language: text.language.code,
-            vocabsByLevel: text.vocabsByLevel,
             pastViewersCount: Number(text.pastViewersCount),
-            isBookmarked: text.isBookmarked
-        }
+        };
     }
 }
 

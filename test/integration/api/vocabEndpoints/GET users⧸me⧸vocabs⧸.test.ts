@@ -1,12 +1,12 @@
 import {describe, expect, test, TestContext} from "vitest";
 import {InjectOptions} from "light-my-request";
-import {buildQueryString, createComparator, fetchRequest} from "@/test/integration/utils.js";
+import {buildQueryString, createComparator, fetchRequest} from "@/test/integration/integrationTestUtils.js";
 import {Vocab} from "@/src/models/entities/Vocab.js";
 import {MapLearnerVocab} from "@/src/models/entities/MapLearnerVocab.js";
-import {learnerVocabSerializer} from "@/src/presentation/response/serializers/mappings/LearnerVocabSerializer.js";
 import {randomCase, randomEnum, randomEnums} from "@/test/utils.js";
 import {VocabLevel} from "dzelda-common";
 import {faker} from "@faker-js/faker";
+import {learnerVocabDTO} from "@/src/presentation/response/dtos/Vocab/LearnerVocabDTO.js";
 
 /**{@link VocabController#getUserVocabs}*/
 describe("GET users/me/vocabs/", () => {
@@ -44,7 +44,7 @@ describe("GET users/me/vocabs/", () => {
             page: queryDefaults.pagination.page,
             pageSize: queryDefaults.pagination.pageSize,
             pageCount: Math.ceil(recordsCount / queryDefaults.pagination.pageSize),
-            data: learnerVocabSerializer.serializeList(expectedMappings)
+            data: learnerVocabDTO.serializeList(expectedMappings)
         });
     });
     describe("test languageCode filter", () => {
@@ -71,7 +71,7 @@ describe("GET users/me/vocabs/", () => {
                 page: queryDefaults.pagination.page,
                 pageSize: queryDefaults.pagination.pageSize,
                 pageCount: Math.ceil(recordsCount / queryDefaults.pagination.pageSize),
-                data: learnerVocabSerializer.serializeList(expectedMappings)
+                data: learnerVocabDTO.serializeList(expectedMappings)
             });
         });
         test<TestContext>("If language does not exist return empty vocab list", async (context) => {
@@ -121,7 +121,7 @@ describe("GET users/me/vocabs/", () => {
                 page: queryDefaults.pagination.page,
                 pageSize: queryDefaults.pagination.pageSize,
                 pageCount: Math.ceil(recordsCount / queryDefaults.pagination.pageSize),
-                data: learnerVocabSerializer.serializeList(expectedMappings)
+                data: learnerVocabDTO.serializeList(expectedMappings)
             });
         });
         test<TestContext>("If multiple levels are sent return vocabs in any of those levels", async (context) => {
@@ -148,7 +148,7 @@ describe("GET users/me/vocabs/", () => {
                 page: queryDefaults.pagination.page,
                 pageSize: queryDefaults.pagination.pageSize,
                 pageCount: Math.ceil(recordsCount / queryDefaults.pagination.pageSize),
-                data: learnerVocabSerializer.serializeList(expectedMappings)
+                data: learnerVocabDTO.serializeList(expectedMappings)
             });
         });
         test<TestContext>("If level filter is invalid return 400", async (context) => {
@@ -183,7 +183,7 @@ describe("GET users/me/vocabs/", () => {
                 page: queryDefaults.pagination.page,
                 pageSize: queryDefaults.pagination.pageSize,
                 pageCount: Math.ceil(recordsCount / queryDefaults.pagination.pageSize),
-                data: learnerVocabSerializer.serializeList(expectedMappings)
+                data: learnerVocabDTO.serializeList(expectedMappings)
             });
         });
         test<TestContext>("If searchQuery is invalid return 400", async (context) => {
@@ -236,7 +236,7 @@ describe("GET users/me/vocabs/", () => {
                     page: queryDefaults.pagination.page,
                     pageSize: queryDefaults.pagination.pageSize,
                     pageCount: Math.ceil(recordsCount / queryDefaults.pagination.pageSize),
-                    data: learnerVocabSerializer.serializeList(expectedMappings)
+                    data: learnerVocabDTO.serializeList(expectedMappings)
                 });
             });
             test<TestContext>("test sortBy learnersCount", async (context) => {
@@ -265,7 +265,7 @@ describe("GET users/me/vocabs/", () => {
                     page: queryDefaults.pagination.page,
                     pageSize: queryDefaults.pagination.pageSize,
                     pageCount: Math.ceil(recordsCount / queryDefaults.pagination.pageSize),
-                    data: learnerVocabSerializer.serializeList(expectedMappings)
+                    data: learnerVocabDTO.serializeList(expectedMappings)
                 });
             });
             test<TestContext>("test sortBy textsCount", async (context) => {
@@ -294,7 +294,7 @@ describe("GET users/me/vocabs/", () => {
                     page: queryDefaults.pagination.page,
                     pageSize: queryDefaults.pagination.pageSize,
                     pageCount: Math.ceil(recordsCount / queryDefaults.pagination.pageSize),
-                    data: learnerVocabSerializer.serializeList(expectedMappings)
+                    data: learnerVocabDTO.serializeList(expectedMappings)
                 });
             });
             test<TestContext>("If sortBy is invalid return 400", async (context) => {
@@ -328,7 +328,7 @@ describe("GET users/me/vocabs/", () => {
                     page: queryDefaults.pagination.page,
                     pageSize: queryDefaults.pagination.pageSize,
                     pageCount: Math.ceil(recordsCount / queryDefaults.pagination.pageSize),
-                    data: learnerVocabSerializer.serializeList(expectedMappings)
+                    data: learnerVocabDTO.serializeList(expectedMappings)
                 });
             });
             test<TestContext>("If sortOrder is desc return the vocabs in descending order", async (context) => {
@@ -354,7 +354,7 @@ describe("GET users/me/vocabs/", () => {
                     page: queryDefaults.pagination.page,
                     pageSize: queryDefaults.pagination.pageSize,
                     pageCount: Math.ceil(recordsCount / queryDefaults.pagination.pageSize),
-                    data: learnerVocabSerializer.serializeList(expectedMappings)
+                    data: learnerVocabDTO.serializeList(expectedMappings)
                 });
             });
             test<TestContext>("If sortOrder is invalid return 400", async (context) => {
@@ -390,7 +390,7 @@ describe("GET users/me/vocabs/", () => {
                     page: page,
                     pageSize: pageSize,
                     pageCount: Math.ceil(recordsCount / pageSize),
-                    data: learnerVocabSerializer.serializeList(expectedMappings)
+                    data: learnerVocabDTO.serializeList(expectedMappings)
                 });
             });
             test<TestContext>("If page is 2 return the second page of results", async (context) => {
@@ -416,7 +416,7 @@ describe("GET users/me/vocabs/", () => {
                     page: page,
                     pageSize: pageSize,
                     pageCount: Math.ceil(recordsCount / pageSize),
-                    data: learnerVocabSerializer.serializeList(expectedMappings)
+                    data: learnerVocabDTO.serializeList(expectedMappings)
                 });
             });
             test<TestContext>("If page is last return the last page of results", async (context) => {
@@ -443,7 +443,7 @@ describe("GET users/me/vocabs/", () => {
                     page: page,
                     pageSize: pageSize,
                     pageCount: Math.ceil(recordsCount / pageSize),
-                    data: learnerVocabSerializer.serializeList(expectedMappings)
+                    data: learnerVocabDTO.serializeList(expectedMappings)
                 });
             });
             test<TestContext>("If page is more than last return empty page", async (context) => {
@@ -512,7 +512,7 @@ describe("GET users/me/vocabs/", () => {
                     page: page,
                     pageSize: pageSize,
                     pageCount: Math.ceil(recordsCount / pageSize),
-                    data: learnerVocabSerializer.serializeList(expectedMappings)
+                    data: learnerVocabDTO.serializeList(expectedMappings)
                 });
             });
             describe("If pageSize is invalid return 400", () => {

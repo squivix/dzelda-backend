@@ -1,6 +1,7 @@
 import {CustomDTO} from "@/src/presentation/response/dtos/CustomDTO.js";
 import {Collection} from "@/src/models/entities/Collection.js";
 
+
 class CollectionSummaryDTO extends CustomDTO<Collection> {
     serialize(collection: Collection): any {
         return {
@@ -12,9 +13,7 @@ class CollectionSummaryDTO extends CustomDTO<Collection> {
             addedOn: collection.addedOn.toISOString(),
             addedBy: collection.addedBy.user.username,
             isPublic: collection.isPublic,
-            vocabsByLevel: collection.vocabsByLevel,
-            isBookmarked: collection.isBookmarked,
-        }
+        };
     }
 }
 
