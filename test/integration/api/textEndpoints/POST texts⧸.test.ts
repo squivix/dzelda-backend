@@ -3,7 +3,7 @@ import {fetchRequest, omit} from "@/test/integration/integrationTestUtils.js";
 import {defaultVocabsByLevel, LanguageLevel} from "dzelda-common";
 import {faker} from "@faker-js/faker";
 import {TextService} from "@/src/services/TextService.js";
-import {textLoggedInDTO} from "@/src/presentation/response/dtos/Text/TextLoggedInDTO.js";
+import {textLoggedInSerializer} from "@/src/presentation/response/serializers/Text/TextLoggedInSerializer.js";
 
 
 /**{@link TextController#createText}*/
@@ -49,8 +49,8 @@ describe("POST texts/", () => {
             expect(dbRecord).not.toBeNull();
             if (!dbRecord) return;
             await context.textRepo.annotateTextsWithUserData([dbRecord], user);
-            expect(response.json()).toMatchObject(omit(textLoggedInDTO.serialize(newText), ["id", "addedOn"]));
-            expect(textLoggedInDTO.serialize(dbRecord)).toMatchObject(omit(textLoggedInDTO.serialize(newText), ["id", "addedOn"]));
+            expect(response.json()).toMatchObject(omit(textLoggedInSerializer.serialize(newText), ["id", "addedOn"]));
+            expect(textLoggedInSerializer.serialize(dbRecord)).toMatchObject(omit(textLoggedInSerializer.serialize(newText), ["id", "addedOn"]));
             expect(sendTextToParsingQueueSpy).toHaveBeenCalledOnce();
             expect(sendTextToParsingQueueSpy).toHaveBeenCalledWith({
                 textId: dbRecord.id,
@@ -122,8 +122,8 @@ describe("POST texts/", () => {
             expect(dbRecord).not.toBeNull();
             if (!dbRecord) return;
             await context.textRepo.annotateTextsWithUserData([dbRecord], user);
-            expect(response.json()).toMatchObject(omit(textLoggedInDTO.serialize(newText), ["id", "addedOn"]));
-            expect(textLoggedInDTO.serialize(dbRecord)).toMatchObject(omit(textLoggedInDTO.serialize(newText), ["id", "addedOn",]));
+            expect(response.json()).toMatchObject(omit(textLoggedInSerializer.serialize(newText), ["id", "addedOn"]));
+            expect(textLoggedInSerializer.serialize(dbRecord)).toMatchObject(omit(textLoggedInSerializer.serialize(newText), ["id", "addedOn",]));
             expect(sendTextToParsingQueueSpy).toHaveBeenCalledOnce();
             expect(sendTextToParsingQueueSpy).toHaveBeenCalledWith({
                 textId: dbRecord.id,

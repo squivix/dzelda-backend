@@ -7,7 +7,7 @@ import {booleanStringValidator} from "@/src/validators/utilValidators.js";
 import {ValidationAPIError} from "@/src/utils/errors/ValidationAPIError.js";
 import {APIError} from "@/src/utils/errors/APIError.js";
 import {LanguageService} from "@/src/services/LanguageService.js";
-import {dictionaryDTO} from "@/src/presentation/response/dtos/Dictionary/DictionaryDTO.js";
+import {dictionarySerializer} from "@/src/presentation/response/serializers/Dictionary/DictionarySerializer.js";
 
 class DictionaryController {
     async getDictionaries(request: FastifyRequest, reply: FastifyReply) {
@@ -20,7 +20,7 @@ class DictionaryController {
         const filters = {languageCode: queryParams.languageCode, isPronunciation: queryParams.isPronunciation};
         const dictionaryService = new DictionaryService(request.em);
         const dictionaries = await dictionaryService.getDictionaries(filters, {sortBy: "name", sortOrder: "asc"});
-        reply.send(dictionaryDTO.serializeList(dictionaries));
+        reply.send(dictionarySerializer.serializeList(dictionaries));
     }
 
     async getUserDictionaries(request: FastifyRequest, reply: FastifyReply) {
@@ -35,7 +35,7 @@ class DictionaryController {
         const filters = {languageCode: queryParams.languageCode, isPronunciation: queryParams.isPronunciation, isLearning: true};
         const dictionaryService = new DictionaryService(request.em);
         const dictionaries = await dictionaryService.getLearnerDictionaries(filters, user);
-        reply.send(dictionaryDTO.serializeList(dictionaries.map(d => d.dictionary)));
+        reply.send(dictionarySerializer.serializeList(dictionaries.map(d => d.dictionary)));
     }
 
     async updateUserLanguageDictionaries(request: FastifyRequest, reply: FastifyReply) {

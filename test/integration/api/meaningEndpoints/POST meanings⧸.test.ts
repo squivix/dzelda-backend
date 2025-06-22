@@ -3,7 +3,7 @@ import {InjectOptions} from "light-my-request";
 import {fetchRequest, omit} from "@/test/integration/integrationTestUtils.js";
 import {Meaning} from "@/src/models/entities/Meaning.js";
 import {faker} from "@faker-js/faker";
-import {meaningDTO} from "@/src/presentation/response/dtos/Meaning/MeaningDTO.js";
+import {meaningSerializer} from "@/src/presentation/response/serializers/Meaning/MeaningSerializer.js";
 
 /**{@link MeaningController#createMeaning}*/
 describe("POST meanings/", () => {
@@ -30,10 +30,10 @@ describe("POST meanings/", () => {
         }, session.token);
 
         expect(response.statusCode).toEqual(201);
-        expect(response.json()).toMatchObject(omit(meaningDTO.serialize(newMeaning), ["id", "addedOn"]));
+        expect(response.json()).toMatchObject(omit(meaningSerializer.serialize(newMeaning), ["id", "addedOn"]));
         const dbRecord = await context.em.findOne(Meaning, {text: newMeaning.text, language, vocab});
         expect(dbRecord).not.toBeNull();
-        expect(meaningDTO.serialize(dbRecord!)).toMatchObject(omit(meaningDTO.serialize(newMeaning), ["id", "addedOn"]));
+        expect(meaningSerializer.serialize(dbRecord!)).toMatchObject(omit(meaningSerializer.serialize(newMeaning), ["id", "addedOn"]));
     });
     test<TestContext>("If meaning with same text and language for same vocab already exists return 200", async (context) => {
         const user = await context.userFactory.createOne();
@@ -51,7 +51,7 @@ describe("POST meanings/", () => {
         }, session.token);
 
         expect(response.statusCode).toEqual(200);
-        expect(response.json()).toEqual(expect.objectContaining(meaningDTO.serialize(existingMeaning)));
+        expect(response.json()).toEqual(expect.objectContaining(meaningSerializer.serialize(existingMeaning)));
     });
     test<TestContext>("If user is not logged in return 401", async (context) => {
         const user = await context.userFactory.createOne();

@@ -5,8 +5,8 @@ import {Text} from "@/src/models/entities/Text.js";
 import {faker} from "@faker-js/faker";
 import {randomCase, randomEnum, randomEnums} from "@/test/utils.js";
 import {LanguageLevel} from "dzelda-common";
-import {textDTO} from "@/src/presentation/response/dtos/Text/TextDTO.js";
-import {textLoggedInDTO} from "@/src/presentation/response/dtos/Text/TextLoggedInDTO.js";
+import {textSerializer} from "@/src/presentation/response/serializers/Text/TextSerializer.js";
+import {textLoggedInSerializer} from "@/src/presentation/response/serializers/Text/TextLoggedInSerializer.js";
 
 /**{@link TextController#getTexts}*/
 describe("GET texts/", () => {
@@ -39,7 +39,7 @@ describe("GET texts/", () => {
             page: queryDefaults.pagination.page,
             pageSize: queryDefaults.pagination.pageSize,
             pageCount: Math.ceil(recordsCount / queryDefaults.pagination.pageSize),
-            data: textDTO.serializeList(expectedTexts)
+            data: textSerializer.serializeList(expectedTexts)
         });
     });
     describe("test languageCode filter", () => {
@@ -62,7 +62,7 @@ describe("GET texts/", () => {
                 page: queryDefaults.pagination.page,
                 pageSize: queryDefaults.pagination.pageSize,
                 pageCount: Math.ceil(recordsCount / queryDefaults.pagination.pageSize),
-                data: textDTO.serializeList(expectedTexts)
+                data: textSerializer.serializeList(expectedTexts)
             });
         });
         test<TestContext>("If language does not exist return empty list", async (context) => {
@@ -101,7 +101,7 @@ describe("GET texts/", () => {
                 page: queryDefaults.pagination.page,
                 pageSize: queryDefaults.pagination.pageSize,
                 pageCount: Math.ceil(recordsCount / queryDefaults.pagination.pageSize),
-                data: textDTO.serializeList(expectedTexts)
+                data: textSerializer.serializeList(expectedTexts)
             });
         });
         test<TestContext>("If multiple levels are sent return texts in any of those levels", async (context) => {
@@ -121,7 +121,7 @@ describe("GET texts/", () => {
                 page: queryDefaults.pagination.page,
                 pageSize: queryDefaults.pagination.pageSize,
                 pageCount: Math.ceil(recordsCount / queryDefaults.pagination.pageSize),
-                data: textDTO.serializeList(expectedTexts)
+                data: textSerializer.serializeList(expectedTexts)
             });
         });
         test<TestContext>("If the level is invalid return 400", async () => {
@@ -149,7 +149,7 @@ describe("GET texts/", () => {
                 page: queryDefaults.pagination.page,
                 pageSize: queryDefaults.pagination.pageSize,
                 pageCount: Math.ceil(recordsCount / queryDefaults.pagination.pageSize),
-                data: textDTO.serializeList(expectedTexts)
+                data: textSerializer.serializeList(expectedTexts)
             });
         });
         test<TestContext>("If addedBy is me and signed in return texts added by that user", async (context) => {
@@ -172,7 +172,7 @@ describe("GET texts/", () => {
                 page: queryDefaults.pagination.page,
                 pageSize: queryDefaults.pagination.pageSize,
                 pageCount: Math.ceil(recordsCount / queryDefaults.pagination.pageSize),
-                data: textLoggedInDTO.serializeList(expectedTexts)
+                data: textLoggedInSerializer.serializeList(expectedTexts)
             });
         });
         test<TestContext>("If addedBy is me and not signed in return 401", async (context) => {
@@ -215,7 +215,7 @@ describe("GET texts/", () => {
                 page: queryDefaults.pagination.page,
                 pageSize: queryDefaults.pagination.pageSize,
                 pageCount: Math.ceil(recordsCount / queryDefaults.pagination.pageSize),
-                data: textDTO.serializeList(expectedTexts)
+                data: textSerializer.serializeList(expectedTexts)
             });
         });
         test<TestContext>("If searchQuery is invalid return 400", async () => {
@@ -258,7 +258,7 @@ describe("GET texts/", () => {
                 page: queryDefaults.pagination.page,
                 pageSize: queryDefaults.pagination.pageSize,
                 pageCount: Math.ceil(recordsCount / queryDefaults.pagination.pageSize),
-                data: textDTO.serializeList(expectedTexts)
+                data: textSerializer.serializeList(expectedTexts)
             });
         });
         test<TestContext>("If hasAudio is false return texts with no audio", async (context) => {
@@ -282,7 +282,7 @@ describe("GET texts/", () => {
                 page: queryDefaults.pagination.page,
                 pageSize: queryDefaults.pagination.pageSize,
                 pageCount: Math.ceil(recordsCount / queryDefaults.pagination.pageSize),
-                data: textDTO.serializeList(expectedTexts)
+                data: textSerializer.serializeList(expectedTexts)
             });
         });
         test<TestContext>("If hasAudio is invalid return 400", async () => {
@@ -307,7 +307,7 @@ describe("GET texts/", () => {
                     page: queryDefaults.pagination.page,
                     pageSize: queryDefaults.pagination.pageSize,
                     pageCount: Math.ceil(recordsCount / queryDefaults.pagination.pageSize),
-                    data: textDTO.serializeList(expectedTexts)
+                    data: textSerializer.serializeList(expectedTexts)
                 });
             });
             test<TestContext>("test sortBy createdDate", async (context) => {
@@ -325,7 +325,7 @@ describe("GET texts/", () => {
                     page: queryDefaults.pagination.page,
                     pageSize: queryDefaults.pagination.pageSize,
                     pageCount: Math.ceil(recordsCount / queryDefaults.pagination.pageSize),
-                    data: textDTO.serializeList(expectedTexts)
+                    data: textSerializer.serializeList(expectedTexts)
                 });
             });
             test<TestContext>("test sortBy pastViewersCount", async (context) => {
@@ -346,7 +346,7 @@ describe("GET texts/", () => {
                     page: queryDefaults.pagination.page,
                     pageSize: queryDefaults.pagination.pageSize,
                     pageCount: Math.ceil(recordsCount / queryDefaults.pagination.pageSize),
-                    data: textDTO.serializeList(expectedTexts)
+                    data: textSerializer.serializeList(expectedTexts)
                 });
             });
             test<TestContext>("if sortBy is invalid return 400", async (context) => {
@@ -370,7 +370,7 @@ describe("GET texts/", () => {
                     page: queryDefaults.pagination.page,
                     pageSize: queryDefaults.pagination.pageSize,
                     pageCount: Math.ceil(recordsCount / queryDefaults.pagination.pageSize),
-                    data: textDTO.serializeList(expectedTexts)
+                    data: textSerializer.serializeList(expectedTexts)
                 });
             });
             test<TestContext>("If sortOrder is desc return the texts in descending order", async (context) => {
@@ -388,7 +388,7 @@ describe("GET texts/", () => {
                     page: queryDefaults.pagination.page,
                     pageSize: queryDefaults.pagination.pageSize,
                     pageCount: Math.ceil(recordsCount / queryDefaults.pagination.pageSize),
-                    data: textDTO.serializeList(expectedTexts)
+                    data: textSerializer.serializeList(expectedTexts)
                 });
             });
             test<TestContext>("If sortBy is invalid return 400", async (context) => {
@@ -417,7 +417,7 @@ describe("GET texts/", () => {
                     page: page,
                     pageSize: pageSize,
                     pageCount: Math.ceil(recordsCount / pageSize),
-                    data: textDTO.serializeList(expectedTexts)
+                    data: textSerializer.serializeList(expectedTexts)
                 });
             });
             test<TestContext>("If page is 2 return the second page of results", async (context) => {
@@ -438,7 +438,7 @@ describe("GET texts/", () => {
                     page: page,
                     pageSize: pageSize,
                     pageCount: Math.ceil(recordsCount / pageSize),
-                    data: textDTO.serializeList(expectedTexts)
+                    data: textSerializer.serializeList(expectedTexts)
                 });
             });
             test<TestContext>("If page is last return the last page of results", async (context) => {
@@ -460,7 +460,7 @@ describe("GET texts/", () => {
                     page: page,
                     pageSize: pageSize,
                     pageCount: Math.ceil(recordsCount / pageSize),
-                    data: textDTO.serializeList(expectedTexts)
+                    data: textSerializer.serializeList(expectedTexts)
                 });
             });
             test<TestContext>("If page is more than last return empty page", async (context) => {
@@ -518,7 +518,7 @@ describe("GET texts/", () => {
                     page: page,
                     pageSize: pageSize,
                     pageCount: Math.ceil(recordsCount / pageSize),
-                    data: textDTO.serializeList(expectedTexts)
+                    data: textSerializer.serializeList(expectedTexts)
                 });
                 expect(response.json().data.length).toBeLessThanOrEqual(pageSize);
             });
@@ -599,7 +599,7 @@ describe("GET texts/", () => {
                     page: queryDefaults.pagination.page,
                     pageSize: queryDefaults.pagination.pageSize,
                     pageCount: Math.ceil(recordsCount / queryDefaults.pagination.pageSize),
-                    data: textLoggedInDTO.serializeList(expectedTexts)
+                    data: textLoggedInSerializer.serializeList(expectedTexts)
                 });
             });
         })
@@ -662,7 +662,7 @@ describe("GET texts/", () => {
                         page: queryDefaults.pagination.page,
                         pageSize: queryDefaults.pagination.pageSize,
                         pageCount: Math.ceil(recordsCount / queryDefaults.pagination.pageSize),
-                        data: textLoggedInDTO.serializeList(expectedTexts)
+                        data: textLoggedInSerializer.serializeList(expectedTexts)
                     });
                 });
             });
@@ -690,7 +690,7 @@ describe("GET texts/", () => {
                     page: queryDefaults.pagination.page,
                     pageSize: queryDefaults.pagination.pageSize,
                     pageCount: Math.ceil(recordsCount / queryDefaults.pagination.pageSize),
-                    data: textLoggedInDTO.serializeList(expectedTexts)
+                    data: textLoggedInSerializer.serializeList(expectedTexts)
                 });
             });
         })
@@ -715,7 +715,7 @@ describe("GET texts/", () => {
             page: queryDefaults.pagination.page,
             pageSize: queryDefaults.pagination.pageSize,
             pageCount: Math.ceil(recordsCount / queryDefaults.pagination.pageSize),
-            data: textLoggedInDTO.serializeList(expectedTexts)
+            data: textLoggedInSerializer.serializeList(expectedTexts)
         });
     });
 });

@@ -10,7 +10,7 @@ import {PreferredTranslationLanguageEntry} from "@/src/models/entities/Preferred
 import {MapLearnerLanguage} from "@/src/models/entities/MapLearnerLanguage.js";
 import {Vocab} from "@/src/models/entities/Vocab.js";
 import {Collection} from "@mikro-orm/core";
-import {learnerVocabDTO} from "@/src/presentation/response/dtos/Vocab/LearnerVocabDTO.js";
+import {learnerVocabSerializer} from "@/src/presentation/response/serializers/Vocab/LearnerVocabSerializer.js";
 
 /**{@link VocabController#updateUserVocab}*/
 describe("PATCH users/me/vocabs/{vocabId}/", () => {
@@ -42,8 +42,8 @@ describe("PATCH users/me/vocabs/{vocabId}/", () => {
 
         const dbRecord = await context.em.findOneOrFail(MapLearnerVocab, {learner: user.profile, vocab});
         expect(response.statusCode).to.equal(200);
-        expect(response.json()).toEqual(learnerVocabDTO.serialize(updatedMapping));
-        expect(learnerVocabDTO.serialize(dbRecord)).toEqual(learnerVocabDTO.serialize(updatedMapping));
+        expect(response.json()).toEqual(learnerVocabSerializer.serialize(updatedMapping));
+        expect(learnerVocabSerializer.serialize(dbRecord)).toEqual(learnerVocabSerializer.serialize(updatedMapping));
     });
     test<TestContext>("If updated vocab level is ignored, delete all meanings saved by user for that vocab", async (context) => {
         const user = await context.userFactory.createOne();
@@ -87,8 +87,8 @@ describe("PATCH users/me/vocabs/{vocabId}/", () => {
 
         const dbRecord = await context.em.findOneOrFail(MapLearnerVocab, {learner: user.profile, vocab});
         expect(response.statusCode).to.equal(200);
-        expect(response.json()).toEqual(learnerVocabDTO.serialize(updatedMapping));
-        expect(learnerVocabDTO.serialize(dbRecord)).toEqual(learnerVocabDTO.serialize(updatedMapping));
+        expect(response.json()).toEqual(learnerVocabSerializer.serialize(updatedMapping));
+        expect(learnerVocabSerializer.serialize(dbRecord)).toEqual(learnerVocabSerializer.serialize(updatedMapping));
         expect(await context.em.find(MapLearnerMeaning, {learner: user.profile, meaning: {vocab: vocab}})).toEqual([]);
     });
     describe(`If fields are invalid return 400`, async () => {

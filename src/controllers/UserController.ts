@@ -24,11 +24,11 @@ import {confirmEmailTemplate} from "@/src/presentation/response/templates/email/
 import {passwordResetTemplate} from "@/src/presentation/response/templates/email/passwordResetTemplate.js";
 import urlJoin from "url-join";
 import {numericStringValidator} from "@/src/validators/utilValidators.js";
-import {profileDTO} from "@/src/presentation/response/dtos/Profile/ProfileDTO.js";
-import {notificationDTO} from "@/src/presentation/response/dtos/Notification/NotificationDTO.js";
-import {userPublicDTO} from "@/src/presentation/response/dtos/User/UserPublicDTO.js";
-import {userPrivateDTO} from "@/src/presentation/response/dtos/User/UserPrivateDTO.js";
-import {userSignUpDTO} from "@/src/presentation/response/dtos/User/UserSignUpDTO.js";
+import {profileSerializer} from "@/src/presentation/response/serializers/Profile/ProfileSerializer.js";
+import {notificationSerializer} from "@/src/presentation/response/serializers/Notification/NotificationSerializer.js";
+import {userPublicSerializer} from "@/src/presentation/response/serializers/User/UserPublicSerializer.js";
+import {userPrivateSerializer} from "@/src/presentation/response/serializers/User/UserPrivateSerializer.js";
+import {userSignUpSerializer} from "@/src/presentation/response/serializers/User/UserSignUpSerializer.js";
 
 class UserController {
     async signUp(request: FastifyRequest, reply: FastifyReply) {
@@ -42,7 +42,7 @@ class UserController {
         const newUser = await userService.createUser(body.username, body.email, body.password);
         const token = await userService.generateEmailConfirmToken({user: newUser, email: newUser.email});
         await emailTransporter.sendMail(confirmEmailTemplate(newUser.email, {token}));
-        reply.status(201).send(userSignUpDTO.serialize(newUser));
+        reply.status(201).send(userSignUpSerializer.serialize(newUser));
     }
 
     async login(request: FastifyRequest, reply: FastifyReply) {
@@ -126,9 +126,9 @@ class UserController {
         if (!user || (!user.profile.isPublic && user !== request.user))
             throw new NotFoundAPIError("User");
         if (request.user !== user)
-            reply.status(200).send(userPublicDTO.serialize(user));
+            reply.status(200).send(userPublicSerializer.serialize(user));
         else
-            reply.status(200).send(userPrivateDTO.serialize(user));
+            reply.status(200).send(userPrivateSerializer.serialize(user));
     }
 
     async requestPasswordReset(request: FastifyRequest, reply: FastifyReply) {
@@ -207,7 +207,7 @@ class UserController {
             body.profilePicture = await validateFileObjectKey(userService, request.user as User, body.profilePicture, "profilePicture", "profilePicture");
         await userService.updateUserProfile(user, {bio: body.bio, profilePicture: body.profilePicture});
 
-        reply.status(200).send(profileDTO.serialize(user.profile));
+        reply.status(200).send(profileSerializer.serialize(user.profile));
     }
 
     async generateFileUploadPresignedUrl(request: FastifyRequest, reply: FastifyReply) {
@@ -261,7 +261,7 @@ class UserController {
         await userService.checkUserPendingJobs(request.user as User);
         const notifications = await userService.getUserNotifications(request.user as User);
 
-        reply.status(200).send(notificationDTO.serializeList(notifications));
+        reply.status(200).send(notificationSerializer.serializeList(notifications));
     }
 
     async deleteUserNotification(request: FastifyRequest, reply: FastifyReply) {

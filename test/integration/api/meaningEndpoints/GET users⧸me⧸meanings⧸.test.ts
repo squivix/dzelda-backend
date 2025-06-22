@@ -2,7 +2,7 @@ import {describe, expect, test, TestContext} from "vitest";
 import {InjectOptions} from "light-my-request";
 import {buildQueryString, createComparator, fetchRequest} from "@/test/integration/integrationTestUtils.js";
 import {Meaning} from "@/src/models/entities/Meaning.js";
-import {meaningDTO} from "@/src/presentation/response/dtos/Meaning/MeaningDTO.js";
+import {meaningSerializer} from "@/src/presentation/response/serializers/Meaning/MeaningSerializer.js";
 
 /**{@link MeaningController#getUserMeanings}*/
 describe("GET users/me/meanings/", () => {
@@ -38,7 +38,7 @@ describe("GET users/me/meanings/", () => {
             page: queryDefaults.pagination.page,
             pageSize: queryDefaults.pagination.pageSize,
             pageCount: Math.ceil(recordsCount / queryDefaults.pagination.pageSize),
-            data: meaningDTO.serializeList(expectedMeanings)
+            data: meaningSerializer.serializeList(expectedMeanings)
         });
     });
     describe("test filters", () => {
@@ -64,7 +64,7 @@ describe("GET users/me/meanings/", () => {
                     page: queryDefaults.pagination.page,
                     pageSize: queryDefaults.pagination.pageSize,
                     pageCount: Math.ceil(recordsCount / queryDefaults.pagination.pageSize),
-                    data: meaningDTO.serializeList(expectedMeanings)
+                    data: meaningSerializer.serializeList(expectedMeanings)
                 });
             });
             test<TestContext>("If the user is not meanings for that vocab return empty list", async (context) => {
@@ -121,7 +121,7 @@ describe("GET users/me/meanings/", () => {
                     page: queryDefaults.pagination.page,
                     pageSize: queryDefaults.pagination.pageSize,
                     pageCount: Math.ceil(recordsCount / queryDefaults.pagination.pageSize),
-                    data: meaningDTO.serializeList(expectedMeanings)
+                    data: meaningSerializer.serializeList(expectedMeanings)
                 });
             });
             test<TestContext>("test sortBy learnersCount", async (context) => {
@@ -147,7 +147,7 @@ describe("GET users/me/meanings/", () => {
                     page: queryDefaults.pagination.page,
                     pageSize: queryDefaults.pagination.pageSize,
                     pageCount: Math.ceil(recordsCount / queryDefaults.pagination.pageSize),
-                    data: meaningDTO.serializeList(expectedMeanings)
+                    data: meaningSerializer.serializeList(expectedMeanings)
                 });
             });
             test<TestContext>("If sortBy is invalid return 400", async (context) => {
@@ -178,7 +178,7 @@ describe("GET users/me/meanings/", () => {
                     page: queryDefaults.pagination.page,
                     pageSize: queryDefaults.pagination.pageSize,
                     pageCount: Math.ceil(recordsCount / queryDefaults.pagination.pageSize),
-                    data: meaningDTO.serializeList(expectedMeanings)
+                    data: meaningSerializer.serializeList(expectedMeanings)
                 });
             });
             test<TestContext>("If sortOrder is desc return the vocabs in descending order", async (context) => {
@@ -201,7 +201,7 @@ describe("GET users/me/meanings/", () => {
                     page: queryDefaults.pagination.page,
                     pageSize: queryDefaults.pagination.pageSize,
                     pageCount: Math.ceil(recordsCount / queryDefaults.pagination.pageSize),
-                    data: meaningDTO.serializeList(expectedMeanings)
+                    data: meaningSerializer.serializeList(expectedMeanings)
                 });
             });
             test<TestContext>("If sortOrder is invalid return 400", async (context) => {
@@ -234,7 +234,7 @@ describe("GET users/me/meanings/", () => {
                     page: page,
                     pageSize: pageSize,
                     pageCount: Math.ceil(recordsCount / pageSize),
-                    data: meaningDTO.serializeList(expectedMeanings)
+                    data: meaningSerializer.serializeList(expectedMeanings)
                 });
             });
             test<TestContext>("If page is 2 return the second page of results", async (context) => {
@@ -257,7 +257,7 @@ describe("GET users/me/meanings/", () => {
                     page: page,
                     pageSize: pageSize,
                     pageCount: Math.ceil(recordsCount / pageSize),
-                    data: meaningDTO.serializeList(expectedMeanings)
+                    data: meaningSerializer.serializeList(expectedMeanings)
                 });
             });
             test<TestContext>("If page is last return the last page of results", async (context) => {
@@ -281,7 +281,7 @@ describe("GET users/me/meanings/", () => {
                     page: page,
                     pageSize: pageSize,
                     pageCount: Math.ceil(recordsCount / pageSize),
-                    data: meaningDTO.serializeList(expectedMeanings)
+                    data: meaningSerializer.serializeList(expectedMeanings)
                 });
             });
             test<TestContext>("If page is more than last return empty page", async (context) => {
@@ -346,7 +346,7 @@ describe("GET users/me/meanings/", () => {
                     page: page,
                     pageSize: pageSize,
                     pageCount: Math.ceil(recordsCount / pageSize),
-                    data: meaningDTO.serializeList(expectedMeanings)
+                    data: meaningSerializer.serializeList(expectedMeanings)
                 });
             });
             describe("If pageSize is invalid return 400", () => {

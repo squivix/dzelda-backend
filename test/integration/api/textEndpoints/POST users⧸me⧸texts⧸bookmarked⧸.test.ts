@@ -3,7 +3,7 @@ import {InjectOptions} from "light-my-request";
 import {fetchRequest} from "@/test/integration/integrationTestUtils.js";
 import {TextBookmark} from "@/src/models/entities/TextBookmark.js";
 import {faker} from "@faker-js/faker";
-import {textLoggedInDTO} from "@/src/presentation/response/dtos/Text/TextLoggedInDTO.js";
+import {textLoggedInSerializer} from "@/src/presentation/response/serializers/Text/TextLoggedInSerializer.js";
 
 
 /**{@link TextController#addTextToUserBookmarks}*/
@@ -28,10 +28,10 @@ describe("POST users/me/texts/bookmarked/", () => {
 
         expectedText.isBookmarked = true;
         expect(response.statusCode).to.equal(201);
-        expect(response.json()).toEqual(textLoggedInDTO.serialize(expectedText));
+        expect(response.json()).toEqual(textLoggedInSerializer.serialize(expectedText));
         const dbRecord = await context.em.findOne(TextBookmark, {bookmarker: user.profile, text: expectedText});
         expect(dbRecord).not.toBeNull();
-        expect(textLoggedInDTO.serialize(dbRecord!.text)).toEqual(textLoggedInDTO.serialize(expectedText));
+        expect(textLoggedInSerializer.serialize(dbRecord!.text)).toEqual(textLoggedInSerializer.serialize(expectedText));
     });
     describe("If required fields are missing return 400", function () {
         test<TestContext>("If the textId is missing return 400", async (context) => {

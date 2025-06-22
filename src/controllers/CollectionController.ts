@@ -15,10 +15,10 @@ import {StatusCodes} from "http-status-codes";
 import {UserService} from "@/src/services/UserService.js";
 import {validateFileObjectKey} from "@/src/controllers/controllerUtils.js";
 import {textContentValidator, textLevelValidator, textTitleValidator} from "@/src/validators/textValidators.js";
-import {collectionDTO} from "@/src/presentation/response/dtos/Collection/CollectionDTO.js";
-import {collectionSummaryDTO} from "@/src/presentation/response/dtos/Collection/CollectionSummaryDTO.js";
-import {collectionLoggedInDTO} from "@/src/presentation/response/dtos/Collection/CollectionLoggedInDTO.js";
-import {collectionSummaryLoggedInDTO} from "@/src/presentation/response/dtos/Collection/CollectionSummaryLoggedInDTO.js";
+import {collectionSerializer} from "@/src/presentation/response/serializers/Collection/CollectionSerializer.js";
+import {collectionSummarySerializer} from "@/src/presentation/response/serializers/Collection/CollectionSummarySerializer.js";
+import {collectionLoggedInSerializer} from "@/src/presentation/response/serializers/Collection/CollectionLoggedInSerializer.js";
+import {collectionSummaryLoggedInSerializer} from "@/src/presentation/response/serializers/Collection/CollectionSummaryLoggedInSerializer.js";
 
 class CollectionController {
     async getCollections(request: FastifyRequest, reply: FastifyReply) {
@@ -50,7 +50,7 @@ class CollectionController {
             page: pagination.page,
             pageSize: pagination.pageSize,
             pageCount: Math.ceil(recordsCount / pagination.pageSize),
-            data: (request.isLoggedIn ? collectionSummaryLoggedInDTO : collectionSummaryDTO).serializeList(collections)
+            data: (request.isLoggedIn ? collectionSummaryLoggedInSerializer : collectionSummarySerializer).serializeList(collections)
         });
     }
 
@@ -86,7 +86,7 @@ class CollectionController {
             image: body.image,
             texts: body.texts,
         }, request.user as User);
-        reply.status(201).send(collectionSummaryLoggedInDTO.serialize(collection));
+        reply.status(201).send(collectionSummaryLoggedInSerializer.serialize(collection));
     }
 
     async getCollection(request: FastifyRequest, reply: FastifyReply) {
@@ -99,9 +99,9 @@ class CollectionController {
         if (!collection)
             throw new NotFoundAPIError("Collection");
         if (request.user && !(request.user instanceof AnonymousUser))
-            reply.status(200).send(collectionLoggedInDTO.serialize(collection));
+            reply.status(200).send(collectionLoggedInSerializer.serialize(collection));
         else
-            reply.status(200).send(collectionDTO.serialize(collection));
+            reply.status(200).send(collectionSerializer.serialize(collection));
     }
 
     async updateCollection(request: FastifyRequest, reply: FastifyReply) {
@@ -139,7 +139,7 @@ class CollectionController {
             textsOrder: body.textsOrder,
             isPublic: body.isPublic
         }, request.user as User);
-        reply.status(200).send(collectionLoggedInDTO.serialize(updatedCollection));
+        reply.status(200).send(collectionLoggedInSerializer.serialize(updatedCollection));
     }
 
     async deleteCollection(request: FastifyRequest, reply: FastifyReply) {
@@ -189,7 +189,7 @@ class CollectionController {
             page: pagination.page,
             pageSize: pagination.pageSize,
             pageCount: Math.ceil(recordsCount / pagination.pageSize),
-            data: collectionSummaryLoggedInDTO.serializeList(collections)
+            data: collectionSummaryLoggedInSerializer.serializeList(collections)
         });
     }
 
@@ -206,11 +206,11 @@ class CollectionController {
             throw new ValidationAPIError({collection: "not in a language the user is learning"});
         const existingCollectionMapping = await collectionService.findBookMarkerCollectionMapping({collection: collection, bookmarker: user.profile});
         if (existingCollectionMapping) {
-            reply.status(200).send(collectionLoggedInDTO.serialize(existingCollectionMapping.collection));
+            reply.status(200).send(collectionLoggedInSerializer.serialize(existingCollectionMapping.collection));
             return;
         }
         const newCollectionMapping = await collectionService.addCollectionToUserBookmarks(collection, request.user as User);
-        reply.status(201).send(collectionLoggedInDTO.serialize(newCollectionMapping.collection));
+        reply.status(201).send(collectionLoggedInSerializer.serialize(newCollectionMapping.collection));
     }
 
     async removeCollectionFromUserBookmarks(request: FastifyRequest, reply: FastifyReply) {

@@ -4,7 +4,7 @@ import {fetchRequest} from "@/test/integration/integrationTestUtils.js";
 import {MapLearnerVocab} from "@/src/models/entities/MapLearnerVocab.js";
 import {faker} from "@faker-js/faker";
 import {Vocab} from "@/src/models/entities/Vocab.js";
-import {learnerVocabDTO} from "@/src/presentation/response/dtos/Vocab/LearnerVocabDTO.js";
+import {learnerVocabSerializer} from "@/src/presentation/response/serializers/Vocab/LearnerVocabSerializer.js";
 
 /**{@link VocabController#addVocabToUser}*/
 describe("POST users/me/vocabs/", () => {
@@ -28,10 +28,10 @@ describe("POST users/me/vocabs/", () => {
         await context.em.find(Vocab, vocab, {refresh: true});
 
         expect(response.statusCode).to.equal(201);
-        expect(response.json()).toEqual(learnerVocabDTO.serialize(expectedMapping));
+        expect(response.json()).toEqual(learnerVocabSerializer.serialize(expectedMapping));
         const dbRecord = await context.em.findOne(MapLearnerVocab, {learner: user.profile, vocab});
         expect(dbRecord).not.toBeNull();
-        expect(learnerVocabDTO.serialize(dbRecord!)).toEqual(learnerVocabDTO.serialize(expectedMapping));
+        expect(learnerVocabSerializer.serialize(dbRecord!)).toEqual(learnerVocabSerializer.serialize(expectedMapping));
     });
     test<TestContext>("If user is already learning vocab return 200", async (context) => {
         const user = await context.userFactory.createOne();
@@ -45,7 +45,7 @@ describe("POST users/me/vocabs/", () => {
         await context.em.find(Vocab, vocab, {refresh: true});
 
         expect(response.statusCode).to.equal(200);
-        expect(response.json()).toEqual(learnerVocabDTO.serialize(mapping));
+        expect(response.json()).toEqual(learnerVocabSerializer.serialize(mapping));
     });
     describe("If required fields are missing return 400", function () {
         test<TestContext>("If the vocabId is missing return 400", async (context) => {

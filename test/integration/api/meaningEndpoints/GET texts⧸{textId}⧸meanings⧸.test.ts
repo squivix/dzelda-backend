@@ -4,7 +4,7 @@ import {createComparator, fetchRequest} from "@/test/integration/integrationTest
 import {Meaning} from "@/src/models/entities/Meaning.js";
 import {faker} from "@faker-js/faker";
 import {Vocab} from "@/src/models/entities/Vocab.js";
-import {meaningSummeryDTO} from "@/src/presentation/response/dtos/Meaning/MeaningSummeryDTO.js";
+import {meaningSummerySerializer} from "@/src/presentation/response/serializers/Meaning/MeaningSummerySerializer.js";
 
 /**{@link MeaningController#getTextMeanings}*/
 describe("GET texts/{textId}/meanings/", () => {
@@ -46,7 +46,7 @@ describe("GET texts/{textId}/meanings/", () => {
         const response = await makeRequest(text.id, session.token);
         expect(response.statusCode).to.equal(200);
         const body = response.json();
-        expect(body.meanings).toEqual(meaningSummeryDTO.serializeList(expectedMeanings));
+        expect(body.meanings).toEqual(meaningSummerySerializer.serializeList(expectedMeanings));
         expect(body.learnerMeanings).toEqual(expectedLearnerMeanings.map(m => m.id))
     });
     test<TestContext>("If user is not logged in return meanings of vocabs in text", async (context) => {
@@ -70,7 +70,7 @@ describe("GET texts/{textId}/meanings/", () => {
         const response = await makeRequest(text.id);
         const body = response.json();
         expect(response.statusCode).to.equal(200);
-        expect(body.meanings).toEqual(meaningSummeryDTO.serializeList(expectedMeanings));
+        expect(body.meanings).toEqual(meaningSummerySerializer.serializeList(expectedMeanings));
         expect(body.learnerMeanings).toBeUndefined();
     });
     test<TestContext>("If text does not exist return 404", async () => {
@@ -127,7 +127,7 @@ describe("GET texts/{textId}/meanings/", () => {
                 const response = await makeRequest(text.id, session.token);
                 expect(response.statusCode).to.equal(200);
                 const body = response.json();
-                expect(body.meanings).toEqual(meaningSummeryDTO.serializeList(expectedMeanings));
+                expect(body.meanings).toEqual(meaningSummerySerializer.serializeList(expectedMeanings));
                 expect(body.learnerMeanings).toEqual(expectedLearnerMeanings.map(m => m.id))
             });
         })
@@ -179,7 +179,7 @@ describe("GET texts/{textId}/meanings/", () => {
                     const response = await makeRequest(text.id, session.token);
                     expect(response.statusCode).to.equal(200);
                     const body = response.json();
-                    expect(body.meanings).toEqual(meaningSummeryDTO.serializeList(expectedMeanings));
+                    expect(body.meanings).toEqual(meaningSummerySerializer.serializeList(expectedMeanings));
                     expect(body.learnerMeanings).toEqual(expectedLearnerMeanings.map(m => m.id))
                 });
             });
@@ -205,7 +205,7 @@ describe("GET texts/{textId}/meanings/", () => {
                 const response = await makeRequest(text.id);
                 const body = response.json();
                 expect(response.statusCode).to.equal(200);
-                expect(body.meanings).toEqual(meaningSummeryDTO.serializeList(expectedMeanings));
+                expect(body.meanings).toEqual(meaningSummerySerializer.serializeList(expectedMeanings));
                 expect(body.learnerMeanings).toBeUndefined();
             });
         });

@@ -2,8 +2,8 @@ import {describe, expect, test, TestContext} from "vitest";
 import {InjectOptions} from "light-my-request";
 import {fetchRequest} from "@/test/integration/integrationTestUtils.js";
 import {faker} from "@faker-js/faker";
-import {textLoggedInDTO} from "@/src/presentation/response/dtos/Text/TextLoggedInDTO.js";
-import {textDTO} from "@/src/presentation/response/dtos/Text/TextDTO.js";
+import {textLoggedInSerializer} from "@/src/presentation/response/serializers/Text/TextLoggedInSerializer.js";
+import {textSerializer} from "@/src/presentation/response/serializers/Text/TextSerializer.js";
 
 /**{@link TextController#getText}*/
 describe("GET texts/{textId}/", () => {
@@ -23,7 +23,7 @@ describe("GET texts/{textId}/", () => {
             const response = await makeRequest(expectedText.id);
 
             expect(response.statusCode).to.equal(200);
-            expect(response.json()).toEqual(textDTO.serialize(expectedText));
+            expect(response.json()).toEqual(textSerializer.serialize(expectedText));
         });
         test<TestContext>("If the user is logged in return text with vocab levels", async (context) => {
             const user = await context.userFactory.createOne();
@@ -35,7 +35,7 @@ describe("GET texts/{textId}/", () => {
             const response = await makeRequest(expectedText.id, session.token);
 
             expect(response.statusCode).to.equal(200);
-            expect(response.json()).toEqual(textLoggedInDTO.serialize(expectedText));
+            expect(response.json()).toEqual(textLoggedInSerializer.serialize(expectedText));
         });
     });
     test<TestContext>("If the text does not exist return 404", async () => {
@@ -78,7 +78,7 @@ describe("GET texts/{textId}/", () => {
                 await context.textRepo.annotateTextsWithUserData([text], author);
 
                 expect(response.statusCode).to.equal(200);
-                expect(response.json()).toEqual(textLoggedInDTO.serialize(text));
+                expect(response.json()).toEqual(textLoggedInSerializer.serialize(text));
             });
         })
         describe("Texts in collection inherit its privacy setting", () => {
@@ -116,7 +116,7 @@ describe("GET texts/{textId}/", () => {
                     await context.textRepo.annotateTextsWithUserData([text], author);
 
                     expect(response.statusCode).to.equal(200);
-                    expect(response.json()).toEqual(textLoggedInDTO.serialize(text));
+                    expect(response.json()).toEqual(textLoggedInSerializer.serialize(text));
                 });
             });
             test<TestContext>("If collection is public, text is public", async (context) => {
@@ -132,7 +132,7 @@ describe("GET texts/{textId}/", () => {
                 await context.textRepo.annotateTextsWithUserData([text], author);
 
                 expect(response.statusCode).to.equal(200);
-                expect(response.json()).toEqual(textLoggedInDTO.serialize(text));
+                expect(response.json()).toEqual(textLoggedInSerializer.serialize(text));
             });
         });
     });

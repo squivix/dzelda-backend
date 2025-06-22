@@ -2,7 +2,7 @@ import {FastifyReply, FastifyRequest} from "fastify";
 import {z} from "zod";
 import {languageCodeValidator} from "@/src/validators/languageValidators.js";
 import {PronunciationService} from "@/src/services/PronunciationService.js";
-import {humanPronunciationDTO} from "@/src/presentation/response/dtos/HumanPronunciation/HumanPronunciationDTO.js";
+import {humanPronunciationSerializer} from "@/src/presentation/response/serializers/HumanPronunciation/HumanPronunciationSerializer.js";
 
 class PronunciationController {
     async getHumanPronunciations(request: FastifyRequest, reply: FastifyReply) {
@@ -25,7 +25,7 @@ class PronunciationController {
             page: pagination.page,
             pageSize: pagination.pageSize,
             pageCount: Math.ceil(recordsCount / pagination.pageSize),
-            data: humanPronunciationDTO.serializeList(humanPronunciations)
+            data: humanPronunciationSerializer.serializeList(humanPronunciations)
         });
     }
 }

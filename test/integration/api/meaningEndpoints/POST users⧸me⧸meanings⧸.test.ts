@@ -3,7 +3,7 @@ import {InjectOptions} from "light-my-request";
 import {fetchRequest, omit} from "@/test/integration/integrationTestUtils.js";
 import {MapLearnerMeaning} from "@/src/models/entities/MapLearnerMeaning.js";
 import {faker} from "@faker-js/faker";
-import {meaningDTO} from "@/src/presentation/response/dtos/Meaning/MeaningDTO.js";
+import {meaningSerializer} from "@/src/presentation/response/serializers/Meaning/MeaningSerializer.js";
 
 /**{@link MeaningController#addMeaningToUser}*/
 describe("POST users/me/meanings/", () => {
@@ -28,7 +28,7 @@ describe("POST users/me/meanings/", () => {
         const response = await makeRequest({meaningId: meaning.id}, session.token);
 
         expect(response.statusCode).to.equal(201);
-        expect(response.json()).toMatchObject(omit(meaningDTO.serialize(meaning), ["learnersCount"]));
+        expect(response.json()).toMatchObject(omit(meaningSerializer.serialize(meaning), ["learnersCount"]));
         expect(await context.em.findOne(MapLearnerMeaning, {learner: user.profile, meaning})).not.toBeNull();
         expect(await meaning.learners.loadCount()).toEqual(oldLearnersCount + 1);
     });
@@ -43,7 +43,7 @@ describe("POST users/me/meanings/", () => {
         const response = await makeRequest({meaningId: meaning.id}, session.token);
 
         expect(response.statusCode).to.equal(200);
-        expect(response.json()).toEqual(meaningDTO.serialize(meaning));
+        expect(response.json()).toEqual(meaningSerializer.serialize(meaning));
     });
     describe("If required fields are missing return 400", function () {
         test<TestContext>("If the meaningId is missing return 400", async (context) => {

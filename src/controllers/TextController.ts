@@ -20,9 +20,9 @@ import {APIError} from "@/src/utils/errors/APIError.js";
 import {StatusCodes} from "http-status-codes";
 import {emailTransporter} from "@/src/nodemailer.config.js";
 import {DOMAIN_NAME} from "@/src/constants.js";
-import {textDTO} from "@/src/presentation/response/dtos/Text/TextDTO.js";
-import {textHistoryEntryDTO} from "@/src/presentation/response/dtos/TextHistoryEntry/TextHistoryEntryDTO.js";
-import {textLoggedInDTO} from "@/src/presentation/response/dtos/Text/TextLoggedInDTO.js";
+import {textSerializer} from "@/src/presentation/response/serializers/Text/TextSerializer.js";
+import {textHistoryEntrySerializer} from "@/src/presentation/response/serializers/TextHistoryEntry/TextHistoryEntrySerializer.js";
+import {textLoggedInSerializer} from "@/src/presentation/response/serializers/Text/TextLoggedInSerializer.js";
 
 class TextController {
     async getTexts(request: FastifyRequest, reply: FastifyReply) {
@@ -59,7 +59,7 @@ class TextController {
             page: pagination.page,
             pageSize: pagination.pageSize,
             pageCount: Math.ceil(recordsCount / pagination.pageSize),
-            data: (request.isLoggedIn ? textLoggedInDTO : textDTO).serializeList(texts)
+            data: (request.isLoggedIn ? textLoggedInSerializer : textSerializer).serializeList(texts)
         });
     }
 
@@ -109,7 +109,7 @@ class TextController {
             image: body.image,
             audio: body.audio,
         }, user, {parsingPriority: 2});
-        reply.status(201).send(textLoggedInDTO.serialize(text));
+        reply.status(201).send(textLoggedInSerializer.serialize(text));
     }
 
     async getText(request: FastifyRequest, reply: FastifyReply) {
@@ -121,7 +121,7 @@ class TextController {
 
         if (!text)
             throw new NotFoundAPIError("Text");
-        reply.status(200).send((request.isLoggedIn ? textLoggedInDTO : textDTO).serialize(text));
+        reply.status(200).send((request.isLoggedIn ? textLoggedInSerializer : textSerializer).serialize(text));
     }
 
     async updateText(request: FastifyRequest, reply: FastifyReply) {
@@ -174,7 +174,7 @@ class TextController {
             image: body.image,
             audio: body.audio
         }, request.user as User);
-        reply.status(200).send(textLoggedInDTO.serialize(updatedText));
+        reply.status(200).send(textLoggedInSerializer.serialize(updatedText));
     }
 
     async deleteText(request: FastifyRequest, reply: FastifyReply) {
@@ -227,7 +227,7 @@ class TextController {
             page: pagination.page,
             pageSize: pagination.pageSize,
             pageCount: Math.ceil(recordsCount / pagination.pageSize),
-            data: textHistoryEntryDTO.serializeList(textHistoryEntries)
+            data: textHistoryEntrySerializer.serializeList(textHistoryEntries)
         });
     }
 
@@ -247,11 +247,11 @@ class TextController {
         const latestHistoryEntry = await textService.findLatestTextHistoryEntry(user);
 
         if (latestHistoryEntry && latestHistoryEntry.text == text) {
-            reply.status(200).send(textHistoryEntryDTO.serialize(latestHistoryEntry));
+            reply.status(200).send(textHistoryEntrySerializer.serialize(latestHistoryEntry));
             return;
         }
         const textHistoryEntry = await textService.addTextToUserHistory(text, user);
-        reply.status(201).send(textHistoryEntryDTO.serialize(textHistoryEntry));
+        reply.status(201).send(textHistoryEntrySerializer.serialize(textHistoryEntry));
     }
 
     async getNextTextInCollection(request: FastifyRequest, reply: FastifyReply) {
@@ -303,7 +303,7 @@ class TextController {
             page: pagination.page,
             pageSize: pagination.pageSize,
             pageCount: Math.ceil(recordsCount / pagination.pageSize),
-            data: textLoggedInDTO.serializeList(texts)
+            data: textLoggedInSerializer.serializeList(texts)
         });
     }
 
@@ -320,7 +320,7 @@ class TextController {
         if (!user.profile.languagesLearning.contains(text.language))
             throw new ValidationAPIError({text: "not in a language the user is learning"});
         const textBookmark = await textService.addTextToUserBookmarks(text, user);
-        reply.status(201).send(textLoggedInDTO.serialize(textBookmark.text));
+        reply.status(201).send(textLoggedInSerializer.serialize(textBookmark.text));
     }
 
     async removeTextFromUserBookmarks(request: FastifyRequest, reply: FastifyReply) {
@@ -372,7 +372,7 @@ class TextController {
             page: pagination.page,
             pageSize: pagination.pageSize,
             pageCount: Math.ceil(recordsCount / pagination.pageSize),
-            data: textLoggedInDTO.serializeList(texts)
+            data: textLoggedInSerializer.serializeList(texts)
         });
     }
 

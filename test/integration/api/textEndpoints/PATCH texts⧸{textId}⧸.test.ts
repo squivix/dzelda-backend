@@ -2,7 +2,7 @@ import {describe, expect, test, TestContext, vi} from "vitest";
 import {fetchRequest, omit} from "@/test/integration/integrationTestUtils.js";
 import {faker} from "@faker-js/faker";
 import {TextService} from "@/src/services/TextService.js";
-import {textLoggedInDTO} from "@/src/presentation/response/dtos/Text/TextLoggedInDTO.js";
+import {textLoggedInSerializer} from "@/src/presentation/response/serializers/Text/TextLoggedInSerializer.js";
 import {defaultVocabsByLevel} from "dzelda-common";
 
 /**{@link TextController#updateText}*/
@@ -43,8 +43,8 @@ describe("PATCH texts/{textId}/", () => {
             await context.textRepo.annotateTextsWithUserData([dbRecord], author);
 
             expect(response.statusCode).to.equal(200);
-            expect(response.json()).toMatchObject(textLoggedInDTO.serialize(updatedText));
-            expect(textLoggedInDTO.serialize(dbRecord)).toMatchObject(textLoggedInDTO.serialize(updatedText));
+            expect(response.json()).toMatchObject(textLoggedInSerializer.serialize(updatedText));
+            expect(textLoggedInSerializer.serialize(dbRecord)).toMatchObject(textLoggedInSerializer.serialize(updatedText));
             expect(sendTextToParsingQueueSpy).toHaveBeenCalledOnce();
             expect(sendTextToParsingQueueSpy).toHaveBeenCalledWith({
                 textId: dbRecord.id,
@@ -101,8 +101,8 @@ describe("PATCH texts/{textId}/", () => {
                 await context.textRepo.annotateTextsWithUserData([dbRecord], author);
 
                 expect(response.statusCode).to.equal(200);
-                expect(response.json()).toMatchObject(omit(textLoggedInDTO.serialize(updatedText), ["addedOn"]));
-                expect(textLoggedInDTO.serialize(dbRecord)).toMatchObject(omit(textLoggedInDTO.serialize(updatedText), ["addedOn"]));
+                expect(response.json()).toMatchObject(omit(textLoggedInSerializer.serialize(updatedText), ["addedOn"]));
+                expect(textLoggedInSerializer.serialize(dbRecord)).toMatchObject(omit(textLoggedInSerializer.serialize(updatedText), ["addedOn"]));
                 expect(sendTextToParsingQueueSpy).toHaveBeenCalledOnce();
                 expect(sendTextToParsingQueueSpy).toHaveBeenCalledWith({
                     textId: dbRecord.id,
@@ -153,8 +153,8 @@ describe("PATCH texts/{textId}/", () => {
                 await context.textRepo.annotateTextsWithUserData([dbRecord], author);
 
                 expect(response.statusCode).to.equal(200);
-                expect(response.json()).toMatchObject(omit(textLoggedInDTO.serialize(updatedText), ["addedOn"]));
-                expect(textLoggedInDTO.serialize(dbRecord)).toMatchObject(omit(textLoggedInDTO.serialize(updatedText), ["addedOn"]));
+                expect(response.json()).toMatchObject(omit(textLoggedInSerializer.serialize(updatedText), ["addedOn"]));
+                expect(textLoggedInSerializer.serialize(dbRecord)).toMatchObject(omit(textLoggedInSerializer.serialize(updatedText), ["addedOn"]));
                 expect(sendTextToParsingQueueSpy).toHaveBeenCalledOnce();
                 expect(sendTextToParsingQueueSpy).toHaveBeenCalledWith({
                     textId: dbRecord.id,
@@ -213,8 +213,8 @@ describe("PATCH texts/{textId}/", () => {
                 await context.textRepo.annotateTextsWithUserData([dbRecord], author);
 
                 expect(response.statusCode).to.equal(200);
-                expect(response.json()).toMatchObject(omit(textLoggedInDTO.serialize(updatedText), ["addedOn"]));
-                expect(textLoggedInDTO.serialize(dbRecord)).toMatchObject(omit(textLoggedInDTO.serialize(updatedText), ["addedOn"]));
+                expect(response.json()).toMatchObject(omit(textLoggedInSerializer.serialize(updatedText), ["addedOn"]));
+                expect(textLoggedInSerializer.serialize(dbRecord)).toMatchObject(omit(textLoggedInSerializer.serialize(updatedText), ["addedOn"]));
                 expect(dbRecord.orderInCollection).toEqual(await newCollection.texts.loadCount(true) - 1);
                 expect(sendTextToParsingQueueSpy).toHaveBeenCalledOnce();
                 expect(sendTextToParsingQueueSpy).toHaveBeenCalledWith({
@@ -263,8 +263,8 @@ describe("PATCH texts/{textId}/", () => {
                 await context.textRepo.annotateTextsWithUserData([dbRecord], author);
 
                 expect(response.statusCode).to.equal(200);
-                expect(response.json()).toMatchObject(omit(textLoggedInDTO.serialize(updatedText), ["addedOn"]));
-                expect(textLoggedInDTO.serialize(dbRecord)).toMatchObject(omit(textLoggedInDTO.serialize(updatedText), ["addedOn"]));
+                expect(response.json()).toMatchObject(omit(textLoggedInSerializer.serialize(updatedText), ["addedOn"]));
+                expect(textLoggedInSerializer.serialize(dbRecord)).toMatchObject(omit(textLoggedInSerializer.serialize(updatedText), ["addedOn"]));
                 expect(dbRecord.orderInCollection).toEqual(null);
                 expect(sendTextToParsingQueueSpy).toHaveBeenCalledOnce();
                 expect(sendTextToParsingQueueSpy).toHaveBeenCalledWith({

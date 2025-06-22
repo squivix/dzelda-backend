@@ -1,7 +1,7 @@
 import {describe, expect, test, TestContext} from "vitest";
 import {buildQueryString, createComparator, fetchRequest} from "@/test/integration/integrationTestUtils.js";
 import {Language} from "@/src/models/entities/Language.js";
-import {languageDTO} from "@/src/presentation/response/dtos/Language/LanguageDTO.js";
+import {languageSerializer} from "@/src/presentation/response/serializers/Language/LanguageSerializer.js";
 
 /**{@link LanguageController#getLanguages}*/
 describe("GET languages/", function () {
@@ -24,7 +24,7 @@ describe("GET languages/", function () {
         const response = await makeRequest();
 
         expect(response.statusCode).to.equal(200);
-        expect(response.json()).toEqual(languageDTO.serializeList(expectedLanguages));
+        expect(response.json()).toEqual(languageSerializer.serializeList(expectedLanguages));
     });
     describe("test sort", () => {
         describe("test sortBy", () => {
@@ -37,7 +37,7 @@ describe("GET languages/", function () {
                 const response = await makeRequest({sortBy: "name"});
 
                 expect(response.statusCode).to.equal(200);
-                expect(response.json()).toEqual(languageDTO.serializeList(expectedLanguages));
+                expect(response.json()).toEqual(languageSerializer.serializeList(expectedLanguages));
             });
             test<TestContext>("test sortBy learnersCount", async (context) => {
                 const user1 = await context.userFactory.createOne();
@@ -51,7 +51,7 @@ describe("GET languages/", function () {
                 const response = await makeRequest({sortBy: "learnersCount"});
 
                 expect(response.statusCode).to.equal(200);
-                expect(response.json()).toEqual(languageDTO.serializeList(expectedLanguages));
+                expect(response.json()).toEqual(languageSerializer.serializeList(expectedLanguages));
             });
             test<TestContext>("test sortBy secondSpeakersCount", async (context) => {
                 const expectedLanguages = [
@@ -62,7 +62,7 @@ describe("GET languages/", function () {
                 const response = await makeRequest({sortBy: "secondSpeakersCount"});
 
                 expect(response.statusCode).to.equal(200);
-                expect(response.json()).toEqual(languageDTO.serializeList(expectedLanguages));
+                expect(response.json()).toEqual(languageSerializer.serializeList(expectedLanguages));
             });
             test<TestContext>("if sortBy is invalid return 400", async (context) => {
                 const response = await makeRequest({sortBy: "flag"});
@@ -79,7 +79,7 @@ describe("GET languages/", function () {
                 const response = await makeRequest({sortOrder: "asc"});
 
                 expect(response.statusCode).to.equal(200);
-                expect(response.json()).toEqual(languageDTO.serializeList(expectedLanguages));
+                expect(response.json()).toEqual(languageSerializer.serializeList(expectedLanguages));
             });
             test<TestContext>("If sortOrder is desc return the languages in descending order", async (context) => {
                 const expectedLanguages = [
@@ -90,7 +90,7 @@ describe("GET languages/", function () {
                 const response = await makeRequest({sortOrder: "desc"});
 
                 expect(response.statusCode).to.equal(200);
-                expect(response.json()).toEqual(languageDTO.serializeList(expectedLanguages));
+                expect(response.json()).toEqual(languageSerializer.serializeList(expectedLanguages));
             });
             test<TestContext>("If sortOrder is invalid return 400", async (context) => {
                 const response = await makeRequest({sortOrder: "rising"});

@@ -3,8 +3,8 @@ import {InjectOptions} from "light-my-request";
 import {fetchRequest, omit} from "@/test/integration/integrationTestUtils.js";
 import {TextHistoryEntry} from "@/src/models/entities/TextHistoryEntry.js";
 import {faker} from "@faker-js/faker";
-import {textHistoryEntryDTO} from "@/src/presentation/response/dtos/TextHistoryEntry/TextHistoryEntryDTO.js";
-import {textLoggedInDTO} from "@/src/presentation/response/dtos/Text/TextLoggedInDTO.js";
+import {textHistoryEntrySerializer} from "@/src/presentation/response/serializers/TextHistoryEntry/TextHistoryEntrySerializer.js";
+import {textLoggedInSerializer} from "@/src/presentation/response/serializers/Text/TextLoggedInSerializer.js";
 
 /**{@link TextController#addTextToUserHistory}*/
 describe("POST users/me/texts/history/", () => {
@@ -28,12 +28,12 @@ describe("POST users/me/texts/history/", () => {
 
         await context.em.refresh(text, {populate: ["pastViewersCount"]});
         expect(response.statusCode).to.equal(201);
-        expect(response.json()).toMatchObject(omit(textHistoryEntryDTO.serialize(expectedTextHistoryEntry), ["timeViewed"]));
+        expect(response.json()).toMatchObject(omit(textHistoryEntrySerializer.serialize(expectedTextHistoryEntry), ["timeViewed"]));
         const dbRecord = await context.em.findOne(TextHistoryEntry, {
             pastViewer: user.profile, text: text
         }, {populate: ["text"]});
         expect(dbRecord).not.toBeNull();
-        expect(textLoggedInDTO.serialize(dbRecord!.text)).toEqual(textLoggedInDTO.serialize(text));
+        expect(textLoggedInSerializer.serialize(dbRecord!.text)).toEqual(textLoggedInSerializer.serialize(text));
     });
     test<TestContext>("If text is already in user history but is not latest add it again with newer timestamp", async (context) => {
         const user = await context.userFactory.createOne();
@@ -51,12 +51,12 @@ describe("POST users/me/texts/history/", () => {
         await context.textRepo.annotateTextsWithUserData([text1], user);
 
         expect(response.statusCode).to.equal(201);
-        expect(response.json()).toMatchObject(omit(textHistoryEntryDTO.serialize(expectedTextHistoryEntry), ["timeViewed"]));
+        expect(response.json()).toMatchObject(omit(textHistoryEntrySerializer.serialize(expectedTextHistoryEntry), ["timeViewed"]));
         const dbRecords = await context.em.find(TextHistoryEntry, {
             pastViewer: user.profile, text: text1
         }, {populate: ["text"], orderBy: {timeViewed: "desc"}});
         expect(dbRecords).toHaveLength(2);
-        expect(textLoggedInDTO.serialize(dbRecords[0].text)).toEqual(textLoggedInDTO.serialize(text1));
+        expect(textLoggedInSerializer.serialize(dbRecords[0].text)).toEqual(textLoggedInSerializer.serialize(text1));
         expect(new Date(dbRecords[0].timeViewed).getTime()).toBeGreaterThan(new Date(oldTextHistoryEntry.timeViewed).getTime());
     });
     test<TestContext>("If text is already in user history and is latest don't add it again, return 200", async (context) => {
@@ -72,12 +72,12 @@ describe("POST users/me/texts/history/", () => {
         await context.em.refresh(text, {populate: ["pastViewersCount"]});
 
         expect(response.statusCode).to.equal(200);
-        expect(response.json()).toMatchObject(omit(textHistoryEntryDTO.serialize(expectedTextHistoryEntry), ["timeViewed"]));
+        expect(response.json()).toMatchObject(omit(textHistoryEntrySerializer.serialize(expectedTextHistoryEntry), ["timeViewed"]));
         const dbRecords = await context.em.find(TextHistoryEntry, {
             pastViewer: user.profile, text: text
         }, {populate: ["text"], orderBy: {timeViewed: "desc"}});
         expect(dbRecords).toHaveLength(1);
-        expect(textLoggedInDTO.serialize(dbRecords[0].text)).toEqual(textLoggedInDTO.serialize(text));
+        expect(textLoggedInSerializer.serialize(dbRecords[0].text)).toEqual(textLoggedInSerializer.serialize(text));
     });
     describe("If required fields are missing return 400", function () {
         test<TestContext>("If the textId is missing return 400", async (context) => {

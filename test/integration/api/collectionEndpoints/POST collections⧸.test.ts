@@ -2,7 +2,7 @@ import {describe, expect, test, TestContext} from "vitest";
 import {fetchRequest, omit} from "@/test/integration/integrationTestUtils.js";
 import {defaultVocabsByLevel} from "dzelda-common";
 import {faker} from "@faker-js/faker";
-import {collectionSummaryLoggedInDTO} from "@/src/presentation/response/dtos/Collection/CollectionSummaryLoggedInDTO.js";
+import {collectionSummaryLoggedInSerializer} from "@/src/presentation/response/serializers/Collection/CollectionSummaryLoggedInSerializer.js";
 
 /**{@link CollectionController#createCollection}*/
 describe("POST collections/", function () {
@@ -38,12 +38,12 @@ describe("POST collections/", function () {
 
             const responseBody = response.json();
             expect(response.statusCode).to.equal(201);
-            expect(responseBody).toMatchObject(omit(collectionSummaryLoggedInDTO.serialize(newCollection), ["id", "addedOn"]));
+            expect(responseBody).toMatchObject(omit(collectionSummaryLoggedInSerializer.serialize(newCollection), ["id", "addedOn"]));
 
             const dbRecord = await context.collectionRepo.findOne({title: newCollection.title, language}, {populate: ["texts"]});
             expect(dbRecord).not.toBeNull();
             await context.collectionRepo.annotateCollectionsWithUserData([dbRecord!], user);
-            expect(collectionSummaryLoggedInDTO.serialize(dbRecord!)).toMatchObject(omit(collectionSummaryLoggedInDTO.serialize(newCollection), ["id", "addedOn"]));
+            expect(collectionSummaryLoggedInSerializer.serialize(dbRecord!)).toMatchObject(omit(collectionSummaryLoggedInSerializer.serialize(newCollection), ["id", "addedOn"]));
         });
         test<TestContext>("If optional fields are provided use provided values", async (context) => {
             const user = await context.userFactory.createOne();
@@ -70,12 +70,12 @@ describe("POST collections/", function () {
 
             const responseBody = response.json();
             expect(response.statusCode).to.equal(201);
-            expect(responseBody).toEqual(expect.objectContaining(omit(collectionSummaryLoggedInDTO.serialize(newCollection), ["id", "addedOn"])));
+            expect(responseBody).toEqual(expect.objectContaining(omit(collectionSummaryLoggedInSerializer.serialize(newCollection), ["id", "addedOn"])));
 
             const dbRecord = await context.collectionRepo.findOne({title: newCollection.title, language}, {populate: ["texts"]});
             expect(dbRecord).not.toBeNull();
             await context.collectionRepo.annotateCollectionsWithUserData([dbRecord!], user);
-            expect(collectionSummaryLoggedInDTO.serialize(dbRecord!)).toMatchObject(omit(collectionSummaryLoggedInDTO.serialize(newCollection), ["id", "addedOn"]));
+            expect(collectionSummaryLoggedInSerializer.serialize(dbRecord!)).toMatchObject(omit(collectionSummaryLoggedInSerializer.serialize(newCollection), ["id", "addedOn"]));
         });
     });
     test<TestContext>("If user not logged in return 401", async (context) => {

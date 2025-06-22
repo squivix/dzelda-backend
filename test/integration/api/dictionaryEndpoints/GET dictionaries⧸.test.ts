@@ -2,7 +2,7 @@ import {describe, expect, test, TestContext} from "vitest";
 import {InjectOptions} from "light-my-request";
 import {buildQueryString, createComparator, fetchRequest} from "@/test/integration/integrationTestUtils.js";
 import {Dictionary} from "@/src/models/entities/Dictionary.js";
-import {dictionaryDTO} from "@/src/presentation/response/dtos/Dictionary/DictionaryDTO.js";
+import {dictionarySerializer} from "@/src/presentation/response/serializers/Dictionary/DictionarySerializer.js";
 
 /**{@link DictionaryController#getDictionaries}*/
 describe("GET dictionaries/", function () {
@@ -25,7 +25,7 @@ describe("GET dictionaries/", function () {
         const response = await makeRequest({});
 
         expect(response.statusCode).to.equal(200);
-        expect(response.json()).toEqual(dictionaryDTO.serializeList(expectedDictionaries));
+        expect(response.json()).toEqual(dictionarySerializer.serializeList(expectedDictionaries));
     });
     describe("test language filter", () => {
         test<TestContext>("If language filter is valid and language exists only return dictionaries in that language", async (context) => {
@@ -38,7 +38,7 @@ describe("GET dictionaries/", function () {
             const response = await makeRequest({languageCode: language1.code});
 
             expect(response.statusCode).to.equal(200);
-            expect(response.json()).toEqual(dictionaryDTO.serializeList(expectedDictionaries));
+            expect(response.json()).toEqual(dictionarySerializer.serializeList(expectedDictionaries));
         });
         test<TestContext>("If language does not exist return empty dictionary list", async (context) => {
             const language = await context.languageFactory.makeOne();

@@ -2,8 +2,8 @@ import {describe, expect, test, TestContext} from "vitest";
 import {InjectOptions} from "light-my-request";
 import {fetchRequest} from "@/test/integration/integrationTestUtils.js";
 import {faker} from "@faker-js/faker";
-import {collectionDTO} from "@/src/presentation/response/dtos/Collection/CollectionDTO.js";
-import {collectionLoggedInDTO} from "@/src/presentation/response/dtos/Collection/CollectionLoggedInDTO.js";
+import {collectionSerializer} from "@/src/presentation/response/serializers/Collection/CollectionSerializer.js";
+import {collectionLoggedInSerializer} from "@/src/presentation/response/serializers/Collection/CollectionLoggedInSerializer.js";
 
 /**{@link CollectionController#getCollection}*/
 describe("GET collections/{collectionId}/", function () {
@@ -23,7 +23,7 @@ describe("GET collections/{collectionId}/", function () {
             const response = await makeRequest(collection.id);
 
             expect(response.statusCode).to.equal(200);
-            expect(response.json()).toEqual(collectionDTO.serialize(collection));
+            expect(response.json()).toEqual(collectionSerializer.serialize(collection));
         });
         test<TestContext>("If the user is logged in return collection and texts with vocab levels", async (context) => {
             const user = await context.userFactory.createOne();
@@ -34,7 +34,7 @@ describe("GET collections/{collectionId}/", function () {
             const response = await makeRequest(collection.id, session.token);
 
             expect(response.statusCode).to.equal(200);
-            expect(response.json()).toEqual(collectionLoggedInDTO.serialize(collection));
+            expect(response.json()).toEqual(collectionLoggedInSerializer.serialize(collection));
         });
         test<TestContext>("If collection is public ignore isPublic status of texts", async (context) => {
             const author = await context.userFactory.createOne();
@@ -58,7 +58,7 @@ describe("GET collections/{collectionId}/", function () {
 
             const response = await makeRequest(collection.id);
             expect(response.statusCode).to.equal(200);
-            expect(response.json()).toEqual(collectionDTO.serialize(collection));
+            expect(response.json()).toEqual(collectionSerializer.serialize(collection));
         });
     });
     describe("If the collection is private hide it from non-author user", () => {

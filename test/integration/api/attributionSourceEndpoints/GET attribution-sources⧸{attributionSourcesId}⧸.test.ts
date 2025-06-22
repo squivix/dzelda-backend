@@ -3,7 +3,7 @@ import {InjectOptions} from "light-my-request";
 import {fetchRequest} from "@/test/integration/integrationTestUtils.js";
 import {faker} from "@faker-js/faker";
 import {AttributionSource} from "@/src/models/entities/AttributionSource.js";
-import {attributionSourceDTO} from "@/src/presentation/response/dtos/AttributionSource/AttributionSourceDTO.js";
+import {attributionSourceSerializer} from "@/src/presentation/response/serializers/AttributionSource/AttributionSourceSerializer.js";
 
 /**{@link MeaningController#getAttributionSource}*/
 describe("GET attribution-sources/{attributionSourcesId}/", function () {
@@ -26,7 +26,7 @@ describe("GET attribution-sources/{attributionSourcesId}/", function () {
         const response = await makeRequest(expectedSource.id);
 
         expect(response.statusCode).to.equal(200);
-        expect(response.json()).toEqual(attributionSourceDTO.serialize(expectedSource));
+        expect(response.json()).toEqual(attributionSourceSerializer.serialize(expectedSource));
     });
 
     test<TestContext>("If attribution source does not exist return 404", async () => {

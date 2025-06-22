@@ -2,7 +2,7 @@ import {describe, expect, test, TestContext} from "vitest";
 import {fetchRequest, onlyKeep} from "@/test/integration/integrationTestUtils.js";
 import {ProfileSchema} from "dzelda-common";
 import {faker} from "@faker-js/faker";
-import {profileDTO} from "@/src/presentation/response/dtos/Profile/ProfileDTO.js";
+import {profileSerializer} from "@/src/presentation/response/serializers/Profile/ProfileSerializer.js";
 
 /**{@link UserController#updateUserProfile}*/
 describe("PUT users/me/profile/", function () {
@@ -26,9 +26,9 @@ describe("PUT users/me/profile/", function () {
             await context.em.refresh(user.profile);
 
             expect(response.statusCode).to.equal(200);
-            expect(response.json()).toEqual(profileDTO.serialize(user.profile));
+            expect(response.json()).toEqual(profileSerializer.serialize(user.profile));
             const updatedFields: (keyof ProfileSchema)[] = ["bio"];
-            expect(onlyKeep(profileDTO.serialize(user.profile), updatedFields)).toEqual(onlyKeep(profileDTO.serialize(updatedProfile), updatedFields));
+            expect(onlyKeep(profileSerializer.serialize(user.profile), updatedFields)).toEqual(onlyKeep(profileSerializer.serialize(updatedProfile), updatedFields));
         });
         test<TestContext>("If new profile picture is blank clear profile picture", async (context) => {
             const user = await context.userFactory.createOne();
@@ -42,9 +42,9 @@ describe("PUT users/me/profile/", function () {
             await context.em.refresh(user.profile);
 
             expect(response.statusCode).to.equal(200);
-            expect(response.json()).toEqual(profileDTO.serialize(user.profile));
+            expect(response.json()).toEqual(profileSerializer.serialize(user.profile));
             const updatedFields: (keyof ProfileSchema)[] = ["profilePicture", "bio"];
-            expect(onlyKeep(profileDTO.serialize(user.profile), updatedFields)).toEqual(onlyKeep(profileDTO.serialize(updatedProfile), updatedFields));
+            expect(onlyKeep(profileSerializer.serialize(user.profile), updatedFields)).toEqual(onlyKeep(profileSerializer.serialize(updatedProfile), updatedFields));
         });
         test<TestContext>("If new profile picture is provided, update profile picture", async (context) => {
             const user = await context.userFactory.createOne();
@@ -59,9 +59,9 @@ describe("PUT users/me/profile/", function () {
             await context.em.refresh(user.profile);
 
             expect(response.statusCode).to.equal(200);
-            expect(response.json()).toEqual(profileDTO.serialize(user.profile));
+            expect(response.json()).toEqual(profileSerializer.serialize(user.profile));
             const updatedFields: (keyof ProfileSchema)[] = ["profilePicture", "bio"];
-            expect(onlyKeep(profileDTO.serialize(user.profile), updatedFields)).toEqual(onlyKeep(profileDTO.serialize(updatedProfile), updatedFields));
+            expect(onlyKeep(profileSerializer.serialize(user.profile), updatedFields)).toEqual(onlyKeep(profileSerializer.serialize(updatedProfile), updatedFields));
         });
     });
     describe("If required fields are missing return 400", async (context) => {

@@ -3,7 +3,7 @@ import {fetchRequest, onlyKeep} from "@/test/integration/integrationTestUtils.js
 import {shuffleArray} from "@/test/utils.js";
 import {CollectionSchema, TextSchema} from "dzelda-common";
 import {faker} from "@faker-js/faker";
-import {collectionLoggedInDTO} from "@/src/presentation/response/dtos/Collection/CollectionLoggedInDTO.js";
+import {collectionLoggedInSerializer} from "@/src/presentation/response/serializers/Collection/CollectionLoggedInSerializer.js";
 
 /**{@link CollectionController#updateCollection}*/
 describe("PUT collections/{collectionId}/", function () {
@@ -42,10 +42,10 @@ describe("PUT collections/{collectionId}/", function () {
             await context.textRepo.annotateTextsWithUserData(collection.texts.getItems(), author);
 
             expect(response.statusCode).to.equal(200);
-            expect(response.json()).toEqual(collectionLoggedInDTO.serialize(collection));
+            expect(response.json()).toEqual(collectionLoggedInSerializer.serialize(collection));
             expect(response.json().texts.map((l: TextSchema) => l.id)).toEqual(shuffledTextIds);
             const updatedFields: (keyof CollectionSchema)[] = ["title", "description"];
-            expect(onlyKeep(collectionLoggedInDTO.serialize(collection), updatedFields)).toEqual(onlyKeep(collectionLoggedInDTO.serialize(updatedCollection), updatedFields));
+            expect(onlyKeep(collectionLoggedInSerializer.serialize(collection), updatedFields)).toEqual(onlyKeep(collectionLoggedInSerializer.serialize(updatedCollection), updatedFields));
         });
         test<TestContext>("If new image is blank clear collection image", async (context) => {
             const author = await context.userFactory.createOne();
@@ -75,11 +75,11 @@ describe("PUT collections/{collectionId}/", function () {
             await context.textRepo.annotateTextsWithUserData(collection.texts.getItems(), author);
 
             expect(response.statusCode).to.equal(200);
-            expect(response.json()).toEqual(collectionLoggedInDTO.serialize(collection));
+            expect(response.json()).toEqual(collectionLoggedInSerializer.serialize(collection));
             expect(collection.image).toEqual("");
             expect(response.json().texts.map((l: TextSchema) => l.id)).toEqual(shuffledTextIds);
             const updatedFields: (keyof CollectionSchema)[] = ["title", "description", "image"];
-            expect(onlyKeep(collectionLoggedInDTO.serialize(collection), updatedFields)).toEqual(onlyKeep(collectionLoggedInDTO.serialize(updatedCollection), updatedFields));
+            expect(onlyKeep(collectionLoggedInSerializer.serialize(collection), updatedFields)).toEqual(onlyKeep(collectionLoggedInSerializer.serialize(updatedCollection), updatedFields));
         });
         test<TestContext>("If new image is provided, update collection image", async (context) => {
             const author = await context.userFactory.createOne();
@@ -116,10 +116,10 @@ describe("PUT collections/{collectionId}/", function () {
             await context.textRepo.annotateTextsWithUserData(collection.texts.getItems(), author);
 
             expect(response.statusCode).to.equal(200);
-            expect(response.json()).toEqual(collectionLoggedInDTO.serialize(collection));
+            expect(response.json()).toEqual(collectionLoggedInSerializer.serialize(collection));
             expect(response.json().texts.map((l: TextSchema) => l.id)).toEqual(shuffledTextIds);
             const updatedFields: (keyof CollectionSchema)[] = ["title", "description", "image", "isPublic"];
-            expect(onlyKeep(collectionLoggedInDTO.serialize(collection), updatedFields)).toEqual(onlyKeep(collectionLoggedInDTO.serialize(updatedCollection), updatedFields));
+            expect(onlyKeep(collectionLoggedInSerializer.serialize(collection), updatedFields)).toEqual(onlyKeep(collectionLoggedInSerializer.serialize(updatedCollection), updatedFields));
         });
     });
     test<TestContext>("If user not logged in return 401", async (context) => {
