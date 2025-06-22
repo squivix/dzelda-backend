@@ -11,7 +11,6 @@ import {ValidationAPIError} from "@/src/utils/errors/ValidationAPIError.js";
 import {LanguageService} from "@/src/services/LanguageService.js";
 import {booleanStringValidator, numericStringValidator} from "@/src/validators/utilValidators.js";
 import {APIError} from "@/src/utils/errors/APIError.js";
-import {StatusCodes} from "http-status-codes";
 import {UserService} from "@/src/services/UserService.js";
 import {validateFileObjectKey} from "@/src/controllers/controllerUtils.js";
 import {textContentValidator, textLevelValidator, textTitleValidator} from "@/src/validators/textValidators.js";
@@ -223,7 +222,7 @@ class CollectionController {
         if (!collection)
             throw new NotFoundAPIError("Collection");
         if (!collection.isBookmarked)
-            throw new APIError(StatusCodes.NOT_FOUND, "Collection is not bookmarked");
+            throw new APIError(404, "Collection is not bookmarked");
         await collectionService.removeCollectionFromUserBookmarks(collection, user);
         reply.status(204).send();
     }

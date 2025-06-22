@@ -7,7 +7,6 @@ import {ValidationAPIError} from "@/src/utils/errors/ValidationAPIError.js";
 import {languageCodeValidator} from "@/src/validators/languageValidators.js";
 import {User} from "@/src/models/entities/auth/User.js";
 import {APIError} from "@/src/utils/errors/APIError.js";
-import {StatusCodes} from "http-status-codes";
 import {TranslationLanguage} from "@/src/models/entities/TranslationLanguage.js";
 import {booleanStringValidator} from "@/src/validators/utilValidators.js";
 import {languageSerializer} from "@/src/presentation/response/serializers/Language/LanguageSerializer.js";
@@ -88,7 +87,7 @@ class LanguageController {
         const languageService = new LanguageService(request.em);
         const languageMapping = await languageService.getUserLanguage(pathParams.languageCode, user);
         if (!languageMapping)
-            throw new APIError(StatusCodes.NOT_FOUND, "User is not learning language", "The user is not learning this language.");
+            throw new APIError(404, "User is not learning language", "The user is not learning this language.");
         let preferredTranslationLanguages: TranslationLanguage[] | undefined;
         if (body.preferredTranslationLanguageCodes) {
             preferredTranslationLanguages = await languageService.findTranslationLanguages({code: {$in: body.preferredTranslationLanguageCodes}});
@@ -113,7 +112,7 @@ class LanguageController {
         const languageService = new LanguageService(request.em);
         const languageMapping = await languageService.getUserLanguage(pathParams.languageCode, user);
         if (!languageMapping)
-            throw new APIError(StatusCodes.NOT_FOUND, "User is not learning language", "The user is not learning this language.");
+            throw new APIError(404, "User is not learning language", "The user is not learning this language.");
         await languageService.removeLanguageFromUser(languageMapping);
         reply.status(204).send();
     }
@@ -128,7 +127,7 @@ class LanguageController {
         const languageService = new LanguageService(request.em);
         const languageMapping = await languageService.getUserLanguage(pathParams.languageCode, user);
         if (!languageMapping)
-            throw new APIError(StatusCodes.NOT_FOUND, "User is not learning language", "The user is not learning this language.");
+            throw new APIError(404, "User is not learning language", "The user is not learning this language.");
         const language = languageMapping.language;
         await languageService.removeLanguageFromUser(languageMapping);
         await languageService.addLanguageToUser({user, language});

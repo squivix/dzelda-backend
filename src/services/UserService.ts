@@ -4,7 +4,6 @@ import {AnonymousUser, User} from "@/src/models/entities/auth/User.js";
 import {Profile} from "@/src/models/entities/Profile.js";
 import {Language} from "@/src/models/entities/Language.js";
 import {Session} from "@/src/models/entities/auth/Session.js";
-import {StatusCodes} from "http-status-codes";
 import {APIError} from "@/src/utils/errors/APIError.js";
 import {EntityManager, EntityRepository, FilterQuery, UniqueConstraintViolationException} from "@mikro-orm/core";
 import {UnauthenticatedAPIError} from "@/src/utils/errors/UnauthenticatedAPIError.js";
@@ -67,7 +66,7 @@ export class UserService {
             return token;
         } else {
             throw new APIError(
-                StatusCodes.UNAUTHORIZED,
+                401,
                 "Username and/or password is incorrect",
                 "The username and/or password you entered is incorrect"
             );
@@ -187,7 +186,7 @@ export class UserService {
             await this.em.nativeDelete(Session, {user: user, id: {$ne: session.id}});
         } else {
             throw new APIError(
-                StatusCodes.UNAUTHORIZED,
+                401,
                 "Old password is incorrect",
                 "The password you entered is incorrect"
             );

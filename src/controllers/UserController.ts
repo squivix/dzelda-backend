@@ -5,7 +5,6 @@ import {NotFoundAPIError} from "@/src/utils/errors/NotFoundAPIError.js";
 import {emailValidator, passwordValidator, usernameValidator} from "@/src/validators/userValidator.js";
 import {emailTransporter} from "@/src/nodemailer.config.js";
 import {APIError} from "@/src/utils/errors/APIError.js";
-import {StatusCodes} from "http-status-codes";
 import {User} from "@/src/models/entities/auth/User.js";
 import {Session} from "@/src/models/entities/auth/Session.js";
 import {ValidationAPIError} from "@/src/utils/errors/ValidationAPIError.js";
@@ -74,7 +73,7 @@ class UserController {
         const user = request.user as User;
 
         if (user.isEmailConfirmed && !user.isPendingEmailChange)
-            throw new APIError(StatusCodes.BAD_REQUEST, "Email is already confirmed");
+            throw new APIError(400, "Email is already confirmed");
 
         const email = body.email ?? user.email;
         await userService.changeUserEmail(user, email);
@@ -112,7 +111,7 @@ class UserController {
         const userService = new UserService(request.em);
         const token = await userService.confirmUserEmail(body.token);
         if (token == null)
-            throw new APIError(StatusCodes.UNAUTHORIZED, "Email confirmation token is invalid or expired");
+            throw new APIError(401, "Email confirmation token is invalid or expired");
 
         reply.status(204).send();
     }
@@ -152,7 +151,7 @@ class UserController {
         const userService = new UserService(request.em);
         const token = await userService.verifyPasswordResetToken(body.token);
         if (token == null)
-            throw new APIError(StatusCodes.UNAUTHORIZED, "Password reset token is invalid or expired");
+            throw new APIError(401, "Password reset token is invalid or expired");
         reply.status(204).send();
     }
 
@@ -167,7 +166,7 @@ class UserController {
         const userService = new UserService(request.em);
         const user = await userService.resetPassword(body.token, body.newPassword);
         if (user === null)
-            throw new APIError(StatusCodes.UNAUTHORIZED, "Password reset token is invalid or expired");
+            throw new APIError(401, "Password reset token is invalid or expired");
         await emailTransporter.sendMail(passwordChangedNotificationTemplate(user.email));
         reply.status(204).send();
     }

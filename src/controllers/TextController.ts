@@ -17,7 +17,6 @@ import {collectionLevelsFilterValidator} from "@/src/validators/collectionValida
 import {LanguageService} from "@/src/services/LanguageService.js";
 import {Collection} from "@/src/models/entities/Collection.js";
 import {APIError} from "@/src/utils/errors/APIError.js";
-import {StatusCodes} from "http-status-codes";
 import {emailTransporter} from "@/src/nodemailer.config.js";
 import {DOMAIN_NAME} from "@/src/constants.js";
 import {textSerializer} from "@/src/presentation/response/serializers/Text/TextSerializer.js";
@@ -334,7 +333,7 @@ class TextController {
             throw new NotFoundAPIError("Text");
 
         if (!text.isBookmarked)
-            throw new APIError(StatusCodes.NOT_FOUND, "Text is not bookmarked");
+            throw new APIError(404, "Text is not bookmarked");
         await textService.removeTextFromUserBookmarks(text, user);
         reply.status(204).send();
     }

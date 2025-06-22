@@ -12,7 +12,6 @@ import {User} from "@/src/models/entities/auth/User.js";
 import {booleanStringValidator, numericStringValidator} from "@/src/validators/utilValidators.js";
 import {TextService} from "@/src/services/TextService.js";
 import {APIError} from "@/src/utils/errors/APIError.js";
-import {StatusCodes} from "http-status-codes";
 import {PronunciationService} from "@/src/services/PronunciationService.js";
 import {enableTTSSynthesize} from "@/src/constants.js";
 import {textVisibilityFilter} from "@/src/filters/textVisibilityFilter.js";
@@ -149,7 +148,7 @@ class VocabController {
         const vocabService = new VocabService(request.em);
         const mapping = await vocabService.getUserVocab(pathParams.vocabId, user.profile);
         if (!mapping)
-            throw new APIError(StatusCodes.NOT_FOUND, "User is not learning vocab", "The user is not learning this vocab.");
+            throw new APIError(404, "User is not learning vocab", "The user is not learning this vocab.");
         reply.send(learnerVocabSerializer.serialize(mapping));
     }
 
@@ -169,7 +168,7 @@ class VocabController {
         const vocabService = new VocabService(request.em);
         const mapping = await vocabService.findLearnerVocab({vocab: pathParams.vocabId, learner: user.profile});
         if (!mapping)
-            throw new APIError(StatusCodes.NOT_FOUND, "User is not learning vocab", "The user is not learning this vocab.");
+            throw new APIError(404, "User is not learning vocab", "The user is not learning this vocab.");
         const updatedMapping = await vocabService.updateUserVocab(mapping, body);
         reply.send(learnerVocabSerializer.serialize(updatedMapping));
     }
@@ -184,7 +183,7 @@ class VocabController {
         const vocabService = new VocabService(request.em);
         const mapping = await vocabService.findLearnerVocab({vocab: pathParams.vocabId, learner: user.profile});
         if (!mapping)
-            throw new APIError(StatusCodes.NOT_FOUND, "User is not learning vocab", "The user is not learning this vocab.");
+            throw new APIError(404, "User is not learning vocab", "The user is not learning this vocab.");
         await vocabService.deleteUserVocab(mapping);
         reply.status(204).send();
     }

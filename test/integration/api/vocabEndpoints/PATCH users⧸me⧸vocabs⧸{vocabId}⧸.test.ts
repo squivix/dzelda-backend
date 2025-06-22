@@ -23,7 +23,7 @@ describe("PATCH users/me/vocabs/{vocabId}/", () => {
         return await fetchRequest(options, authToken);
     };
     const meaningSortComparator = createComparator(Meaning, [
-        {property: "learnersCount", order: "asc"},
+        {property: "learnersCount", order: "desc"},
         {property: "text", order: "asc", preProcess: ((t: string) => t.length)},
         {property: "id", order: "asc"}]
     );
