@@ -12,7 +12,7 @@ import {pronunciationRouter} from "@/src/routers/pronunciationRouter.js";
 
 //TODO return 400 for invalid json not 500
 const rootRouter: FastifyPluginCallback = function rootRouter(fastify, options, done) {
-    fastify.decorateRequest("em", null);
+    fastify.decorateRequest("em", null as any);
     fastify.decorateRequest("user", null);
     fastify.addHook("preParsing", attachOrmEntityManagerMiddleware);
     fastify.addHook("preParsing", authMiddleware);

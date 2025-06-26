@@ -14,11 +14,12 @@ class TextSummarySerializer extends CustomSerializer<Text> {
             isLastInCollection: text.isLastInCollection,
             isProcessing: text.isProcessing,
             addedOn: text.addedOn.toISOString(),
-            addedBy: text.addedBy.user.username,
             isPublic: text.isPublic,
             level: text.level,
-            language: text.language.code,
             pastViewersCount: Number(text.pastViewersCount),
+
+            addedBy: text.addedBy.user.username,
+            language: text.language.code,
         };
     }
 }

@@ -1,4 +1,3 @@
-import {orm} from "@/src/server.js";
 import process from "process";
 
 export async function setup() {
@@ -8,5 +7,4 @@ export async function setup() {
     } else
         console.log(`NODE_ENV is correctly set to ${process.env.NODE_ENV}`);
 
-    await orm.getSchemaGenerator().clearDatabase();
 }

@@ -1,24 +1,25 @@
 import {afterAll, beforeEach, TestContext, vi} from "vitest";
 import {orm} from "@/src/server.js";
+import {parsers} from "dzelda-common";
 import {UserFactory} from "@/devtools/factories/UserFactory.js";
 import {ProfileFactory} from "@/devtools/factories/ProfileFactory.js";
 import {SessionFactory} from "@/devtools/factories/SessionFactory.js";
 import {LanguageFactory} from "@/devtools/factories/LanguageFactory.js";
-import {TextFactory} from "@/devtools/factories/TextFactory.js";
+import {TranslationLanguageFactory} from "@/devtools/factories/TranslationLanguageFactory.js";
 import {CollectionFactory} from "@/devtools/factories/CollectionFactory.js";
+import {TextFactory} from "@/devtools/factories/TextFactory.js";
 import {DictionaryFactory} from "@/devtools/factories/DictionaryFactory.js";
 import {VocabFactory} from "@/devtools/factories/VocabFactory.js";
 import {MeaningFactory} from "@/devtools/factories/MeaningFactory.js";
 import {FileUploadRequestFactory} from "@/devtools/factories/FileUploadRequestFactory.js";
-import {Text} from "@/src/models/entities/Text.js";
-import {Meaning} from "@/src/models/entities/Meaning.js";
-import {Vocab} from "@/src/models/entities/Vocab.js";
-import {Collection} from "@/src/models/entities/Collection.js";
-import {TranslationLanguageFactory} from "@/devtools/factories/TranslationLanguageFactory.js";
-import {parsers} from "dzelda-common";
 import {NotificationFactory} from "@/devtools/factories/NotificationFactory.js";
 import {PendingJobFactory} from "@/devtools/factories/PendingJobFactory.js";
 import {HumanPronunciationFactory} from "@/devtools/factories/HumanPronunciationFactory.js";
+import {Collection} from "@/src/models/entities/Collection.js";
+import {Text} from "@/src/models/entities/Text.js";
+import {Vocab} from "@/src/models/entities/Vocab.js";
+import {Meaning} from "@/src/models/entities/Meaning.js";
+import '@/test/customMatchers.js'
 
 vi.mock("dzelda-common", async () => {
     return {
@@ -27,7 +28,7 @@ vi.mock("dzelda-common", async () => {
     };
 });
 beforeEach(async (context: TestContext) => {
-    await orm.getSchemaGenerator().clearDatabase();
+    //todo need to use factories without a db connection
     context.em = orm.em.fork();
 
     //factories

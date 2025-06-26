@@ -20,16 +20,33 @@ export default defineConfig({
     test: {
         exclude: [...defaultExclude, "build/**", ".yalc/**"],
         fileParallelism: false,
-        globalSetup: ["./test/globalSetup.ts",],
-        setupFiles: [
-            "./test/setup.ts"
-        ],
         restoreMocks: true,
-        testTimeout: 10_000,
+        globalSetup: ["./test/globalSetup.ts",],
         coverage: {
             enabled: true,
             reporter: ["text", 'html'],
             exclude: ['test-results/**', 'src/migrations/**', ...coverageConfigDefaults.exclude]
-        }
+        },
+        projects: [
+            {
+                extends: true,
+                test: {
+                    name: 'unit',
+                    testTimeout: 0,
+                    include: ['test/unit/**/*.test.ts'],
+                    setupFiles: ['./test/unit/unitTestSetup.ts'],
+                },
+            },
+            {
+
+                extends: true,
+                test: {
+                    name: 'integration',
+                    testTimeout: 10_000,
+                    include: ['test/integration/**/*.test.ts'],
+                    setupFiles: ['./test/integration/integrationTestSetup.ts'],
+                },
+            },
+        ],
     },
 });

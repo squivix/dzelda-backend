@@ -14,11 +14,12 @@ class TextSummaryLoggedInSerializer extends CustomSerializer<Text> {
             isLastInCollection: text.isLastInCollection,
             isProcessing: text.isProcessing,
             addedOn: text.addedOn.toISOString(),
-            addedBy: text.addedBy.user.username,
             isPublic: text.isPublic,
             level: text.level,
-            language: text.language.code,
             pastViewersCount: Number(text.pastViewersCount),
+
+            language: text.language.code,
+            addedBy: text.addedBy.user.username,
 
             vocabsByLevel: text.vocabsByLevel,
             isBookmarked: text.isBookmarked
