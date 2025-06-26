@@ -1,5 +1,5 @@
 import {describe, expect, test, TestContext, vi} from "vitest";
-import {FieldResolvers, gatherViewDetails, resolveView, ViewDescription} from "@/src/models/viewResolver.js";
+import {buildNestedResult, FieldResolvers, gatherViewDetails, resolveView, ViewDescription} from "@/src/models/viewResolver.js";
 import {collectionFieldResolvers} from "@/src/models/resolvers/collectionFieldResolvers.js";
 import {textFieldResolvers} from "@/src/models/resolvers/textFieldResolvers.js";
 import {CollectionLoggedInSerializer} from "@/src/presentation/response/serializers/Collection/CollectionLoggedInSerializer.js";
@@ -92,18 +92,31 @@ describe("gatherViewDetails()", function () {
             expect(topLevelFields).toEqual([]);
             expect(topLevelPopulate).toEqual([]);
             expect(filteredPopulates).toEqual(expect.arrayEqualRegardlessOfOrder([]))
-            expect(computedResolvers).toEqual(expect.arrayEqualRegardlessOfOrder([computedField1Resolve, computedField2Resolve]))
+            expect(computedResolvers).toEqual(expect.arrayEqualRegardlessOfOrder([{path: "", resolve: computedField1Resolve}, {path: "", resolve: computedField2Resolve}]))
         });
-        test<TestContext>("should handle computed resolvers that return promises", async (testContext) => {
-            const computedField1Resolve = vi.fn().mockResolvedValue(undefined);
-            const computedField2Resolve = vi.fn().mockResolvedValue(undefined);
-            const resolvers: FieldResolvers<any> = {
+        test<TestContext>("should handle nested computed resolvers", async (testContext) => {
+            const computedField1Resolve = vi.fn();
+            const computedField2Resolve = vi.fn();
+            const subResolvers: FieldResolvers<any> = {
                 computedField1: {type: "computed", resolve: computedField1Resolve},
                 computedField2: {type: "computed", resolve: computedField2Resolve},
-                otherField: {type: "db"},
+            }
+            const resolvers: FieldResolvers<any> = {
+                columnField: {type: "db"},
+                relationField: {
+                    type: "relation",
+                    populate: "relationField",
+                    resolvers: subResolvers,
+                    relationType: "to-many"
+                },
             }
             const view: ViewDescription = {
-                fields: ["computedField1", "computedField2"]
+                fields: ["columnField"],
+                relations: {
+                    relationField: {
+                        fields: ["computedField1", "computedField2"]
+                    }
+                }
             }
 
             const context = {user: null};
@@ -114,10 +127,10 @@ describe("gatherViewDetails()", function () {
                 filteredPopulates,
                 computedResolvers
             } = gatherViewDetails(view, resolvers, context, relationFilters);
-            expect(topLevelFields).toEqual([]);
-            expect(topLevelPopulate).toEqual([]);
+            expect(topLevelFields).toEqual(["columnField"]);
+            expect(topLevelPopulate).toEqual(["relationField"]);
             expect(filteredPopulates).toEqual(expect.arrayEqualRegardlessOfOrder([]))
-            expect(computedResolvers).toEqual(expect.arrayEqualRegardlessOfOrder([computedField1Resolve, computedField2Resolve]))
+            expect(computedResolvers).toEqual(expect.arrayEqualRegardlessOfOrder([{path: "relationField", resolve: computedField1Resolve}, {path: "relationField", resolve: computedField2Resolve}]))
         });
     })
     describe("Simple Relations", function () {
@@ -127,7 +140,7 @@ describe("gatherViewDetails()", function () {
                 subfield2: {type: "formula"},
             }
             const resolvers: FieldResolvers<any> = {
-                relationField: {type: "relation", populate: "relationField", resolvers: subResolvers},
+                relationField: {type: "relation", populate: "relationField", resolvers: subResolvers, relationType:"to-many"},
                 columnField: {type: "db"},
             }
 
@@ -160,10 +173,10 @@ describe("gatherViewDetails()", function () {
             const subResolvers: FieldResolvers<any> = {
                 subfield1: {type: "db"},
                 subfield2: {type: "formula"},
-                subRelationField: {type: "relation", populate: "subRelationField", resolvers: subSubResolvers},
+                subRelationField: {type: "relation", populate: "subRelationField", resolvers: subSubResolvers, relationType:"to-many"},
             }
             const resolvers: FieldResolvers<any> = {
-                relationField: {type: "relation", populate: "relationField", resolvers: subResolvers},
+                relationField: {type: "relation", populate: "relationField", resolvers: subResolvers, relationType:"to-many"},
                 field1: {type: "db"},
             }
 
@@ -208,6 +221,7 @@ describe("gatherViewDetails()", function () {
                 relationField: {
                     type: "relation",
                     populate: "relationField",
+                    relationType:"to-many",
                     resolvers: subResolvers,
                     defaultContextFilter: populateWithContextFilter
                 },
@@ -244,12 +258,15 @@ describe("gatherViewDetails()", function () {
                 relationField1: {
                     type: "relation",
                     populate: "relationField1",
+                    relationType:"to-many",
                     resolvers: subResolvers1,
+
                     defaultContextFilter: populateWithContextFilter1
                 },
                 relationField2: {
                     type: "relation",
                     populate: "relationField2",
+                    relationType:"to-many",
                     resolvers: subResolvers2,
                     defaultContextFilter: populateWithContextFilter2
                 },
@@ -414,6 +431,8 @@ describe("gatherViewDetails()", function () {
                 filteredPopulates,
                 computedResolvers
             } = gatherViewDetails(view, resolvers, context, relationFilters);
+
+
             expect(topLevelFields).toEqual(["id", "title", "description", "image", "addedOn", "isPublic", "avgPastViewersCountPerText",
                 "language.code",
                 "addedBy.user.username",
@@ -428,14 +447,10 @@ describe("gatherViewDetails()", function () {
                 "texts.addedBy.user",
             ]);
             expect(filteredPopulates).toEqual(expect.arrayEqualRegardlessOfOrder([]))
-            expect(computedResolvers).toEqual(expect.arrayEqualRegardlessOfOrder([...collectionComputedMocks, ...textComputedMocks]))
-            //todo nested computes call for each
-            // collectionComputedMocks.forEach((mock) => expect(mock).toHaveBeenCalledExactlyOnceWith(results, context))
-            // textComputedMocks.forEach((mock) => {
-            //     expect(mock).toHaveBeenCalledTimes(results.length);
-            //     results.forEach(c => expect(mock).toHaveBeenCalledWith(c.texts, context));
-            // })
-            // expect(repositoryMock.populate).not.toHaveBeenCalled();
+            expect(computedResolvers).toEqual(expect.arrayEqualRegardlessOfOrder([
+                ...collectionComputedMocks.map(r => ({path: "", resolve: r})),
+                ...textComputedMocks.map(r => ({path: "texts", resolve: r})),
+            ]));
         });
     });
 });

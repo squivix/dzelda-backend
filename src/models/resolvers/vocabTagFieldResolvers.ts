@@ -5,5 +5,5 @@ import {vocabTagCategoryFieldResolvers} from "@/src/models/resolvers/vocabTagCat
 export const vocabTagFieldResolvers: FieldResolvers<VocabTag> = {
     id: {type: "db"},
     name: {type: "db"},
-    category: {type: "relation", populate: "category", resolvers: vocabTagCategoryFieldResolvers}
+    category: {type: "relation", populate: "category", resolvers: vocabTagCategoryFieldResolvers, relationType: "to-one"}
 }

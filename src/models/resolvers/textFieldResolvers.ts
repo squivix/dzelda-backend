@@ -21,9 +21,9 @@ export const textFieldResolvers: FieldResolvers<Text> = {
     level: {type: 'db'},
     isLastInCollection: {type: 'formula'},
     pastViewersCount: {type: 'formula'},
-    language: {type: "relation", populate: "language", resolvers: languageFieldResolvers},
-    addedBy: {type: "relation", populate: "addedBy", resolvers: profileFieldResolvers},
-    collection: {type: "relation", populate: "collection", resolvers: collectionFieldResolvers},
+    language: {type: "relation", populate: "language", resolvers: languageFieldResolvers, relationType: "to-one"},
+    addedBy: {type: "relation", populate: "addedBy", resolvers: profileFieldResolvers, relationType: "to-one"},
+    collection: {type: "relation", populate: "collection", resolvers: collectionFieldResolvers, relationType: "to-one"},
     vocabsByLevel: {
         type: 'computed',
         resolve: async (texts, context) => {

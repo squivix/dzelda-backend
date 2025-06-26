@@ -9,6 +9,6 @@ export const profileFieldResolvers: FieldResolvers<Profile> = {
     profilePicture: {type: "db"},
     bio: {type: "db"},
     isPublic: {type: "db"},
-    user: {type: 'relation', populate: 'user', resolvers: userFieldResolvers},
-    languagesLearning: {type: "relation", populate: "languagesLearning", resolvers: languageFieldResolvers}
+    user: {type: 'relation', populate: 'user', resolvers: userFieldResolvers, relationType: "to-one"},
+    languagesLearning: {type: "relation", populate: "languagesLearning", resolvers: languageFieldResolvers, relationType: "to-many"}
 };

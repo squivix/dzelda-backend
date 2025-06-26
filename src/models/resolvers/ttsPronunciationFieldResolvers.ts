@@ -9,7 +9,7 @@ export const ttsPronunciationFieldResolvers: FieldResolvers<TTSPronunciation> = 
     id: {type: 'db'},
     url: {type: 'db'},
     addedOn: {type: 'db'},
-    voice: {type: "relation", populate: "voice", resolvers: ttsVoiceResolvers},
-    vocab: {type: "relation", populate: "vocab", resolvers: vocabFieldResolvers},
-    vocabVariant: {type: "relation", populate: "vocabVariant", resolvers: vocabVariantFieldResolvers},
+    voice: {type: "relation", populate: "voice", resolvers: ttsVoiceResolvers, relationType: "to-one"},
+    vocab: {type: "relation", populate: "vocab", resolvers: vocabFieldResolvers, relationType: "to-one"},
+    vocabVariant: {type: "relation", populate: "vocabVariant", resolvers: vocabVariantFieldResolvers, relationType: "to-one"},
 }

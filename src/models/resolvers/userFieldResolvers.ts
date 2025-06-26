@@ -9,5 +9,5 @@ export const userFieldResolvers: FieldResolvers<User> = {
     isEmailConfirmed: {type: "db"},
     isBanned: {type: "db"},
     isPendingEmailChange: {type: "formula"},
-    profile: {type: "relation", populate: "profile", resolvers: profileFieldResolvers}
+    profile: {type: "relation", populate: "profile", resolvers: profileFieldResolvers, relationType: "to-one"}
 };

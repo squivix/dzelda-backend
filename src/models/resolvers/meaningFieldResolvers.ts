@@ -12,9 +12,9 @@ export const meaningFieldResolvers: FieldResolvers<Meaning> = {
     learnersCount: {type: 'formula'},
     addedOn: {type: 'db'},
     attribution: {type: 'db'},
-    vocab: {type: "relation", populate: "vocab", resolvers: vocabFieldResolvers},
-    addedBy: {type: "relation", populate: "addedBy", resolvers: profileFieldResolvers},
-    language: {type: "relation", populate: "language", resolvers: languageFieldResolvers},
-    attributionSource: {type: "relation", populate: "attributionSource", resolvers: attributionSourceResolvers},
-    vocabVariant: {type: "relation", populate: "vocabVariant", resolvers: vocabVariantFieldResolvers}
+    vocab: {type: "relation", populate: "vocab", resolvers: vocabFieldResolvers, relationType: "to-one"},
+    addedBy: {type: "relation", populate: "addedBy", resolvers: profileFieldResolvers, relationType: "to-one"},
+    language: {type: "relation", populate: "language", resolvers: languageFieldResolvers, relationType: "to-one"},
+    attributionSource: {type: "relation", populate: "attributionSource", resolvers: attributionSourceResolvers, relationType: "to-one"},
+    vocabVariant: {type: "relation", populate: "vocabVariant", resolvers: vocabVariantFieldResolvers, relationType: "to-one"}
 }

@@ -10,5 +10,5 @@ export const ttsVoiceResolvers: FieldResolvers<TTSVoice> = {
     provider: {type: "db"},
     accentCountryCode: {type: "db"},
     isDefault: {type: "db"},
-    language: {type: "relation", populate: "language", resolvers: languageFieldResolvers}
+    language: {type: "relation", populate: "language", resolvers: languageFieldResolvers, relationType: "to-one"}
 }

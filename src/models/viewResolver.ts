@@ -1,5 +1,6 @@
-import {AnyEntity, EntityRepository, FilterQuery} from "@mikro-orm/core";
+import {AnyEntity, Collection, EntityRepository, FilterQuery} from "@mikro-orm/core";
 import {AnonymousUser, User} from "@/src/models/entities/auth/User.js";
+import path from "path";
 
 export type ResolverType = 'db' | 'formula' | 'relation' | 'computed';
 
@@ -22,6 +23,7 @@ export interface RelationFieldResolver {
     /** field resolvers for the related entity allowing nested composition */
     resolvers: FieldResolvers<any>;
     defaultContextFilter?: (context: ResolveContext) => FilterQuery<any>;
+    relationType: 'to-one' | 'to-many';
 }
 
 export interface ComputedFieldResolver<T extends AnyEntity> {
@@ -48,7 +50,7 @@ interface GatheredDetails {
     localFields: string[];
     localPopulate: string[];
     filteredPopulates: { populate: string[]; filter: FilterQuery<any>, fields: string[] }[];
-    computedResolvers: ((records: AnyEntity[], context: ResolveContext) => Promise<void> | void)[];
+    computedResolvers: Array<{ path: string, resolve: ((records: AnyEntity[], context: ResolveContext) => Promise<void> | void) }>;
 }
 
 type RelationFilters = Record<string, FilterQuery<any>>;
@@ -72,6 +74,59 @@ function buildNestedObject(path: string, value: { [key: string]: any }): { [key:
     return result;
 }
 
+export function buildNestedResult<T extends AnyEntity>(
+    rootResolver: Record<string, FieldResolver<T>>,
+    path: string,
+    topLevelResults: T[]
+): T[] {
+    if (path === "")
+        return topLevelResults;
+    const keys = path.split('.');
+    let currentResolver: FieldResolver<any> | undefined = rootResolver[keys[0]];
+    let currentResults: T[] = topLevelResults;
+
+    if (!currentResolver)
+        throw new Error(`Resolver for '${keys[0]}' not found`);
+
+
+    for (let i = 0; i < keys.length; i++) {
+        const key = keys[i];
+
+        if (i > 0) {
+            if (currentResolver?.type !== 'relation')
+                throw new Error(`Expected 'relation' resolver at '${keys.slice(0, i).join('.')}', got '${currentResolver?.type}'`);
+
+            const relationResolvers: FieldResolvers<T> = currentResolver.resolvers;
+            currentResolver = relationResolvers[key];
+
+            if (!currentResolver)
+                throw new Error(`Resolver for '${keys.slice(0, i + 1).join('.')}' not found`);
+        }
+        if (currentResolver?.type !== 'relation')
+            throw new Error(`Non-relation resolver encountered at '${keys.slice(0, i + 1).join('.')}'`);
+
+        const relationType = currentResolver.relationType;
+        const nextResults: T[] = [];
+
+        for (const record of currentResults) {
+            const related = record?.[key];
+            if (!related)
+                throw new Error(`Invalid path: ${path}`);
+
+            if (relationType === 'to-one')
+                nextResults.push(related);
+            else if (relationType === 'to-many') {
+                const items: T[] = related.getItems();
+                nextResults.push(...items);
+            } else
+                throw new Error(`Unknown relationType '${relationType}' at '${keys.slice(0, i + 1).join('.')}'`);
+        }
+        currentResults = nextResults;
+    }
+
+    return currentResults;
+}
+
 export function gatherViewDetails(
     currentView: ViewDescription,
     currentResolvers: FieldResolvers<any>,
@@ -83,7 +138,7 @@ export function gatherViewDetails(
     const localPopulate: string[] = [];
 
     const filteredPopulates: { populate: string[]; filter: FilterQuery<any>, fields: string[] }[] = [];
-    const computedResolvers: ((records: AnyEntity[], context: ResolveContext) => Promise<void> | void)[] = [];
+    const computedResolvers: Array<{ path: string, resolve: ((records: AnyEntity[], context: ResolveContext) => Promise<void> | void) }> = [];
 
     for (const field of currentView.fields) {
         const resolver = currentResolvers[field];
@@ -95,7 +150,7 @@ export function gatherViewDetails(
         if (resolver.type === 'db' || resolver.type === 'formula')
             localFields.push(target);
         else if (resolver.type === 'computed')
-            computedResolvers.push(resolver.resolve);
+            computedResolvers.push({path: prefix, resolve: resolver.resolve});
     }
 
     if (currentView.relations) {
@@ -162,8 +217,9 @@ export async function resolveView<T extends AnyEntity>(
     for (const {populate, filter, fields} of filteredPopulates)
         await repo.populate(result, populate as any, {where: filter, fields: fields});
 
-    for (const comp of computedResolvers)
-        await comp(result, context);
+    for (const {path, resolve} of computedResolvers)
+        await resolve(buildNestedResult(resolvers, path, result), context);
+
 
     return result;
 }

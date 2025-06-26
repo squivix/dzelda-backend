@@ -13,14 +13,13 @@ export const vocabFieldResolvers: FieldResolvers<Vocab> = {
     isPhrase: {type: 'db'},
     learnersCount: {type: 'formula'},
 
-    language: {type: "relation", populate: "language", resolvers: languageFieldResolvers},
-    meanings: {
-        type: "relation", populate: "meanings", resolvers: meaningFieldResolvers,
-    },
+    language: {type: "relation", populate: "language", resolvers: languageFieldResolvers, relationType: "to-one"},
+    meanings: {type: "relation", populate: "meanings", resolvers: meaningFieldResolvers, relationType: "to-many"},
     learnerMeanings: {
         type: 'relation',
         populate: 'learnerMeanings',
         resolvers: meaningFieldResolvers,
+        relationType: "to-many",
         defaultContextFilter: (context) => {
             if (!context.user || context.user instanceof AnonymousUser)
                 throw new Error("Context doesn't have logged in user")
@@ -31,9 +30,10 @@ export const vocabFieldResolvers: FieldResolvers<Vocab> = {
         type: 'relation',
         populate: 'ttsPronunciations',
         resolvers: ttsPronunciationFieldResolvers,
+        relationType: "to-many"
     },
-    tags: {type: "relation", populate: "tags", resolvers: vocabTagFieldResolvers},
-    vocabVariants: {type: 'relation', populate: 'vocabVariants', resolvers: vocabVariantFieldResolvers},
+    tags: {type: "relation", populate: "tags", resolvers: vocabTagFieldResolvers, relationType: "to-many"},
+    vocabVariants: {type: 'relation', populate: 'vocabVariants', resolvers: vocabVariantFieldResolvers, relationType: "to-many"},
     // rootForms: {type: "relation", populate: "rootForms", resolvers: vocabFieldResolvers},
 }
 

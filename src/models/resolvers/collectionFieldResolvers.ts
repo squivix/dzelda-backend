@@ -15,9 +15,9 @@ export const collectionFieldResolvers: FieldResolvers<Collection> = {
     addedOn: {type: 'db'},
     isPublic: {type: 'db'},
     avgPastViewersCountPerText: {type: 'formula'},
-    language: {type: 'relation', populate: 'language', resolvers: languageFieldResolvers},
-    addedBy: {type: 'relation', populate: 'addedBy', resolvers: profileFieldResolvers},
-    texts: {type: 'relation', populate: 'texts', resolvers: textFieldResolvers},
+    language: {type: 'relation', populate: 'language', resolvers: languageFieldResolvers, relationType: "to-one"},
+    addedBy: {type: 'relation', populate: 'addedBy', resolvers: profileFieldResolvers, relationType: "to-one"},
+    texts: {type: 'relation', populate: 'texts', resolvers: textFieldResolvers, relationType: "to-many"},
     vocabsByLevel: {
         type: 'computed',
         resolve: async (collections, context) => {

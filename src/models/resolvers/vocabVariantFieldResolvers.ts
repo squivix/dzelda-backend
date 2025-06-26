@@ -10,5 +10,6 @@ export const vocabVariantFieldResolvers: FieldResolvers<VocabVariant> = {
         type: 'relation',
         populate: 'ttsPronunciations',
         resolvers: ttsPronunciationFieldResolvers,
+        relationType: "to-many"
     },
 };
