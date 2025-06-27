@@ -1,18 +1,18 @@
 import {describe, expect, test, TestContext, vi} from "vitest";
-import {buildNestedResult, FieldResolvers, gatherViewDetails, resolveView, ViewDescription} from "@/src/models/viewResolver.js";
-import {collectionFieldResolvers} from "@/src/models/resolvers/collectionFieldResolvers.js";
-import {textFieldResolvers} from "@/src/models/resolvers/textFieldResolvers.js";
+import {buildFetchPlan, FieldFetchSpecsMap, ViewDescription} from "@/src/models/viewResolver.js";
+import {collectionFieldFetchMap} from "@/src/models/fetchSpecs/collectionFieldFetchMap.js";
+import {textFieldFetchMap} from "@/src/models/fetchSpecs/textFieldFetchMap.js";
 import {CollectionLoggedInSerializer} from "@/src/presentation/response/serializers/Collection/CollectionLoggedInSerializer.js";
-import {vocabFieldResolvers} from "@/src/models/resolvers/vocabFieldResolvers.js";
+import {vocabFieldFetchMap} from "@/src/models/fetchSpecs/vocabFieldFetchMap.js";
 
 
-/**{@link resolveView}*/
-describe("gatherViewDetails()", function () {
+/**{@link buildFetchPlan}*/
+describe("buildFetchPlan()", function () {
     describe("Field Selection (db / formula)", function () {
         test<TestContext>("should select simple db fields from the root view", async (testContext) => {
-            const resolvers: FieldResolvers<any> = {
-                columnField: {type: "db"},
-                otherField: {type: "db"},
+            const fetchSpecsMap: FieldFetchSpecsMap<any> = {
+                columnField: {type: "db-column"},
+                otherField: {type: 'db-column'},
             }
             const view: ViewDescription = {
                 fields: ["columnField"]
@@ -24,15 +24,15 @@ describe("gatherViewDetails()", function () {
                 localFields: topLevelFields,
                 localPopulate: topLevelPopulate,
                 filteredPopulates,
-                computedResolvers
-            } = gatherViewDetails(view, resolvers, context, relationFilters);
+                annotatedFields
+            } = buildFetchPlan(view, fetchSpecsMap, context, relationFilters);
             expect(topLevelFields).toEqual(["columnField"]);
             expect(topLevelPopulate).toEqual([]);
             expect(filteredPopulates).toEqual(expect.arrayEqualRegardlessOfOrder([]))
-            expect(computedResolvers).toEqual(expect.arrayEqualRegardlessOfOrder([]))
+            expect(annotatedFields).toEqual(expect.arrayEqualRegardlessOfOrder([]))
         });
         test<TestContext>("should select formula fields from the root view", async (testContext) => {
-            const resolvers: FieldResolvers<any> = {
+            const fetchSpecsMap: FieldFetchSpecsMap<any> = {
                 formulaField: {type: "formula"},
                 otherField: {type: "formula"},
             }
@@ -46,18 +46,18 @@ describe("gatherViewDetails()", function () {
                 localFields: topLevelFields,
                 localPopulate: topLevelPopulate,
                 filteredPopulates,
-                computedResolvers
-            } = gatherViewDetails(view, resolvers, context, relationFilters);
+                annotatedFields
+            } = buildFetchPlan(view, fetchSpecsMap, context, relationFilters);
             expect(topLevelFields).toEqual(["formulaField"]);
             expect(topLevelPopulate).toEqual([]);
             expect(filteredPopulates).toEqual(expect.arrayEqualRegardlessOfOrder([]))
-            expect(computedResolvers).toEqual(expect.arrayEqualRegardlessOfOrder([]))
+            expect(annotatedFields).toEqual(expect.arrayEqualRegardlessOfOrder([]))
         });
         test<TestContext>("should throw an error on non-existent fields in the view", async (testContext) => {
-            const resolvers: FieldResolvers<any> = {
-                field1: {type: "db"},
+            const fetchSpecsMap: FieldFetchSpecsMap<any> = {
+                field1: {type: 'db-column'},
                 field2: {type: "formula"},
-                otherField: {type: "db"},
+                otherField: {type: 'db-column'},
             }
             const view: ViewDescription = {
                 fields: ["field1", "field2", "nonExistentField"]
@@ -65,20 +65,20 @@ describe("gatherViewDetails()", function () {
 
             const context = {user: null};
             const relationFilters = {};
-            await expect(async () => gatherViewDetails(view, resolvers, context, relationFilters)).rejects.toThrowError();
+            await expect(async () => buildFetchPlan(view, fetchSpecsMap, context, relationFilters)).rejects.toThrowError();
         });
     });
-    describe("Computed Fields", function () {
-        test<TestContext>("should call computed resolvers with the result and context", async (testContext) => {
-            const computedField1Resolve = vi.fn();
-            const computedField2Resolve = vi.fn();
-            const resolvers: FieldResolvers<any> = {
-                computedField1: {type: "computed", resolve: computedField1Resolve},
-                computedField2: {type: "computed", resolve: computedField2Resolve},
-                otherField: {type: "db"},
+    describe("Annotated Fields", function () {
+        test<TestContext>("should call annotated fetchSpecs with the result and context", async (testContext) => {
+            const annotateField1 = vi.fn();
+            const annotateField2 = vi.fn();
+            const fetchSpecsMap: FieldFetchSpecsMap<any> = {
+                annotatedField1: {type: "annotated", annotate: annotateField1},
+                annotatedField2: {type: "annotated", annotate: annotateField2},
+                otherField: {type: 'db-column'},
             }
             const view: ViewDescription = {
-                fields: ["computedField1", "computedField2"]
+                fields: ["annotatedField1", "annotatedField2"]
             }
 
             const context = {user: null};
@@ -87,26 +87,26 @@ describe("gatherViewDetails()", function () {
                 localFields: topLevelFields,
                 localPopulate: topLevelPopulate,
                 filteredPopulates,
-                computedResolvers
-            } = gatherViewDetails(view, resolvers, context, relationFilters);
+                annotatedFields
+            } = buildFetchPlan(view, fetchSpecsMap, context, relationFilters);
             expect(topLevelFields).toEqual([]);
             expect(topLevelPopulate).toEqual([]);
             expect(filteredPopulates).toEqual(expect.arrayEqualRegardlessOfOrder([]))
-            expect(computedResolvers).toEqual(expect.arrayEqualRegardlessOfOrder([{path: "", resolve: computedField1Resolve}, {path: "", resolve: computedField2Resolve}]))
+            expect(annotatedFields).toEqual(expect.arrayEqualRegardlessOfOrder([{path: "", annotate: annotateField1}, {path: "", annotate: annotateField2}]))
         });
-        test<TestContext>("should handle nested computed resolvers", async (testContext) => {
-            const computedField1Resolve = vi.fn();
-            const computedField2Resolve = vi.fn();
-            const subResolvers: FieldResolvers<any> = {
-                computedField1: {type: "computed", resolve: computedField1Resolve},
-                computedField2: {type: "computed", resolve: computedField2Resolve},
+        test<TestContext>("should handle nested annotated fetchSpecs", async (testContext) => {
+            const annotateField1 = vi.fn();
+            const annotateField2 = vi.fn();
+            const subFetchSpecsMap: FieldFetchSpecsMap<any> = {
+                annotatedField1: {type: "annotated", annotate: annotateField1},
+                annotatedField2: {type: "annotated", annotate: annotateField2},
             }
-            const resolvers: FieldResolvers<any> = {
-                columnField: {type: "db"},
+            const fetchSpecsMap: FieldFetchSpecsMap<any> = {
+                columnField: {type: 'db-column'},
                 relationField: {
                     type: "relation",
                     populate: "relationField",
-                    resolvers: subResolvers,
+                    fieldFetchSpecsMap: subFetchSpecsMap,
                     relationType: "to-many"
                 },
             }
@@ -114,7 +114,7 @@ describe("gatherViewDetails()", function () {
                 fields: ["columnField"],
                 relations: {
                     relationField: {
-                        fields: ["computedField1", "computedField2"]
+                        fields: ["annotatedField1", "annotatedField2"]
                     }
                 }
             }
@@ -125,23 +125,23 @@ describe("gatherViewDetails()", function () {
                 localFields: topLevelFields,
                 localPopulate: topLevelPopulate,
                 filteredPopulates,
-                computedResolvers
-            } = gatherViewDetails(view, resolvers, context, relationFilters);
+                annotatedFields
+            } = buildFetchPlan(view, fetchSpecsMap, context, relationFilters);
             expect(topLevelFields).toEqual(["columnField"]);
             expect(topLevelPopulate).toEqual(["relationField"]);
             expect(filteredPopulates).toEqual(expect.arrayEqualRegardlessOfOrder([]))
-            expect(computedResolvers).toEqual(expect.arrayEqualRegardlessOfOrder([{path: "relationField", resolve: computedField1Resolve}, {path: "relationField", resolve: computedField2Resolve}]))
+            expect(annotatedFields).toEqual(expect.arrayEqualRegardlessOfOrder([{path: "relationField", annotate: annotateField1}, {path: "relationField", annotate: annotateField2}]))
         });
     })
     describe("Simple Relations", function () {
         test<TestContext>("should populate direct relations defined in the view", async (testContext) => {
-            const subResolvers: FieldResolvers<any> = {
-                subfield1: {type: "db"},
+            const subFetchSpecsMap: FieldFetchSpecsMap<any> = {
+                subfield1: {type: 'db-column'},
                 subfield2: {type: "formula"},
             }
-            const resolvers: FieldResolvers<any> = {
-                relationField: {type: "relation", populate: "relationField", resolvers: subResolvers, relationType:"to-many"},
-                columnField: {type: "db"},
+            const fetchSpecsMap: FieldFetchSpecsMap<any> = {
+                relationField: {type: "relation", populate: "relationField", fieldFetchSpecsMap: subFetchSpecsMap, relationType:"to-many"},
+                columnField: {type: 'db-column'},
             }
 
             const view: ViewDescription = {
@@ -158,26 +158,26 @@ describe("gatherViewDetails()", function () {
                 localFields: topLevelFields,
                 localPopulate: topLevelPopulate,
                 filteredPopulates,
-                computedResolvers
-            } = gatherViewDetails(view, resolvers, context, relationFilters);
+                annotatedFields
+            } = buildFetchPlan(view, fetchSpecsMap, context, relationFilters);
             expect(topLevelFields).toEqual(["columnField", "relationField.subfield1", "relationField.subfield2"]);
             expect(topLevelPopulate).toEqual(["relationField"]);
             expect(filteredPopulates).toEqual(expect.arrayEqualRegardlessOfOrder([]))
-            expect(computedResolvers).toEqual(expect.arrayEqualRegardlessOfOrder([]))
+            expect(annotatedFields).toEqual(expect.arrayEqualRegardlessOfOrder([]))
         });
         test<TestContext>("should handle nested relation paths`", async (testContext) => {
-            const subSubResolvers: FieldResolvers<any> = {
-                subSubfield1: {type: "db"},
+            const subSubFetchSpecsMap: FieldFetchSpecsMap<any> = {
+                subSubfield1: {type: 'db-column'},
                 subSubfield2: {type: "formula"},
             }
-            const subResolvers: FieldResolvers<any> = {
-                subfield1: {type: "db"},
+            const subFetchSpecsMap: FieldFetchSpecsMap<any> = {
+                subfield1: {type: 'db-column'},
                 subfield2: {type: "formula"},
-                subRelationField: {type: "relation", populate: "subRelationField", resolvers: subSubResolvers, relationType:"to-many"},
+                subRelationField: {type: "relation", populate: "subRelationField", fieldFetchSpecsMap: subSubFetchSpecsMap, relationType:"to-many"},
             }
-            const resolvers: FieldResolvers<any> = {
-                relationField: {type: "relation", populate: "relationField", resolvers: subResolvers, relationType:"to-many"},
-                field1: {type: "db"},
+            const fetchSpecsMap: FieldFetchSpecsMap<any> = {
+                relationField: {type: "relation", populate: "relationField", fieldFetchSpecsMap: subFetchSpecsMap, relationType:"to-many"},
+                field1: {type: 'db-column'},
             }
 
             const view: ViewDescription = {
@@ -200,29 +200,29 @@ describe("gatherViewDetails()", function () {
                 localFields: topLevelFields,
                 localPopulate: topLevelPopulate,
                 filteredPopulates,
-                computedResolvers
-            } = gatherViewDetails(view, resolvers, context, relationFilters);
+                annotatedFields
+            } = buildFetchPlan(view, fetchSpecsMap, context, relationFilters);
             expect(topLevelFields).toEqual(["field1", "relationField.subfield1", "relationField.subfield2", "relationField.subRelationField.subSubfield1", "relationField.subRelationField.subSubfield2"]);
             expect(topLevelPopulate).toEqual(["relationField", "relationField.subRelationField"]);
             expect(filteredPopulates).toEqual(expect.arrayEqualRegardlessOfOrder([]))
-            expect(computedResolvers).toEqual(expect.arrayEqualRegardlessOfOrder([]))
+            expect(annotatedFields).toEqual(expect.arrayEqualRegardlessOfOrder([]))
         });
     })
     describe("Context-Filtered Relations", function () {
         test<TestContext>("should apply context-based filters using `repo.populate`", async (testContext) => {
-            const subResolvers: FieldResolvers<any> = {
-                subfield1: {type: "db"},
+            const subFetchSpecsMap: FieldFetchSpecsMap<any> = {
+                subfield1: {type: 'db-column'},
                 subfield2: {type: "formula"},
             }
             const contextualFilter = {};
             const populateWithContextFilter = vi.fn().mockReturnValue(contextualFilter);
-            const resolvers: FieldResolvers<any> = {
-                field1: {type: "db"},
+            const fetchSpecsMap: FieldFetchSpecsMap<any> = {
+                field1: {type: 'db-column'},
                 relationField: {
                     type: "relation",
                     populate: "relationField",
                     relationType:"to-many",
-                    resolvers: subResolvers,
+                    fieldFetchSpecsMap: subFetchSpecsMap,
                     defaultContextFilter: populateWithContextFilter
                 },
             }
@@ -239,27 +239,27 @@ describe("gatherViewDetails()", function () {
                 localFields: topLevelFields,
                 localPopulate: topLevelPopulate,
                 filteredPopulates,
-                computedResolvers
-            } = gatherViewDetails(view, resolvers, context, relationFilters);
+                annotatedFields
+            } = buildFetchPlan(view, fetchSpecsMap, context, relationFilters);
             expect(topLevelFields).toEqual(["field1"]);
             expect(topLevelPopulate).toEqual([]);
             expect(filteredPopulates).toEqual(expect.arrayEqualRegardlessOfOrder([
                 {populate: ["relationField"], filter: {relationField: contextualFilter}, fields: ["relationField.subfield1", "relationField.subfield2"]}
             ]))
-            expect(computedResolvers).toEqual(expect.arrayEqualRegardlessOfOrder([]))
+            expect(annotatedFields).toEqual(expect.arrayEqualRegardlessOfOrder([]))
         });
         test<TestContext>("should support multiple filtered relations", async (testContext) => {
-            const subResolvers1: FieldResolvers<any> = {sub1field: {type: "db"}}, subResolvers2: FieldResolvers<any> = {sub2field: {type: "db"}}
+            const subFetchSpecsMap1: FieldFetchSpecsMap<any> = {sub1field: {type: 'db-column'}}, subFetchSpecsMap2: FieldFetchSpecsMap<any> = {sub2field: {type: 'db-column'}}
             const contextualFilter1 = {}, contextualFilter2 = {};
             const populateWithContextFilter1 = vi.fn().mockReturnValue(contextualFilter1),
                 populateWithContextFilter2 = vi.fn().mockReturnValue(contextualFilter2);
-            const resolvers: FieldResolvers<any> = {
-                field1: {type: "db"},
+            const fetchSpecsMap: FieldFetchSpecsMap<any> = {
+                field1: {type: 'db-column'},
                 relationField1: {
                     type: "relation",
                     populate: "relationField1",
                     relationType:"to-many",
-                    resolvers: subResolvers1,
+                    fieldFetchSpecsMap: subFetchSpecsMap1,
 
                     defaultContextFilter: populateWithContextFilter1
                 },
@@ -267,7 +267,7 @@ describe("gatherViewDetails()", function () {
                     type: "relation",
                     populate: "relationField2",
                     relationType:"to-many",
-                    resolvers: subResolvers2,
+                    fieldFetchSpecsMap: subFetchSpecsMap2,
                     defaultContextFilter: populateWithContextFilter2
                 },
             }
@@ -285,15 +285,15 @@ describe("gatherViewDetails()", function () {
                 localFields: topLevelFields,
                 localPopulate: topLevelPopulate,
                 filteredPopulates,
-                computedResolvers
-            } = gatherViewDetails(view, resolvers, context, relationFilters);
+                annotatedFields
+            } = buildFetchPlan(view, fetchSpecsMap, context, relationFilters);
             expect(topLevelFields).toEqual(["field1"]);
             expect(topLevelPopulate).toEqual([]);
             expect(filteredPopulates).toEqual(expect.arrayEqualRegardlessOfOrder([
                 {populate: ["relationField1"], filter: {relationField1: contextualFilter1}, fields: ["relationField1.sub1field"]},
                 {populate: ["relationField2"], filter: {relationField2: contextualFilter2}, fields: ["relationField2.sub2field"]},
             ]))
-            expect(computedResolvers).toEqual(expect.arrayEqualRegardlessOfOrder([]))
+            expect(annotatedFields).toEqual(expect.arrayEqualRegardlessOfOrder([]))
         });
         test.todo<TestContext>("should work with combinations of filtered and unfiltered relations", async (testContext) => {
         });
@@ -301,29 +301,29 @@ describe("gatherViewDetails()", function () {
     describe("Recursive View Handling", function () {
         test.todo<TestContext>("should recurse into relation subviews and collect their fields", async (testContext) => {
         });
-        test.todo<TestContext>("should stop recursion if no resolvers are provided for a relation", async (testContext) => {
+        test.todo<TestContext>("should stop recursion if no fetchSpecs are provided for a relation", async (testContext) => {
         });
         test.todo<TestContext>("should handle both array-style and object-style subviews", async (testContext) => {
         });
-        test.todo<TestContext>("should call computed resolvers in nested views", async (testContext) => {
+        test.todo<TestContext>("should call annotated fetchSpecs in nested views", async (testContext) => {
         });
     });
     describe("Integration Scenarios", function () {
-        test.todo<TestContext>("should resolve fields, relations, and computed fields together", async (testContext) => {
+        test.todo<TestContext>("should resolve fields, relations, and annotated fields together", async (testContext) => {
         });
-        test.todo<TestContext>("should resolve multiple nested levels of relations, filters, and computed fields", async (testContext) => {
+        test.todo<TestContext>("should resolve multiple nested levels of relations, filters, and annotated fields", async (testContext) => {
         });
         test.todo<TestContext>("should handle an empty view without errors", async (testContext) => {
         });
     });
     describe("Error/Edge Handling", function () {
-        test.todo<TestContext>("should handle missing resolvers gracefully", async (testContext) => {
+        test.todo<TestContext>("should handle missing fetchSpecs gracefully", async (testContext) => {
         });
         test.todo<TestContext>("should ignore unknown fields in the view", async (testContext) => {
         });
         test.todo<TestContext>("should not throw if `view.relations` is missing or empty", async (testContext) => {
         });
-        test.todo<TestContext>("should not fail when `resolver.contextFilter` is absent", async (testContext) => {
+        test.todo<TestContext>("should not fail when `fetchSpecsMap.contextFilter` is absent", async (testContext) => {
         });
     });
     describe("Optional / Stretch", function () {
@@ -335,7 +335,7 @@ describe("gatherViewDetails()", function () {
     describe("Realistic endpoints", function () {
         test<TestContext>("Get text vocabs (with meanings)", async (testContext) => {
             const user = testContext.userFactory.makeOne();
-            const resolvers = vocabFieldResolvers;
+            const fetchSpecsMap = vocabFieldFetchMap;
             const view: ViewDescription = {
                 fields: ["id", "text", "isPhrase", "learnersCount"],
                 relations: {
@@ -374,8 +374,8 @@ describe("gatherViewDetails()", function () {
                 localFields: topLevelFields,
                 localPopulate: topLevelPopulate,
                 filteredPopulates,
-                computedResolvers
-            } = gatherViewDetails(view, resolvers, context, relationFilters);
+                annotatedFields
+            } = buildFetchPlan(view, fetchSpecsMap, context, relationFilters);
             expect(topLevelFields).toEqual([
                 "id", "text", "isPhrase", "learnersCount",
                 "language.code",
@@ -414,13 +414,13 @@ describe("gatherViewDetails()", function () {
                     ]
                 },
             ]))
-            expect(computedResolvers).toEqual(expect.arrayEqualRegardlessOfOrder([]))
+            expect(annotatedFields).toEqual(expect.arrayEqualRegardlessOfOrder([]))
         });
         test<TestContext>("Get collections logged in", async (testContext) => {
-            const collectionComputedMocks = ["vocabsByLevel", "isBookmarked"].map(c => vi.spyOn(collectionFieldResolvers[c] as any, "resolve").mockResolvedValue(undefined))
-            const textComputedMocks = ["vocabsByLevel", "isBookmarked"].map(c => vi.spyOn(textFieldResolvers[c] as any, "resolve").mockResolvedValue(undefined))
+            const collectionAnnotateMocks = ["vocabsByLevel", "isBookmarked"].map(c => vi.spyOn(collectionFieldFetchMap[c] as any, "annotate").mockResolvedValue(undefined))
+            const textAnnotateMocks = ["vocabsByLevel", "isBookmarked"].map(c => vi.spyOn(textFieldFetchMap[c] as any, "annotate").mockResolvedValue(undefined))
 
-            const resolvers = collectionFieldResolvers;
+            const fetchSpecsMap = collectionFieldFetchMap;
             const view = CollectionLoggedInSerializer.view;
 
             const context = {user: null};
@@ -429,8 +429,8 @@ describe("gatherViewDetails()", function () {
                 localFields: topLevelFields,
                 localPopulate: topLevelPopulate,
                 filteredPopulates,
-                computedResolvers
-            } = gatherViewDetails(view, resolvers, context, relationFilters);
+                annotatedFields
+            } = buildFetchPlan(view, fetchSpecsMap, context, relationFilters);
 
 
             expect(topLevelFields).toEqual(["id", "title", "description", "image", "addedOn", "isPublic", "avgPastViewersCountPerText",
@@ -447,9 +447,9 @@ describe("gatherViewDetails()", function () {
                 "texts.addedBy.user",
             ]);
             expect(filteredPopulates).toEqual(expect.arrayEqualRegardlessOfOrder([]))
-            expect(computedResolvers).toEqual(expect.arrayEqualRegardlessOfOrder([
-                ...collectionComputedMocks.map(r => ({path: "", resolve: r})),
-                ...textComputedMocks.map(r => ({path: "texts", resolve: r})),
+            expect(annotatedFields).toEqual(expect.arrayEqualRegardlessOfOrder([
+                ...collectionAnnotateMocks.map(a => ({path: "", annotate: a})),
+                ...textAnnotateMocks.map(a => ({path: "texts", annotate: a})),
             ]));
         });
     });
