@@ -1,6 +1,5 @@
-
 export function nestValueAtPath(path: string, value: unknown): { [key: string]: unknown } {
-    const keys = path.split('.');
+    const keys = path.split(".");
     const result: { [key: string]: any } = {};
     let current = result;
 

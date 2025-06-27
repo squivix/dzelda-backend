@@ -46,7 +46,7 @@ describe("GET collections/{collectionId}/", function () {
                         addedBy: author.profile,
                         language,
                         isPublic: true,
-                        isLastInCollection:false
+                        isLastInCollection: false
                     }),
                     ...context.textFactory.makeDefinitions(3, {
                         addedBy: author.profile,

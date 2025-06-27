@@ -19,7 +19,7 @@ describe("DELETE users/me/texts/hidden/:textId", () => {
         const user = await context.userFactory.createOne();
         const session = await context.sessionFactory.createOne({user});
         const language = await context.languageFactory.createOne();
-        const text = await context.textFactory.createOne({language, hiddenBy:user.profile});
+        const text = await context.textFactory.createOne({language, hiddenBy: user.profile});
 
         const response = await makeRequest(text.id, session.token);
 
@@ -29,7 +29,7 @@ describe("DELETE users/me/texts/hidden/:textId", () => {
     test<TestContext>("If user is not logged in return 401", async (context) => {
         const user = await context.userFactory.createOne();
         const language = await context.languageFactory.createOne();
-        const text = await context.textFactory.createOne({language, hiddenBy:user.profile});
+        const text = await context.textFactory.createOne({language, hiddenBy: user.profile});
 
         const response = await makeRequest(text.id);
 
@@ -39,7 +39,7 @@ describe("DELETE users/me/texts/hidden/:textId", () => {
         const user = await context.userFactory.createOne({isEmailConfirmed: false});
         const session = await context.sessionFactory.createOne({user});
         const language = await context.languageFactory.createOne();
-        const text = await context.textFactory.createOne({language, hiddenBy:user.profile});
+        const text = await context.textFactory.createOne({language, hiddenBy: user.profile});
 
         const response = await makeRequest(text.id, session.token);
 

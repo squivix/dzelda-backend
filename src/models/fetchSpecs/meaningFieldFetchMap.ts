@@ -7,11 +7,11 @@ import {attributionSourceFieldFetchMap} from "@/src/models/fetchSpecs/attributio
 import {vocabVariantFieldFetchMap} from "@/src/models/fetchSpecs/vocabVariantFieldFetchMap.js";
 
 export const meaningFieldFetchMap: FieldFetchSpecsMap<Meaning> = {
-    id: {type: 'db-column'},
-    text: {type: 'db-column'},
-    learnersCount: {type: 'formula'},
-    addedOn: {type: 'db-column'},
-    attribution: {type: 'db-column'},
+    id: {type: "db-column"},
+    text: {type: "db-column"},
+    learnersCount: {type: "formula"},
+    addedOn: {type: "db-column"},
+    attribution: {type: "db-column"},
     vocab: {type: "relation", populate: "vocab", fieldFetchSpecsMap: vocabFieldFetchMap, relationType: "to-one"},
     addedBy: {type: "relation", populate: "addedBy", fieldFetchSpecsMap: profileFieldFieldFetchMap, relationType: "to-one"},
     language: {type: "relation", populate: "language", fieldFetchSpecsMap: languageFieldFetchMap, relationType: "to-one"},

@@ -1,4 +1,4 @@
-import {afterAll, beforeAll, beforeEach, TestContext, vi} from "vitest";
+import {afterAll, beforeEach, TestContext, vi} from "vitest";
 import {orm} from "@/src/server.js";
 import {UserFactory} from "@/devtools/factories/UserFactory.js";
 import {ProfileFactory} from "@/devtools/factories/ProfileFactory.js";
@@ -19,7 +19,7 @@ import {parsers} from "dzelda-common";
 import {NotificationFactory} from "@/devtools/factories/NotificationFactory.js";
 import {PendingJobFactory} from "@/devtools/factories/PendingJobFactory.js";
 import {HumanPronunciationFactory} from "@/devtools/factories/HumanPronunciationFactory.js";
-import '@/test/customMatchers.js'
+import "@/test/customMatchers.js"
 
 vi.mock("dzelda-common", async () => {
     return {

@@ -41,7 +41,6 @@
     "bcrypt": "^5.1.1",
     "concurrently": "^8.2.2",
     "dzelda-common": "github:squivix/dzelda-common#v2.0.0",
-
     "fs-extra": "^11.1.0",
     "mime-types": "^2.1.35",
     "nodemailer": "^6.9.4",

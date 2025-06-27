@@ -41,10 +41,10 @@ describe("POST users/me/texts/history/", () => {
         const language = await context.languageFactory.createOne({learners: user.profile});
         const text1 = await context.textFactory.createOne({language, isPublic: true});
         const text2 = await context.textFactory.createOne({language, isPublic: true});
-        const oldTextHistoryEntry = context.em.create(TextHistoryEntry, {pastViewer: user.profile, text: text1, timeViewed: new Date('2023-06-22T00:00:00.0000')});
-        context.em.create(TextHistoryEntry, {pastViewer: user.profile, text: text2, timeViewed: new Date('2024-06-22T00:00:00.0000')});
+        const oldTextHistoryEntry = context.em.create(TextHistoryEntry, {pastViewer: user.profile, text: text1, timeViewed: new Date("2023-06-22T00:00:00.0000")});
+        context.em.create(TextHistoryEntry, {pastViewer: user.profile, text: text2, timeViewed: new Date("2024-06-22T00:00:00.0000")});
         await context.em.flush();
-        const expectedTextHistoryEntry = context.em.create(TextHistoryEntry, {pastViewer: user.profile, text: text1, timeViewed: new Date('2025-06-22T00:00:00.0000')}, {persist: false});
+        const expectedTextHistoryEntry = context.em.create(TextHistoryEntry, {pastViewer: user.profile, text: text1, timeViewed: new Date("2025-06-22T00:00:00.0000")}, {persist: false});
 
         const response = await makeRequest({textId: text1.id}, session.token);
         await context.em.refresh(text1, {populate: ["pastViewersCount",]});

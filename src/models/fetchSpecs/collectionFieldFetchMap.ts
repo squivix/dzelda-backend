@@ -8,18 +8,18 @@ import {CollectionRepo} from "@/src/models/repos/CollectionRepo.js";
 
 
 export const collectionFieldFetchMap: FieldFetchSpecsMap<Collection> = {
-    id: {type: 'db-column'},
-    title: {type: 'db-column'},
-    description: {type: 'db-column'},
-    image: {type: 'db-column'},
-    addedOn: {type: 'db-column'},
-    isPublic: {type: 'db-column'},
-    avgPastViewersCountPerText: {type: 'formula'},
-    language: {type: 'relation', populate: 'language', fieldFetchSpecsMap: languageFieldFetchMap, relationType: "to-one"},
-    addedBy: {type: 'relation', populate: 'addedBy', fieldFetchSpecsMap: profileFieldFieldFetchMap, relationType: "to-one"},
-    texts: {type: 'relation', populate: 'texts', fieldFetchSpecsMap: textFieldFetchMap, relationType: "to-many"},
+    id: {type: "db-column"},
+    title: {type: "db-column"},
+    description: {type: "db-column"},
+    image: {type: "db-column"},
+    addedOn: {type: "db-column"},
+    isPublic: {type: "db-column"},
+    avgPastViewersCountPerText: {type: "formula"},
+    language: {type: "relation", populate: "language", fieldFetchSpecsMap: languageFieldFetchMap, relationType: "to-one"},
+    addedBy: {type: "relation", populate: "addedBy", fieldFetchSpecsMap: profileFieldFieldFetchMap, relationType: "to-one"},
+    texts: {type: "relation", populate: "texts", fieldFetchSpecsMap: textFieldFetchMap, relationType: "to-many"},
     vocabsByLevel: {
-        type: 'annotated',
+        type: "annotated",
         annotate: async (collections, context) => {
             if (!context.user || context.user instanceof AnonymousUser)
                 throw new Error("Context doesn't have logged in user")
@@ -28,7 +28,7 @@ export const collectionFieldFetchMap: FieldFetchSpecsMap<Collection> = {
         }
     },
     isBookmarked: {
-        type: 'annotated',
+        type: "annotated",
         annotate: async (collections, context) => {
             if (!context.user || context.user instanceof AnonymousUser)
                 throw new Error("Context doesn't have logged in user")

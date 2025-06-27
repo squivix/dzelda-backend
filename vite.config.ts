@@ -24,27 +24,27 @@ export default defineConfig({
         globalSetup: ["./test/globalSetup.ts",],
         coverage: {
             enabled: true,
-            reporter: ["text", 'html'],
-            exclude: ['test-results/**', 'src/migrations/**', ...coverageConfigDefaults.exclude]
+            reporter: ["text", "html"],
+            exclude: ["test-results/**", "src/migrations/**", ...coverageConfigDefaults.exclude]
         },
         projects: [
             {
                 extends: true,
                 test: {
-                    name: 'unit',
+                    name: "unit",
                     testTimeout: 0,
-                    include: ['test/unit/**/*.test.ts'],
-                    setupFiles: ['./test/unit/unitTestSetup.ts'],
+                    include: ["test/unit/**/*.test.ts"],
+                    setupFiles: ["./test/unit/unitTestSetup.ts"],
                 },
             },
             {
 
                 extends: true,
                 test: {
-                    name: 'integration',
+                    name: "integration",
                     testTimeout: 10_000,
-                    include: ['test/integration/**/*.test.ts'],
-                    setupFiles: ['./test/integration/integrationTestSetup.ts'],
+                    include: ["test/integration/**/*.test.ts"],
+                    setupFiles: ["./test/integration/integrationTestSetup.ts"],
                 },
             },
         ],

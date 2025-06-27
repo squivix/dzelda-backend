@@ -8,24 +8,24 @@ export type FetchContext = {
 }
 
 export interface DBColumnFieldSepc {
-    type: 'db-column'
+    type: "db-column"
 }
 
 export interface FormulaFieldSpec {
-    type: 'formula'
+    type: "formula"
 }
 
 export interface RelationFieldSpec {
-    type: 'relation';
+    type: "relation";
     populate: string;
     /** field fetch specs map for the related entity allowing nested composition */
     fieldFetchSpecsMap: FieldFetchSpecsMap<any>;
     defaultContextFilter?: (context: FetchContext) => FilterQuery<any>;
-    relationType: 'to-one' | 'to-many';
+    relationType: "to-one" | "to-many";
 }
 
 export interface AnnotatedFieldSpec<T extends AnyEntity> {
-    type: 'annotated';
+    type: "annotated";
     annotate: (records: T[], context: FetchContext) => Promise<void> | void;
 }
 
@@ -61,7 +61,7 @@ export function getResultAtPath<T extends AnyEntity>(
 ): T[] {
     if (path === "")
         return topLevelResults;
-    const keys = path.split('.');
+    const keys = path.split(".");
     let currentFetchSpec: FieldFetchSpec<any> | undefined = rootFetchMap[keys[0]];
     let currentResults: T[] = topLevelResults;
 
@@ -73,17 +73,17 @@ export function getResultAtPath<T extends AnyEntity>(
         const key = keys[i];
 
         if (i > 0) {
-            if (currentFetchSpec?.type !== 'relation')
-                throw new Error(`Expected 'relation' field at '${keys.slice(0, i).join('.')}', got '${currentFetchSpec?.type}'`);
+            if (currentFetchSpec?.type !== "relation")
+                throw new Error(`Expected 'relation' field at '${keys.slice(0, i).join(".")}', got '${currentFetchSpec?.type}'`);
 
             const relationFieldFetchMap: FieldFetchSpecsMap<T> = currentFetchSpec.fieldFetchSpecsMap;
             currentFetchSpec = relationFieldFetchMap[key];
 
             if (!currentFetchSpec)
-                throw new Error(`Field fetch spec for '${keys.slice(0, i + 1).join('.')}' not found`);
+                throw new Error(`Field fetch spec for '${keys.slice(0, i + 1).join(".")}' not found`);
         }
-        if (currentFetchSpec?.type !== 'relation')
-            throw new Error(`Non-relation field encountered at '${keys.slice(0, i + 1).join('.')}'`);
+        if (currentFetchSpec?.type !== "relation")
+            throw new Error(`Non-relation field encountered at '${keys.slice(0, i + 1).join(".")}'`);
 
         const relationType = currentFetchSpec.relationType;
         const nextResults: T[] = [];
@@ -93,13 +93,13 @@ export function getResultAtPath<T extends AnyEntity>(
             if (!related)
                 throw new Error(`Invalid path: ${path}`);
 
-            if (relationType === 'to-one')
+            if (relationType === "to-one")
                 nextResults.push(related);
-            else if (relationType === 'to-many') {
+            else if (relationType === "to-many") {
                 const items: T[] = related.getItems();
                 nextResults.push(...items);
             } else
-                throw new Error(`Unknown relationType '${relationType}' at '${keys.slice(0, i + 1).join('.')}'`);
+                throw new Error(`Unknown relationType '${relationType}' at '${keys.slice(0, i + 1).join(".")}'`);
         }
         currentResults = nextResults;
     }
@@ -112,7 +112,7 @@ export function buildFetchPlan(
     currentFetchMap: FieldFetchSpecsMap<any>,
     context: FetchContext,
     relationFilters: RelationFilters,
-    prefix = ''
+    prefix = ""
 ): FetchPlan {
     const localFields: string[] = [];
     const localPopulate: string[] = [];
@@ -127,16 +127,16 @@ export function buildFetchPlan(
 
         const target = prefix ? `${prefix}.${field}` : field;
 
-        if (fieldFetchSpec.type === 'db-column' || fieldFetchSpec.type === 'formula')
+        if (fieldFetchSpec.type === "db-column" || fieldFetchSpec.type === "formula")
             localFields.push(target);
-        else if (fieldFetchSpec.type === 'annotated')
+        else if (fieldFetchSpec.type === "annotated")
             annotatedFields.push({path: prefix, annotate: fieldFetchSpec.annotate});
     }
 
     if (currentView.relations) {
         for (const [relation, sub] of Object.entries(currentView.relations)) {
             const relationFieldFetchSpec = currentFetchMap[relation];
-            if (!relationFieldFetchSpec || relationFieldFetchSpec.type !== 'relation') continue;
+            if (!relationFieldFetchSpec || relationFieldFetchSpec.type !== "relation") continue;
 
             const path = prefix ? `${prefix}.${relationFieldFetchSpec.populate}` : relationFieldFetchSpec.populate;
             const subView: ViewDescription = Array.isArray(sub) ? {fields: sub} : sub;

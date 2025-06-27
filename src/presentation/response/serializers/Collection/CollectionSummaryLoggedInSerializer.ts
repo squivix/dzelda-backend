@@ -1,6 +1,5 @@
-import {createFindOptions, CustomSerializer} from "@/src/presentation/response/serializers/CustomSerializer.js";
+import {CustomSerializer} from "@/src/presentation/response/serializers/CustomSerializer.js";
 import {Collection} from "@/src/models/entities/Collection.js";
-import {CollectionAnnotatedField} from "@/src/models/repos/CollectionRepo.js";
 import {ViewDescription} from "@/src/models/viewResolver.js";
 
 class CollectionSummaryLoggedInSerializer extends CustomSerializer<Collection> {

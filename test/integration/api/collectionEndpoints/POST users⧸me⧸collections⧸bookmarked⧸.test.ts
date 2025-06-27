@@ -36,7 +36,7 @@ describe("POST users/me/collections/bookmarked/", function () {
         const user = await context.userFactory.createOne();
         const session = await context.sessionFactory.createOne({user});
         const language = await context.languageFactory.createOne({learners: user.profile});
-        const expectedCollection = await context.collectionFactory.createOne({language, bookmarkers:user.profile});
+        const expectedCollection = await context.collectionFactory.createOne({language, bookmarkers: user.profile});
         await context.collectionRepo.annotateCollectionsWithUserData([expectedCollection], user);
 
         const response = await makeRequest({collectionId: expectedCollection.id}, session.token);

@@ -19,7 +19,7 @@ import {Collection} from "@/src/models/entities/Collection.js";
 import {Text} from "@/src/models/entities/Text.js";
 import {Vocab} from "@/src/models/entities/Vocab.js";
 import {Meaning} from "@/src/models/entities/Meaning.js";
-import '@/test/customMatchers.js'
+import "@/test/customMatchers.js"
 
 vi.mock("dzelda-common", async () => {
     return {

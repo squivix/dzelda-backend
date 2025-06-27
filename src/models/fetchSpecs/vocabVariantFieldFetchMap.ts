@@ -4,11 +4,11 @@ import {ttsPronunciationFieldFetchMap} from "@/src/models/fetchSpecs/ttsPronunci
 
 
 export const vocabVariantFieldFetchMap: FieldFetchSpecsMap<VocabVariant> = {
-    id: {type: 'db-column'},
-    text: {type: 'db-column'},
+    id: {type: "db-column"},
+    text: {type: "db-column"},
     ttsPronunciations: {
-        type: 'relation',
-        populate: 'ttsPronunciations',
+        type: "relation",
+        populate: "ttsPronunciations",
         fieldFetchSpecsMap: ttsPronunciationFieldFetchMap,
         relationType: "to-many"
     },

@@ -50,10 +50,10 @@ describe("GET users/me/meanings/", () => {
                 const translationLanguage = await context.translationLanguageFactory.createOne();
                 const vocab1 = await context.vocabFactory.createOne({language});
                 const vocab2 = await context.vocabFactory.createOne({language});
-                const expectedMeanings = await context.meaningFactory.create(5, {vocab: vocab1, language:translationLanguage, learners: [user.profile]});
-                await context.meaningFactory.create(5, {vocab: vocab2, language:translationLanguage, learners: [user.profile]});
-                await context.meaningFactory.create(5, {vocab: vocab1, language:translationLanguage});
-                await context.meaningFactory.create(5, {vocab: vocab2, language:translationLanguage});
+                const expectedMeanings = await context.meaningFactory.create(5, {vocab: vocab1, language: translationLanguage, learners: [user.profile]});
+                await context.meaningFactory.create(5, {vocab: vocab2, language: translationLanguage, learners: [user.profile]});
+                await context.meaningFactory.create(5, {vocab: vocab1, language: translationLanguage});
+                await context.meaningFactory.create(5, {vocab: vocab2, language: translationLanguage});
                 expectedMeanings.sort(defaultSortComparator);
                 const recordsCount = expectedMeanings.length;
 
@@ -75,9 +75,9 @@ describe("GET users/me/meanings/", () => {
                 const translationLanguage = await context.translationLanguageFactory.createOne();
                 const vocab1 = await context.vocabFactory.createOne({language});
                 const vocab2 = await context.vocabFactory.createOne({language});
-                await context.meaningFactory.create(5, {vocab: vocab2, language:translationLanguage, addedBy: otherUser.profile, learners: user.profile,});
-                await context.meaningFactory.create(5, {vocab: vocab1, language:translationLanguage, addedBy: otherUser.profile});
-                await context.meaningFactory.create(5, {vocab: vocab2, language:translationLanguage, addedBy: otherUser.profile});
+                await context.meaningFactory.create(5, {vocab: vocab2, language: translationLanguage, addedBy: otherUser.profile, learners: user.profile,});
+                await context.meaningFactory.create(5, {vocab: vocab1, language: translationLanguage, addedBy: otherUser.profile});
+                await context.meaningFactory.create(5, {vocab: vocab2, language: translationLanguage, addedBy: otherUser.profile});
 
                 const response = await makeRequest({vocabId: vocab1.id}, session.token);
 
@@ -108,8 +108,8 @@ describe("GET users/me/meanings/", () => {
                 const translationLanguage = await context.translationLanguageFactory.createOne();
                 const vocab = await context.vocabFactory.createOne({language});
                 const expectedMeanings = [
-                    await context.meaningFactory.createOne({text: "abc", vocab, language:translationLanguage, learners: user.profile}),
-                    await context.meaningFactory.createOne({text: "def", vocab, language:translationLanguage, learners: user.profile}),
+                    await context.meaningFactory.createOne({text: "abc", vocab, language: translationLanguage, learners: user.profile}),
+                    await context.meaningFactory.createOne({text: "def", vocab, language: translationLanguage, learners: user.profile}),
                 ];
                 await context.meaningFactory.create(5, {vocab, language: translationLanguage});
                 const recordsCount = expectedMeanings.length;
@@ -165,8 +165,8 @@ describe("GET users/me/meanings/", () => {
                 const translationLanguage = await context.translationLanguageFactory.createOne();
                 const vocab = await context.vocabFactory.createOne({language});
                 const expectedMeanings = [
-                    await context.meaningFactory.createOne({text: "abc", vocab, language:translationLanguage, learners: user.profile}),
-                    await context.meaningFactory.createOne({text: "def", vocab, language:translationLanguage, learners: user.profile}),
+                    await context.meaningFactory.createOne({text: "abc", vocab, language: translationLanguage, learners: user.profile}),
+                    await context.meaningFactory.createOne({text: "def", vocab, language: translationLanguage, learners: user.profile}),
                 ];
                 await context.meaningFactory.create(5, {vocab, language: translationLanguage});
                 const recordsCount = expectedMeanings.length;
@@ -188,8 +188,8 @@ describe("GET users/me/meanings/", () => {
                 const translationLanguage = await context.translationLanguageFactory.createOne();
                 const vocab = await context.vocabFactory.createOne({language});
                 const expectedMeanings = [
-                    await context.meaningFactory.createOne({text: "def", vocab, language:translationLanguage, learners: user.profile}),
-                    await context.meaningFactory.createOne({text: "abc", vocab, language:translationLanguage, learners: user.profile}),
+                    await context.meaningFactory.createOne({text: "def", vocab, language: translationLanguage, learners: user.profile}),
+                    await context.meaningFactory.createOne({text: "abc", vocab, language: translationLanguage, learners: user.profile}),
                 ];
                 await context.meaningFactory.create(5, {vocab, language: translationLanguage});
                 const recordsCount = expectedMeanings.length;

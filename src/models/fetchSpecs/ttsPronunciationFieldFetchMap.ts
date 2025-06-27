@@ -6,9 +6,9 @@ import {vocabVariantFieldFetchMap} from "@/src/models/fetchSpecs/vocabVariantFie
 
 
 export const ttsPronunciationFieldFetchMap: FieldFetchSpecsMap<TTSPronunciation> = {
-    id: {type: 'db-column'},
-    url: {type: 'db-column'},
-    addedOn: {type: 'db-column'},
+    id: {type: "db-column"},
+    url: {type: "db-column"},
+    addedOn: {type: "db-column"},
     voice: {type: "relation", populate: "voice", fieldFetchSpecsMap: ttsVoiceFieldFetchMap, relationType: "to-one"},
     vocab: {type: "relation", populate: "vocab", fieldFetchSpecsMap: vocabFieldFetchMap, relationType: "to-one"},
     vocabVariant: {type: "relation", populate: "vocabVariant", fieldFetchSpecsMap: vocabVariantFieldFetchMap, relationType: "to-one"},

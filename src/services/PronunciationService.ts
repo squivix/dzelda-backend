@@ -34,7 +34,7 @@ export class PronunciationService {
         return await this.em.find(HumanPronunciation, {
             parsedText: {$ilike: text},
             language: language
-        }, {populate:["language"]});
+        }, {populate: ["language"]});
     }
 
     async getVocabTTSPronunciations(vocab: Vocab) {

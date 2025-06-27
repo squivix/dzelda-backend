@@ -7,8 +7,7 @@ export class UnauthenticatedAPIError extends APIError {
             super(401,
                 "Authentication required",
                 "Authentication credentials were not provided");
-        }
-        else {
+        } else {
             super(401,
                 "Invalid credentials",
                 "Invalid authentication credentials");

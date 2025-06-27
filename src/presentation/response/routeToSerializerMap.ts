@@ -1,3 +1,1 @@
-const routeToSerializer = {
-
-}
+const routeToSerializer = {}

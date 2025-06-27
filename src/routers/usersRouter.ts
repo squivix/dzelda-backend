@@ -10,7 +10,11 @@ export const userRouter: FastifyPluginCallback = function (fastify, options, don
     fastify.delete(`/users/me/`, {preHandler: [requiresAuth, requiresUnbannedAccount, requiresEmailConfirmed], handler: userController.deleteAccount});
     fastify.post(`/users/me/email/confirm/`, userController.confirmEmail);
     fastify.post(`/users/me/password/reset/`, {handler: userController.resetPassword, config: {rateLimit: {max: 10, timeWindow: "1 minute"}}});
-    fastify.put(`/users/me/password/`, {preHandler: [requiresAuth, requiresUnbannedAccount, requiresEmailConfirmed], handler: userController.changeUserPassword, config: {rateLimit: {max: 10, timeWindow: "1 minute"}}});
+    fastify.put(`/users/me/password/`, {
+        preHandler: [requiresAuth, requiresUnbannedAccount, requiresEmailConfirmed],
+        handler: userController.changeUserPassword,
+        config: {rateLimit: {max: 10, timeWindow: "1 minute"}}
+    });
     fastify.post(`/sessions/`, userController.login);
     fastify.delete(`/sessions/`, {preHandler: requiresAuth, handler: userController.logout});
     fastify.put(`/users/me/email/`, {preHandler: [requiresAuth, requiresUnbannedAccount, requiresEmailConfirmed], handler: userController.changeUserEmail});

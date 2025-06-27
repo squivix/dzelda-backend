@@ -8,16 +8,16 @@ import {ttsPronunciationFieldFetchMap} from "@/src/models/fetchSpecs/ttsPronunci
 import {AnonymousUser} from "@/src/models/entities/auth/User.js";
 
 export const vocabFieldFetchMap: FieldFetchSpecsMap<Vocab> = {
-    id: {type: 'db-column'},
-    text: {type: 'db-column'},
-    isPhrase: {type: 'db-column'},
-    learnersCount: {type: 'formula'},
+    id: {type: "db-column"},
+    text: {type: "db-column"},
+    isPhrase: {type: "db-column"},
+    learnersCount: {type: "formula"},
 
     language: {type: "relation", populate: "language", fieldFetchSpecsMap: languageFieldFetchMap, relationType: "to-one"},
     meanings: {type: "relation", populate: "meanings", fieldFetchSpecsMap: meaningFieldFetchMap, relationType: "to-many"},
     learnerMeanings: {
-        type: 'relation',
-        populate: 'learnerMeanings',
+        type: "relation",
+        populate: "learnerMeanings",
         fieldFetchSpecsMap: meaningFieldFetchMap,
         relationType: "to-many",
         defaultContextFilter: (context) => {
@@ -27,13 +27,13 @@ export const vocabFieldFetchMap: FieldFetchSpecsMap<Vocab> = {
         }
     },
     ttsPronunciations: {
-        type: 'relation',
-        populate: 'ttsPronunciations',
+        type: "relation",
+        populate: "ttsPronunciations",
         fieldFetchSpecsMap: ttsPronunciationFieldFetchMap,
         relationType: "to-many"
     },
     tags: {type: "relation", populate: "tags", fieldFetchSpecsMap: vocabTagFieldFetchMap, relationType: "to-many"},
-    vocabVariants: {type: 'relation', populate: 'vocabVariants', fieldFetchSpecsMap: vocabVariantFieldFetchMap, relationType: "to-many"},
+    vocabVariants: {type: "relation", populate: "vocabVariants", fieldFetchSpecsMap: vocabVariantFieldFetchMap, relationType: "to-many"},
 }
 
 

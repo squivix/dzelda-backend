@@ -1,4 +1,3 @@
-
 export class APIError extends Error {
     statusCode: number;
     message: string;

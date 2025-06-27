@@ -12,7 +12,7 @@ describe("buildFetchPlan()", function () {
         test<TestContext>("should select simple db fields from the root view", async (testContext) => {
             const fetchSpecsMap: FieldFetchSpecsMap<any> = {
                 columnField: {type: "db-column"},
-                otherField: {type: 'db-column'},
+                otherField: {type: "db-column"},
             }
             const view: ViewDescription = {
                 fields: ["columnField"]
@@ -55,9 +55,9 @@ describe("buildFetchPlan()", function () {
         });
         test<TestContext>("should throw an error on non-existent fields in the view", async (testContext) => {
             const fetchSpecsMap: FieldFetchSpecsMap<any> = {
-                field1: {type: 'db-column'},
+                field1: {type: "db-column"},
                 field2: {type: "formula"},
-                otherField: {type: 'db-column'},
+                otherField: {type: "db-column"},
             }
             const view: ViewDescription = {
                 fields: ["field1", "field2", "nonExistentField"]
@@ -75,7 +75,7 @@ describe("buildFetchPlan()", function () {
             const fetchSpecsMap: FieldFetchSpecsMap<any> = {
                 annotatedField1: {type: "annotated", annotate: annotateField1},
                 annotatedField2: {type: "annotated", annotate: annotateField2},
-                otherField: {type: 'db-column'},
+                otherField: {type: "db-column"},
             }
             const view: ViewDescription = {
                 fields: ["annotatedField1", "annotatedField2"]
@@ -102,7 +102,7 @@ describe("buildFetchPlan()", function () {
                 annotatedField2: {type: "annotated", annotate: annotateField2},
             }
             const fetchSpecsMap: FieldFetchSpecsMap<any> = {
-                columnField: {type: 'db-column'},
+                columnField: {type: "db-column"},
                 relationField: {
                     type: "relation",
                     populate: "relationField",
@@ -136,12 +136,12 @@ describe("buildFetchPlan()", function () {
     describe("Simple Relations", function () {
         test<TestContext>("should populate direct relations defined in the view", async (testContext) => {
             const subFetchSpecsMap: FieldFetchSpecsMap<any> = {
-                subfield1: {type: 'db-column'},
+                subfield1: {type: "db-column"},
                 subfield2: {type: "formula"},
             }
             const fetchSpecsMap: FieldFetchSpecsMap<any> = {
-                relationField: {type: "relation", populate: "relationField", fieldFetchSpecsMap: subFetchSpecsMap, relationType:"to-many"},
-                columnField: {type: 'db-column'},
+                relationField: {type: "relation", populate: "relationField", fieldFetchSpecsMap: subFetchSpecsMap, relationType: "to-many"},
+                columnField: {type: "db-column"},
             }
 
             const view: ViewDescription = {
@@ -167,17 +167,17 @@ describe("buildFetchPlan()", function () {
         });
         test<TestContext>("should handle nested relation paths`", async (testContext) => {
             const subSubFetchSpecsMap: FieldFetchSpecsMap<any> = {
-                subSubfield1: {type: 'db-column'},
+                subSubfield1: {type: "db-column"},
                 subSubfield2: {type: "formula"},
             }
             const subFetchSpecsMap: FieldFetchSpecsMap<any> = {
-                subfield1: {type: 'db-column'},
+                subfield1: {type: "db-column"},
                 subfield2: {type: "formula"},
-                subRelationField: {type: "relation", populate: "subRelationField", fieldFetchSpecsMap: subSubFetchSpecsMap, relationType:"to-many"},
+                subRelationField: {type: "relation", populate: "subRelationField", fieldFetchSpecsMap: subSubFetchSpecsMap, relationType: "to-many"},
             }
             const fetchSpecsMap: FieldFetchSpecsMap<any> = {
-                relationField: {type: "relation", populate: "relationField", fieldFetchSpecsMap: subFetchSpecsMap, relationType:"to-many"},
-                field1: {type: 'db-column'},
+                relationField: {type: "relation", populate: "relationField", fieldFetchSpecsMap: subFetchSpecsMap, relationType: "to-many"},
+                field1: {type: "db-column"},
             }
 
             const view: ViewDescription = {
@@ -211,17 +211,17 @@ describe("buildFetchPlan()", function () {
     describe("Context-Filtered Relations", function () {
         test<TestContext>("should apply context-based filters using `repo.populate`", async (testContext) => {
             const subFetchSpecsMap: FieldFetchSpecsMap<any> = {
-                subfield1: {type: 'db-column'},
+                subfield1: {type: "db-column"},
                 subfield2: {type: "formula"},
             }
             const contextualFilter = {};
             const populateWithContextFilter = vi.fn().mockReturnValue(contextualFilter);
             const fetchSpecsMap: FieldFetchSpecsMap<any> = {
-                field1: {type: 'db-column'},
+                field1: {type: "db-column"},
                 relationField: {
                     type: "relation",
                     populate: "relationField",
-                    relationType:"to-many",
+                    relationType: "to-many",
                     fieldFetchSpecsMap: subFetchSpecsMap,
                     defaultContextFilter: populateWithContextFilter
                 },
@@ -249,16 +249,16 @@ describe("buildFetchPlan()", function () {
             expect(annotatedFields).toEqual(expect.arrayEqualRegardlessOfOrder([]))
         });
         test<TestContext>("should support multiple filtered relations", async (testContext) => {
-            const subFetchSpecsMap1: FieldFetchSpecsMap<any> = {sub1field: {type: 'db-column'}}, subFetchSpecsMap2: FieldFetchSpecsMap<any> = {sub2field: {type: 'db-column'}}
+            const subFetchSpecsMap1: FieldFetchSpecsMap<any> = {sub1field: {type: "db-column"}}, subFetchSpecsMap2: FieldFetchSpecsMap<any> = {sub2field: {type: "db-column"}}
             const contextualFilter1 = {}, contextualFilter2 = {};
             const populateWithContextFilter1 = vi.fn().mockReturnValue(contextualFilter1),
                 populateWithContextFilter2 = vi.fn().mockReturnValue(contextualFilter2);
             const fetchSpecsMap: FieldFetchSpecsMap<any> = {
-                field1: {type: 'db-column'},
+                field1: {type: "db-column"},
                 relationField1: {
                     type: "relation",
                     populate: "relationField1",
-                    relationType:"to-many",
+                    relationType: "to-many",
                     fieldFetchSpecsMap: subFetchSpecsMap1,
 
                     defaultContextFilter: populateWithContextFilter1
@@ -266,7 +266,7 @@ describe("buildFetchPlan()", function () {
                 relationField2: {
                     type: "relation",
                     populate: "relationField2",
-                    relationType:"to-many",
+                    relationType: "to-many",
                     fieldFetchSpecsMap: subFetchSpecsMap2,
                     defaultContextFilter: populateWithContextFilter2
                 },

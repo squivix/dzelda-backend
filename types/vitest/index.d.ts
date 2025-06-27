@@ -18,7 +18,7 @@ import {NotificationFactory} from "@/devtools/factories/NotificationFactory.js";
 import {HumanPronunciationFactory} from "@/devtools/factories/HumanPronunciationFactory.js";
 
 interface CustomMatchers<R = unknown> {
-    arrayEqualRegardlessOfOrder: (expected:any[]) => R,
+    arrayEqualRegardlessOfOrder: (expected: any[]) => R,
 }
 
 declare module "vitest" {

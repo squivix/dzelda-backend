@@ -600,7 +600,7 @@ describe("GET users/me/texts/bookmarked/", () => {
 
                     const expectedTexts = [
                         ...await context.textFactory.create(3, {language, collection: publicCollection, bookmarkers: author.profile}),
-                        ...await context.textFactory.create(3, {language, collection: privateCollection, isPublic:false, addedBy: author.profile, bookmarkers: author.profile}),
+                        ...await context.textFactory.create(3, {language, collection: privateCollection, isPublic: false, addedBy: author.profile, bookmarkers: author.profile}),
                     ];
                     await context.textRepo.annotateTextsWithUserData(expectedTexts, author);
                     await context.textFactory.create(3, {language, isPublic: false});

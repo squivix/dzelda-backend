@@ -4,10 +4,10 @@ import {profileFieldFieldFetchMap} from "@/src/models/fetchSpecs/profileFieldFie
 
 
 export const userFieldFetchMap: FieldFetchSpecsMap<User> = {
-    username: {type: 'db-column'},
-    email: {type: 'db-column'},
-    isEmailConfirmed: {type: 'db-column'},
-    isBanned: {type: 'db-column'},
+    username: {type: "db-column"},
+    email: {type: "db-column"},
+    isEmailConfirmed: {type: "db-column"},
+    isBanned: {type: "db-column"},
     isPendingEmailChange: {type: "formula"},
     profile: {type: "relation", populate: "profile", fieldFetchSpecsMap: profileFieldFieldFetchMap, relationType: "to-one"}
 };

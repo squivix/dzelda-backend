@@ -7,25 +7,25 @@ import {AnonymousUser} from "@/src/models/entities/auth/User.js";
 import {TextRepo} from "@/src/models/repos/TextRepo.js";
 
 export const textFieldFetchMap: FieldFetchSpecsMap<Text> = {
-    id: {type: 'db-column'},
-    title: {type: 'db-column'},
-    content: {type: 'db-column'},
-    parsedTitle: {type: 'db-column'},
-    parsedContent: {type: 'db-column'},
-    audio: {type: 'db-column'},
-    image: {type: 'db-column'},
-    orderInCollection: {type: 'db-column'},
-    isProcessing: {type: 'db-column'},
-    addedOn: {type: 'db-column'},
-    isPublic: {type: 'db-column'},
-    level: {type: 'db-column'},
-    isLastInCollection: {type: 'formula'},
-    pastViewersCount: {type: 'formula'},
+    id: {type: "db-column"},
+    title: {type: "db-column"},
+    content: {type: "db-column"},
+    parsedTitle: {type: "db-column"},
+    parsedContent: {type: "db-column"},
+    audio: {type: "db-column"},
+    image: {type: "db-column"},
+    orderInCollection: {type: "db-column"},
+    isProcessing: {type: "db-column"},
+    addedOn: {type: "db-column"},
+    isPublic: {type: "db-column"},
+    level: {type: "db-column"},
+    isLastInCollection: {type: "formula"},
+    pastViewersCount: {type: "formula"},
     language: {type: "relation", populate: "language", fieldFetchSpecsMap: languageFieldFetchMap, relationType: "to-one"},
     addedBy: {type: "relation", populate: "addedBy", fieldFetchSpecsMap: profileFieldFieldFetchMap, relationType: "to-one"},
     collection: {type: "relation", populate: "collection", fieldFetchSpecsMap: collectionFieldFetchMap, relationType: "to-one"},
     vocabsByLevel: {
-        type: 'annotated',
+        type: "annotated",
         annotate: async (texts, context) => {
             if (!context.user || context.user instanceof AnonymousUser)
                 throw new Error("Context doesn't have logged in user")
@@ -34,7 +34,7 @@ export const textFieldFetchMap: FieldFetchSpecsMap<Text> = {
         }
     },
     isBookmarked: {
-        type: 'annotated',
+        type: "annotated",
         annotate: async (texts, context) => {
             if (!context.user || context.user instanceof AnonymousUser)
                 throw new Error("Context doesn't have logged in user")
