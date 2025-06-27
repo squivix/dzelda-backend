@@ -1,11 +1,10 @@
 import {CustomSerializer} from "@/src/presentation/response/serializers/CustomSerializer.js";
 import {Text} from "@/src/models/entities/Text.js";
-import {assertNoUndefinedProps} from "@/src/presentation/response/serializers/serializerUtils.js";
 
 
 class TextSummarySerializer extends CustomSerializer<Text> {
     serialize(text: Text, {assertNoUndefined = true} = {}): any {
-        const pojo = {
+        return this.finalizePojo({
             id: text.id,
             title: text.title,
             audio: text.audio,
@@ -21,10 +20,7 @@ class TextSummarySerializer extends CustomSerializer<Text> {
 
             addedBy: text.addedBy.user.username,
             language: text.language.code,
-        };
-        if (assertNoUndefined)
-            assertNoUndefinedProps(pojo);
-        return pojo;
+        }, assertNoUndefined);
     }
 }
 

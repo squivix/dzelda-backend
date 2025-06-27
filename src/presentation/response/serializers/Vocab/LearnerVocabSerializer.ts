@@ -3,11 +3,10 @@ import {MapLearnerVocab} from "@/src/models/entities/MapLearnerVocab.js";
 import {meaningSummerySerializer} from "@/src/presentation/response/serializers/Meaning/MeaningSummerySerializer.js";
 import {vocabVariantSerializer} from "@/src/presentation/response/serializers/VocabVariant/VocabVariantSerializer.js";
 import {vocabTagSerializer} from "@/src/presentation/response/serializers/VocabTag/VocabTagSerializer.js";
-import {assertNoUndefinedProps} from "@/src/presentation/response/serializers/serializerUtils.js";
 
 class LearnerVocabSerializer extends CustomSerializer<MapLearnerVocab> {
     serialize(mapping: MapLearnerVocab, {assertNoUndefined = true} = {}): any {
-        const pojo = {
+        return this.finalizePojo({
             id: mapping.vocab.id,
             text: mapping.vocab.text,
             isPhrase: mapping.vocab.isPhrase,
@@ -21,10 +20,7 @@ class LearnerVocabSerializer extends CustomSerializer<MapLearnerVocab> {
             tags: vocabTagSerializer.serializeList(mapping.vocab.tags.getItems(), {assertNoUndefined}),
             rootForms: mapping.vocab.rootForms.getItems().map(v => v.text),
             variants: vocabVariantSerializer.serializeList(mapping.vocab.vocabVariants.getItems(), {assertNoUndefined})
-        };
-        if (assertNoUndefined)
-            assertNoUndefinedProps(pojo);
-        return pojo;
+        }, assertNoUndefined);
     }
 }
 

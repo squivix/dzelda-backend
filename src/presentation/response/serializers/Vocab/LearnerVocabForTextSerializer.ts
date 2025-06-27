@@ -4,7 +4,6 @@ import {Vocab} from "@/src/models/entities/Vocab.js";
 import {VocabLevel} from "dzelda-common";
 import {vocabTagSerializer} from "@/src/presentation/response/serializers/VocabTag/VocabTagSerializer.js";
 import {vocabVariantSerializer} from "@/src/presentation/response/serializers/VocabVariant/VocabVariantSerializer.js";
-import {assertNoUndefinedProps} from "@/src/presentation/response/serializers/serializerUtils.js";
 
 
 class LearnerVocabForTextSerializer extends CustomSerializer<Vocab | MapLearnerVocab> {
@@ -13,7 +12,7 @@ class LearnerVocabForTextSerializer extends CustomSerializer<Vocab | MapLearnerV
         const isMapping = vocabOrMapping instanceof MapLearnerVocab;
         const internalVocab = isMapping ? vocabOrMapping.vocab : vocabOrMapping;
 
-        const pojo = {
+        return this.finalizePojo({
             id: internalVocab.id,
             text: internalVocab.text,
             isPhrase: internalVocab.isPhrase,
@@ -27,10 +26,7 @@ class LearnerVocabForTextSerializer extends CustomSerializer<Vocab | MapLearnerV
             // mapping fields
             level: isMapping ? vocabOrMapping.level : VocabLevel.NEW,
             notes: isMapping ? vocabOrMapping.notes : null,
-        };
-        if (assertNoUndefined)
-            assertNoUndefinedProps(pojo);
-        return pojo;
+        }, assertNoUndefined);
     }
 }
 

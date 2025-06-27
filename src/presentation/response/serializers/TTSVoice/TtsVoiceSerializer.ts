@@ -1,10 +1,9 @@
 import {CustomSerializer} from "@/src/presentation/response/serializers/CustomSerializer.js";
 import {TTSVoice} from "@/src/models/entities/TTSVoice.js";
-import {assertNoUndefinedProps} from "@/src/presentation/response/serializers/serializerUtils.js";
 
 class TTSVoiceSerializer extends CustomSerializer<TTSVoice> {
     serialize(ttsVoice: TTSVoice, {assertNoUndefined = true} = {}): any {
-        const pojo = {
+        return this.finalizePojo({
             id: ttsVoice.id,
             code: ttsVoice.code,
             name: ttsVoice.name,
@@ -13,10 +12,7 @@ class TTSVoiceSerializer extends CustomSerializer<TTSVoice> {
             accentCountryCode: ttsVoice.accentCountryCode,
             language: ttsVoice.language.code,
             isDefault: ttsVoice.isDefault,
-        };
-        if (assertNoUndefined)
-            assertNoUndefinedProps(pojo);
-        return pojo;
+        }, assertNoUndefined);
     }
 }
 

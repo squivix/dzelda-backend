@@ -2,11 +2,10 @@ import {CustomSerializer} from "@/src/presentation/response/serializers/CustomSe
 import {MapLearnerLanguage} from "@/src/models/entities/MapLearnerLanguage.js";
 import {translationLanguageSerializer} from "@/src/presentation/response/serializers/TranslationLanguage/TranslationLanguageSerializer.js";
 import {ttsVoiceSerializer} from "@/src/presentation/response/serializers/TTSVoice/TtsVoiceSerializer.js";
-import {assertNoUndefinedProps} from "@/src/presentation/response/serializers/serializerUtils.js";
 
 class LearnerLanguageSerializer extends CustomSerializer<MapLearnerLanguage> {
     serialize(mapping: MapLearnerLanguage, {assertNoUndefined = true} = {}): any {
-        const pojo = {
+        return this.finalizePojo({
             id: mapping.language.id,
             code: mapping.language.code,
             name: mapping.language.name,
@@ -22,10 +21,7 @@ class LearnerLanguageSerializer extends CustomSerializer<MapLearnerLanguage> {
             preferredTtsVoice: mapping.preferredTtsVoice ? ttsVoiceSerializer.serialize(mapping.preferredTtsVoice, {assertNoUndefined}) : null,
             preferredTranslationLanguages: translationLanguageSerializer.serializeList(mapping.preferredTranslationLanguages.getItems().map(m => m.translationLanguage), {assertNoUndefined}),
             isRtl: mapping.language.isRtl,
-        };
-        if (assertNoUndefined)
-            assertNoUndefinedProps(pojo);
-        return pojo;
+        }, assertNoUndefined);
     }
 }
 
