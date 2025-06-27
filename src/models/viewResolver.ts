@@ -107,9 +107,10 @@ export function getResultAtPath<T extends AnyEntity>(
     return currentResults;
 }
 
+
 export function buildFetchPlan(
     currentView: ViewDescription,
-    currentFetchMap: FieldFetchSpecsMap<any>,
+    currentFieldFetchSpecsMap: FieldFetchSpecsMap<any>,
     context: FetchContext,
     relationFilters: RelationFilters,
     prefix = ""
@@ -121,7 +122,7 @@ export function buildFetchPlan(
     const annotatedFields: Array<{ path: string, annotate: ((records: AnyEntity[], context: FetchContext) => Promise<void> | void) }> = [];
 
     for (const field of currentView.fields) {
-        const fieldFetchSpec = currentFetchMap[field];
+        const fieldFetchSpec = currentFieldFetchSpecsMap[field];
         if (!fieldFetchSpec)
             throw new Error(`Invalid view field: ${field}, current view=${JSON.stringify(currentView)}`)
 
@@ -135,9 +136,9 @@ export function buildFetchPlan(
 
     if (currentView.relations) {
         for (const [relation, sub] of Object.entries(currentView.relations)) {
-            const relationFieldFetchSpec = currentFetchMap[relation];
-            if (!relationFieldFetchSpec || relationFieldFetchSpec.type !== "relation") continue;
-
+            const relationFieldFetchSpec = currentFieldFetchSpecsMap[relation];
+            if (!relationFieldFetchSpec || relationFieldFetchSpec.type !== "relation")
+                continue;
             const path = prefix ? `${prefix}.${relationFieldFetchSpec.populate}` : relationFieldFetchSpec.populate;
             const subView: ViewDescription = Array.isArray(sub) ? {fields: sub} : sub;
             const nested = buildFetchPlan(subView, relationFieldFetchSpec.fieldFetchSpecsMap, context, relationFilters, path);

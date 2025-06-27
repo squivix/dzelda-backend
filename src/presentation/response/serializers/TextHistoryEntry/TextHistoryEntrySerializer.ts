@@ -2,9 +2,41 @@ import {CustomSerializer} from "@/src/presentation/response/serializers/CustomSe
 import {TextHistoryEntry} from "@/src/models/entities/TextHistoryEntry.js";
 import {AnonymousUser} from "@/src/models/entities/auth/User.js";
 import {collectionSummarySerializer} from "@/src/presentation/response/serializers/Collection/CollectionSummarySerializer.js";
+import {ViewDescription} from "@/src/models/viewResolver.js";
 
 
 class TextHistoryEntrySerializer extends CustomSerializer<TextHistoryEntry> {
+    static readonly view: ViewDescription = {
+        fields: ["timeViewed"],
+        relations: {
+            pastViewer: {
+                fields: [],
+                relations: {user: {fields: ["username"]}}
+            },
+            text: {
+                // "level","isBookmarked"
+                fields: ["id", "title", "content", "parsedTitle", "parsedContent", "audio", "image", "orderInCollection", "isLastInCollection", "isProcessing", "addedOn", "isPublic", "pastViewersCount", "vocabsByLevel"],
+                relations: {
+                    // language: {fields: ["code"]},
+                    addedBy: {
+                        fields: [],
+                        relations: {user: {fields: ["username"]}}
+                    },
+                    collection: {
+                        fields: ["id", "title", "description", "image", "addedOn", "isPublic"],
+                        relations: {
+                            language: {fields: ["code"]},
+                            addedBy: {
+                                fields: [],
+                                relations: {user: {fields: ["username"]}}
+                            },
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     serialize(textHistoryEntry: TextHistoryEntry, {assertNoUndefined = true} = {}): any {
         return this.finalizePojo({
             id: textHistoryEntry.text.id,
@@ -14,16 +46,18 @@ class TextHistoryEntrySerializer extends CustomSerializer<TextHistoryEntry> {
             parsedContent: textHistoryEntry.text.parsedContent,
             audio: textHistoryEntry.text.audio,
             image: textHistoryEntry.text.image,
-            collection: textHistoryEntry.text.collection ? collectionSummarySerializer.serialize(textHistoryEntry.text.collection, {assertNoUndefined}) : null,
             orderInCollection: textHistoryEntry.text.orderInCollection,
             isLastInCollection: textHistoryEntry.text.isLastInCollection,
             isProcessing: textHistoryEntry.text.isProcessing,
             addedOn: textHistoryEntry.text.addedOn.toISOString(),
-            addedBy: textHistoryEntry.text.addedBy.user.username,
             isPublic: textHistoryEntry.text.isPublic,
             // level: textHistoryEntry.text.level,
-            // language: textHistoryEntry.text.language.code,
             pastViewersCount: Number(textHistoryEntry.text.pastViewersCount),
+
+            // language: textHistoryEntry.text.language.code,
+            addedBy: textHistoryEntry.text.addedBy.user.username,
+            collection: textHistoryEntry.text.collection ? collectionSummarySerializer.serialize(textHistoryEntry.text.collection, {assertNoUndefined}) : null,
+
             vocabsByLevel: textHistoryEntry.text.vocabsByLevel, // always logged in remember?
             // isBookmarked: textHistoryEntry.text.text.isBookmarked,
 

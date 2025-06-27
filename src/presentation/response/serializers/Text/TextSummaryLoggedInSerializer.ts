@@ -1,8 +1,20 @@
 import {CustomSerializer} from "@/src/presentation/response/serializers/CustomSerializer.js";
 import {Text} from "@/src/models/entities/Text.js";
+import {ViewDescription} from "@/src/models/viewResolver.js";
 
 
 class TextSummaryLoggedInSerializer extends CustomSerializer<Text> {
+    static readonly view: ViewDescription = {
+        fields: ["id", "title", "content", "parsedTitle", "parsedContent", "audio", "image", "orderInCollection", "isLastInCollection", "isProcessing", "addedOn", "isPublic", "level", "pastViewersCount", "collection", "vocabsByLevel", "isBookmarked"],
+        relations: {
+            language: {fields: ["code"]},
+            addedBy: {
+                fields: [],
+                relations: {user: {fields: ["username"]}}
+            },
+        }
+    }
+
     serialize(text: Text, {assertNoUndefined = true} = {}): any {
         return this.finalizePojo({
             id: text.id,

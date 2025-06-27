@@ -3,7 +3,7 @@
 declare global {
     namespace NodeJS {
         interface ProcessEnv {
-            NODE_ENV?: "dev" | "test" | "prod" | string;
+            NODE_ENV?: "dev" | "test" | "prod";
             PORT?: string;
             MIKRO_ORM_CLIENT_URL?: string;
             SMTP_HOST?: string;

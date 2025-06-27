@@ -1,19 +1,31 @@
 import {CustomSerializer} from "@/src/presentation/response/serializers/CustomSerializer.js";
 import {HumanPronunciation} from "@/src/models/entities/HumanPronunciation.js";
 import {attributionSourceSerializer} from "@/src/presentation/response/serializers/AttributionSource/AttributionSourceSerializer.js";
+import {ViewDescription} from "@/src/models/viewResolver.js";
 
 class HumanPronunciationSerializer extends CustomSerializer<HumanPronunciation> {
+    static readonly view: ViewDescription = {
+        fields: ["id", "url", "text", "parsedText", "speakerCountryCode", "speakerRegion", "attribution",],
+        relations: {
+            language: {fields: ["code"]},
+            attributionSource: {
+                fields: ["id", "name", "url", "logoUrl"]
+            }
+        }
+    }
+
     serialize(humanPronunciation: HumanPronunciation, {assertNoUndefined = true} = {}): any {
         return this.finalizePojo({
             id: humanPronunciation.id,
             url: humanPronunciation.url,
             text: humanPronunciation.text,
             parsedText: humanPronunciation.parsedText,
-            language: humanPronunciation.language.code,
             speakerCountryCode: humanPronunciation.speakerCountryCode,
             speakerRegion: humanPronunciation.speakerRegion,
-            attributionSource: humanPronunciation.attributionSource ? attributionSourceSerializer.serialize(humanPronunciation.attributionSource, {assertNoUndefined}) : null,
             attribution: humanPronunciation.attribution,
+
+            language: humanPronunciation.language.code,
+            attributionSource: humanPronunciation.attributionSource ? attributionSourceSerializer.serialize(humanPronunciation.attributionSource, {assertNoUndefined}) : null,
         }, assertNoUndefined);
     }
 }

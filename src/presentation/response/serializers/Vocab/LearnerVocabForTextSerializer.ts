@@ -4,9 +4,11 @@ import {Vocab} from "@/src/models/entities/Vocab.js";
 import {VocabLevel} from "dzelda-common";
 import {vocabTagSerializer} from "@/src/presentation/response/serializers/VocabTag/VocabTagSerializer.js";
 import {vocabVariantSerializer} from "@/src/presentation/response/serializers/VocabVariant/VocabVariantSerializer.js";
+import {ViewDescription} from "@/src/models/viewResolver.js";
 
 
 class LearnerVocabForTextSerializer extends CustomSerializer<Vocab | MapLearnerVocab> {
+    static readonly view: ViewDescription = {}
 
     serialize(vocabOrMapping: Vocab | MapLearnerVocab, {assertNoUndefined = true} = {}): any {
         const isMapping = vocabOrMapping instanceof MapLearnerVocab;
@@ -20,7 +22,7 @@ class LearnerVocabForTextSerializer extends CustomSerializer<Vocab | MapLearnerV
             language: internalVocab.language.code,
             ttsPronunciationUrl: internalVocab.ttsPronunciations.getItems().pop()?.url ?? null,
             tags: vocabTagSerializer.serializeList(internalVocab.tags.getItems(), {assertNoUndefined}),
-            rootForms: internalVocab.rootForms.getItems().map(v => v.text),
+            rootForms: [],//internalVocab.rootForms.getItems().map(v => v.text),
             variants: vocabVariantSerializer.serializeList(internalVocab.vocabVariants.getItems(), {assertNoUndefined}),
 
             // mapping fields
