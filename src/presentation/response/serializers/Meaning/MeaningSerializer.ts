@@ -1,8 +1,8 @@
 import {CustomSerializer} from "@/src/presentation/response/serializers/CustomSerializer.js";
 import {Meaning} from "@/src/models/entities/Meaning.js";
-import {attributionSourceSerializer} from "@/src/presentation/response/serializers/AttributionSource/AttributionSourceSerializer.js";
-import {vocabForMeaningSerializer} from "@/src/presentation/response/serializers/Vocab/VocabForMeaningSerializer.js";
-import {vocabVariantSerializer} from "@/src/presentation/response/serializers/VocabVariant/VocabVariantSerializer.js";
+import {AttributionSourceSerializer, attributionSourceSerializer} from "@/src/presentation/response/serializers/AttributionSource/AttributionSourceSerializer.js";
+import {VocabForMeaningSerializer, vocabForMeaningSerializer} from "@/src/presentation/response/serializers/Vocab/VocabForMeaningSerializer.js";
+import {VocabVariantSerializer, vocabVariantSerializer} from "@/src/presentation/response/serializers/VocabVariant/VocabVariantSerializer.js";
 import {ViewDescription} from "@/src/models/viewResolver.js";
 
 class MeaningSerializer extends CustomSerializer<Meaning> {
@@ -14,17 +14,9 @@ class MeaningSerializer extends CustomSerializer<Meaning> {
                 fields: [],
                 relations: {user: {fields: ["username"]}}
             },
-            vocab: {
-                fields: ["id", "text", "isPhrase", "learnersCount", "textsCount",],
-                relations: {language: {fields: ["code"]}}
-            },
-            vocabVariant: {
-                fields: ["id", "text"],
-                relations: {ttsPronunciations: {fields: ["url"]}}
-            },
-            attributionSource: {
-                fields: ["id", "name", "url", "logoUrl",]
-            }
+            vocab: VocabForMeaningSerializer.view,
+            vocabVariant: VocabVariantSerializer.view,
+            attributionSource: AttributionSourceSerializer.view
         }
     }
 

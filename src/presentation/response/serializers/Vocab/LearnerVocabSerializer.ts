@@ -1,8 +1,8 @@
 import {CustomSerializer} from "@/src/presentation/response/serializers/CustomSerializer.js";
 import {MapLearnerVocab} from "@/src/models/entities/MapLearnerVocab.js";
-import {meaningSummerySerializer} from "@/src/presentation/response/serializers/Meaning/MeaningSummerySerializer.js";
-import {vocabVariantSerializer} from "@/src/presentation/response/serializers/VocabVariant/VocabVariantSerializer.js";
-import {vocabTagSerializer} from "@/src/presentation/response/serializers/VocabTag/VocabTagSerializer.js";
+import {MeaningSummerySerializer, meaningSummerySerializer} from "@/src/presentation/response/serializers/Meaning/MeaningSummerySerializer.js";
+import {VocabVariantSerializer, vocabVariantSerializer} from "@/src/presentation/response/serializers/VocabVariant/VocabVariantSerializer.js";
+import {VocabTagSerializer, vocabTagSerializer} from "@/src/presentation/response/serializers/VocabTag/VocabTagSerializer.js";
 import {ViewDescription} from "@/src/models/viewResolver.js";
 
 class LearnerVocabSerializer extends CustomSerializer<MapLearnerVocab> {
@@ -14,48 +14,10 @@ class LearnerVocabSerializer extends CustomSerializer<MapLearnerVocab> {
                 relations: {
                     language: {fields: ["code"]},
                     ttsPronunciations: {fields: ["url"]},
-                    tags: {
-                        fields: ["id", "name",],
-                        relations: {category: {fields: ["name"]}}
-                    },
-                    vocabVariants: {
-                        fields: ["id", "text"],
-                        relations: {ttsPronunciations: {fields: ["url"]}}
-                    },
-                    learnerMeanings: {
-                        fields: ["id", "text", "learnersCount", "addedOn", "attribution", "vocab"],
-                        relations: {
-                            language: {fields: ["code"]},
-                            addedBy: {
-                                fields: [],
-                                relations: {user: {fields: ["username"]}}
-                            },
-                            vocabVariant: {
-                                fields: ["id", "text"],
-                                relations: {ttsPronunciations: {fields: ["url"]}}
-                            },
-                            attributionSource: {
-                                fields: ["id", "name", "url", "logoUrl",]
-                            }
-                        }
-                    },
-                    meanings: {
-                        fields: ["id", "text", "learnersCount", "addedOn", "attribution", "vocab"],
-                        relations: {
-                            language: {fields: ["code"]},
-                            addedBy: {
-                                fields: [],
-                                relations: {user: {fields: ["username"]}}
-                            },
-                            vocabVariant: {
-                                fields: ["id", "text"],
-                                relations: {ttsPronunciations: {fields: ["url"]}}
-                            },
-                            attributionSource: {
-                                fields: ["id", "name", "url", "logoUrl",]
-                            }
-                        }
-                    },
+                    tags: VocabTagSerializer.view,
+                    vocabVariants: VocabVariantSerializer.view,
+                    learnerMeanings: MeaningSummerySerializer.view,
+                    meanings: MeaningSummerySerializer.view,
                 }
             }
         }

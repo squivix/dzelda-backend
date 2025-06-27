@@ -2,7 +2,7 @@ import {CustomSerializer} from "@/src/presentation/response/serializers/CustomSe
 import {VocabTag} from "@/src/models/entities/VocabTag.js";
 import {ViewDescription} from "@/src/models/viewResolver.js";
 
-class VocabTagSerializer extends CustomSerializer<VocabTag> {
+export class VocabTagSerializer extends CustomSerializer<VocabTag> {
     static readonly view: ViewDescription = {
         fields: ["id", "name",],
         relations: {category: {fields: ["name"]}}

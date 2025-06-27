@@ -2,7 +2,7 @@ import {CustomSerializer} from "@/src/presentation/response/serializers/CustomSe
 import {VocabVariant} from "@/src/models/entities/VocabVariant.js";
 import {ViewDescription} from "@/src/models/viewResolver.js";
 
-class VocabVariantSerializer extends CustomSerializer<VocabVariant> {
+export class VocabVariantSerializer extends CustomSerializer<VocabVariant> {
     static readonly view: ViewDescription = {
         fields: ["id", "text"],
         relations: {ttsPronunciations: {fields: ["url"]}}

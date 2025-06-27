@@ -1,15 +1,13 @@
 import {CustomSerializer} from "@/src/presentation/response/serializers/CustomSerializer.js";
 import {Profile} from "@/src/models/entities/Profile.js";
-import {languageSerializer} from "@/src/presentation/response/serializers/Language/LanguageSerializer.js";
+import {LanguageSerializer, languageSerializer} from "@/src/presentation/response/serializers/Language/LanguageSerializer.js";
 import {ViewDescription} from "@/src/models/viewResolver.js";
 
-class ProfileSerializer extends CustomSerializer<Profile> {
+export class ProfileSerializer extends CustomSerializer<Profile> {
     static readonly view: ViewDescription = {
         fields: ["id", "profilePicture", "bio", "isPublic"],
         relations: {
-            languagesLearning: {
-                fields: ["id", "code", "name", "greeting", "isRtl", "flag", "flagCircular", "flagEmoji", "color", "levelThresholds", "learnersCount"]
-            }
+            languagesLearning: LanguageSerializer.view
         }
     }
 

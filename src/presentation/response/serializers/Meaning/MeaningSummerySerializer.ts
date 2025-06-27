@@ -1,24 +1,18 @@
 import {CustomSerializer} from "@/src/presentation/response/serializers/CustomSerializer.js";
 import {Meaning} from "@/src/models/entities/Meaning.js";
-import {vocabVariantSerializer} from "@/src/presentation/response/serializers/VocabVariant/VocabVariantSerializer.js";
+import {VocabVariantSerializer, vocabVariantSerializer} from "@/src/presentation/response/serializers/VocabVariant/VocabVariantSerializer.js";
 import {ViewDescription} from "@/src/models/viewResolver.js";
 
-class MeaningSummerySerializer extends CustomSerializer<Meaning> {
+export class MeaningSummerySerializer extends CustomSerializer<Meaning> {
     static readonly view: ViewDescription = {
-        fields: ["id", "text", "learnersCount", "addedOn", "attribution", "vocab"],
+        fields: ["id", "text", "learnersCount", "addedOn", "attribution", "vocab", "attributionSource"],
         relations: {
             language: {fields: ["code"]},
             addedBy: {
                 fields: [],
                 relations: {user: {fields: ["username"]}}
             },
-            vocabVariant: {
-                fields: ["id", "text"],
-                relations: {ttsPronunciations: {fields: ["url"]}}
-            },
-            attributionSource: {
-                fields: ["id", "name", "url", "logoUrl",]
-            }
+            vocabVariant: VocabVariantSerializer.view,
         }
     }
 

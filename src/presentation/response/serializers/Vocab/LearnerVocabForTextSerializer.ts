@@ -1,7 +1,7 @@
 import {CustomSerializer} from "@/src/presentation/response/serializers/CustomSerializer.js";
 import {MapLearnerVocab} from "@/src/models/entities/MapLearnerVocab.js";
-import {vocabTagSerializer} from "@/src/presentation/response/serializers/VocabTag/VocabTagSerializer.js";
-import {vocabVariantSerializer} from "@/src/presentation/response/serializers/VocabVariant/VocabVariantSerializer.js";
+import {VocabTagSerializer, vocabTagSerializer} from "@/src/presentation/response/serializers/VocabTag/VocabTagSerializer.js";
+import {VocabVariantSerializer, vocabVariantSerializer} from "@/src/presentation/response/serializers/VocabVariant/VocabVariantSerializer.js";
 import {ViewDescription} from "@/src/models/viewResolver.js";
 
 
@@ -14,14 +14,8 @@ class LearnerVocabForTextSerializer extends CustomSerializer<MapLearnerVocab> {
                 relations: {
                     language: {fields: ["code"]},
                     ttsPronunciations: {fields: ["url"]},
-                    tags: {
-                        fields: ["id", "name",],
-                        relations: {category: {fields: ["name"]}}
-                    },
-                    vocabVariants: {
-                        fields: ["id", "text"],
-                        relations: {ttsPronunciations: {fields: ["url"]}}
-                    }
+                    tags: VocabTagSerializer.view,
+                    vocabVariants: VocabVariantSerializer.view
                 },
             }
         }

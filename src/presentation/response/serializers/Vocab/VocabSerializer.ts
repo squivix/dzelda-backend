@@ -1,8 +1,8 @@
 import {CustomSerializer} from "@/src/presentation/response/serializers/CustomSerializer.js";
 import {Vocab} from "@/src/models/entities/Vocab.js";
-import {meaningSummerySerializer} from "@/src/presentation/response/serializers/Meaning/MeaningSummerySerializer.js";
-import {vocabTagSerializer} from "@/src/presentation/response/serializers/VocabTag/VocabTagSerializer.js";
-import {vocabVariantSerializer} from "@/src/presentation/response/serializers/VocabVariant/VocabVariantSerializer.js";
+import {MeaningSummerySerializer, meaningSummerySerializer} from "@/src/presentation/response/serializers/Meaning/MeaningSummerySerializer.js";
+import {VocabTagSerializer, vocabTagSerializer} from "@/src/presentation/response/serializers/VocabTag/VocabTagSerializer.js";
+import {VocabVariantSerializer, vocabVariantSerializer} from "@/src/presentation/response/serializers/VocabVariant/VocabVariantSerializer.js";
 import {ViewDescription} from "@/src/models/viewResolver.js";
 
 class VocabSerializer extends CustomSerializer<Vocab> {
@@ -10,31 +10,9 @@ class VocabSerializer extends CustomSerializer<Vocab> {
         fields: ["id", "text", "isPhrase", "learnersCount", "textsCount"],
         relations: {
             language: {fields: ["code"]},
-            tags: {
-                fields: ["id", "name",],
-                relations: {category: {fields: ["name"]}}
-            },
-            vocabVariants: {
-                fields: ["id", "text"],
-                relations: {ttsPronunciations: {fields: ["url"]}}
-            },
-            meanings: {
-                fields: ["id", "text", "learnersCount", "addedOn", "attribution", "vocab"],
-                relations: {
-                    language: {fields: ["code"]},
-                    addedBy: {
-                        fields: [],
-                        relations: {user: {fields: ["username"]}}
-                    },
-                    vocabVariant: {
-                        fields: ["id", "text"],
-                        relations: {ttsPronunciations: {fields: ["url"]}}
-                    },
-                    attributionSource: {
-                        fields: ["id", "name", "url", "logoUrl",]
-                    }
-                }
-            }
+            tags: VocabTagSerializer.view,
+            vocabVariants: VocabVariantSerializer.view,
+            meanings: MeaningSummerySerializer.view
         }
     }
 

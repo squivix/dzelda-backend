@@ -1,6 +1,6 @@
 import {CustomSerializer} from "@/src/presentation/response/serializers/CustomSerializer.js";
 import {Text} from "@/src/models/entities/Text.js";
-import {collectionSummarySerializer} from "@/src/presentation/response/serializers/Collection/CollectionSummarySerializer.js";
+import {CollectionSummarySerializer, collectionSummarySerializer} from "@/src/presentation/response/serializers/Collection/CollectionSummarySerializer.js";
 import {ViewDescription} from "@/src/models/viewResolver.js";
 
 
@@ -13,16 +13,7 @@ class TextLoggedInSerializer extends CustomSerializer<Text> {
                 fields: [],
                 relations: {user: {fields: ["username"]}}
             },
-            collection: {
-                fields: ["id", "title", "description", "image", "addedOn", "isPublic"],
-                relations: {
-                    language: {fields: ["code"]},
-                    addedBy: {
-                        fields: [],
-                        relations: {user: {fields: ["username"]}}
-                    },
-                }
-            }
+            collection: CollectionSummarySerializer.view
         }
     }
 

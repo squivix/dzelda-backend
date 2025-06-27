@@ -1,6 +1,6 @@
 import {CustomSerializer} from "@/src/presentation/response/serializers/CustomSerializer.js";
 import {HumanPronunciation} from "@/src/models/entities/HumanPronunciation.js";
-import {attributionSourceSerializer} from "@/src/presentation/response/serializers/AttributionSource/AttributionSourceSerializer.js";
+import {AttributionSourceSerializer, attributionSourceSerializer} from "@/src/presentation/response/serializers/AttributionSource/AttributionSourceSerializer.js";
 import {ViewDescription} from "@/src/models/viewResolver.js";
 
 class HumanPronunciationSerializer extends CustomSerializer<HumanPronunciation> {
@@ -8,9 +8,7 @@ class HumanPronunciationSerializer extends CustomSerializer<HumanPronunciation> 
         fields: ["id", "url", "text", "parsedText", "speakerCountryCode", "speakerRegion", "attribution",],
         relations: {
             language: {fields: ["code"]},
-            attributionSource: {
-                fields: ["id", "name", "url", "logoUrl"]
-            }
+            attributionSource: AttributionSourceSerializer.view
         }
     }
 

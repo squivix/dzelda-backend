@@ -1,20 +1,13 @@
 import {CustomSerializer} from "@/src/presentation/response/serializers/CustomSerializer.js";
 import {User} from "@/src/models/entities/auth/User.js";
-import {profileSerializer} from "@/src/presentation/response/serializers/Profile/ProfileSerializer.js";
+import {ProfileSerializer, profileSerializer} from "@/src/presentation/response/serializers/Profile/ProfileSerializer.js";
 import {ViewDescription} from "@/src/models/viewResolver.js";
 
 class UserPublicSerializer extends CustomSerializer<User> {
     static readonly view: ViewDescription = {
         fields: ["username", "isBanned"],
         relations: {
-            profile: {
-                fields: ["id", "profilePicture", "bio", "isPublic"],
-                relations: {
-                    languagesLearning: {
-                        fields: ["id", "code", "name", "greeting", "isRtl", "flag", "flagCircular", "flagEmoji", "color", "levelThresholds", "learnersCount"]
-                    }
-                }
-            }
+            profile: ProfileSerializer.view
         }
     }
 

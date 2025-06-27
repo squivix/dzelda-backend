@@ -1,7 +1,7 @@
 import {CustomSerializer} from "@/src/presentation/response/serializers/CustomSerializer.js";
 import {TextHistoryEntry} from "@/src/models/entities/TextHistoryEntry.js";
 import {AnonymousUser} from "@/src/models/entities/auth/User.js";
-import {collectionSummarySerializer} from "@/src/presentation/response/serializers/Collection/CollectionSummarySerializer.js";
+import {CollectionSummarySerializer, collectionSummarySerializer} from "@/src/presentation/response/serializers/Collection/CollectionSummarySerializer.js";
 import {ViewDescription} from "@/src/models/viewResolver.js";
 
 
@@ -22,16 +22,7 @@ class TextHistoryEntrySerializer extends CustomSerializer<TextHistoryEntry> {
                         fields: [],
                         relations: {user: {fields: ["username"]}}
                     },
-                    collection: {
-                        fields: ["id", "title", "description", "image", "addedOn", "isPublic"],
-                        relations: {
-                            language: {fields: ["code"]},
-                            addedBy: {
-                                fields: [],
-                                relations: {user: {fields: ["username"]}}
-                            },
-                        }
-                    }
+                    collection: CollectionSummarySerializer.view
                 }
             }
         }

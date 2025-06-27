@@ -5,7 +5,7 @@ import process from "process";
 
 
 export abstract class CustomSerializer<R extends CustomBaseEntity> {
-    static readonly views: ViewDescription;
+    static readonly view: ViewDescription;
 
     abstract serialize(rootEntity: R, options: { assertNoUndefined: boolean }): any;
 

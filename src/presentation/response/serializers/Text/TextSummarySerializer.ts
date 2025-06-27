@@ -3,7 +3,7 @@ import {Text} from "@/src/models/entities/Text.js";
 import {ViewDescription} from "@/src/models/viewResolver.js";
 
 
-class TextSummarySerializer extends CustomSerializer<Text> {
+export class TextSummarySerializer extends CustomSerializer<Text> {
     static readonly view: ViewDescription = {
         fields: ["id", "title", "content", "parsedTitle", "parsedContent", "audio", "image", "orderInCollection", "isLastInCollection", "isProcessing", "addedOn", "isPublic", "level", "pastViewersCount", "collection"],
         relations: {
