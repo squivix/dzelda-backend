@@ -1,7 +1,6 @@
 import {CustomSerializer} from "@/src/presentation/response/serializers/CustomSerializer.js";
 import {Collection} from "@/src/models/entities/Collection.js";
 import {ViewDescription} from "@/src/models/viewResolver.js";
-import {assertNoUndefinedProps} from "@/src/presentation/response/serializers/serializerUtils.js";
 
 
 class CollectionSummarySerializer extends CustomSerializer<Collection> {
@@ -23,7 +22,7 @@ class CollectionSummarySerializer extends CustomSerializer<Collection> {
     }
 
     serialize(collection: Collection, {assertNoUndefined = true} = {}): any {
-        const pojo = {
+        return this.finalizePojo({
             id: collection.id,
             title: collection.title,
             description: collection.description,
@@ -33,11 +32,7 @@ class CollectionSummarySerializer extends CustomSerializer<Collection> {
 
             language: collection.language.code,
             addedBy: collection.addedBy.user.username,
-        };
-
-        if (assertNoUndefined)
-            assertNoUndefinedProps(pojo);
-        return pojo;
+        }, assertNoUndefined);
     }
 }
 

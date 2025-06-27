@@ -2,12 +2,11 @@ import {CustomSerializer} from "@/src/presentation/response/serializers/CustomSe
 import {TextHistoryEntry} from "@/src/models/entities/TextHistoryEntry.js";
 import {AnonymousUser} from "@/src/models/entities/auth/User.js";
 import {collectionSummarySerializer} from "@/src/presentation/response/serializers/Collection/CollectionSummarySerializer.js";
-import {assertNoUndefinedProps} from "@/src/presentation/response/serializers/serializerUtils.js";
 
 
 class TextHistoryEntrySerializer extends CustomSerializer<TextHistoryEntry> {
     serialize(textHistoryEntry: TextHistoryEntry, {assertNoUndefined = true} = {}): any {
-        const pojo = {
+        return this.finalizePojo({
             id: textHistoryEntry.text.id,
             title: textHistoryEntry.text.title,
             content: textHistoryEntry.text.content,
@@ -30,10 +29,7 @@ class TextHistoryEntrySerializer extends CustomSerializer<TextHistoryEntry> {
 
             timeViewed: textHistoryEntry.timeViewed.toISOString(),
             pastViewer: textHistoryEntry.pastViewer?.user.username ?? AnonymousUser.name,
-        };
-        if (assertNoUndefined)
-            assertNoUndefinedProps(pojo);
-        return pojo;
+        }, assertNoUndefined);
     }
 }
 

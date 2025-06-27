@@ -1,10 +1,9 @@
 import {CustomSerializer} from "@/src/presentation/response/serializers/CustomSerializer.js";
 import {Language} from "@/src/models/entities/Language.js";
-import {assertNoUndefinedProps} from "@/src/presentation/response/serializers/serializerUtils.js";
 
 class LanguageSerializer extends CustomSerializer<Language> {
     serialize(language: Language, {assertNoUndefined = true} = {}): any {
-        const pojo = {
+        return this.finalizePojo({
             id: language.id,
             code: language.code,
             name: language.name,
@@ -16,10 +15,7 @@ class LanguageSerializer extends CustomSerializer<Language> {
             color: language.color,
             levelThresholds: language.levelThresholds,
             learnersCount: Number(language.learnersCount),
-        };
-        if (assertNoUndefined)
-            assertNoUndefinedProps(pojo);
-        return pojo;
+        }, assertNoUndefined);
     }
 }
 
