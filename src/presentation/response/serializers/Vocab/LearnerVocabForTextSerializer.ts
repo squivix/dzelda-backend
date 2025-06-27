@@ -1,33 +1,48 @@
 import {CustomSerializer} from "@/src/presentation/response/serializers/CustomSerializer.js";
 import {MapLearnerVocab} from "@/src/models/entities/MapLearnerVocab.js";
-import {Vocab} from "@/src/models/entities/Vocab.js";
-import {VocabLevel} from "dzelda-common";
 import {vocabTagSerializer} from "@/src/presentation/response/serializers/VocabTag/VocabTagSerializer.js";
 import {vocabVariantSerializer} from "@/src/presentation/response/serializers/VocabVariant/VocabVariantSerializer.js";
 import {ViewDescription} from "@/src/models/viewResolver.js";
 
 
-class LearnerVocabForTextSerializer extends CustomSerializer<Vocab | MapLearnerVocab> {
-    static readonly view: ViewDescription = {}
+class LearnerVocabForTextSerializer extends CustomSerializer<MapLearnerVocab> {
+    static readonly view: ViewDescription = {
+        fields: ["level", "notes"],
+        relations: {
+            vocab: {
+                fields: ["id", "text", "isPhrase", "learnersCount"],
+                relations: {
+                    language: {fields: ["code"]},
+                    ttsPronunciations: {fields: ["url"]},
+                    tags: {
+                        fields: ["id", "name",],
+                        relations: {category: {fields: ["name"]}}
+                    },
+                    vocabVariants: {
+                        fields: ["id", "text"],
+                        relations: {ttsPronunciations: {fields: ["url"]}}
+                    }
+                },
+            }
+        }
+    }
 
-    serialize(vocabOrMapping: Vocab | MapLearnerVocab, {assertNoUndefined = true} = {}): any {
-        const isMapping = vocabOrMapping instanceof MapLearnerVocab;
-        const internalVocab = isMapping ? vocabOrMapping.vocab : vocabOrMapping;
-
+    serialize(mapping: MapLearnerVocab, {assertNoUndefined = true} = {}): any {
         return this.finalizePojo({
-            id: internalVocab.id,
-            text: internalVocab.text,
-            isPhrase: internalVocab.isPhrase,
-            learnersCount: Number(internalVocab.learnersCount),
-            language: internalVocab.language.code,
-            ttsPronunciationUrl: internalVocab.ttsPronunciations.getItems().pop()?.url ?? null,
-            tags: vocabTagSerializer.serializeList(internalVocab.tags.getItems(), {assertNoUndefined}),
-            rootForms: [],//internalVocab.rootForms.getItems().map(v => v.text),
-            variants: vocabVariantSerializer.serializeList(internalVocab.vocabVariants.getItems(), {assertNoUndefined}),
+            id: mapping.vocab.id,
+            text: mapping.vocab.text,
+            isPhrase: mapping.vocab.isPhrase,
+            learnersCount: Number(mapping.vocab.learnersCount),
+
+            language: mapping.vocab.language.code,
+            ttsPronunciationUrl: mapping.vocab.ttsPronunciations.getItems().pop()?.url ?? null,
+            tags: vocabTagSerializer.serializeList(mapping.vocab.tags.getItems(), {assertNoUndefined}),
+            rootForms: [],//vocabOrMapping.vocab.rootForms.getItems().map(v => v.text),
+            variants: vocabVariantSerializer.serializeList(mapping.vocab.vocabVariants.getItems(), {assertNoUndefined}),
 
             // mapping fields
-            level: isMapping ? vocabOrMapping.level : VocabLevel.NEW,
-            notes: isMapping ? vocabOrMapping.notes : null,
+            level: mapping.level,
+            notes: mapping.notes,
         }, assertNoUndefined);
     }
 }

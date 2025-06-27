@@ -22,6 +22,7 @@ import {learnerVocabSerializer} from "@/src/presentation/response/serializers/Vo
 import {learnerVocabForTextSerializer} from "@/src/presentation/response/serializers/Vocab/LearnerVocabForTextSerializer.js";
 import {vocabSerializer} from "@/src/presentation/response/serializers/Vocab/VocabSerializer.js";
 import {ttsPronunciationSerializer} from "@/src/presentation/response/serializers/TTSPronunciation/TtsPronunciationSerializer.js";
+import {vocabForTextSerializer} from "@/src/presentation/response/serializers/Vocab/VocabForTextSerializer.js";
 
 class VocabController {
 
@@ -198,8 +199,11 @@ class VocabController {
 
         const vocabService = new VocabService(request.em);
 
-        const vocabs = await vocabService.getTextVocabs(text, request.user as User);
-        reply.send(learnerVocabForTextSerializer.serializeList(vocabs));
+        const {learningVocabMappings, newVocabs} = await vocabService.getTextVocabs(text, request.user as User);
+        reply.send([
+            ...learnerVocabForTextSerializer.serializeList(learningVocabMappings),
+            ...vocabForTextSerializer.serializeList(newVocabs)
+        ]);
     }
 
     async getUserSavedVocabsCount(request: FastifyRequest, reply: FastifyReply) {

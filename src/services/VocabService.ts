@@ -215,7 +215,7 @@ export class VocabService {
         await this.em.populate(newVocabs, ["vocabVariants.ttsPronunciations.voice"], {
             where: {vocabVariants: {ttsPronunciations: {voice: {$or: [{prefererLanguageMappings: {learner: user.profile}}, {isDefault: true}]}}}}
         });
-        return [...existingMappings, ...newVocabs];
+        return {learningVocabMappings: existingMappings, newVocabs}
     }
 
     async getUserSavedVocabsCount(user: User, options: {
