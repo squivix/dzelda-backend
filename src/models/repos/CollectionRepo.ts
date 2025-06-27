@@ -43,7 +43,8 @@ export class CollectionRepo extends EntityRepository<Collection> {
             return collections;
         const query = `SELECT json_object_agg(collection_id, true) AS collection_id_to_is_bookmarked
                        FROM collection_bookmark
-                       WHERE bookmarker_id = ${learnerId};`;
+                       WHERE bookmarker_id = ${learnerId}
+                         AND collection_id IN (${collections.map(c => c.id).join(",")});`;
         const collectionIdToIsBookmarked = (await this.em.execute(query))[0].collection_id_to_is_bookmarked;
         collections.forEach(collection => collection.isBookmarked = collectionIdToIsBookmarked?.[collection.id] ?? false);
         return collections;

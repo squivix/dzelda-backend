@@ -28,7 +28,7 @@ export class TextRepo extends EntityRepository<Text> {
                                           mtv.text_id
                                    FROM map_text_vocab mtv
                                             LEFT JOIN map_learner_vocab mlv on mtv.vocab_id = mlv.vocab_id AND mlv.learner_id = ${learnerId}
-                                   WHERE mtv.text_id IN (${texts.map(l => l.id).join(",")})
+                                   WHERE mtv.text_id IN (${texts.map(t => t.id).join(",")})
                                    GROUP BY mtv.text_id, mlv.level
                                    ORDER BY mtv.text_id) AS subq
                              GROUP BY subq.text_id) as outq`;
@@ -44,7 +44,8 @@ export class TextRepo extends EntityRepository<Text> {
             return texts;
         const query = `SELECT json_object_agg(text_id, true) AS text_id_to_is_bookmarked
                        FROM text_bookmark
-                       WHERE bookmarker_id = ${learnerId};`;
+                       WHERE bookmarker_id = ${learnerId}
+                         and text_id IN (${texts.map(t => t.id).join(",")});`;
         const textIdToIsBookmarked = (await this.em.execute(query))[0].text_id_to_is_bookmarked;
         texts.forEach(collection => collection.isBookmarked = textIdToIsBookmarked?.[collection.id] ?? false);
         return texts;
