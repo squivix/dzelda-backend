@@ -155,7 +155,7 @@ export class VocabService {
                 where: {vocab: {meanings: {language: {prefererEntries: {learnerLanguageMapping: {learner: learner}}}}}},
             });
             await this.em.populate(mapping, ["vocab.learnerMeanings", "vocab.learnerMeanings.addedBy.user"], {
-                where: {vocab: {learnerMeanings: {learners: learner}}}
+                where: {vocab: {learnerMeanings: {learners: learner}}},
             });
         }
         return mapping;

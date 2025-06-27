@@ -28,7 +28,7 @@ describe("POST users/me/texts/history/", () => {
 
         await context.em.refresh(text, {populate: ["pastViewersCount"]});
         expect(response.statusCode).to.equal(201);
-        expect(response.json()).toMatchObject(omit(textHistoryEntrySerializer.serialize(expectedTextHistoryEntry), ["timeViewed"]));
+        expect(response.json()).toMatchObject(omit(textHistoryEntrySerializer.serialize(expectedTextHistoryEntry, {assertNoUndefined: false}), ["timeViewed"]));
         const dbRecord = await context.em.findOne(TextHistoryEntry, {
             pastViewer: user.profile, text: text
         }, {populate: ["text"]});
@@ -51,7 +51,7 @@ describe("POST users/me/texts/history/", () => {
         await context.textRepo.annotateTextsWithUserData([text1], user);
 
         expect(response.statusCode).to.equal(201);
-        expect(response.json()).toMatchObject(omit(textHistoryEntrySerializer.serialize(expectedTextHistoryEntry), ["timeViewed"]));
+        expect(response.json()).toMatchObject(omit(textHistoryEntrySerializer.serialize(expectedTextHistoryEntry, {assertNoUndefined: false}), ["timeViewed"]));
         const dbRecords = await context.em.find(TextHistoryEntry, {
             pastViewer: user.profile, text: text1
         }, {populate: ["text"], orderBy: {timeViewed: "desc"}});
@@ -72,7 +72,7 @@ describe("POST users/me/texts/history/", () => {
         await context.em.refresh(text, {populate: ["pastViewersCount"]});
 
         expect(response.statusCode).to.equal(200);
-        expect(response.json()).toMatchObject(omit(textHistoryEntrySerializer.serialize(expectedTextHistoryEntry), ["timeViewed"]));
+        expect(response.json()).toMatchObject(omit(textHistoryEntrySerializer.serialize(expectedTextHistoryEntry, {assertNoUndefined: false}), ["timeViewed"]));
         const dbRecords = await context.em.find(TextHistoryEntry, {
             pastViewer: user.profile, text: text
         }, {populate: ["text"], orderBy: {timeViewed: "desc"}});

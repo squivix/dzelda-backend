@@ -1,16 +1,20 @@
 import {CustomSerializer} from "@/src/presentation/response/serializers/CustomSerializer.js";
 import {Profile} from "@/src/models/entities/Profile.js";
 import {languageSerializer} from "@/src/presentation/response/serializers/Language/LanguageSerializer.js";
+import {assertNoUndefinedProps} from "@/src/presentation/response/serializers/serializerUtils.js";
 
 class ProfileSerializer extends CustomSerializer<Profile> {
-    serialize(profile: Profile): any {
-        return {
+    serialize(profile: Profile, {assertNoUndefined = true} = {}): any {
+        const pojo = {
             id: profile.id,
-            languagesLearning: languageSerializer.serializeList(profile.languagesLearning.getItems()),
+            languagesLearning: languageSerializer.serializeList(profile.languagesLearning.getItems(), {assertNoUndefined}),
             profilePicture: profile.profilePicture,
             bio: profile.bio,
             isPublic: profile.isPublic
         };
+        if (assertNoUndefined)
+            assertNoUndefinedProps(pojo);
+        return pojo;
     }
 }
 

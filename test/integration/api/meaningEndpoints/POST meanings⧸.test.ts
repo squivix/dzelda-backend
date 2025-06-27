@@ -30,10 +30,10 @@ describe("POST meanings/", () => {
         }, session.token);
 
         expect(response.statusCode).toEqual(201);
-        expect(response.json()).toMatchObject(omit(meaningSerializer.serialize(newMeaning), ["id", "addedOn"]));
+        expect(response.json()).toMatchObject(omit(meaningSerializer.serialize(newMeaning, {assertNoUndefined: false}), ["id", "addedOn"]));
         const dbRecord = await context.em.findOne(Meaning, {text: newMeaning.text, language, vocab});
         expect(dbRecord).not.toBeNull();
-        expect(meaningSerializer.serialize(dbRecord!)).toMatchObject(omit(meaningSerializer.serialize(newMeaning), ["id", "addedOn"]));
+        expect(meaningSerializer.serialize(dbRecord!)).toMatchObject(omit(meaningSerializer.serialize(newMeaning, {assertNoUndefined: false}), ["id", "addedOn"]));
     });
     test<TestContext>("If meaning with same text and language for same vocab already exists return 200", async (context) => {
         const user = await context.userFactory.createOne();

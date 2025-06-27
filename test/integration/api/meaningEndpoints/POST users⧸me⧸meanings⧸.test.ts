@@ -28,7 +28,7 @@ describe("POST users/me/meanings/", () => {
         const response = await makeRequest({meaningId: meaning.id}, session.token);
 
         expect(response.statusCode).to.equal(201);
-        expect(response.json()).toMatchObject(omit(meaningSerializer.serialize(meaning), ["learnersCount"]));
+        expect(response.json()).toMatchObject(omit(meaningSerializer.serialize(meaning, {assertNoUndefined: false}), ["learnersCount"]));
         expect(await context.em.findOne(MapLearnerMeaning, {learner: user.profile, meaning})).not.toBeNull();
         expect(await meaning.learners.loadCount()).toEqual(oldLearnersCount + 1);
     });

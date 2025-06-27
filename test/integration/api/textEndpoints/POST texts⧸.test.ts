@@ -49,8 +49,8 @@ describe("POST texts/", () => {
             expect(dbRecord).not.toBeNull();
             if (!dbRecord) return;
             await context.textRepo.annotateTextsWithUserData([dbRecord], user);
-            expect(response.json()).toMatchObject(omit(textLoggedInSerializer.serialize(newText), ["id", "addedOn"]));
-            expect(textLoggedInSerializer.serialize(dbRecord)).toMatchObject(omit(textLoggedInSerializer.serialize(newText), ["id", "addedOn"]));
+            expect(response.json()).toMatchObject(omit(textLoggedInSerializer.serialize(newText, {assertNoUndefined: false}), ["id", "addedOn"]));
+            expect(textLoggedInSerializer.serialize(dbRecord)).toMatchObject(omit(textLoggedInSerializer.serialize(newText, {assertNoUndefined: false}), ["id", "addedOn"]));
             expect(sendTextToParsingQueueSpy).toHaveBeenCalledOnce();
             expect(sendTextToParsingQueueSpy).toHaveBeenCalledWith({
                 textId: dbRecord.id,
@@ -122,8 +122,8 @@ describe("POST texts/", () => {
             expect(dbRecord).not.toBeNull();
             if (!dbRecord) return;
             await context.textRepo.annotateTextsWithUserData([dbRecord], user);
-            expect(response.json()).toMatchObject(omit(textLoggedInSerializer.serialize(newText), ["id", "addedOn"]));
-            expect(textLoggedInSerializer.serialize(dbRecord)).toMatchObject(omit(textLoggedInSerializer.serialize(newText), ["id", "addedOn",]));
+            expect(response.json()).toMatchObject(omit(textLoggedInSerializer.serialize(newText, {assertNoUndefined: false}), ["id", "addedOn"]));
+            expect(textLoggedInSerializer.serialize(dbRecord)).toMatchObject(omit(textLoggedInSerializer.serialize(newText, {assertNoUndefined: false}), ["id", "addedOn",]));
             expect(sendTextToParsingQueueSpy).toHaveBeenCalledOnce();
             expect(sendTextToParsingQueueSpy).toHaveBeenCalledWith({
                 textId: dbRecord.id,

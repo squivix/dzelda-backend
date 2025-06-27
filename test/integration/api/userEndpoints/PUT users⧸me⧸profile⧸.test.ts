@@ -28,7 +28,7 @@ describe("PUT users/me/profile/", function () {
             expect(response.statusCode).to.equal(200);
             expect(response.json()).toEqual(profileSerializer.serialize(user.profile));
             const updatedFields: (keyof ProfileSchema)[] = ["bio"];
-            expect(onlyKeep(profileSerializer.serialize(user.profile), updatedFields)).toEqual(onlyKeep(profileSerializer.serialize(updatedProfile), updatedFields));
+            expect(onlyKeep(profileSerializer.serialize(user.profile), updatedFields)).toEqual(onlyKeep(profileSerializer.serialize(updatedProfile, {assertNoUndefined: false}), updatedFields));
         });
         test<TestContext>("If new profile picture is blank clear profile picture", async (context) => {
             const user = await context.userFactory.createOne();
@@ -44,7 +44,7 @@ describe("PUT users/me/profile/", function () {
             expect(response.statusCode).to.equal(200);
             expect(response.json()).toEqual(profileSerializer.serialize(user.profile));
             const updatedFields: (keyof ProfileSchema)[] = ["profilePicture", "bio"];
-            expect(onlyKeep(profileSerializer.serialize(user.profile), updatedFields)).toEqual(onlyKeep(profileSerializer.serialize(updatedProfile), updatedFields));
+            expect(onlyKeep(profileSerializer.serialize(user.profile), updatedFields)).toEqual(onlyKeep(profileSerializer.serialize(updatedProfile, {assertNoUndefined: false}), updatedFields));
         });
         test<TestContext>("If new profile picture is provided, update profile picture", async (context) => {
             const user = await context.userFactory.createOne();
@@ -61,7 +61,7 @@ describe("PUT users/me/profile/", function () {
             expect(response.statusCode).to.equal(200);
             expect(response.json()).toEqual(profileSerializer.serialize(user.profile));
             const updatedFields: (keyof ProfileSchema)[] = ["profilePicture", "bio"];
-            expect(onlyKeep(profileSerializer.serialize(user.profile), updatedFields)).toEqual(onlyKeep(profileSerializer.serialize(updatedProfile), updatedFields));
+            expect(onlyKeep(profileSerializer.serialize(user.profile), updatedFields)).toEqual(onlyKeep(profileSerializer.serialize(updatedProfile, {assertNoUndefined: false}), updatedFields));
         });
     });
     describe("If required fields are missing return 400", async (context) => {

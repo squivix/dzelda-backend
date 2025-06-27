@@ -45,7 +45,7 @@ describe("PUT collections/{collectionId}/", function () {
             expect(response.json()).toEqual(collectionLoggedInSerializer.serialize(collection));
             expect(response.json().texts.map((l: TextSchema) => l.id)).toEqual(shuffledTextIds);
             const updatedFields: (keyof CollectionSchema)[] = ["title", "description"];
-            expect(onlyKeep(collectionLoggedInSerializer.serialize(collection), updatedFields)).toEqual(onlyKeep(collectionLoggedInSerializer.serialize(updatedCollection), updatedFields));
+            expect(onlyKeep(collectionLoggedInSerializer.serialize(collection), updatedFields)).toEqual(onlyKeep(collectionLoggedInSerializer.serialize(updatedCollection, {assertNoUndefined: false}), updatedFields));
         });
         test<TestContext>("If new image is blank clear collection image", async (context) => {
             const author = await context.userFactory.createOne();
@@ -79,7 +79,7 @@ describe("PUT collections/{collectionId}/", function () {
             expect(collection.image).toEqual("");
             expect(response.json().texts.map((l: TextSchema) => l.id)).toEqual(shuffledTextIds);
             const updatedFields: (keyof CollectionSchema)[] = ["title", "description", "image"];
-            expect(onlyKeep(collectionLoggedInSerializer.serialize(collection), updatedFields)).toEqual(onlyKeep(collectionLoggedInSerializer.serialize(updatedCollection), updatedFields));
+            expect(onlyKeep(collectionLoggedInSerializer.serialize(collection), updatedFields)).toEqual(onlyKeep(collectionLoggedInSerializer.serialize(updatedCollection, {assertNoUndefined: false}), updatedFields));
         });
         test<TestContext>("If new image is provided, update collection image", async (context) => {
             const author = await context.userFactory.createOne();
@@ -119,7 +119,7 @@ describe("PUT collections/{collectionId}/", function () {
             expect(response.json()).toEqual(collectionLoggedInSerializer.serialize(collection));
             expect(response.json().texts.map((l: TextSchema) => l.id)).toEqual(shuffledTextIds);
             const updatedFields: (keyof CollectionSchema)[] = ["title", "description", "image", "isPublic"];
-            expect(onlyKeep(collectionLoggedInSerializer.serialize(collection), updatedFields)).toEqual(onlyKeep(collectionLoggedInSerializer.serialize(updatedCollection), updatedFields));
+            expect(onlyKeep(collectionLoggedInSerializer.serialize(collection), updatedFields)).toEqual(onlyKeep(collectionLoggedInSerializer.serialize(updatedCollection, {assertNoUndefined: false}), updatedFields));
         });
     });
     test<TestContext>("If user not logged in return 401", async (context) => {

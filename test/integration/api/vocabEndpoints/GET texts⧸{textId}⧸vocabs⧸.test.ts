@@ -1,6 +1,6 @@
 import {describe, expect, test, TestContext} from "vitest";
 import {InjectOptions} from "light-my-request";
-import {fetchRequest, omit} from "@/test/integration/integrationTestUtils.js";
+import {fetchRequest} from "@/test/integration/integrationTestUtils.js";
 import {Vocab} from "@/src/models/entities/Vocab.js";
 import {MapLearnerVocab} from "@/src/models/entities/MapLearnerVocab.js";
 import {faker} from "@faker-js/faker";
@@ -37,7 +37,7 @@ describe("GET texts/{textId}/vocabs/", () => {
 
         expect(response.statusCode).to.equal(200);
         const responseBody = response.json();
-        const expectedBody = omit(learnerVocabForTextSerializer.serializeList(expectedTextVocabs), ["meanings", "learnerMeanings"]);
+        const expectedBody = learnerVocabForTextSerializer.serializeList(expectedTextVocabs);
         //ignore order
         expect(responseBody.length).toEqual(expectedBody.length);
         expect(responseBody).toEqual(expect.arrayContaining(expectedBody));
@@ -99,7 +99,7 @@ describe("GET texts/{textId}/vocabs/", () => {
 
                 expect(response.statusCode).to.equal(200);
                 const responseBody = response.json();
-                const expectedBody = omit(learnerVocabForTextSerializer.serializeList(expectedTextVocabs), ["meanings", "learnerMeanings"]);
+                const expectedBody = learnerVocabForTextSerializer.serializeList(expectedTextVocabs);
                 //ignore order
                 expect(responseBody.length).toEqual(expectedBody.length);
                 expect(responseBody).toEqual(expect.arrayContaining(expectedBody));
@@ -137,7 +137,7 @@ describe("GET texts/{textId}/vocabs/", () => {
 
                     expect(response.statusCode).to.equal(200);
                     const responseBody = response.json();
-                    const expectedBody = omit(learnerVocabForTextSerializer.serializeList(expectedTextVocabs), ["meanings", "learnerMeanings"]);
+                    const expectedBody = learnerVocabForTextSerializer.serializeList(expectedTextVocabs);
                     //ignore order
                     expect(responseBody.length).toEqual(expectedBody.length);
                     expect(responseBody).toEqual(expect.arrayContaining(expectedBody));
@@ -162,7 +162,7 @@ describe("GET texts/{textId}/vocabs/", () => {
 
                 expect(response.statusCode).to.equal(200);
                 const responseBody = response.json();
-                const expectedBody = omit(learnerVocabForTextSerializer.serializeList(expectedTextVocabs), ["meanings", "learnerMeanings"]);
+                const expectedBody = learnerVocabForTextSerializer.serializeList(expectedTextVocabs);
                 //ignore order
                 expect(responseBody.length).toEqual(expectedBody.length);
                 expect(responseBody).toEqual(expect.arrayContaining(expectedBody));
