@@ -26,10 +26,10 @@ describe("POST users/me/languages/", function () {
 
         const responseBody = response.json();
         expect(response.statusCode).to.equal(201);
-        expect(responseBody).toMatchObject(omit(learnerLanguageSerializer.serialize(expectedMapping), ["startedLearningOn", "lastOpened"]));
+        expect(responseBody).toMatchObject(omit(learnerLanguageSerializer.serialize(expectedMapping, {assertNoUndefined: false}), ["startedLearningOn", "lastOpened"]));
         const dbRecord = await context.em.findOne(MapLearnerLanguage, {language, learner: user.profile}, {populate: ["preferredTranslationLanguages"]});
         expect(dbRecord).not.toBeNull();
-        expect(learnerLanguageSerializer.serialize(dbRecord!)).toMatchObject(omit(learnerLanguageSerializer.serialize(expectedMapping), ["startedLearningOn", "lastOpened"]));
+        expect(learnerLanguageSerializer.serialize(dbRecord!)).toMatchObject(omit(learnerLanguageSerializer.serialize(expectedMapping, {assertNoUndefined: false}), ["startedLearningOn", "lastOpened"]));
     });
     test<TestContext>("If user is already learning language return 200", async (context) => {
         const user = await context.userFactory.createOne();

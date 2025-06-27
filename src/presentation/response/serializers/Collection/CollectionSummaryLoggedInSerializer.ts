@@ -1,6 +1,7 @@
 import {CustomSerializer} from "@/src/presentation/response/serializers/CustomSerializer.js";
 import {Collection} from "@/src/models/entities/Collection.js";
 import {ViewDescription} from "@/src/models/viewResolver.js";
+import {assertNoUndefinedProps} from "@/src/presentation/response/serializers/serializerUtils.js";
 
 class CollectionSummaryLoggedInSerializer extends CustomSerializer<Collection> {
     static readonly view: ViewDescription = {
@@ -20,8 +21,8 @@ class CollectionSummaryLoggedInSerializer extends CustomSerializer<Collection> {
         }
     }
 
-    serialize(collection: Collection): any {
-        return {
+    serialize(collection: Collection, {assertNoUndefined = true} = {}): any {
+        const pojo = {
             id: collection.id,
             title: collection.title,
             description: collection.description,
@@ -35,6 +36,10 @@ class CollectionSummaryLoggedInSerializer extends CustomSerializer<Collection> {
             vocabsByLevel: collection.vocabsByLevel,
             isBookmarked: collection.isBookmarked,
         };
+
+        if (assertNoUndefined)
+            assertNoUndefinedProps(pojo);
+        return pojo;
     }
 }
 

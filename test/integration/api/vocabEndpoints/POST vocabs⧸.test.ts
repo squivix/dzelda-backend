@@ -36,7 +36,7 @@ describe("POST vocabs/", () => {
         }, session.token);
 
         expect(response.statusCode).toEqual(201);
-        expect(response.json()).toEqual(expect.objectContaining(omit(vocabSerializer.serialize(newVocab), ["id"])));
+        expect(response.json()).toEqual(expect.objectContaining(omit(vocabSerializer.serialize(newVocab, {assertNoUndefined: false}), ["id"])));
         const dbRecord = await context.vocabRepo.findOne({text: newVocab.text, isPhrase: newVocab.isPhrase, language})
         expect(dbRecord).not.toBeNull();
         expect(new Set((await context.em.find(MapTextVocab, {vocab: dbRecord})).map(m => m.text.id))).toEqual(new Set(expectedTextsAppearingIn.map(t => t.id)))

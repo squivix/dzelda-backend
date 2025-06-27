@@ -19,8 +19,8 @@ describe("GET collections/", function () {
     const queryDefaults = {pagination: {pageSize: 10, page: 1}};
     const defaultSortComparator = createComparator(Collection, [
         {property: "title", order: "asc"},
-        {property: "id", order: "asc"}]
-    );
+        {property: "id", order: "asc"}
+    ]);
     test<TestContext>("If there are no filters return all public collections", async (context) => {
         const language = await context.languageFactory.createOne();
         await context.collectionFactory.create(5, {language, isPublic: false});
