@@ -5,6 +5,7 @@ import {Vocab} from "@/src/models/entities/Vocab.js";
 import {MapLearnerVocab} from "@/src/models/entities/MapLearnerVocab.js";
 import {faker} from "@faker-js/faker";
 import {learnerVocabForTextSerializer} from "@/src/presentation/response/serializers/Vocab/LearnerVocabForTextSerializer.js";
+import {vocabForTextSerializer} from "@/src/presentation/response/serializers/Vocab/VocabForTextSerializer.js";
 
 /**{@link VocabController#getTextVocabs}*/
 describe("GET texts/{textId}/vocabs/", () => {
@@ -30,14 +31,13 @@ describe("GET texts/{textId}/vocabs/", () => {
         for (let vocab of expectedExistingVocabs)
             expectedExistingMappings.push(context.em.create(MapLearnerVocab, {learner: user.profile, vocab}));
         await context.em.flush();
-        const expectedTextVocabs = [...expectedExistingMappings, ...expectedNewVocabs];
         await context.vocabFactory.create(10, {language});
         const response = await makeRequest(text.id, session.token);
         await context.em.find(Vocab, expectedExistingVocabs, {refresh: true});
 
         expect(response.statusCode).toEqual(200);
         const responseBody = response.json();
-        const expectedBody = learnerVocabForTextSerializer.serializeList(expectedTextVocabs);
+        const expectedBody = [...learnerVocabForTextSerializer.serializeList(expectedExistingMappings), ...vocabForTextSerializer.serializeList(expectedNewVocabs)];
         //ignore order
         expect(responseBody.length).toEqual(expectedBody.length);
         expect(responseBody).toEqual(expect.arrayContaining(expectedBody));
@@ -92,14 +92,13 @@ describe("GET texts/{textId}/vocabs/", () => {
                 for (let vocab of expectedExistingVocabs)
                     expectedExistingMappings.push(context.em.create(MapLearnerVocab, {learner: author.profile, vocab}));
                 await context.em.flush();
-                const expectedTextVocabs = [...expectedExistingMappings, ...expectedNewVocabs];
                 await context.vocabFactory.create(10, {language});
                 const response = await makeRequest(text.id, session.token);
                 await context.em.find(Vocab, expectedExistingVocabs, {refresh: true});
 
                 expect(response.statusCode).toEqual(200);
                 const responseBody = response.json();
-                const expectedBody = learnerVocabForTextSerializer.serializeList(expectedTextVocabs);
+                const expectedBody = [...learnerVocabForTextSerializer.serializeList(expectedExistingMappings), ...vocabForTextSerializer.serializeList(expectedNewVocabs)];
                 //ignore order
                 expect(responseBody.length).toEqual(expectedBody.length);
                 expect(responseBody).toEqual(expect.arrayContaining(expectedBody));
@@ -130,14 +129,13 @@ describe("GET texts/{textId}/vocabs/", () => {
                     for (let vocab of expectedExistingVocabs)
                         expectedExistingMappings.push(context.em.create(MapLearnerVocab, {learner: author.profile, vocab}));
                     await context.em.flush();
-                    const expectedTextVocabs = [...expectedExistingMappings, ...expectedNewVocabs];
                     await context.vocabFactory.create(10, {language});
                     const response = await makeRequest(text.id, session.token);
                     await context.em.find(Vocab, expectedExistingVocabs, {refresh: true});
 
                     expect(response.statusCode).toEqual(200);
                     const responseBody = response.json();
-                    const expectedBody = learnerVocabForTextSerializer.serializeList(expectedTextVocabs);
+                    const expectedBody = [...learnerVocabForTextSerializer.serializeList(expectedExistingMappings), ...vocabForTextSerializer.serializeList(expectedNewVocabs)];
                     //ignore order
                     expect(responseBody.length).toEqual(expectedBody.length);
                     expect(responseBody).toEqual(expect.arrayContaining(expectedBody));
@@ -155,14 +153,13 @@ describe("GET texts/{textId}/vocabs/", () => {
                 for (let vocab of expectedExistingVocabs)
                     expectedExistingMappings.push(context.em.create(MapLearnerVocab, {learner: user.profile, vocab}));
                 await context.em.flush();
-                const expectedTextVocabs = [...expectedExistingMappings, ...expectedNewVocabs];
                 await context.vocabFactory.create(10, {language});
                 const response = await makeRequest(text.id, session.token);
                 await context.em.find(Vocab, expectedExistingVocabs, {refresh: true});
 
                 expect(response.statusCode).toEqual(200);
                 const responseBody = response.json();
-                const expectedBody = learnerVocabForTextSerializer.serializeList(expectedTextVocabs);
+                const expectedBody = [...learnerVocabForTextSerializer.serializeList(expectedExistingMappings), ...vocabForTextSerializer.serializeList(expectedNewVocabs)]
                 //ignore order
                 expect(responseBody.length).toEqual(expectedBody.length);
                 expect(responseBody).toEqual(expect.arrayContaining(expectedBody));
