@@ -1,11 +1,10 @@
-/**{@link MeaningController#removeMeaningFromUser}*/
 import {describe, expect, test, TestContext} from "vitest";
 import {InjectOptions} from "light-my-request";
 import {fetchRequest} from "@/test/integration/integrationTestUtils.js";
 import {MapLearnerMeaning} from "@/src/models/entities/MapLearnerMeaning.js";
 import {faker} from "@faker-js/faker";
 
-
+/**{@link MeaningController#removeMeaningFromUser}*/
 describe("DELETE users/me/meanings/{meaningId}/", () => {
     const makeRequest = async (meaningId: number | string, authToken?: string) => {
         const options: InjectOptions = {

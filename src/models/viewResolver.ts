@@ -131,6 +131,8 @@ export function buildFetchPlan(
 
         if (fieldFetchSpec.type === "db-column" || fieldFetchSpec.type === "formula")
             localFields.push(target);
+        else if (fieldFetchSpec.type === "relation")
+            localFields.push(`${target}.id`);
         else if (fieldFetchSpec.type === "annotated")
             annotatedFields.push({path: prefix, annotate: async (records) => await fieldFetchSpec.annotate(records, context)});
     }

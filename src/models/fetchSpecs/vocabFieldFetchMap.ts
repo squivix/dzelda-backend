@@ -12,6 +12,7 @@ export const vocabFieldFetchMap: FieldFetchSpecsMap<Vocab> = {
     text: {type: "db-column"},
     isPhrase: {type: "db-column"},
     learnersCount: {type: "formula"},
+    textsCount: {type: "formula"},
 
     language: {type: "relation", populate: "language", getFieldFetchSpecsMap: () => languageFieldFetchMap, relationType: "to-one"},
     meanings: {type: "relation", populate: "meanings", getFieldFetchSpecsMap: () => meaningFieldFetchMap, relationType: "to-many"},

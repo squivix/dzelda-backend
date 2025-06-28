@@ -15,6 +15,7 @@ import {VocabVariant} from "@/src/models/entities/VocabVariant.js";
 import {attributionSourceSerializer} from "@/src/presentation/response/serializers/AttributionSource/AttributionSourceSerializer.js";
 import {meaningSerializer} from "@/src/presentation/response/serializers/Meaning/MeaningSerializer.js";
 import {meaningSummerySerializer} from "@/src/presentation/response/serializers/Meaning/MeaningSummerySerializer.js";
+import {APIError} from "@/src/utils/errors/APIError.js";
 
 class MeaningController {
     async createMeaning(request: FastifyRequest, reply: FastifyReply) {
@@ -25,6 +26,7 @@ class MeaningController {
             vocabVariantId: z.number().min(0).optional(),
         });
         const body = bodyValidator.parse(request.body);
+        const serializer = meaningSerializer;
 
         const languageService = new LanguageService(request.em);
         const language = await languageService.findTranslationLanguage({code: body.languageCode});
@@ -32,9 +34,10 @@ class MeaningController {
             throw new ValidationAPIError({language: "not found"});
 
         const vocabService = new VocabService(request.em);
-        const vocab = await vocabService.getVocab(body.vocabId);
+        const vocab = await vocabService.findVocab(body.vocabId);
         if (!vocab)
             throw new ValidationAPIError({vocab: "not found"});
+
         let vocabVariant: VocabVariant | null = null;
         if (body.vocabVariantId !== undefined) {
             vocabVariant = await vocabService.findVocabVariant({id: body.vocabVariantId});
@@ -42,19 +45,20 @@ class MeaningController {
                 throw new ValidationAPIError({vocabVariantId: "Not found"});
         }
         const meaningService = new MeaningService(request.em);
-        const existingMeaning = await meaningService.getMeaningByText({vocab: vocab, language: language, text: body.text});
+        const existingMeaning = await meaningService.getMeaningByText({vocab: vocab, language: language, text: body.text}, serializer.view);
         if (existingMeaning) {
-            reply.status(200).send(meaningSerializer.serialize(existingMeaning));
+            reply.status(200).send(serializer.serialize(existingMeaning));
             return;
         }
 
-        const newMeaning = await meaningService.createMeaning({
+        let newMeaning = await meaningService.createMeaning({
             language: language,
             text: body.text,
             vocab: vocab,
             vocabVariant: vocabVariant
         }, request.user as User);
-        reply.status(201).send(meaningSerializer.serialize(newMeaning));
+        newMeaning = await meaningService.getMeaning(newMeaning.id, serializer.view);
+        reply.status(201).send(serializer.serialize(newMeaning));
     }
 
     async getUserMeanings(request: FastifyRequest, reply: FastifyReply) {
@@ -68,24 +72,27 @@ class MeaningController {
             pageSize: z.coerce.number().int().min(1).max(50).optional().default(10),
         });
         const queryParams = queryParamsValidator.parse(request.query);
+        const serializer = meaningSerializer;
         const filters = {vocabId: queryParams.vocabId};
         const sort = {sortBy: queryParams.sortBy, sortOrder: queryParams.sortOrder};
         const pagination = {page: queryParams.page, pageSize: queryParams.pageSize};
 
         const meaningService = new MeaningService(request.em);
-        const [meanings, recordsCount] = await meaningService.getUserMeanings(filters, sort, pagination, user);
+        const [meanings, recordsCount] = await meaningService.getUserMeanings(filters, sort, pagination, user, serializer.view);
 
         reply.send({
             page: pagination.page,
             pageSize: pagination.pageSize,
             pageCount: Math.ceil(recordsCount / pagination.pageSize),
-            data: meaningSerializer.serializeList(meanings)
+            data: serializer.serializeList(meanings)
         });
     }
 
     async getTextMeanings(request: FastifyRequest, reply: FastifyReply) {
         const pathParamsValidator = z.object({textId: numericStringValidator});
         const pathParams = pathParamsValidator.parse(request.params);
+        const serializer = meaningSummerySerializer;
+
         const textService = new TextService(request.em);
         const text = await textService.findText({$and: [{id: pathParams.textId,}, textVisibilityFilter(request.user)]});
         if (!text)
@@ -93,9 +100,9 @@ class MeaningController {
 
         const meaningService = new MeaningService(request.em);
 
-        const {meanings, learnerMeanings} = await meaningService.getTextMeanings(text, request.user);
+        const {meanings, learnerMeanings} = await meaningService.getTextMeanings(text, request.user, serializer.view);
         reply.send({
-            meanings: meaningSummerySerializer.serializeList(meanings),
+            meanings: serializer.serializeList(meanings),
             learnerMeanings: learnerMeanings ? learnerMeanings.map(m => m.id) : undefined
         });
     }
@@ -105,20 +112,24 @@ class MeaningController {
 
         const bodyValidator = z.object({meaningId: z.number().min(0)});
         const body = bodyValidator.parse(request.body);
+        const serializer = meaningSerializer;
 
         const meaningService = new MeaningService(request.em);
-        const meaning = await meaningService.getMeaning(body.meaningId);
+        const meaning = await meaningService.getMeaning(body.meaningId, {fields: ["id"], relations: {vocab: {fields: ["language"]}}});
         if (!meaning)
             throw new ValidationAPIError({meaning: "Not found"});
         if (!(request.user as User).profile.languagesLearning.contains(meaning.vocab.language))
             throw new ValidationAPIError({meaning: "not in a language the user is learning"});
 
-        const existingMeaningMapping = await meaningService.getUserMeaning(meaning.id, user);
-        if (existingMeaningMapping)
-            reply.status(200).send(meaningSerializer.serialize(existingMeaningMapping.meaning));
+        const existingMeaningMapping = await meaningService.getUserMeaning(meaning.id, user, serializer.view);
+        if (existingMeaningMapping) {
+            reply.status(200).send(serializer.serialize(existingMeaningMapping.meaning));
+            return;
+        }
 
-        const newMeaningMapping = await meaningService.addMeaningToUserLearning(meaning, user);
-        reply.status(201).send(meaningSerializer.serialize(newMeaningMapping.meaning));
+        await meaningService.addMeaningToUserLearning(meaning, user);
+        const newMeaningMapping = (await meaningService.getUserMeaning(meaning.id, user, serializer.view))!;
+        reply.status(201).send(serializer.serialize(newMeaningMapping.meaning!));
     }
 
     async removeMeaningFromUser(request: FastifyRequest, reply: FastifyReply) {
@@ -129,9 +140,12 @@ class MeaningController {
         const pathParams = pathParamsValidator.parse(request.params);
 
         const meaningService = new MeaningService(request.em);
-        const meaningMapping = await meaningService.getUserMeaning(pathParams.meaningId, user);
-        if (!meaningMapping)
+        const meaning = await meaningService.getMeaning(pathParams.meaningId, {fields: ["id"], relations: {vocab: {fields: ["language"]}}});
+        if (!meaning)
             throw new NotFoundAPIError("Meaning");
+        const meaningMapping = await meaningService.findLearnerMeaning({meaning: pathParams.meaningId, learner: user});
+        if (!meaningMapping)
+            throw new APIError(404, "User is not learning meaning");
 
         await meaningService.removeMeaningFromUser(meaningMapping);
         reply.status(204).send();

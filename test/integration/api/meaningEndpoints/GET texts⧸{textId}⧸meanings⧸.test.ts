@@ -81,7 +81,6 @@ describe("GET texts/{textId}/meanings/", () => {
         const response = await makeRequest(faker.random.alpha(8));
         expect(response.statusCode).toEqual(400);
     });
-
     describe("test privacy", () => {
         describe("Hide private texts from non-authors", () => {
             test<TestContext>("If the text is private and the user is not logged-in return 404", async (context) => {

@@ -25,7 +25,7 @@ class LanguageController {
         const languageService = new LanguageService(request.em);
         const sort = {sortBy: queryParams.sortBy, sortOrder: queryParams.sortOrder};
         const languages = await languageService.getLanguages(sort, serializer.view);
-        reply.send(languageSerializer.serializeList(languages));
+        reply.send(serializer.serializeList(languages));
     }
 
     async getUserLanguages(request: FastifyRequest, reply: FastifyReply) {

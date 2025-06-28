@@ -4,6 +4,8 @@ import {collectionFieldFetchMap} from "@/src/models/fetchSpecs/collectionFieldFe
 import {textFieldFetchMap} from "@/src/models/fetchSpecs/textFieldFetchMap.js";
 import {CollectionLoggedInSerializer} from "@/src/presentation/response/serializers/Collection/CollectionLoggedInSerializer.js";
 import {vocabFieldFetchMap} from "@/src/models/fetchSpecs/vocabFieldFetchMap.js";
+import {meaningFieldFetchMap} from "@/src/models/fetchSpecs/meaningFieldFetchMap.js";
+import {meaningSummerySerializer} from "@/src/presentation/response/serializers/Meaning/MeaningSummerySerializer.js";
 
 
 /**{@link buildFetchPlan}*/
@@ -53,6 +55,9 @@ describe("buildFetchPlan()", function () {
             expect(filteredPopulates).toEqual(expect.arrayEqualRegardlessOfOrder([]))
             expect(annotatedFields).toEqual(expect.arrayEqualRegardlessOfOrder([]))
         });
+        test<TestContext>.todo("if relation fields are included in fields in view, select their id", async (testContext) => {
+
+        });
         test<TestContext>("should throw an error on non-existent fields in the view", async (testContext) => {
             const fetchSpecsMap: FieldFetchSpecsMap<any> = {
                 field1: {type: "db-column"},
@@ -67,6 +72,7 @@ describe("buildFetchPlan()", function () {
             const relationFilters = {};
             await expect(async () => buildFetchPlan(view, fetchSpecsMap, context, relationFilters)).rejects.toThrowError();
         });
+
     });
     describe("Annotated Fields", function () {
         test<TestContext>("should call annotated fetchSpecs with the result and context", async (testContext) => {
@@ -451,6 +457,11 @@ describe("buildFetchPlan()", function () {
                 ...collectionAnnotateMocks.map(a => ({path: "", annotate: a})),
                 ...textAnnotateMocks.map(a => ({path: "texts", annotate: a})),
             ]));
+        });
+        test.todo<TestContext>("Get text meanings", (testContext) => {
+            const fieldFetchMap = meaningFieldFetchMap;
+            const view = meaningSummerySerializer.view;
+            const {fields: dbFields, populate: dbPopulate} = buildFetchPlan(view, fieldFetchMap, {user: null, em: testContext.em});
         });
     });
 });

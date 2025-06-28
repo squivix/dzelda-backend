@@ -8,31 +8,42 @@ import {QueryOrderMap} from "@mikro-orm/core/enums.js";
 import {MapLearnerVocab} from "@/src/models/entities/MapLearnerVocab.js";
 import {VocabLevel} from "dzelda-common";
 import {TranslationLanguage} from "@/src/models/entities/TranslationLanguage.js";
-import {AttributionSource} from "@/src/models/entities/AttributionSource.js";
 import {VocabVariant} from "@/src/models/entities/VocabVariant.js";
-import {ViewDescription} from "@/src/models/viewResolver.js";
+import {buildFetchPlan, ViewDescription} from "@/src/models/viewResolver.js";
+import {meaningFieldFetchMap} from "@/src/models/fetchSpecs/meaningFieldFetchMap.js";
+import {MapLearnerLanguage} from "@/src/models/entities/MapLearnerLanguage.js";
+import {EntityField} from "@mikro-orm/core/drivers/IDatabaseDriver.js";
 
 export class MeaningService {
 
     em: EntityManager;
-    meaningRepo: EntityRepository<Meaning>;
 
     constructor(em: EntityManager) {
         this.em = em;
+    }
 
-        this.meaningRepo = this.em.getRepository(Meaning);
+    async getMeaning(meaningId: number, viewDescription: ViewDescription) {
+        const {fields: dbFields, populate: dbPopulate} = buildFetchPlan(viewDescription, meaningFieldFetchMap, {user: null, em: this.em});
+        return await this.em.findOne(Meaning, {id: meaningId}, {
+            fields: dbFields as any,
+            populate: dbPopulate as any,
+        }) as Meaning;
     }
 
     async getMeaningByText(meaningData: { vocab: Vocab; language: TranslationLanguage; text: string }, viewDescription: ViewDescription) {
-        return await this.meaningRepo.findOne({
+        const {fields: dbFields, populate: dbPopulate} = buildFetchPlan(viewDescription, meaningFieldFetchMap, {user: null, em: this.em});
+        return await this.em.findOne(Meaning, {
             vocab: meaningData.vocab,
             text: meaningData.text,
             language: meaningData.language
-        }, {populate: ["addedBy.user", "vocab.language", "vocab.vocabVariants"]});
+        }, {
+            fields: dbFields as any,
+            populate: dbPopulate as any,
+        });
     }
 
-    async createMeaning(meaningData: { vocab: Vocab, vocabVariant: VocabVariant | null; language: TranslationLanguage; text: string }, user: User, viewDescription: ViewDescription) {
-        const newMeaning = this.meaningRepo.create({
+    async createMeaning(meaningData: { vocab: Vocab, vocabVariant: VocabVariant | null; language: TranslationLanguage; text: string }, user: User) {
+        const newMeaning = this.em.create(Meaning, {
             text: meaningData.text,
             language: meaningData.language,
             vocab: meaningData.vocab,
@@ -41,7 +52,6 @@ export class MeaningService {
             vocabVariant: meaningData.vocabVariant
         });
         await this.em.flush();
-        await this.em.populate(newMeaning, ["addedBy.user", "vocab.language", "vocab.vocabVariants"]);
         return newMeaning;
     }
 
@@ -60,8 +70,10 @@ export class MeaningService {
         else if (sort.sortBy == "learnersCount")
             dbOrderBy.push({learnersCount: sort.sortOrder});
 
-        return await this.meaningRepo.findAndCount(dbFilters, {
-            populate: ["language", "vocab.language", "addedBy.user", "learnersCount"],
+        const {fields: dbFields, populate: dbPopulate} = buildFetchPlan(viewDescription, meaningFieldFetchMap, {user: null, em: this.em});
+        return await this.em.findAndCount(Meaning, dbFilters, {
+            fields: dbFields as any,
+            populate: dbPopulate as any,
             orderBy: dbOrderBy,
             limit: pagination.pageSize,
             offset: pagination.pageSize * (pagination.page - 1),
@@ -69,10 +81,12 @@ export class MeaningService {
     }
 
     async getTextMeanings(text: Text, user: User | AnonymousUser | null, viewDescription: ViewDescription) {
+        const {fields: dbFields, populate: dbPopulate} = buildFetchPlan(viewDescription, meaningFieldFetchMap, {user: user, em: this.em});
         const meanings = await this.em.find(Meaning, {
             vocab: {textsAppearingIn: text}
         }, {
-            populate: ["language", "addedBy.user"],
+            fields: dbFields as any,
+            populate: dbPopulate as any,
             orderBy: [{vocab: {id: "asc"}}, {learnersCount: "desc"}, {[raw(alias => `length(${alias}.text)`)]: "asc"}, {id: "asc"}]
         })
         if (!(user instanceof User)) {
@@ -81,11 +95,13 @@ export class MeaningService {
                 learnerMeanings: null
             }
         }
+
         const learnerMeanings = await this.em.find(Meaning, {
             vocab: {textsAppearingIn: text},
             learners: user.profile
         }, {
-            populate: ["language", "addedBy.user"],
+            fields: ["id"],
+            populate: [],
             orderBy: [{vocab: {id: "asc"}}, {learnersCount: "desc"}, {[raw(alias => `length(${alias}.text)`)]: "asc"}, {id: "asc"}]
         });
         return {
@@ -95,27 +111,37 @@ export class MeaningService {
     }
 
     async getUserMeaning(meaningId: number, user: User, viewDescription: ViewDescription) {
-        return await this.em.findOne(MapLearnerMeaning, {meaning: meaningId, learner: user.profile});
+        const {fields: meaningFields, populate: meaningPopulate} = buildFetchPlan(viewDescription, meaningFieldFetchMap, {user: user, em: this.em});
+        return await this.em.findOne(MapLearnerMeaning, {
+            meaning: meaningId,
+            learner: user.profile
+        }, {
+            fields: meaningFields.map(m => `meaning.${m}`) as any,
+            populate: meaningPopulate.map(m => `meaning.${m}`) as any,
+            refresh: true
+        });
     }
 
-    async getMeaning(meaningId: number, viewDescription: ViewDescription) {
-        return await this.meaningRepo.findOne({id: meaningId}, {populate: ["language", "vocab.language", "addedBy.user", "learnersCount"]});
-    }
-
-    async addMeaningToUserLearning(meaning: Meaning, user: User, viewDescription: ViewDescription) {
-        const mapping = this.em.create(MapLearnerMeaning, {learner: user.profile, meaning: meaning});
+    async addMeaningToUserLearning(meaning: Meaning, user: User) {
+        this.em.create(MapLearnerMeaning, {learner: user.profile, meaning: meaning});
         await this.em.flush();
         await this.em.nativeUpdate(MapLearnerVocab, {
             learner: user.profile,
             vocab: meaning.vocab,
             level: {$in: [VocabLevel.LEARNED, VocabLevel.KNOWN, VocabLevel.IGNORED]}
         }, {level: VocabLevel.LEVEL_1});
-        await this.em.refresh(mapping.meaning);
-        return mapping;
     }
 
     async removeMeaningFromUser(meaningMapping: MapLearnerMeaning) {
         this.em.remove(meaningMapping);
         await this.em.flush();
+    }
+
+    async findMeaning(where: FilterQuery<Meaning>, fields: EntityField<Meaning>[] = ["id"]) {
+        return await this.em.findOne(Meaning, where, {fields: fields as any});
+    }
+
+    async findLearnerMeaning(where: FilterQuery<MapLearnerMeaning>, fields: EntityField<MapLearnerMeaning>[] = ["learner", "meaning"]) {
+        return await this.em.findOne(MapLearnerMeaning, where, {fields: fields as any});
     }
 }
