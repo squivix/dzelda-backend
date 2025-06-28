@@ -6,6 +6,7 @@ import {MapLearnerLanguage} from "@/src/models/entities/MapLearnerLanguage.js";
 import {faker} from "@faker-js/faker";
 import {RequiredEntityData} from "@mikro-orm/core";
 import {learnerLanguageSerializer} from "@/src/presentation/response/serializers/Language/LearnerLanguageSerializer.js";
+import {PreferredTranslationLanguageEntry} from "@/src/models/entities/PreferredTranslationLanguageEntry.js";
 
 /**{@link LanguageController#getUserLanguages}*/
 describe("GET users/{username}/languages/", function () {
@@ -25,10 +26,22 @@ describe("GET users/{username}/languages/", function () {
         const user = await context.userFactory.createOne({profile: {isPublic: true}});
         const expectedLanguages = await context.languageFactory.create(10);
         expectedLanguages.sort(defaultSortComparator);
+
         const expectedMappings = expectedLanguages.map(language => {
             language.learnersCount++;
             return context.em.create(MapLearnerLanguage, {language, learner: user.profile});
         });
+        const translationLanguages = await context.translationLanguageFactory.create(3);
+        expectedMappings.map(m => {
+            translationLanguages.forEach((t, i) => {
+                context.em.create(PreferredTranslationLanguageEntry, {
+                    translationLanguage: t,
+                    learnerLanguageMapping: m,
+                    precedenceOrder: i
+                }, {persist: true})
+            })
+        })
+
         await context.em.flush();
 
         const response = await makeRequest(user.username);

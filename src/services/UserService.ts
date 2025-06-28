@@ -74,7 +74,7 @@ export class UserService {
         }
     }
 
-    async getUser(username: "me" | string, authenticatedUser: User | AnonymousUser | null, viewDescription: ViewDescription) {
+    async getUser(username: "me" | string, authenticatedUser: User | AnonymousUser | null) {
         let user: User | null;
         if (username == "me") {
             if (!authenticatedUser || authenticatedUser instanceof AnonymousUser)

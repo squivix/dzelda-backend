@@ -14,6 +14,8 @@ describe("PATCH users/me/languages/{languageCode}/", () => {
         };
         return await fetchRequest(options, authToken);
     };
+    test.todo<TestContext>("test preferred translation language update", async (context) => {
+    });
     test<TestContext>("If user is logged in, and all fields are valid return 200", async (context) => {
         const user = await context.userFactory.createOne();
         const session = await context.sessionFactory.createOne({user: user});

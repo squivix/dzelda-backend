@@ -37,7 +37,7 @@ export class MapLearnerLanguage extends CustomBaseEntity {
         mappedBy: (preferredTranslationLanguageEntry) => preferredTranslationLanguageEntry.learnerLanguageMapping,
         orderBy: {precedenceOrder: "asc"}
     })
-    preferredTranslationLanguages: Collection<PreferredTranslationLanguageEntry> = new Collection<PreferredTranslationLanguageEntry>(this);
+    preferredTranslationLanguageEntries: Collection<PreferredTranslationLanguageEntry> = new Collection<PreferredTranslationLanguageEntry>(this);
 
     [OptionalProps]?: "startedLearningOn" | "lastOpened" | "preferredTranslationLanguages";
 }

@@ -9,10 +9,13 @@ class LearnerLanguageSerializer extends CustomSerializer<MapLearnerLanguage> {
         fields: ["startedLearningOn", "lastOpened"],
         relations: {
             language: {
-                fields: ["id", "code", "name", "greeting", "flag", "flagCircular", "flagEmoji", "color", "levelThresholds", "learnersCount",]
+                fields: ["id", "code", "name", "greeting", "isRtl", "flag", "flagCircular", "flagEmoji", "color", "levelThresholds", "learnersCount",]
             },
             preferredTtsVoice: ttsVoiceSerializer.view,
-            preferredTranslationLanguages: translationLanguageSerializer.view
+            preferredTranslationLanguageEntries: {
+                fields: ["precedenceOrder"],
+                relations: {translationLanguage: translationLanguageSerializer.view}
+            }
         }
     }
 
@@ -22,19 +25,19 @@ class LearnerLanguageSerializer extends CustomSerializer<MapLearnerLanguage> {
             code: mapping.language.code,
             name: mapping.language.name,
             greeting: mapping.language.greeting,
+            isRtl: mapping.language.isRtl,
             flag: mapping.language.flag,
             flagCircular: mapping.language.flagCircular,
             flagEmoji: mapping.language.flagEmoji,
             color: mapping.language.color,
             levelThresholds: mapping.language.levelThresholds,
             learnersCount: Number(mapping?.language?.learnersCount),
-            isRtl: mapping.language.isRtl,
 
             startedLearningOn: mapping.startedLearningOn.toISOString(),
             lastOpened: mapping.lastOpened.toISOString(),
 
             preferredTtsVoice: mapping.preferredTtsVoice ? ttsVoiceSerializer.serialize(mapping.preferredTtsVoice, {assertNoUndefined}) : null,
-            preferredTranslationLanguages: translationLanguageSerializer.serializeList(mapping.preferredTranslationLanguages.getItems().map(m => m.translationLanguage), {assertNoUndefined}),
+            preferredTranslationLanguages: translationLanguageSerializer.serializeList(mapping.preferredTranslationLanguageEntries.getItems().map(m => m.translationLanguage), {assertNoUndefined}),
         }, assertNoUndefined);
     }
 }

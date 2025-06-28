@@ -11,7 +11,10 @@ import {QueryOrderMap} from "@mikro-orm/core/enums.js";
 import {Dictionary} from "@/src/models/entities/Dictionary.js";
 import {TranslationLanguage} from "@/src/models/entities/TranslationLanguage.js";
 import {PreferredTranslationLanguageEntry} from "@/src/models/entities/PreferredTranslationLanguageEntry.js";
-import {ViewDescription} from "@/src/models/viewResolver.js";
+import {buildFetchPlan, ViewDescription} from "@/src/models/viewResolver.js";
+import {languageFieldFetchMap} from "@/src/models/fetchSpecs/languageFieldFetchMap.js";
+import {mapLearnerLanguageFieldFetchMap} from "@/src/models/fetchSpecs/mapLearnerLanguageFieldFetchMap.js";
+import {translationLanguageFieldFetchMap} from "@/src/models/fetchSpecs/translationLanguageFieldFetchMap.js";
 
 export class LanguageService {
     em: EntityManager;
@@ -33,8 +36,10 @@ export class LanguageService {
 
         dbOrderBy.push({code: "asc"});
         dbOrderBy.push({id: "asc"});
+        const {fields: dbFields, populate: dbPopulate} = buildFetchPlan(viewDescription, languageFieldFetchMap, {user: null, em: this.em});
         return await this.languageRepo.find({}, {
-            populate: ["learnersCount"],
+            fields: dbFields as any,
+            populate: dbPopulate as any,
             orderBy: dbOrderBy,
         });
     }
@@ -53,18 +58,26 @@ export class LanguageService {
 
         dbOrderBy.push({language: {code: "asc"}});
         dbOrderBy.push({language: {id: "asc"}});
-
-        return await this.em.find(MapLearnerLanguage, dbFilters, {orderBy: dbOrderBy, populate: ["preferredTtsVoice", "preferredTranslationLanguages.translationLanguage"]});
+        const {fields: dbFields, populate: dbPopulate} = buildFetchPlan(viewDescription, mapLearnerLanguageFieldFetchMap, {user: user, em: this.em});
+        return await this.em.find(MapLearnerLanguage, dbFilters, {
+            fields: dbFields as any,
+            populate: dbPopulate as any,
+            orderBy: dbOrderBy,
+        });
     }
 
     async getUserLanguage(code: string, user: User, viewDescription: ViewDescription) {
-        return await this.em.findOne(MapLearnerLanguage, {language: {code}, learner: user.profile}, {populate: ["preferredTtsVoice", "preferredTranslationLanguages.translationLanguage"]});
+        const {fields: dbFields, populate: dbPopulate} = buildFetchPlan(viewDescription, mapLearnerLanguageFieldFetchMap, {user: user, em: this.em});
+        return await this.em.findOne(MapLearnerLanguage, {language: {code}, learner: user.profile}, {
+            fields: dbFields as any,
+            populate: dbPopulate as any
+        }) as MapLearnerLanguage;
     }
 
     async updateUserLanguage(languageMapping: MapLearnerLanguage, updateFields: {
         lastOpened: "now" | undefined,
         preferredTranslationLanguages?: TranslationLanguage[]
-    }, viewDescription: ViewDescription) {
+    }) {
         if (updateFields.preferredTranslationLanguages !== undefined) {
             const preferredTranslationLanguages = updateFields.preferredTranslationLanguages;
             await this.em.transactional(async (tm) => {
@@ -78,19 +91,20 @@ export class LanguageService {
         }
         if (updateFields.lastOpened !== undefined)
             await this.languageRepo.updateUserLanguageTimeStamp(languageMapping);
-        return (await this.em.refresh(languageMapping, {populate: ["preferredTtsVoice", "preferredTranslationLanguages.translationLanguage"]}))!;
     }
 
     async addLanguageToUser({user, language, preferredTranslationLanguages}: {
         user: User,
         language: Language,
         preferredTranslationLanguages?: TranslationLanguage[]
-    }, viewDescription: ViewDescription) {
+    }) {
         const mapping = this.em.create(MapLearnerLanguage, {learner: user.profile, language: language});
         await this.em.flush();
+
         //TODO test this
         const defaultDictionaries = await this.em.find(Dictionary, {isDefault: true, language: language}, {orderBy: [{name: "asc"}, {id: "asc"}]});
         await this.em.insertMany(MapLearnerDictionary, defaultDictionaries.map((d, i) => ({learner: user.profile.id, dictionary: d.id, order: i})));
+
         const defaultTranslationLanguages = await this.em.find(TranslationLanguage, {isDefault: true});
         preferredTranslationLanguages = preferredTranslationLanguages ?? defaultTranslationLanguages;
         await this.em.insertMany(PreferredTranslationLanguageEntry, preferredTranslationLanguages.map((t, i) => ({
@@ -98,8 +112,6 @@ export class LanguageService {
             translationLanguage: t,
             precedenceOrder: i
         })));
-        await this.em.refresh(mapping.language);
-        return mapping;
     }
 
     async removeLanguageFromUser(languageMapping: MapLearnerLanguage) {
@@ -117,7 +129,13 @@ export class LanguageService {
         const dbFilters: FilterQuery<TranslationLanguage> = {$and: []};
         if (filters.isDefault !== undefined)
             dbFilters.$and!.push({isDefault: filters.isDefault});
-        return await this.em.find(TranslationLanguage, dbFilters, {orderBy: {name: "asc"}});
+        const {fields: dbFields, populate: dbPopulate} = buildFetchPlan(viewDescription, translationLanguageFieldFetchMap, {user: null, em: this.em});
+
+        return await this.em.find(TranslationLanguage, dbFilters, {
+            fields: dbFields as any,
+            populate: dbPopulate as any,
+            orderBy: {name: "asc"}
+        });
     }
 
     async findLearningLanguage(where: FilterQuery<Language>, fields: EntityField<Language>[] = ["id", "code"]) {
@@ -130,5 +148,9 @@ export class LanguageService {
 
     async findTranslationLanguages(where: FilterQuery<TranslationLanguage>, fields: EntityField<TranslationLanguage>[] = ["id", "code"]) {
         return await this.em.find(TranslationLanguage, where, {fields: fields as any});
+    }
+
+    async findLearnerLanguageMapping(where: FilterQuery<MapLearnerLanguage>, fields: EntityField<MapLearnerLanguage>[] = ["id", "language", "learner", "startedLearningOn", "lastOpened", "preferredTtsVoice"]) {
+        return await this.em.findOne(MapLearnerLanguage, where, {fields: fields as any});
     }
 }
