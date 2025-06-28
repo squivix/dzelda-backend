@@ -9,6 +9,7 @@ import {vocabRouter} from "@/src/routers/vocabRouter.js";
 import {meaningRouter} from "@/src/routers/meaningRouter.js";
 import {dictionaryRouter} from "@/src/routers/dictionaryRouter.js";
 import {pronunciationRouter} from "@/src/routers/pronunciationRouter.js";
+import {attributionRouter} from "@/src/routers/attributionRouter.js";
 
 //TODO return 400 for invalid json not 500
 const rootRouter: FastifyPluginCallback = function rootRouter(fastify, options, done) {
@@ -24,6 +25,7 @@ const rootRouter: FastifyPluginCallback = function rootRouter(fastify, options, 
     fastify.register(vocabRouter);
     fastify.register(pronunciationRouter);
     fastify.register(meaningRouter);
+    fastify.register(attributionRouter);
     fastify.register(dictionaryRouter);
 
     done();

@@ -118,8 +118,4 @@ export class MeaningService {
         this.em.remove(meaningMapping);
         await this.em.flush();
     }
-
-    async getAttributionSource(attributionSourceId: number, viewDescription: ViewDescription) {
-        return this.em.findOne(AttributionSource, {id: attributionSourceId})
-    }
 }

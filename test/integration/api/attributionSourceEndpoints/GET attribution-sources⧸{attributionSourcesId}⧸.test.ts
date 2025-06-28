@@ -5,7 +5,7 @@ import {faker} from "@faker-js/faker";
 import {AttributionSource} from "@/src/models/entities/AttributionSource.js";
 import {attributionSourceSerializer} from "@/src/presentation/response/serializers/AttributionSource/AttributionSourceSerializer.js";
 
-/**{@link MeaningController#getAttributionSource}*/
+/**{@link AttributionService#getAttributionSource}*/
 describe("GET attribution-sources/{attributionSourcesId}/", function () {
     const makeRequest = async (attributionSourceId: number | string) => {
         const options: InjectOptions = {

@@ -136,17 +136,6 @@ class MeaningController {
         await meaningService.removeMeaningFromUser(meaningMapping);
         reply.status(204).send();
     }
-
-    async getAttributionSource(request: FastifyRequest, reply: FastifyReply) {
-        const pathParamsValidator = z.object({attributionSourcesId: numericStringValidator});
-        const pathParams = pathParamsValidator.parse(request.params);
-        const meaningService = new MeaningService(request.em);
-        const attributionSource = await meaningService.getAttributionSource(pathParams.attributionSourcesId);
-        if (!attributionSource)
-            throw new NotFoundAPIError("Attribution source");
-
-        reply.send(attributionSourceSerializer.serialize(attributionSource));
-    }
 }
 
 export const meaningController = new MeaningController();
