@@ -19,7 +19,7 @@ describe("GET users/{username}/", function () {
         await context.userFactory.createOne({profile: {isPublic: true}});
 
         const response = await makeRequest("me");
-        expect(response.statusCode).to.equal(401);
+        expect(response.statusCode).toEqual(401);
     });
     test<TestContext>("If username is me login session expired, delete session and return 401", async (context) => {
         const user = await context.userFactory.createOne({profile: {isPublic: true}});
@@ -27,7 +27,7 @@ describe("GET users/{username}/", function () {
 
         const response = await makeRequest("me", session.token);
 
-        expect(response.statusCode).to.equal(401);
+        expect(response.statusCode).toEqual(401);
         expect(await context.em.findOne(Session, {id: session.id}, {refresh: true})).toBeNull();
     });
     test<TestContext>("If username is me and authenticated return user with email", async (context) => {
@@ -35,7 +35,7 @@ describe("GET users/{username}/", function () {
         const session = await context.sessionFactory.createOne({user: user});
 
         const response = await makeRequest("me", session.token);
-        expect(response.statusCode).to.equal(200);
+        expect(response.statusCode).toEqual(200);
         expect(response.json()).toEqual(userPrivateSerializer.serialize(user));
     });
     test<TestContext>("If username is same as authenticated as user's return user with email", async (context) => {
@@ -43,7 +43,7 @@ describe("GET users/{username}/", function () {
         const session = await context.sessionFactory.createOne({user: user});
 
         const response = await makeRequest(user.username, session.token);
-        expect(response.statusCode).to.equal(200);
+        expect(response.statusCode).toEqual(200);
         expect(response.json()).toEqual(userPrivateSerializer.serialize(user));
     });
     describe("If profile is not public and not authenticated as user return 404", () => {
@@ -51,7 +51,7 @@ describe("GET users/{username}/", function () {
             const user = await context.userFactory.createOne({profile: {isPublic: false}});
 
             const response = await makeRequest(user.username);
-            expect(response.statusCode).to.equal(404);
+            expect(response.statusCode).toEqual(404);
         });
         test<TestContext>("If authenticated as other user return 404", async (context) => {
             const user = await context.userFactory.createOne({profile: {isPublic: false}});
@@ -59,7 +59,7 @@ describe("GET users/{username}/", function () {
             const session = await context.sessionFactory.createOne({user: otherUser});
 
             const response = await makeRequest(user.username, session.token);
-            expect(response.statusCode).to.equal(404);
+            expect(response.statusCode).toEqual(404);
         });
     });
     describe("If profile is public and not user return user without email", () => {
@@ -67,7 +67,7 @@ describe("GET users/{username}/", function () {
             const user = await context.userFactory.createOne({profile: {isPublic: true}});
 
             const response = await makeRequest(user.username);
-            expect(response.statusCode).to.equal(200);
+            expect(response.statusCode).toEqual(200);
             expect(response.json()).toEqual(userPublicSerializer.serialize(user));
         });
         test<TestContext>("If authenticated as other user return user without email", async (context) => {
@@ -76,12 +76,12 @@ describe("GET users/{username}/", function () {
             const session = await context.sessionFactory.createOne({user: otherUser});
 
             const response = await makeRequest(user.username, session.token);
-            expect(response.statusCode).to.equal(200);
+            expect(response.statusCode).toEqual(200);
             expect(response.json()).toEqual(userPublicSerializer.serialize(user));
         });
     });
     test<TestContext>("If username does not exist return 404", async (context) => {
         const response = await makeRequest(faker.random.alpha({count: 20}));
-        expect(response.statusCode).to.equal(404);
+        expect(response.statusCode).toEqual(404);
     });
 });

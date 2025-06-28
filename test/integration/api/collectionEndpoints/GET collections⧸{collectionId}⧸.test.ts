@@ -22,7 +22,7 @@ describe("GET collections/{collectionId}/", function () {
 
             const response = await makeRequest(collection.id);
 
-            expect(response.statusCode).to.equal(200);
+            expect(response.statusCode).toEqual(200);
             expect(response.json()).toEqual(collectionSerializer.serialize(collection));
         });
         test<TestContext>("If the user is logged in return collection and texts with vocab levels", async (context) => {
@@ -33,7 +33,7 @@ describe("GET collections/{collectionId}/", function () {
 
             const response = await makeRequest(collection.id, session.token);
 
-            expect(response.statusCode).to.equal(200);
+            expect(response.statusCode).toEqual(200);
             expect(response.json()).toEqual(collectionLoggedInSerializer.serialize(collection));
         });
         test<TestContext>("If collection is public ignore isPublic status of texts", async (context) => {
@@ -57,7 +57,7 @@ describe("GET collections/{collectionId}/", function () {
             });
 
             const response = await makeRequest(collection.id);
-            expect(response.statusCode).to.equal(200);
+            expect(response.statusCode).toEqual(200);
             expect(response.json()).toEqual(collectionSerializer.serialize(collection));
         });
     });
@@ -68,7 +68,7 @@ describe("GET collections/{collectionId}/", function () {
 
             const response = await makeRequest(collection.id);
 
-            expect(response.statusCode).to.equal(404);
+            expect(response.statusCode).toEqual(404);
         });
         test<TestContext>("If the user is not author of private collection return 404", async (context) => {
             const author = await context.userFactory.createOne();
@@ -81,15 +81,15 @@ describe("GET collections/{collectionId}/", function () {
 
             const response = await makeRequest(collection.id, session.token);
 
-            expect(response.statusCode).to.equal(404);
+            expect(response.statusCode).toEqual(404);
         });
     })
     test<TestContext>("If the collection does not exist return 404", async () => {
         const response = await makeRequest(faker.datatype.number({min: 10000000}));
-        expect(response.statusCode).to.equal(404);
+        expect(response.statusCode).toEqual(404);
     });
     test<TestContext>("If collection id is invalid return 400", async () => {
         const response = await makeRequest(faker.random.alpha(8));
-        expect(response.statusCode).to.equal(400);
+        expect(response.statusCode).toEqual(400);
     });
 });

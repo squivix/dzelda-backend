@@ -22,7 +22,7 @@ describe("GET texts/{textId}/", () => {
 
             const response = await makeRequest(expectedText.id);
 
-            expect(response.statusCode).to.equal(200);
+            expect(response.statusCode).toEqual(200);
             expect(response.json()).toEqual(textSerializer.serialize(expectedText));
         });
         test<TestContext>("If the user is logged in return text with vocab levels", async (context) => {
@@ -34,17 +34,17 @@ describe("GET texts/{textId}/", () => {
 
             const response = await makeRequest(expectedText.id, session.token);
 
-            expect(response.statusCode).to.equal(200);
+            expect(response.statusCode).toEqual(200);
             expect(response.json()).toEqual(textLoggedInSerializer.serialize(expectedText));
         });
     });
     test<TestContext>("If the text does not exist return 404", async () => {
         const response = await makeRequest(Number(faker.random.numeric(8)));
-        expect(response.statusCode).to.equal(404);
+        expect(response.statusCode).toEqual(404);
     });
     test<TestContext>("If text id is invalid return 400", async () => {
         const response = await makeRequest(faker.random.alpha(8));
-        expect(response.statusCode).to.equal(400);
+        expect(response.statusCode).toEqual(400);
     });
     describe("test privacy", () => {
         describe("Hide private texts from non-authors", () => {
@@ -54,7 +54,7 @@ describe("GET texts/{textId}/", () => {
 
                 const response = await makeRequest(text.id);
 
-                expect(response.statusCode).to.equal(404);
+                expect(response.statusCode).toEqual(404);
             });
             test<TestContext>("If the text is private and the user is logged in as a non-author return 404", async (context) => {
                 const author = await context.userFactory.createOne();
@@ -65,7 +65,7 @@ describe("GET texts/{textId}/", () => {
 
                 const response = await makeRequest(text.id, session.token);
 
-                expect(response.statusCode).to.equal(404);
+                expect(response.statusCode).toEqual(404);
             });
             test<TestContext>("If the text is private and the user is logged in as author return text", async (context) => {
                 const author = await context.userFactory.createOne();
@@ -77,7 +77,7 @@ describe("GET texts/{textId}/", () => {
 
                 await context.textRepo.annotateTextsWithUserData([text], author);
 
-                expect(response.statusCode).to.equal(200);
+                expect(response.statusCode).toEqual(200);
                 expect(response.json()).toEqual(textLoggedInSerializer.serialize(text));
             });
         })
@@ -90,7 +90,7 @@ describe("GET texts/{textId}/", () => {
 
                     const response = await makeRequest(text.id);
 
-                    expect(response.statusCode).to.equal(404);
+                    expect(response.statusCode).toEqual(404);
                 });
                 test<TestContext>("If the text is in private collection and the user is logged in as a non-author return 404", async (context) => {
                     const author = await context.userFactory.createOne();
@@ -102,7 +102,7 @@ describe("GET texts/{textId}/", () => {
 
                     const response = await makeRequest(text.id, session.token);
 
-                    expect(response.statusCode).to.equal(404);
+                    expect(response.statusCode).toEqual(404);
                 });
                 test<TestContext>("If the text is in private collection and the user is logged in as author return text", async (context) => {
                     const author = await context.userFactory.createOne();
@@ -115,7 +115,7 @@ describe("GET texts/{textId}/", () => {
 
                     await context.textRepo.annotateTextsWithUserData([text], author);
 
-                    expect(response.statusCode).to.equal(200);
+                    expect(response.statusCode).toEqual(200);
                     expect(response.json()).toEqual(textLoggedInSerializer.serialize(text));
                 });
             });
@@ -131,7 +131,7 @@ describe("GET texts/{textId}/", () => {
 
                 await context.textRepo.annotateTextsWithUserData([text], author);
 
-                expect(response.statusCode).to.equal(200);
+                expect(response.statusCode).toEqual(200);
                 expect(response.json()).toEqual(textLoggedInSerializer.serialize(text));
             });
         });

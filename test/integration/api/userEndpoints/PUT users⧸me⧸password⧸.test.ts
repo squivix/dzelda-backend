@@ -26,7 +26,7 @@ describe("PUT users/me/password/", function () {
 
         const response = await makeRequest({oldPassword: oldPassword, newPassword: newPassword}, session.token);
         await context.em.refresh(user);
-        expect(response.statusCode).to.equal(204);
+        expect(response.statusCode).toEqual(204);
         expect(await passwordHasher.validate(newPassword, user.password)).toBeTruthy();
         expect(await context.em.find(Session, {id: {$in: otherSessions.map(s => s.id)}}, {refresh: true})).toHaveLength(0);
         expect(sendMailSpy).toHaveBeenCalledOnce();
@@ -40,7 +40,7 @@ describe("PUT users/me/password/", function () {
 
         const response = await makeRequest({oldPassword: faker.random.alphaNumeric(10), newPassword: newPassword}, session.token);
         await context.em.refresh(user);
-        expect(response.statusCode).to.equal(401);
+        expect(response.statusCode).toEqual(401);
         expect(await passwordHasher.validate(newPassword, user.password)).toBeFalsy();
         expect(sendMailSpy).not.toHaveBeenCalled();
     });
@@ -53,7 +53,7 @@ describe("PUT users/me/password/", function () {
 
         const response = await makeRequest({oldPassword: oldPassword, newPassword: newPassword}, session.token);
         await context.em.refresh(user);
-        expect(response.statusCode).to.equal(400);
+        expect(response.statusCode).toEqual(400);
         expect(await passwordHasher.validate(newPassword, user.password)).toBeFalsy();
         expect(sendMailSpy).not.toHaveBeenCalled();
     });
@@ -65,7 +65,7 @@ describe("PUT users/me/password/", function () {
 
         const response = await makeRequest({oldPassword: oldPassword, newPassword: newPassword});
         await context.em.refresh(user);
-        expect(response.statusCode).to.equal(401);
+        expect(response.statusCode).toEqual(401);
         expect(await passwordHasher.validate(newPassword, user.password)).toBeFalsy();
         expect(sendMailSpy).not.toHaveBeenCalled();
     });

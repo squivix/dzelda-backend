@@ -27,7 +27,7 @@ describe("POST users/me/texts/history/", () => {
         const response = await makeRequest({textId: text.id}, session.token);
 
         await context.em.refresh(text, {populate: ["pastViewersCount"]});
-        expect(response.statusCode).to.equal(201);
+        expect(response.statusCode).toEqual(201);
         expect(response.json()).toMatchObject(omit(textHistoryEntrySerializer.serialize(expectedTextHistoryEntry, {assertNoUndefined: false}), ["timeViewed"]));
         const dbRecord = await context.em.findOne(TextHistoryEntry, {
             pastViewer: user.profile, text: text
@@ -50,7 +50,7 @@ describe("POST users/me/texts/history/", () => {
         await context.em.refresh(text1, {populate: ["pastViewersCount",]});
         await context.textRepo.annotateTextsWithUserData([text1], user);
 
-        expect(response.statusCode).to.equal(201);
+        expect(response.statusCode).toEqual(201);
         expect(response.json()).toMatchObject(omit(textHistoryEntrySerializer.serialize(expectedTextHistoryEntry, {assertNoUndefined: false}), ["timeViewed"]));
         const dbRecords = await context.em.find(TextHistoryEntry, {
             pastViewer: user.profile, text: text1
@@ -71,7 +71,7 @@ describe("POST users/me/texts/history/", () => {
         const response = await makeRequest({textId: text.id}, session.token);
         await context.em.refresh(text, {populate: ["pastViewersCount"]});
 
-        expect(response.statusCode).to.equal(200);
+        expect(response.statusCode).toEqual(200);
         expect(response.json()).toMatchObject(omit(textHistoryEntrySerializer.serialize(expectedTextHistoryEntry, {assertNoUndefined: false}), ["timeViewed"]));
         const dbRecords = await context.em.find(TextHistoryEntry, {
             pastViewer: user.profile, text: text
@@ -85,7 +85,7 @@ describe("POST users/me/texts/history/", () => {
             const session = await context.sessionFactory.createOne({user});
 
             const response = await makeRequest({}, session.token);
-            expect(response.statusCode).to.equal(400);
+            expect(response.statusCode).toEqual(400);
         });
     });
     describe("If fields are invalid return 400", function () {
@@ -95,14 +95,14 @@ describe("POST users/me/texts/history/", () => {
                 const session = await context.sessionFactory.createOne({user});
 
                 const response = await makeRequest({textId: faker.random.alpha(10)}, session.token);
-                expect(response.statusCode).to.equal(400);
+                expect(response.statusCode).toEqual(400);
             });
             test<TestContext>("If the text is not found return 400", async (context) => {
                 const user = await context.userFactory.createOne();
                 const session = await context.sessionFactory.createOne({user});
 
                 const response = await makeRequest({textId: faker.datatype.number({min: 100000})}, session.token);
-                expect(response.statusCode).to.equal(400);
+                expect(response.statusCode).toEqual(400);
             });
             test<TestContext>("If the text is not public and the user is logged in as author return 400", async (context) => {
                 const user = await context.userFactory.createOne();
@@ -113,7 +113,7 @@ describe("POST users/me/texts/history/", () => {
 
                 const response = await makeRequest({textId: text.id}, session.token);
 
-                expect(response.statusCode).to.equal(400);
+                expect(response.statusCode).toEqual(400);
             });
             test<TestContext>("If the text is not in a language the user is learning return 400", async (context) => {
                 const user = await context.userFactory.createOne();
@@ -123,13 +123,13 @@ describe("POST users/me/texts/history/", () => {
 
                 const response = await makeRequest({textId: text.id}, session.token);
 
-                expect(response.statusCode).to.equal(400);
+                expect(response.statusCode).toEqual(400);
             });
         });
     });
     test<TestContext>("If user is not logged in return 401", async () => {
         const response = await makeRequest({});
-        expect(response.statusCode).to.equal(401);
+        expect(response.statusCode).toEqual(401);
     });
     test<TestContext>("If user email is not confirmed return 403", async (context) => {
         const user = await context.userFactory.createOne({isEmailConfirmed: false});
@@ -138,6 +138,6 @@ describe("POST users/me/texts/history/", () => {
         const text = await context.textFactory.createOne({language, isPublic: true});
 
         const response = await makeRequest({textId: text.id}, session.token);
-        expect(response.statusCode).to.equal(403);
+        expect(response.statusCode).toEqual(403);
     });
 });

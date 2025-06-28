@@ -26,7 +26,7 @@ describe("PUT users/me/email/", function () {
         const response = await makeRequest({newEmail: newEmail}, session.token);
 
         await context.em.refresh(user);
-        expect(response.statusCode).to.equal(204);
+        expect(response.statusCode).toEqual(204);
         const emailConfirmToken = await context.em.findOne(EmailConfirmationToken, {user});
         expect(emailConfirmToken).not.toBeNull();
         expect(emailConfirmToken!.email).toEqual(newEmail);
@@ -47,7 +47,7 @@ describe("PUT users/me/email/", function () {
 
         const response = await makeRequest({newEmail: newEmail});
 
-        expect(response.statusCode).to.equal(401);
+        expect(response.statusCode).toEqual(401);
     });
     test<TestContext>("If user email is not confirmed return 403", async (context) => {
         const user = await context.userFactory.createOne({isEmailConfirmed: false});
@@ -56,7 +56,7 @@ describe("PUT users/me/email/", function () {
 
         const response = await makeRequest({newEmail: newEmail}, session.token);
 
-        expect(response.statusCode).to.equal(403);
+        expect(response.statusCode).toEqual(403);
     });
     describe("If new email is invalid return 400", async (context) => {
         test<TestContext>("If email is not a valid email return 400", async (context) => {
@@ -68,8 +68,8 @@ describe("PUT users/me/email/", function () {
             const response = await makeRequest({newEmail: faker.random.alpha(8)}, session.token);
 
             await context.em.refresh(user);
-            expect(response.statusCode).to.equal(400);
-            expect(user.email).to.equal(oldEmail);
+            expect(response.statusCode).toEqual(400);
+            expect(user.email).toEqual(oldEmail);
             expect(await context.em.findOne(EmailConfirmationToken, {user})).toBeNull();
             expect(sendMailSpy).not.toHaveBeenCalled();
         });
@@ -82,8 +82,8 @@ describe("PUT users/me/email/", function () {
             const response = await makeRequest({newEmail: faker.internet.email(faker.random.alpha(257))}, session.token);
 
             await context.em.refresh(user);
-            expect(response.statusCode).to.equal(400);
-            expect(user.email).to.equal(oldEmail);
+            expect(response.statusCode).toEqual(400);
+            expect(user.email).toEqual(oldEmail);
             expect(await context.em.findOne(EmailConfirmationToken, {user})).toBeNull();
             expect(sendMailSpy).not.toHaveBeenCalled();
         });
@@ -97,8 +97,8 @@ describe("PUT users/me/email/", function () {
             const response = await makeRequest({newEmail: otherUser.email}, session.token);
 
             await context.em.refresh(user);
-            expect(response.statusCode).to.equal(400);
-            expect(user.email).to.equal(oldEmail);
+            expect(response.statusCode).toEqual(400);
+            expect(user.email).toEqual(oldEmail);
             expect(await context.em.findOne(EmailConfirmationToken, {user})).toBeNull();
             expect(sendMailSpy).not.toHaveBeenCalled();
         });

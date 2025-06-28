@@ -23,7 +23,7 @@ describe("DELETE users/me/texts/hidden/:textId", () => {
 
         const response = await makeRequest(text.id, session.token);
 
-        expect(response.statusCode).to.equal(204);
+        expect(response.statusCode).toEqual(204);
         expect(await context.em.findOne(MapHiderText, {hider: user.profile, text})).toBeNull();
     });
     test<TestContext>("If user is not logged in return 401", async (context) => {
@@ -33,7 +33,7 @@ describe("DELETE users/me/texts/hidden/:textId", () => {
 
         const response = await makeRequest(text.id);
 
-        expect(response.statusCode).to.equal(401);
+        expect(response.statusCode).toEqual(401);
     });
     test<TestContext>("If user email is not confirmed return 403", async (context) => {
         const user = await context.userFactory.createOne({isEmailConfirmed: false});
@@ -43,7 +43,7 @@ describe("DELETE users/me/texts/hidden/:textId", () => {
 
         const response = await makeRequest(text.id, session.token);
 
-        expect(response.statusCode).to.equal(403);
+        expect(response.statusCode).toEqual(403);
     });
     test<TestContext>("If textId is invalid return 400", async (context) => {
         const user = await context.userFactory.createOne();
@@ -51,7 +51,7 @@ describe("DELETE users/me/texts/hidden/:textId", () => {
 
         const response = await makeRequest(-1, session.token);
 
-        expect(response.statusCode).to.equal(400);
+        expect(response.statusCode).toEqual(400);
     });
     test<TestContext>("If text is not found return 404", async (context) => {
         const user = await context.userFactory.createOne();
@@ -59,7 +59,7 @@ describe("DELETE users/me/texts/hidden/:textId", () => {
 
         const response = await makeRequest(faker.datatype.number({min: 100000}), session.token);
 
-        expect(response.statusCode).to.equal(404);
+        expect(response.statusCode).toEqual(404);
     });
     test<TestContext>("If text is not hidden return 404", async (context) => {
         const user = await context.userFactory.createOne();
@@ -69,6 +69,6 @@ describe("DELETE users/me/texts/hidden/:textId", () => {
 
         const response = await makeRequest(text.id, session.token);
 
-        expect(response.statusCode).to.equal(404);
+        expect(response.statusCode).toEqual(404);
     });
 });

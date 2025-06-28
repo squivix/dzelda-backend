@@ -27,7 +27,7 @@ describe("POST users/me/vocabs/", () => {
         const response = await makeRequest({vocabId: vocab.id}, session.token);
         await context.em.find(Vocab, vocab, {refresh: true});
 
-        expect(response.statusCode).to.equal(201);
+        expect(response.statusCode).toEqual(201);
         expect(response.json()).toEqual(learnerVocabSerializer.serialize(expectedMapping));
         const dbRecord = await context.em.findOne(MapLearnerVocab, {learner: user.profile, vocab});
         expect(dbRecord).not.toBeNull();
@@ -44,7 +44,7 @@ describe("POST users/me/vocabs/", () => {
         const response = await makeRequest({vocabId: vocab.id}, session.token);
         await context.em.find(Vocab, vocab, {refresh: true});
 
-        expect(response.statusCode).to.equal(200);
+        expect(response.statusCode).toEqual(200);
         expect(response.json()).toEqual(learnerVocabSerializer.serialize(mapping));
     });
     describe("If required fields are missing return 400", function () {
@@ -53,7 +53,7 @@ describe("POST users/me/vocabs/", () => {
             const session = await context.sessionFactory.createOne({user});
 
             const response = await makeRequest({}, session.token);
-            expect(response.statusCode).to.equal(400);
+            expect(response.statusCode).toEqual(400);
         });
     });
     describe("If fields are invalid return 400", function () {
@@ -63,14 +63,14 @@ describe("POST users/me/vocabs/", () => {
                 const session = await context.sessionFactory.createOne({user});
 
                 const response = await makeRequest({vocabId: faker.random.alpha(10)}, session.token);
-                expect(response.statusCode).to.equal(400);
+                expect(response.statusCode).toEqual(400);
             });
             test<TestContext>("If the vocab is not found return 400", async (context) => {
                 const user = await context.userFactory.createOne();
                 const session = await context.sessionFactory.createOne({user});
 
                 const response = await makeRequest({vocabId: faker.datatype.number({min: 100000})}, session.token);
-                expect(response.statusCode).to.equal(400);
+                expect(response.statusCode).toEqual(400);
             });
             test<TestContext>("If the vocab is not in a language the user is learning return 400", async (context) => {
                 const user = await context.userFactory.createOne();
@@ -80,7 +80,7 @@ describe("POST users/me/vocabs/", () => {
 
                 const response = await makeRequest({vocabId: vocab.id}, session.token);
 
-                expect(response.statusCode).to.equal(400);
+                expect(response.statusCode).toEqual(400);
             });
         });
     });
@@ -90,7 +90,7 @@ describe("POST users/me/vocabs/", () => {
         const vocab = await context.vocabFactory.createOne({language});
 
         const response = await makeRequest({vocabId: vocab.id});
-        expect(response.statusCode).to.equal(401);
+        expect(response.statusCode).toEqual(401);
     });
     test<TestContext>("If user email is not confirmed return 403", async (context) => {
         const user = await context.userFactory.createOne({isEmailConfirmed: false});
@@ -99,6 +99,6 @@ describe("POST users/me/vocabs/", () => {
         const vocab = await context.vocabFactory.createOne({language});
 
         const response = await makeRequest({vocabId: vocab.id}, session.token);
-        expect(response.statusCode).to.equal(403);
+        expect(response.statusCode).toEqual(403);
     });
 });

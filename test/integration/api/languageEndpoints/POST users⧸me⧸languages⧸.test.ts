@@ -25,7 +25,7 @@ describe("POST users/me/languages/", function () {
         const response = await makeRequest({languageCode: language.code}, session.token);
 
         const responseBody = response.json();
-        expect(response.statusCode).to.equal(201);
+        expect(response.statusCode).toEqual(201);
         expect(responseBody).toMatchObject(omit(learnerLanguageSerializer.serialize(expectedMapping, {assertNoUndefined: false}), ["startedLearningOn", "lastOpened"]));
         const dbRecord = await context.em.findOne(MapLearnerLanguage, {language, learner: user.profile}, {populate: ["preferredTranslationLanguages"]});
         expect(dbRecord).not.toBeNull();
@@ -40,14 +40,14 @@ describe("POST users/me/languages/", function () {
 
         const response = await makeRequest({languageCode: language.code}, session.token);
 
-        expect(response.statusCode).to.equal(200);
+        expect(response.statusCode).toEqual(200);
         expect(response.json()).toEqual(learnerLanguageSerializer.serialize(expectedMapping));
     });
     test<TestContext>("If user is not logged in return 401", async (context) => {
         const language = await context.languageFactory.createOne();
 
         const response = await makeRequest({languageCode: language.code});
-        expect(response.statusCode).to.equal(401);
+        expect(response.statusCode).toEqual(401);
     });
     test<TestContext>("If user email is not confirmed return 403", async (context) => {
         const user = await context.userFactory.createOne({isEmailConfirmed: false});
@@ -55,7 +55,7 @@ describe("POST users/me/languages/", function () {
         const language = await context.languageFactory.createOne();
 
         const response = await makeRequest({languageCode: language.code}, session.token);
-        expect(response.statusCode).to.equal(403);
+        expect(response.statusCode).toEqual(403);
     });
     describe("If fields are invalid return 400", () => {
         describe("If language is invalid return 400", () => {
@@ -64,7 +64,7 @@ describe("POST users/me/languages/", function () {
                 const session = await context.sessionFactory.createOne({user: currentUser});
 
                 const response = await makeRequest({languageCode: faker.random.alpha({count: 10})}, session.token);
-                expect(response.statusCode).to.equal(400);
+                expect(response.statusCode).toEqual(400);
             });
             test<TestContext>("If language is not found return 400", async (context) => {
                 const currentUser = await context.userFactory.createOne();
@@ -72,7 +72,7 @@ describe("POST users/me/languages/", function () {
                 const language = context.languageFactory.makeOne();
 
                 const response = await makeRequest({languageCode: language.code}, session.token);
-                expect(response.statusCode).to.equal(400);
+                expect(response.statusCode).toEqual(400);
             });
         });
     });

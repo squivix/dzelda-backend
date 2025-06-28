@@ -34,7 +34,7 @@ describe("GET users/me/collections/bookmarked/", function () {
 
         const response = await makeRequest({}, session.token);
 
-        expect(response.statusCode).to.equal(200);
+        expect(response.statusCode).toEqual(200);
         expect(response.json()).toEqual({
             page: queryDefaults.pagination.page,
             pageSize: queryDefaults.pagination.pageSize,
@@ -62,7 +62,7 @@ describe("GET users/me/collections/bookmarked/", function () {
 
             const response = await makeRequest({languageCode: language1.code}, session.token);
 
-            expect(response.statusCode).to.equal(200);
+            expect(response.statusCode).toEqual(200);
             expect(response.json()).toEqual({
                 page: queryDefaults.pagination.page,
                 pageSize: queryDefaults.pagination.pageSize,
@@ -79,7 +79,7 @@ describe("GET users/me/collections/bookmarked/", function () {
             });
 
             const response = await makeRequest({languageCode: faker.random.alpha({count: 4})}, session.token);
-            expect(response.statusCode).to.equal(200);
+            expect(response.statusCode).toEqual(200);
             expect(response.json()).toEqual({
                 page: queryDefaults.pagination.page,
                 pageSize: queryDefaults.pagination.pageSize,
@@ -91,7 +91,7 @@ describe("GET users/me/collections/bookmarked/", function () {
             const user = await context.userFactory.createOne();
             const session = await context.sessionFactory.createOne({user});
             const response = await makeRequest({languageCode: 12345}, session.token);
-            expect(response.statusCode).to.equal(400);
+            expect(response.statusCode).toEqual(400);
         });
     });
     describe("test addedBy filter", () => {
@@ -115,7 +115,7 @@ describe("GET users/me/collections/bookmarked/", function () {
 
             const response = await makeRequest({addedBy: user1.username}, session.token);
 
-            expect(response.statusCode).to.equal(200);
+            expect(response.statusCode).toEqual(200);
             expect(response.json()).toEqual({
                 page: queryDefaults.pagination.page,
                 pageSize: queryDefaults.pagination.pageSize,
@@ -146,7 +146,7 @@ describe("GET users/me/collections/bookmarked/", function () {
 
             const response = await makeRequest({addedBy: "me"}, session.token);
 
-            expect(response.statusCode).to.equal(200);
+            expect(response.statusCode).toEqual(200);
             expect(response.json()).toEqual({
                 page: queryDefaults.pagination.page,
                 pageSize: queryDefaults.pagination.pageSize,
@@ -163,7 +163,7 @@ describe("GET users/me/collections/bookmarked/", function () {
             });
 
             const response = await makeRequest({addedBy: faker.random.alpha({count: 20})}, session.token);
-            expect(response.statusCode).to.equal(200);
+            expect(response.statusCode).toEqual(200);
             expect(response.json()).toEqual({
                 page: queryDefaults.pagination.page,
                 pageSize: queryDefaults.pagination.pageSize,
@@ -176,7 +176,7 @@ describe("GET users/me/collections/bookmarked/", function () {
             const session = await context.sessionFactory.createOne({user});
 
             const response = await makeRequest({addedBy: ""}, session.token);
-            expect(response.statusCode).to.equal(400);
+            expect(response.statusCode).toEqual(400);
         });
     });
     describe("test searchQuery filter", () => {
@@ -211,7 +211,7 @@ describe("GET users/me/collections/bookmarked/", function () {
             const recordsCount = expectedCollections.length;
 
             const response = await makeRequest({searchQuery: searchQuery}, session.token);
-            expect(response.statusCode).to.equal(200);
+            expect(response.statusCode).toEqual(200);
 
             expect(response.json()).toEqual({
                 page: queryDefaults.pagination.page,
@@ -225,7 +225,7 @@ describe("GET users/me/collections/bookmarked/", function () {
             const session = await context.sessionFactory.createOne({user});
             const response = await makeRequest({searchQuery: faker.random.alpha({count: 300})}, session.token);
 
-            expect(response.statusCode).to.equal(400);
+            expect(response.statusCode).toEqual(400);
         });
         test<TestContext>("If no collections match search query return empty list", async (context) => {
             const user = await context.userFactory.createOne();
@@ -237,7 +237,7 @@ describe("GET users/me/collections/bookmarked/", function () {
 
             const response = await makeRequest({searchQuery: faker.random.alpha({count: 200})}, session.token);
 
-            expect(response.statusCode).to.equal(200);
+            expect(response.statusCode).toEqual(200);
             expect(response.json()).toEqual({
                 page: queryDefaults.pagination.page,
                 pageSize: queryDefaults.pagination.pageSize,
@@ -261,7 +261,7 @@ describe("GET users/me/collections/bookmarked/", function () {
 
                 const response = await makeRequest({sortBy: "title"}, session.token);
 
-                expect(response.statusCode).to.equal(200);
+                expect(response.statusCode).toEqual(200);
                 expect(response.json()).toEqual({
                     page: queryDefaults.pagination.page,
                     pageSize: queryDefaults.pagination.pageSize,
@@ -290,7 +290,7 @@ describe("GET users/me/collections/bookmarked/", function () {
 
                 const response = await makeRequest({sortBy: "createdDate"}, session.token);
 
-                expect(response.statusCode).to.equal(200);
+                expect(response.statusCode).toEqual(200);
                 expect(response.json()).toEqual({
                     page: queryDefaults.pagination.page,
                     pageSize: queryDefaults.pagination.pageSize,
@@ -328,7 +328,7 @@ describe("GET users/me/collections/bookmarked/", function () {
 
                 const response = await makeRequest({sortBy: "avgPastViewersCountPerText"}, session.token);
 
-                expect(response.statusCode).to.equal(200);
+                expect(response.statusCode).toEqual(200);
                 expect(response.json()).toEqual({
                     page: queryDefaults.pagination.page,
                     pageSize: queryDefaults.pagination.pageSize,
@@ -340,7 +340,7 @@ describe("GET users/me/collections/bookmarked/", function () {
                 const user = await context.userFactory.createOne();
                 const session = await context.sessionFactory.createOne({user});
                 const response = await makeRequest({sortBy: "texts"}, session.token);
-                expect(response.statusCode).to.equal(400);
+                expect(response.statusCode).toEqual(400);
             });
         });
         describe("test sortOrder", () => {
@@ -357,7 +357,7 @@ describe("GET users/me/collections/bookmarked/", function () {
 
                 const response = await makeRequest({sortOrder: "asc"}, session.token);
 
-                expect(response.statusCode).to.equal(200);
+                expect(response.statusCode).toEqual(200);
                 expect(response.json()).toEqual({
                     page: queryDefaults.pagination.page,
                     pageSize: queryDefaults.pagination.pageSize,
@@ -378,7 +378,7 @@ describe("GET users/me/collections/bookmarked/", function () {
 
                 const response = await makeRequest({sortOrder: "desc"}, session.token);
 
-                expect(response.statusCode).to.equal(200);
+                expect(response.statusCode).toEqual(200);
                 expect(response.json()).toEqual({
                     page: queryDefaults.pagination.page,
                     pageSize: queryDefaults.pagination.pageSize,
@@ -390,7 +390,7 @@ describe("GET users/me/collections/bookmarked/", function () {
                 const user = await context.userFactory.createOne();
                 const session = await context.sessionFactory.createOne({user});
                 const response = await makeRequest({sortOrder: "rising"}, session.token);
-                expect(response.statusCode).to.equal(400);
+                expect(response.statusCode).toEqual(400);
             });
         });
     });
@@ -412,7 +412,7 @@ describe("GET users/me/collections/bookmarked/", function () {
 
                 const response = await makeRequest({page, pageSize}, session.token);
 
-                expect(response.statusCode).to.equal(200);
+                expect(response.statusCode).toEqual(200);
                 expect(response.json()).toEqual({
                     page: page,
                     pageSize: pageSize,
@@ -436,7 +436,7 @@ describe("GET users/me/collections/bookmarked/", function () {
 
                 const response = await makeRequest({page, pageSize}, session.token);
 
-                expect(response.statusCode).to.equal(200);
+                expect(response.statusCode).toEqual(200);
                 expect(response.json()).toEqual({
                     page: page,
                     pageSize: pageSize,
@@ -461,7 +461,7 @@ describe("GET users/me/collections/bookmarked/", function () {
 
                 const response = await makeRequest({page, pageSize}, session.token);
 
-                expect(response.statusCode).to.equal(200);
+                expect(response.statusCode).toEqual(200);
                 expect(response.json()).toEqual({
                     page: page,
                     pageSize: pageSize,
@@ -485,7 +485,7 @@ describe("GET users/me/collections/bookmarked/", function () {
 
                 const response = await makeRequest({page, pageSize}, session.token);
 
-                expect(response.statusCode).to.equal(200);
+                expect(response.statusCode).toEqual(200);
                 expect(response.json()).toEqual({
                     page: page,
                     pageSize: pageSize,
@@ -499,14 +499,14 @@ describe("GET users/me/collections/bookmarked/", function () {
                     const session = await context.sessionFactory.createOne({user});
                     const response = await makeRequest({page: 0, pageSize: 3}, session.token);
 
-                    expect(response.statusCode).to.equal(400);
+                    expect(response.statusCode).toEqual(400);
                 });
                 test<TestContext>("If page is not a number return 400", async (context) => {
                     const user = await context.userFactory.createOne();
                     const session = await context.sessionFactory.createOne({user});
                     const response = await makeRequest({page: "last", pageSize: 3}, session.token);
 
-                    expect(response.statusCode).to.equal(400);
+                    expect(response.statusCode).toEqual(400);
                 });
             });
         });
@@ -527,7 +527,7 @@ describe("GET users/me/collections/bookmarked/", function () {
 
                 const response = await makeRequest({page, pageSize}, session.token);
 
-                expect(response.statusCode).to.equal(200);
+                expect(response.statusCode).toEqual(200);
                 expect(response.json()).toEqual({
                     page: page,
                     pageSize: pageSize,
@@ -542,21 +542,21 @@ describe("GET users/me/collections/bookmarked/", function () {
                     const session = await context.sessionFactory.createOne({user});
                     const response = await makeRequest({page: 1, pageSize: 250}, session.token);
 
-                    expect(response.statusCode).to.equal(400);
+                    expect(response.statusCode).toEqual(400);
                 });
                 test<TestContext>("If pageSize is negative return 400", async (context) => {
                     const user = await context.userFactory.createOne();
                     const session = await context.sessionFactory.createOne({user});
                     const response = await makeRequest({page: 1, pageSize: -20}, session.token);
 
-                    expect(response.statusCode).to.equal(400);
+                    expect(response.statusCode).toEqual(400);
                 });
                 test<TestContext>("If pageSize is not a number return 400", async (context) => {
                     const user = await context.userFactory.createOne();
                     const session = await context.sessionFactory.createOne({user});
                     const response = await makeRequest({page: 1, pageSize: "a lot"}, session.token);
 
-                    expect(response.statusCode).to.equal(400);
+                    expect(response.statusCode).toEqual(400);
                 });
             });
         });

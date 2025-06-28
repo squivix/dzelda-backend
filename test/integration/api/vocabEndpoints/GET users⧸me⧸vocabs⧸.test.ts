@@ -39,7 +39,7 @@ describe("GET users/me/vocabs/", () => {
         await context.em.count(MapLearnerVocab, {learner: user.profile});
         await context.em.find(Vocab, expectedVocabs, {refresh: true});
 
-        expect(response.statusCode).to.equal(200);
+        expect(response.statusCode).toEqual(200);
         expect(response.json()).toEqual({
             page: queryDefaults.pagination.page,
             pageSize: queryDefaults.pagination.pageSize,
@@ -66,7 +66,7 @@ describe("GET users/me/vocabs/", () => {
             const response = await makeRequest({languageCode: language1.code}, session.token);
             await context.em.find(Vocab, expectedVocabs, {refresh: true});
 
-            expect(response.statusCode).to.equal(200);
+            expect(response.statusCode).toEqual(200);
             expect(response.json()).toEqual({
                 page: queryDefaults.pagination.page,
                 pageSize: queryDefaults.pagination.pageSize,
@@ -81,7 +81,7 @@ describe("GET users/me/vocabs/", () => {
 
             const response = await makeRequest({languageCode: language.code}, session.token);
 
-            expect(response.statusCode).to.equal(200);
+            expect(response.statusCode).toEqual(200);
             expect(response.json()).toEqual({
                 page: queryDefaults.pagination.page,
                 pageSize: queryDefaults.pagination.pageSize,
@@ -95,7 +95,7 @@ describe("GET users/me/vocabs/", () => {
 
             const response = await makeRequest({languageCode: 12345}, session.token);
 
-            expect(response.statusCode).to.equal(400);
+            expect(response.statusCode).toEqual(400);
         });
     });
     describe("test level filter", () => {
@@ -116,7 +116,7 @@ describe("GET users/me/vocabs/", () => {
             const response = await makeRequest({level: level}, session.token);
             await context.em.find(Vocab, expectedVocabs, {refresh: true});
 
-            expect(response.statusCode).to.equal(200);
+            expect(response.statusCode).toEqual(200);
             expect(response.json()).toEqual({
                 page: queryDefaults.pagination.page,
                 pageSize: queryDefaults.pagination.pageSize,
@@ -143,7 +143,7 @@ describe("GET users/me/vocabs/", () => {
             const response = await makeRequest({level: levels}, session.token);
             await context.em.find(Vocab, expectedVocabs, {refresh: true});
 
-            expect(response.statusCode).to.equal(200);
+            expect(response.statusCode).toEqual(200);
             expect(response.json()).toEqual({
                 page: queryDefaults.pagination.page,
                 pageSize: queryDefaults.pagination.pageSize,
@@ -157,7 +157,7 @@ describe("GET users/me/vocabs/", () => {
 
             const response = await makeRequest({level: 7}, session.token);
 
-            expect(response.statusCode).to.equal(400);
+            expect(response.statusCode).toEqual(400);
         });
     });
     describe("test searchQuery filter", () => {
@@ -178,7 +178,7 @@ describe("GET users/me/vocabs/", () => {
             const response = await makeRequest({searchQuery: searchQuery}, session.token);
             await context.em.find(Vocab, expectedVocabs, {refresh: true});
 
-            expect(response.statusCode).to.equal(200);
+            expect(response.statusCode).toEqual(200);
             expect(response.json()).toEqual({
                 page: queryDefaults.pagination.page,
                 pageSize: queryDefaults.pagination.pageSize,
@@ -192,7 +192,7 @@ describe("GET users/me/vocabs/", () => {
 
             const response = await makeRequest({searchQuery: faker.random.alpha({count: 300})}, session.token);
 
-            expect(response.statusCode).to.equal(400);
+            expect(response.statusCode).toEqual(400);
         });
         test<TestContext>("If no vocabs match search query return empty list", async (context) => {
             const user = await context.userFactory.createOne();
@@ -202,7 +202,7 @@ describe("GET users/me/vocabs/", () => {
 
             const response = await makeRequest({searchQuery: faker.random.alpha({count: 200})}, session.token);
 
-            expect(response.statusCode).to.equal(200);
+            expect(response.statusCode).toEqual(200);
             expect(response.json()).toEqual({
                 page: queryDefaults.pagination.page,
                 pageSize: queryDefaults.pagination.pageSize,
@@ -231,7 +231,7 @@ describe("GET users/me/vocabs/", () => {
                 const response = await makeRequest({sortBy: "text"}, session.token);
                 await context.em.find(Vocab, expectedVocabs, {refresh: true});
 
-                expect(response.statusCode).to.equal(200);
+                expect(response.statusCode).toEqual(200);
                 expect(response.json()).toEqual({
                     page: queryDefaults.pagination.page,
                     pageSize: queryDefaults.pagination.pageSize,
@@ -260,7 +260,7 @@ describe("GET users/me/vocabs/", () => {
                 const response = await makeRequest({sortBy: "learnersCount"}, session.token);
                 await context.em.find(Vocab, expectedVocabs, {refresh: true});
 
-                expect(response.statusCode).to.equal(200);
+                expect(response.statusCode).toEqual(200);
                 expect(response.json()).toEqual({
                     page: queryDefaults.pagination.page,
                     pageSize: queryDefaults.pagination.pageSize,
@@ -289,7 +289,7 @@ describe("GET users/me/vocabs/", () => {
                 const response = await makeRequest({sortBy: "textsCount"}, session.token);
                 await context.em.find(Vocab, expectedVocabs, {refresh: true});
 
-                expect(response.statusCode).to.equal(200);
+                expect(response.statusCode).toEqual(200);
                 expect(response.json()).toEqual({
                     page: queryDefaults.pagination.page,
                     pageSize: queryDefaults.pagination.pageSize,
@@ -301,7 +301,7 @@ describe("GET users/me/vocabs/", () => {
                 const user = await context.userFactory.createOne();
                 const session = await context.sessionFactory.createOne({user: user});
                 const response = await makeRequest({sortBy: "popularity"}, session.token);
-                expect(response.statusCode).to.equal(400);
+                expect(response.statusCode).toEqual(400);
             });
         });
         describe("test sortOrder", () => {
@@ -323,7 +323,7 @@ describe("GET users/me/vocabs/", () => {
                 const response = await makeRequest({sortBy: "text", sortOrder: "asc"}, session.token);
                 await context.em.find(Vocab, expectedVocabs, {refresh: true});
 
-                expect(response.statusCode).to.equal(200);
+                expect(response.statusCode).toEqual(200);
                 expect(response.json()).toEqual({
                     page: queryDefaults.pagination.page,
                     pageSize: queryDefaults.pagination.pageSize,
@@ -349,7 +349,7 @@ describe("GET users/me/vocabs/", () => {
                 const response = await makeRequest({sortBy: "text", sortOrder: "desc"}, session.token);
                 await context.em.find(Vocab, expectedVocabs, {refresh: true});
 
-                expect(response.statusCode).to.equal(200);
+                expect(response.statusCode).toEqual(200);
                 expect(response.json()).toEqual({
                     page: queryDefaults.pagination.page,
                     pageSize: queryDefaults.pagination.pageSize,
@@ -361,7 +361,7 @@ describe("GET users/me/vocabs/", () => {
                 const user = await context.userFactory.createOne();
                 const session = await context.sessionFactory.createOne({user: user});
                 const response = await makeRequest({sortOrder: "rising"}, session.token);
-                expect(response.statusCode).to.equal(400);
+                expect(response.statusCode).toEqual(400);
             });
         });
     });
@@ -385,7 +385,7 @@ describe("GET users/me/vocabs/", () => {
                 const response = await makeRequest({page, pageSize}, session.token);
                 await context.em.find(Vocab, expectedVocabs, {refresh: true});
 
-                expect(response.statusCode).to.equal(200);
+                expect(response.statusCode).toEqual(200);
                 expect(response.json()).toEqual({
                     page: page,
                     pageSize: pageSize,
@@ -411,7 +411,7 @@ describe("GET users/me/vocabs/", () => {
                 const response = await makeRequest({page, pageSize}, session.token);
                 await context.em.find(Vocab, expectedVocabs, {refresh: true});
 
-                expect(response.statusCode).to.equal(200);
+                expect(response.statusCode).toEqual(200);
                 expect(response.json()).toEqual({
                     page: page,
                     pageSize: pageSize,
@@ -438,7 +438,7 @@ describe("GET users/me/vocabs/", () => {
                 const response = await makeRequest({page, pageSize}, session.token);
                 await context.em.find(Vocab, expectedVocabs, {refresh: true});
 
-                expect(response.statusCode).to.equal(200);
+                expect(response.statusCode).toEqual(200);
                 expect(response.json()).toEqual({
                     page: page,
                     pageSize: pageSize,
@@ -463,7 +463,7 @@ describe("GET users/me/vocabs/", () => {
 
                 const response = await makeRequest({page, pageSize}, session.token);
 
-                expect(response.statusCode).to.equal(200);
+                expect(response.statusCode).toEqual(200);
                 expect(response.json()).toEqual({
                     page: page,
                     pageSize: pageSize,
@@ -477,14 +477,14 @@ describe("GET users/me/vocabs/", () => {
                     const session = await context.sessionFactory.createOne({user: user});
                     const response = await makeRequest({page: 0, pageSize: 3}, session.token);
 
-                    expect(response.statusCode).to.equal(400);
+                    expect(response.statusCode).toEqual(400);
                 });
                 test<TestContext>("If page is not a number return 400", async (context) => {
                     const user = await context.userFactory.createOne();
                     const session = await context.sessionFactory.createOne({user: user});
                     const response = await makeRequest({page: "last", pageSize: 3}, session.token);
 
-                    expect(response.statusCode).to.equal(400);
+                    expect(response.statusCode).toEqual(400);
                 });
             });
         });
@@ -507,7 +507,7 @@ describe("GET users/me/vocabs/", () => {
                 const response = await makeRequest({page, pageSize}, session.token);
                 await context.em.find(Vocab, expectedVocabs, {refresh: true});
 
-                expect(response.statusCode).to.equal(200);
+                expect(response.statusCode).toEqual(200);
                 expect(response.json()).toEqual({
                     page: page,
                     pageSize: pageSize,
@@ -521,33 +521,33 @@ describe("GET users/me/vocabs/", () => {
                     const session = await context.sessionFactory.createOne({user: user});
                     const response = await makeRequest({page: 1, pageSize: 500}, session.token);
 
-                    expect(response.statusCode).to.equal(400);
+                    expect(response.statusCode).toEqual(400);
                 });
                 test<TestContext>("If pageSize is negative return 400", async (context) => {
                     const user = await context.userFactory.createOne();
                     const session = await context.sessionFactory.createOne({user: user});
                     const response = await makeRequest({page: 1, pageSize: -10}, session.token);
 
-                    expect(response.statusCode).to.equal(400);
+                    expect(response.statusCode).toEqual(400);
                 });
                 test<TestContext>("If pageSize is not a number return 400", async (context) => {
                     const user = await context.userFactory.createOne();
                     const session = await context.sessionFactory.createOne({user: user});
                     const response = await makeRequest({page: 1, pageSize: "a lot"}, session.token);
 
-                    expect(response.statusCode).to.equal(400);
+                    expect(response.statusCode).toEqual(400);
                 });
             });
         });
     });
     test<TestContext>("If user is not logged in return 401", async (context) => {
         const response = await makeRequest({});
-        expect(response.statusCode).to.equal(401);
+        expect(response.statusCode).toEqual(401);
     });
     test<TestContext>("If user email is not confirmed return 403", async (context) => {
         const user = await context.userFactory.createOne({isEmailConfirmed: false});
         const session = await context.sessionFactory.createOne({user: user});
         const response = await makeRequest({}, session.token);
-        expect(response.statusCode).to.equal(403);
+        expect(response.statusCode).toEqual(403);
     });
 });

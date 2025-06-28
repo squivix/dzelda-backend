@@ -41,7 +41,7 @@ describe("POST texts/", () => {
                 content: newText.content,
             }, session.token);
 
-            expect(response.statusCode).to.equal(201);
+            expect(response.statusCode).toEqual(201);
             const dbRecord = await context.textRepo.findOne({
                 language,
                 title: newText.title
@@ -114,7 +114,7 @@ describe("POST texts/", () => {
                 audio: audioUploadRequest.objectKey,
             }, session.token);
 
-            expect(response.statusCode).to.equal(201);
+            expect(response.statusCode).toEqual(201);
             const dbRecord = await context.textRepo.findOne({
                 collection,
                 title: newText.title
@@ -141,7 +141,7 @@ describe("POST texts/", () => {
             content: newText.content,
         });
 
-        expect(response.statusCode).to.equal(401);
+        expect(response.statusCode).toEqual(401);
     });
     test<TestContext>("If user email is not confirmed return 403", async (context) => {
         const user = await context.userFactory.createOne({isEmailConfirmed: false});
@@ -155,7 +155,7 @@ describe("POST texts/", () => {
             content: newText.content,
         }, session.token);
 
-        expect(response.statusCode).to.equal(403);
+        expect(response.statusCode).toEqual(403);
     });
     describe("If required fields are missing return 400", async () => {
         test<TestContext>("If title is missing return 400", async (context) => {
@@ -169,7 +169,7 @@ describe("POST texts/", () => {
                 content: newText.content,
             }, session.token);
 
-            expect(response.statusCode).to.equal(400);
+            expect(response.statusCode).toEqual(400);
         });
         test<TestContext>("If text is missing return 400", async (context) => {
             const user = await context.userFactory.createOne();
@@ -182,7 +182,7 @@ describe("POST texts/", () => {
                 title: newText.title,
             }, session.token);
 
-            expect(response.statusCode).to.equal(400);
+            expect(response.statusCode).toEqual(400);
         });
         test<TestContext>("If languageCode is missing return 400", async (context) => {
             const user = await context.userFactory.createOne();
@@ -195,7 +195,7 @@ describe("POST texts/", () => {
                 content: newText.content,
             }, session.token);
 
-            expect(response.statusCode).to.equal(400);
+            expect(response.statusCode).toEqual(400);
         });
     });
     describe("If fields are invalid return 400", async () => {
@@ -211,7 +211,7 @@ describe("POST texts/", () => {
                 content: newText.content,
             }, session.token);
 
-            expect(response.statusCode).to.equal(400);
+            expect(response.statusCode).toEqual(400);
         });
         test<TestContext>("If text is invalid return 400", async (context) => {
             const user = await context.userFactory.createOne();
@@ -225,7 +225,7 @@ describe("POST texts/", () => {
                 content: faker.random.words(40000),
             }, session.token);
 
-            expect(response.statusCode).to.equal(400);
+            expect(response.statusCode).toEqual(400);
         });
         describe("If collection is invalid return 400", async () => {
             test<TestContext>("If collection id is not a number return 400", async (context) => {
@@ -241,7 +241,7 @@ describe("POST texts/", () => {
                     collectionId: faker.random.alpha(3),
                 }, session.token);
 
-                expect(response.statusCode).to.equal(400);
+                expect(response.statusCode).toEqual(400);
             });
             test<TestContext>("If collection does not exist return 400", async (context) => {
                 const user = await context.userFactory.createOne();
@@ -256,7 +256,7 @@ describe("POST texts/", () => {
                     collectionId: faker.datatype.number({min: 10000}),
                 }, session.token);
 
-                expect(response.statusCode).to.equal(400);
+                expect(response.statusCode).toEqual(400);
             });
             test<TestContext>("If collection is in a different language than text return 400", async (context) => {
                 const user = await context.userFactory.createOne();
@@ -273,7 +273,7 @@ describe("POST texts/", () => {
                     collectionId: collection.id,
                 }, session.token);
 
-                expect(response.statusCode).to.equal(400);
+                expect(response.statusCode).toEqual(400);
             });
             test<TestContext>("If user is not author of collection return 403", async (context) => {
                 const user = await context.userFactory.createOne();
@@ -294,7 +294,7 @@ describe("POST texts/", () => {
                     collectionId: collection.id,
                 }, session.token);
 
-                expect(response.statusCode).to.equal(403);
+                expect(response.statusCode).toEqual(403);
             });
 
         });
@@ -325,7 +325,7 @@ describe("POST texts/", () => {
                     audio: audioUploadRequest.objectKey,
                 }, session.token);
 
-                expect(response.statusCode).to.equal(400);
+                expect(response.statusCode).toEqual(400);
             });
             test<TestContext>("If file upload request with key was not requested by user return 400", async (context) => {
                 const user = await context.userFactory.createOne();
@@ -354,7 +354,7 @@ describe("POST texts/", () => {
                     audio: audioUploadRequest.objectKey,
                 }, session.token);
 
-                expect(response.statusCode).to.equal(400);
+                expect(response.statusCode).toEqual(400);
             });
             test<TestContext>("If file upload request with key is not for textImage field return 400", async (context) => {
                 const user = await context.userFactory.createOne();
@@ -382,7 +382,7 @@ describe("POST texts/", () => {
                     audio: audioUploadRequest.objectKey,
                 }, session.token);
 
-                expect(response.statusCode).to.equal(400);
+                expect(response.statusCode).toEqual(400);
             });
         });
         describe("If audio is invalid return 400", async () => {
@@ -412,7 +412,7 @@ describe("POST texts/", () => {
                     audio: audioUploadRequest.objectKey,
                 }, session.token);
 
-                expect(response.statusCode).to.equal(400);
+                expect(response.statusCode).toEqual(400);
             });
             test<TestContext>("If file upload request with key was not requested by user return 400", async (context) => {
                 const user = await context.userFactory.createOne();
@@ -441,7 +441,7 @@ describe("POST texts/", () => {
                     audio: audioUploadRequest.objectKey,
                 }, session.token);
 
-                expect(response.statusCode).to.equal(400);
+                expect(response.statusCode).toEqual(400);
             });
             test<TestContext>("If file upload request with key is not for textAudio field return 400", async (context) => {
                 const user = await context.userFactory.createOne();
@@ -469,7 +469,7 @@ describe("POST texts/", () => {
                     audio: audioUploadRequest.objectKey,
                 }, session.token);
 
-                expect(response.statusCode).to.equal(400);
+                expect(response.statusCode).toEqual(400);
             });
         });
     });

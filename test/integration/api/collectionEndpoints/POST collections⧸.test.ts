@@ -37,7 +37,7 @@ describe("POST collections/", function () {
             }, session.token);
 
             const responseBody = response.json();
-            expect(response.statusCode).to.equal(201);
+            expect(response.statusCode).toEqual(201);
             expect(responseBody).toMatchObject(omit(collectionSummaryLoggedInSerializer.serialize(newCollection, {assertNoUndefined: false}), ["id", "addedOn"]));
 
             const dbRecord = await context.collectionRepo.findOne({title: newCollection.title, language}, {populate: ["texts"]});
@@ -69,7 +69,7 @@ describe("POST collections/", function () {
             }, session.token);
 
             const responseBody = response.json();
-            expect(response.statusCode).to.equal(201);
+            expect(response.statusCode).toEqual(201);
             expect(responseBody).toEqual(expect.objectContaining(omit(collectionSummaryLoggedInSerializer.serialize(newCollection, {assertNoUndefined: false}), ["id", "addedOn"])));
 
             const dbRecord = await context.collectionRepo.findOne({title: newCollection.title, language}, {populate: ["texts"]});
@@ -87,7 +87,7 @@ describe("POST collections/", function () {
             languageCode: language.code,
         });
 
-        expect(response.statusCode).to.equal(401);
+        expect(response.statusCode).toEqual(401);
     });
     test<TestContext>("If user email is not confirmed return 403", async (context) => {
         const user = await context.userFactory.createOne({isEmailConfirmed: false});
@@ -100,7 +100,7 @@ describe("POST collections/", function () {
             languageCode: language.code,
         }, session.token);
 
-        expect(response.statusCode).to.equal(403);
+        expect(response.statusCode).toEqual(403);
     });
     describe("If required fields are missing return 400", async () => {
         test<TestContext>("If title is missing return 400", async (context) => {
@@ -112,7 +112,7 @@ describe("POST collections/", function () {
                 languageCode: language.code
             }, session.token);
 
-            expect(response.statusCode).to.equal(400);
+            expect(response.statusCode).toEqual(400);
         });
         test<TestContext>("If language is missing return 400", async (context) => {
             const user = await context.userFactory.createOne();
@@ -123,7 +123,7 @@ describe("POST collections/", function () {
                 title: newCollection.title
             }, session.token);
 
-            expect(response.statusCode).to.equal(400);
+            expect(response.statusCode).toEqual(400);
         });
     });
     describe("If fields are invalid return 400", async () => {
@@ -136,7 +136,7 @@ describe("POST collections/", function () {
                 title: faker.random.alpha(300),
                 languageCode: language.code,
             }, session.token);
-            expect(response.statusCode).to.equal(400);
+            expect(response.statusCode).toEqual(400);
         });
         describe("If language is invalid return 400", () => {
             test<TestContext>("If languageCode is invalid return 400", async (context) => {
@@ -149,7 +149,7 @@ describe("POST collections/", function () {
                     title: newCollection.title,
                     languageCode: faker.random.alphaNumeric(10),
                 }, session.token);
-                expect(response.statusCode).to.equal(400);
+                expect(response.statusCode).toEqual(400);
             });
             test<TestContext>("If language is not found return 400", async (context) => {
                 const user = await context.userFactory.createOne();
@@ -162,7 +162,7 @@ describe("POST collections/", function () {
                     languageCode: faker.random.alpha(4),
                 }, session.token);
 
-                expect(response.statusCode).to.equal(400);
+                expect(response.statusCode).toEqual(400);
             });
         });
         test<TestContext>("If description is invalid return 400", async (context) => {
@@ -177,7 +177,7 @@ describe("POST collections/", function () {
                 description: faker.random.alpha(600)
             }, session.token);
 
-            expect(response.statusCode).to.equal(400);
+            expect(response.statusCode).toEqual(400);
         });
         test<TestContext>("If isPublic is invalid return 400", async (context) => {
             const user = await context.userFactory.createOne();
@@ -191,7 +191,7 @@ describe("POST collections/", function () {
                 isPublic: "maybe?"
             }, session.token);
 
-            expect(response.statusCode).to.equal(400);
+            expect(response.statusCode).toEqual(400);
         });
         describe("If image is invalid return 400", () => {
             test<TestContext>("If file upload request with key does not exist return 400", async (context) => {
@@ -213,7 +213,7 @@ describe("POST collections/", function () {
                     languageCode: language.code,
                     image: fileUploadRequest.objectKey,
                 }, session.token);
-                expect(response.statusCode).to.equal(400);
+                expect(response.statusCode).toEqual(400);
             });
             test<TestContext>("If file upload request with key was not requested by user return 400", async (context) => {
                 const user = await context.userFactory.createOne();
@@ -235,7 +235,7 @@ describe("POST collections/", function () {
                     languageCode: language.code,
                     image: fileUploadRequest.objectKey,
                 }, session.token);
-                expect(response.statusCode).to.equal(400);
+                expect(response.statusCode).toEqual(400);
             });
             test<TestContext>("If file upload request with key is not for collectionImage field return 400", async (context) => {
                 const user = await context.userFactory.createOne();
@@ -256,7 +256,7 @@ describe("POST collections/", function () {
                     languageCode: language.code,
                     image: fileUploadRequest.objectKey,
                 }, session.token);
-                expect(response.statusCode).to.equal(400);
+                expect(response.statusCode).toEqual(400);
             });
         });
     });

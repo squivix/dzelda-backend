@@ -35,7 +35,7 @@ describe("PUT users/me/languages/{languageCode}/dictionaries/", function () {
 
         const mappings = await context.em.find(MapLearnerDictionary, {learner: user.profile}, {orderBy: {order: "asc"}, populate: ["dictionary"]});
 
-        expect(response.statusCode).to.equal(204);
+        expect(response.statusCode).toEqual(204);
         expect(mappings.map(m => m.dictionary.id)).toEqual(dictIdsInOrder);
         expect(mappings).toHaveLength(dictIdsInOrder.length);
         expect(mappings.map(m => m.order)).toEqual(dictIdsInOrder.map((_, i) => i));
@@ -50,7 +50,7 @@ describe("PUT users/me/languages/{languageCode}/dictionaries/", function () {
         const dictIdsInOrder = [...dictionaries, ...otherDictionaries].map(d => d.id)
         const response = await makeRequest(language1.code, {dictionaryIds: dictIdsInOrder}, session.token);
 
-        expect(response.statusCode).to.equal(400);
+        expect(response.statusCode).toEqual(400);
     });
     test<TestContext>("If any dictionary is not found return 404", async (context) => {
         const user = await context.userFactory.createOne();
@@ -59,7 +59,7 @@ describe("PUT users/me/languages/{languageCode}/dictionaries/", function () {
 
         const response = await makeRequest(language.code, {dictionaryIds: [1, 2, 3]}, session.token);
 
-        expect(response.statusCode).to.equal(404);
+        expect(response.statusCode).toEqual(404);
     });
     test<TestContext>("If dictionaryIds is invalid return 400", async (context) => {
         const user = await context.userFactory.createOne();
@@ -69,7 +69,7 @@ describe("PUT users/me/languages/{languageCode}/dictionaries/", function () {
 
         const response = await makeRequest(language.code, {dictionaryIds: [dictionary.id, "abc"] as any}, session.token);
 
-        expect(response.statusCode).to.equal(400);
+        expect(response.statusCode).toEqual(400);
     });
     test<TestContext>("If user is not learning language return 400", async (context) => {
         const user = await context.userFactory.createOne();
@@ -78,7 +78,7 @@ describe("PUT users/me/languages/{languageCode}/dictionaries/", function () {
         const dictionaries = await context.dictionaryFactory.create(3, {language: language1});
         const response = await makeRequest(language1.code, {dictionaryIds: dictionaries.map(d => d.id)}, session.token);
 
-        expect(response.statusCode).to.equal(400);
+        expect(response.statusCode).toEqual(400);
     });
     test<TestContext>("If languageCode is invalid return 400", async (context) => {
         const user = await context.userFactory.createOne();
@@ -86,7 +86,7 @@ describe("PUT users/me/languages/{languageCode}/dictionaries/", function () {
 
         const response = await makeRequest(faker.random.alpha(10), {dictionaryIds: []}, session.token);
 
-        expect(response.statusCode).to.equal(400);
+        expect(response.statusCode).toEqual(400);
     });
     test<TestContext>("If user is not logged in return 401", async (context) => {
         const language = await context.languageFactory.createOne();
@@ -94,7 +94,7 @@ describe("PUT users/me/languages/{languageCode}/dictionaries/", function () {
 
         const response = await makeRequest(language.code, {dictionaryIds: [dictionary.id]});
 
-        expect(response.statusCode).to.equal(401);
+        expect(response.statusCode).toEqual(401);
     });
     test<TestContext>("If user email is not confirmed return 403", async (context) => {
         const user = await context.userFactory.createOne({isEmailConfirmed: false});
@@ -104,6 +104,6 @@ describe("PUT users/me/languages/{languageCode}/dictionaries/", function () {
 
         const response = await makeRequest(language.code, {dictionaryIds: [dictionary.id]}, session.token);
 
-        expect(response.statusCode).to.equal(403);
+        expect(response.statusCode).toEqual(403);
     });
 });

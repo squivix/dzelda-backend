@@ -33,7 +33,7 @@ describe("GET users/me/meanings/", () => {
 
         const response = await makeRequest({}, session.token);
 
-        expect(response.statusCode).to.equal(200);
+        expect(response.statusCode).toEqual(200);
         expect(response.json()).toEqual({
             page: queryDefaults.pagination.page,
             pageSize: queryDefaults.pagination.pageSize,
@@ -59,7 +59,7 @@ describe("GET users/me/meanings/", () => {
 
                 const response = await makeRequest({vocabId: vocab1.id}, session.token);
 
-                expect(response.statusCode).to.equal(200);
+                expect(response.statusCode).toEqual(200);
                 expect(response.json()).toEqual({
                     page: queryDefaults.pagination.page,
                     pageSize: queryDefaults.pagination.pageSize,
@@ -81,7 +81,7 @@ describe("GET users/me/meanings/", () => {
 
                 const response = await makeRequest({vocabId: vocab1.id}, session.token);
 
-                expect(response.statusCode).to.equal(200);
+                expect(response.statusCode).toEqual(200);
                 expect(response.json()).toEqual({
                     page: queryDefaults.pagination.page,
                     pageSize: queryDefaults.pagination.pageSize,
@@ -95,7 +95,7 @@ describe("GET users/me/meanings/", () => {
 
                 const response = await makeRequest({vocabId: "all"}, session.token);
 
-                expect(response.statusCode).to.equal(400);
+                expect(response.statusCode).toEqual(400);
             });
         });
     });
@@ -116,7 +116,7 @@ describe("GET users/me/meanings/", () => {
 
                 const response = await makeRequest({sortBy: "text"}, session.token);
 
-                expect(response.statusCode).to.equal(200);
+                expect(response.statusCode).toEqual(200);
                 expect(response.json()).toEqual({
                     page: queryDefaults.pagination.page,
                     pageSize: queryDefaults.pagination.pageSize,
@@ -142,7 +142,7 @@ describe("GET users/me/meanings/", () => {
 
                 const response = await makeRequest({sortBy: "learnersCount"}, session.token);
 
-                expect(response.statusCode).to.equal(200);
+                expect(response.statusCode).toEqual(200);
                 expect(response.json()).toEqual({
                     page: queryDefaults.pagination.page,
                     pageSize: queryDefaults.pagination.pageSize,
@@ -154,7 +154,7 @@ describe("GET users/me/meanings/", () => {
                 const user = await context.userFactory.createOne();
                 const session = await context.sessionFactory.createOne({user: user});
                 const response = await makeRequest({sortBy: "popularity"}, session.token);
-                expect(response.statusCode).to.equal(400);
+                expect(response.statusCode).toEqual(400);
             });
         });
         describe("test sortOrder", () => {
@@ -173,7 +173,7 @@ describe("GET users/me/meanings/", () => {
 
                 const response = await makeRequest({sortOrder: "asc"}, session.token);
 
-                expect(response.statusCode).to.equal(200);
+                expect(response.statusCode).toEqual(200);
                 expect(response.json()).toEqual({
                     page: queryDefaults.pagination.page,
                     pageSize: queryDefaults.pagination.pageSize,
@@ -196,7 +196,7 @@ describe("GET users/me/meanings/", () => {
 
                 const response = await makeRequest({sortOrder: "desc"}, session.token);
 
-                expect(response.statusCode).to.equal(200);
+                expect(response.statusCode).toEqual(200);
                 expect(response.json()).toEqual({
                     page: queryDefaults.pagination.page,
                     pageSize: queryDefaults.pagination.pageSize,
@@ -208,7 +208,7 @@ describe("GET users/me/meanings/", () => {
                 const user = await context.userFactory.createOne();
                 const session = await context.sessionFactory.createOne({user: user});
                 const response = await makeRequest({sortOrder: "rising"}, session.token);
-                expect(response.statusCode).to.equal(400);
+                expect(response.statusCode).toEqual(400);
             });
         });
     });
@@ -229,7 +229,7 @@ describe("GET users/me/meanings/", () => {
 
                 const response = await makeRequest({page, pageSize}, session.token);
 
-                expect(response.statusCode).to.equal(200);
+                expect(response.statusCode).toEqual(200);
                 expect(response.json()).toEqual({
                     page: page,
                     pageSize: pageSize,
@@ -252,7 +252,7 @@ describe("GET users/me/meanings/", () => {
 
                 const response = await makeRequest({page, pageSize}, session.token);
 
-                expect(response.statusCode).to.equal(200);
+                expect(response.statusCode).toEqual(200);
                 expect(response.json()).toEqual({
                     page: page,
                     pageSize: pageSize,
@@ -276,7 +276,7 @@ describe("GET users/me/meanings/", () => {
 
                 const response = await makeRequest({page, pageSize}, session.token);
 
-                expect(response.statusCode).to.equal(200);
+                expect(response.statusCode).toEqual(200);
                 expect(response.json()).toEqual({
                     page: page,
                     pageSize: pageSize,
@@ -299,7 +299,7 @@ describe("GET users/me/meanings/", () => {
 
                 const response = await makeRequest({page, pageSize}, session.token);
 
-                expect(response.statusCode).to.equal(200);
+                expect(response.statusCode).toEqual(200);
                 expect(response.json()).toEqual({
                     page: page,
                     pageSize: pageSize,
@@ -313,14 +313,14 @@ describe("GET users/me/meanings/", () => {
                     const session = await context.sessionFactory.createOne({user: user});
                     const response = await makeRequest({page: 0, pageSize: 3}, session.token);
 
-                    expect(response.statusCode).to.equal(400);
+                    expect(response.statusCode).toEqual(400);
                 });
                 test<TestContext>("If page is not a number return 400", async (context) => {
                     const user = await context.userFactory.createOne();
                     const session = await context.sessionFactory.createOne({user: user});
                     const response = await makeRequest({page: "last", pageSize: 3}, session.token);
 
-                    expect(response.statusCode).to.equal(400);
+                    expect(response.statusCode).toEqual(400);
                 });
             });
         });
@@ -341,7 +341,7 @@ describe("GET users/me/meanings/", () => {
 
                 const response = await makeRequest({page, pageSize}, session.token);
 
-                expect(response.statusCode).to.equal(200);
+                expect(response.statusCode).toEqual(200);
                 expect(response.json()).toEqual({
                     page: page,
                     pageSize: pageSize,
@@ -355,21 +355,21 @@ describe("GET users/me/meanings/", () => {
                     const session = await context.sessionFactory.createOne({user: user});
                     const response = await makeRequest({page: 1, pageSize: 75}, session.token);
 
-                    expect(response.statusCode).to.equal(400);
+                    expect(response.statusCode).toEqual(400);
                 });
                 test<TestContext>("If pageSize is negative return 400", async (context) => {
                     const user = await context.userFactory.createOne();
                     const session = await context.sessionFactory.createOne({user: user});
                     const response = await makeRequest({page: 1, pageSize: -10}, session.token);
 
-                    expect(response.statusCode).to.equal(400);
+                    expect(response.statusCode).toEqual(400);
                 });
                 test<TestContext>("If pageSize is not a number return 400", async (context) => {
                     const user = await context.userFactory.createOne();
                     const session = await context.sessionFactory.createOne({user: user});
                     const response = await makeRequest({page: 1, pageSize: "a lot"}, session.token);
 
-                    expect(response.statusCode).to.equal(400);
+                    expect(response.statusCode).toEqual(400);
                 });
             });
         });

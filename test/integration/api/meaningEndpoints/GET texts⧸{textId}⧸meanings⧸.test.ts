@@ -44,7 +44,7 @@ describe("GET texts/{textId}/meanings/", () => {
         await context.meaningFactory.create(3, {vocab: otherVocab, language: translationLanguage});
 
         const response = await makeRequest(text.id, session.token);
-        expect(response.statusCode).to.equal(200);
+        expect(response.statusCode).toEqual(200);
         const body = response.json();
         expect(body.meanings).toEqual(meaningSummerySerializer.serializeList(expectedMeanings));
         expect(body.learnerMeanings).toEqual(expectedLearnerMeanings.map(m => m.id))
@@ -69,17 +69,17 @@ describe("GET texts/{textId}/meanings/", () => {
 
         const response = await makeRequest(text.id);
         const body = response.json();
-        expect(response.statusCode).to.equal(200);
+        expect(response.statusCode).toEqual(200);
         expect(body.meanings).toEqual(meaningSummerySerializer.serializeList(expectedMeanings));
         expect(body.learnerMeanings).toBeUndefined();
     });
     test<TestContext>("If text does not exist return 404", async () => {
         const response = await makeRequest(faker.datatype.number({min: 1000000}));
-        expect(response.statusCode).to.equal(404);
+        expect(response.statusCode).toEqual(404);
     });
     test<TestContext>("If text id is invalid return 400", async () => {
         const response = await makeRequest(faker.random.alpha(8));
-        expect(response.statusCode).to.equal(400);
+        expect(response.statusCode).toEqual(400);
     });
 
     describe("test privacy", () => {
@@ -90,7 +90,7 @@ describe("GET texts/{textId}/meanings/", () => {
 
                 const response = await makeRequest(text.id);
 
-                expect(response.statusCode).to.equal(404);
+                expect(response.statusCode).toEqual(404);
             });
             test<TestContext>("If the text is private and the user is non-author return 404", async (context) => {
                 const user = await context.userFactory.createOne();
@@ -100,7 +100,7 @@ describe("GET texts/{textId}/meanings/", () => {
 
                 const response = await makeRequest(text.id, session.token);
 
-                expect(response.statusCode).to.equal(404);
+                expect(response.statusCode).toEqual(404);
             });
             test<TestContext>("If the text is private and the user is author return meanings and learner meanings of vocabs in text", async (context) => {
                 const user = await context.userFactory.createOne();
@@ -125,7 +125,7 @@ describe("GET texts/{textId}/meanings/", () => {
                 await context.meaningFactory.create(3, {vocab: otherVocab, language: translationLanguage});
 
                 const response = await makeRequest(text.id, session.token);
-                expect(response.statusCode).to.equal(200);
+                expect(response.statusCode).toEqual(200);
                 const body = response.json();
                 expect(body.meanings).toEqual(meaningSummerySerializer.serializeList(expectedMeanings));
                 expect(body.learnerMeanings).toEqual(expectedLearnerMeanings.map(m => m.id))
@@ -140,7 +140,7 @@ describe("GET texts/{textId}/meanings/", () => {
 
                     const response = await makeRequest(text.id);
 
-                    expect(response.statusCode).to.equal(404);
+                    expect(response.statusCode).toEqual(404);
                 });
                 test<TestContext>("If the text is in private collection and user is non-author return 404", async (context) => {
                     const user = await context.userFactory.createOne();
@@ -151,7 +151,7 @@ describe("GET texts/{textId}/meanings/", () => {
 
                     const response = await makeRequest(text.id, session.token);
 
-                    expect(response.statusCode).to.equal(404);
+                    expect(response.statusCode).toEqual(404);
                 });
                 test<TestContext>("If the text is in private collection and user is author return vocabs in text", async (context) => {
                     const author = await context.userFactory.createOne();
@@ -177,7 +177,7 @@ describe("GET texts/{textId}/meanings/", () => {
                     await context.meaningFactory.create(3, {vocab: otherVocab, language: translationLanguage});
 
                     const response = await makeRequest(text.id, session.token);
-                    expect(response.statusCode).to.equal(200);
+                    expect(response.statusCode).toEqual(200);
                     const body = response.json();
                     expect(body.meanings).toEqual(meaningSummerySerializer.serializeList(expectedMeanings));
                     expect(body.learnerMeanings).toEqual(expectedLearnerMeanings.map(m => m.id))
@@ -204,7 +204,7 @@ describe("GET texts/{textId}/meanings/", () => {
 
                 const response = await makeRequest(text.id);
                 const body = response.json();
-                expect(response.statusCode).to.equal(200);
+                expect(response.statusCode).toEqual(200);
                 expect(body.meanings).toEqual(meaningSummerySerializer.serializeList(expectedMeanings));
                 expect(body.learnerMeanings).toBeUndefined();
             });

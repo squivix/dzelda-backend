@@ -24,7 +24,7 @@ describe("GET dictionaries/", function () {
 
         const response = await makeRequest({});
 
-        expect(response.statusCode).to.equal(200);
+        expect(response.statusCode).toEqual(200);
         expect(response.json()).toEqual(dictionarySerializer.serializeList(expectedDictionaries));
     });
     describe("test language filter", () => {
@@ -37,7 +37,7 @@ describe("GET dictionaries/", function () {
 
             const response = await makeRequest({languageCode: language1.code});
 
-            expect(response.statusCode).to.equal(200);
+            expect(response.statusCode).toEqual(200);
             expect(response.json()).toEqual(dictionarySerializer.serializeList(expectedDictionaries));
         });
         test<TestContext>("If language does not exist return empty dictionary list", async (context) => {
@@ -46,12 +46,12 @@ describe("GET dictionaries/", function () {
 
             const response = await makeRequest({languageCode: language.code});
 
-            expect(response.statusCode).to.equal(200);
+            expect(response.statusCode).toEqual(200);
             expect(response.json()).toEqual([]);
         });
         test<TestContext>("If language filter is invalid return 400", async (context) => {
             const response = await makeRequest({languageCode: 12345});
-            expect(response.statusCode).to.equal(400);
+            expect(response.statusCode).toEqual(400);
         });
     });
 });

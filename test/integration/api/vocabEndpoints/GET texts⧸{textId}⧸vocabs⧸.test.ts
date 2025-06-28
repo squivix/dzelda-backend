@@ -35,7 +35,7 @@ describe("GET texts/{textId}/vocabs/", () => {
         const response = await makeRequest(text.id, session.token);
         await context.em.find(Vocab, expectedExistingVocabs, {refresh: true});
 
-        expect(response.statusCode).to.equal(200);
+        expect(response.statusCode).toEqual(200);
         const responseBody = response.json();
         const expectedBody = learnerVocabForTextSerializer.serializeList(expectedTextVocabs);
         //ignore order
@@ -49,7 +49,7 @@ describe("GET texts/{textId}/vocabs/", () => {
 
         const response = await makeRequest(text.id);
 
-        expect(response.statusCode).to.equal(401);
+        expect(response.statusCode).toEqual(401);
     });
     test<TestContext>("If user email is not confirmed return 403", async (context) => {
         const user = await context.userFactory.createOne({isEmailConfirmed: false});
@@ -59,7 +59,7 @@ describe("GET texts/{textId}/vocabs/", () => {
 
         const response = await makeRequest(text.id, session.token);
 
-        expect(response.statusCode).to.equal(403);
+        expect(response.statusCode).toEqual(403);
     });
     test<TestContext>("If text does not exists return 404", async (context) => {
         const user = await context.userFactory.createOne();
@@ -67,7 +67,7 @@ describe("GET texts/{textId}/vocabs/", () => {
 
         const response = await makeRequest(faker.datatype.number({min: 10000000}), session.token);
 
-        expect(response.statusCode).to.equal(404);
+        expect(response.statusCode).toEqual(404);
     });
     describe("test privacy", () => {
         describe("Hide private texts from non-authors", () => {
@@ -79,7 +79,7 @@ describe("GET texts/{textId}/vocabs/", () => {
 
                 const response = await makeRequest(text.id, session.token);
 
-                expect(response.statusCode).to.equal(404);
+                expect(response.statusCode).toEqual(404);
             });
             test<TestContext>("If the text is private and the user is author return vocabs in text", async (context) => {
                 const author = await context.userFactory.createOne();
@@ -97,7 +97,7 @@ describe("GET texts/{textId}/vocabs/", () => {
                 const response = await makeRequest(text.id, session.token);
                 await context.em.find(Vocab, expectedExistingVocabs, {refresh: true});
 
-                expect(response.statusCode).to.equal(200);
+                expect(response.statusCode).toEqual(200);
                 const responseBody = response.json();
                 const expectedBody = learnerVocabForTextSerializer.serializeList(expectedTextVocabs);
                 //ignore order
@@ -116,7 +116,7 @@ describe("GET texts/{textId}/vocabs/", () => {
 
                     const response = await makeRequest(text.id, session.token);
 
-                    expect(response.statusCode).to.equal(404);
+                    expect(response.statusCode).toEqual(404);
                 });
                 test<TestContext>("If the text is in private collection and user is author return vocabs in text", async (context) => {
                     const author = await context.userFactory.createOne();
@@ -135,7 +135,7 @@ describe("GET texts/{textId}/vocabs/", () => {
                     const response = await makeRequest(text.id, session.token);
                     await context.em.find(Vocab, expectedExistingVocabs, {refresh: true});
 
-                    expect(response.statusCode).to.equal(200);
+                    expect(response.statusCode).toEqual(200);
                     const responseBody = response.json();
                     const expectedBody = learnerVocabForTextSerializer.serializeList(expectedTextVocabs);
                     //ignore order
@@ -160,7 +160,7 @@ describe("GET texts/{textId}/vocabs/", () => {
                 const response = await makeRequest(text.id, session.token);
                 await context.em.find(Vocab, expectedExistingVocabs, {refresh: true});
 
-                expect(response.statusCode).to.equal(200);
+                expect(response.statusCode).toEqual(200);
                 const responseBody = response.json();
                 const expectedBody = learnerVocabForTextSerializer.serializeList(expectedTextVocabs);
                 //ignore order

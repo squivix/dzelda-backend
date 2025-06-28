@@ -31,7 +31,7 @@ describe("POST users/me/password/reset/", function () {
         const response = await makeRequest({token: token, newPassword: newPassword});
         await context.em.refresh(user);
 
-        expect(response.statusCode).to.equal(204);
+        expect(response.statusCode).toEqual(204);
         expect(await passwordHasher.validate(newPassword, user.password)).toBeTruthy();
         expect(sendMailSpy).toHaveBeenCalledOnce();
         expect(sendMailSpy).toHaveBeenCalledWith(expect.objectContaining({to: user.email}));
@@ -44,7 +44,7 @@ describe("POST users/me/password/reset/", function () {
 
         const response = await makeRequest({token: await expiringTokenHasher.hash(token), newPassword: newPassword});
 
-        expect(response.statusCode).to.equal(401);
+        expect(response.statusCode).toEqual(401);
         expect(sendMailSpy).not.toHaveBeenCalled();
     });
     test<TestContext>("If token is expired, delete it and return 401", async (context) => {
@@ -63,7 +63,7 @@ describe("POST users/me/password/reset/", function () {
         const response = await makeRequest({token: token, newPassword: newPassword});
         await context.em.refresh(user);
 
-        expect(response.statusCode).to.equal(401);
+        expect(response.statusCode).toEqual(401);
         expect(sendMailSpy).not.toHaveBeenCalled();
         expect(user.password).toEqual(oldPassword);
         expect(await passwordHasher.validate(newPassword, user.password)).not.toBeTruthy();
@@ -84,7 +84,7 @@ describe("POST users/me/password/reset/", function () {
         const response = await makeRequest({token: token, newPassword: newPassword});
         await context.em.refresh(user);
 
-        expect(response.statusCode).to.equal(400);
+        expect(response.statusCode).toEqual(400);
         expect(sendMailSpy).not.toHaveBeenCalled();
         expect(user.password).toEqual(oldPassword);
         expect(await passwordHasher.validate(newPassword, user.password)).not.toBeTruthy();
