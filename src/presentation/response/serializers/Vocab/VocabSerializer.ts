@@ -1,18 +1,18 @@
 import {CustomSerializer} from "@/src/presentation/response/serializers/CustomSerializer.js";
 import {Vocab} from "@/src/models/entities/Vocab.js";
-import {MeaningSummerySerializer, meaningSummerySerializer} from "@/src/presentation/response/serializers/Meaning/MeaningSummerySerializer.js";
-import {VocabTagSerializer, vocabTagSerializer} from "@/src/presentation/response/serializers/VocabTag/VocabTagSerializer.js";
-import {VocabVariantSerializer, vocabVariantSerializer} from "@/src/presentation/response/serializers/VocabVariant/VocabVariantSerializer.js";
+import {meaningSummerySerializer} from "@/src/presentation/response/serializers/Meaning/MeaningSummerySerializer.js";
+import {vocabTagSerializer} from "@/src/presentation/response/serializers/VocabTag/VocabTagSerializer.js";
+import {vocabVariantSerializer} from "@/src/presentation/response/serializers/VocabVariant/VocabVariantSerializer.js";
 import {ViewDescription} from "@/src/models/viewResolver.js";
 
 class VocabSerializer extends CustomSerializer<Vocab> {
-    static readonly view: ViewDescription = {
+    readonly view: ViewDescription = {
         fields: ["id", "text", "isPhrase", "learnersCount", "textsCount"],
         relations: {
             language: {fields: ["code"]},
-            tags: VocabTagSerializer.view,
-            vocabVariants: VocabVariantSerializer.view,
-            meanings: MeaningSummerySerializer.view
+            tags: vocabTagSerializer.view,
+            vocabVariants: vocabVariantSerializer.view,
+            meanings: meaningSummerySerializer.view
         }
     }
 

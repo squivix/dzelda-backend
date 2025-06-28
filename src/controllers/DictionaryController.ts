@@ -16,11 +16,12 @@ class DictionaryController {
             isPronunciation: booleanStringValidator.optional()
         });
         const queryParams = queryParamsValidator.parse(request.query);
+        const serializer = dictionarySerializer;
 
         const filters = {languageCode: queryParams.languageCode, isPronunciation: queryParams.isPronunciation};
         const dictionaryService = new DictionaryService(request.em);
-        const dictionaries = await dictionaryService.getDictionaries(filters, {sortBy: "name", sortOrder: "asc"});
-        reply.send(dictionarySerializer.serializeList(dictionaries));
+        const dictionaries = await dictionaryService.getDictionaries(filters, {sortBy: "name", sortOrder: "asc"}, serializer.view);
+        reply.send(serializer.serializeList(dictionaries));
     }
 
     async getUserDictionaries(request: FastifyRequest, reply: FastifyReply) {
@@ -31,11 +32,12 @@ class DictionaryController {
             isPronunciation: booleanStringValidator.optional()
         });
         const queryParams = queryParamsValidator.parse(request.query);
+        const serializer = dictionarySerializer
 
         const filters = {languageCode: queryParams.languageCode, isPronunciation: queryParams.isPronunciation, isLearning: true};
         const dictionaryService = new DictionaryService(request.em);
-        const dictionaries = await dictionaryService.getLearnerDictionaries(filters, user);
-        reply.send(dictionarySerializer.serializeList(dictionaries.map(d => d.dictionary)));
+        const dictionaries = await dictionaryService.getLearnerDictionaries(filters, user, serializer.view);
+        reply.send(serializer.serializeList(dictionaries));
     }
 
     async updateUserLanguageDictionaries(request: FastifyRequest, reply: FastifyReply) {

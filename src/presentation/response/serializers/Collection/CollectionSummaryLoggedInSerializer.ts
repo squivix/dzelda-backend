@@ -3,7 +3,7 @@ import {Collection} from "@/src/models/entities/Collection.js";
 import {ViewDescription} from "@/src/models/viewResolver.js";
 
 class CollectionSummaryLoggedInSerializer extends CustomSerializer<Collection> {
-    static readonly view: ViewDescription = {
+    readonly view: ViewDescription = {
         fields: ["id", "title", "description", "image", "addedOn", "isPublic", "avgPastViewersCountPerText", "vocabsByLevel", "isBookmarked"],
         relations: {
             language: {

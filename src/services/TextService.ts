@@ -16,6 +16,7 @@ import {FlaggedTextReport} from "@/src/models/entities/FlaggedTextReport.js";
 import {TEXT_REPORT_HIDING_THRESHOLD} from "@/src/constants.js";
 import amqp from "amqplib";
 import {textVisibilityFilter} from "@/src/filters/textVisibilityFilter.js";
+import {ViewDescription} from "@/src/models/viewResolver.js";
 
 const parseTextQueueKey = "parseTextWorkerQueue";
 
@@ -41,7 +42,7 @@ export class TextService {
                             },
                             sort: { sortBy: "title" | "createdDate" | "pastViewersCount", sortOrder: "asc" | "desc" },
                             pagination: { page: number, pageSize: number },
-                            user: User | AnonymousUser | null): Promise<[Text[], number]> {
+                            user: User | AnonymousUser | null, viewDescription: ViewDescription): Promise<[Text[], number]> {
         const dbFilters: FilterQuery<Text> = {$and: []};
         dbFilters.$and!.push({isRemovedByMods: false});
         dbFilters.$and!.push(textVisibilityFilter(user));
@@ -98,7 +99,7 @@ export class TextService {
                                       sortOrder: "asc" | "desc"
                                   },
                                   pagination: { page: number, pageSize: number },
-                                  user: User): Promise<[TextHistoryEntry[], number]> {
+                                  user: User, viewDescription: ViewDescription): Promise<[TextHistoryEntry[], number]> {
         const dbFilters: FilterQuery<TextHistoryEntry> = {$and: []};
         dbFilters.$and!.push({text: {isRemovedByMods: false}});
         dbFilters.$and!.push({text: {hiddenBy: {$none: user.profile}}});
@@ -152,7 +153,7 @@ export class TextService {
     }, user: User, {populate = true, parsingPriority = 2}: {
         populate?: boolean,
         parsingPriority?: 1 | 2
-    } = {}): Promise<Text> {
+    } = {}, viewDescription?: ViewDescription): Promise<Text> {
         let newText = this.textRepo.create({
             title: fields.title,
             content: fields.content,
@@ -180,7 +181,7 @@ export class TextService {
         return newText;
     }
 
-    async getText(textId: number, user: User | AnonymousUser | null) {
+    async getText(textId: number, user: User | AnonymousUser | null, viewDescription: ViewDescription) {
         const dbFilters: FilterQuery<Text> = {$and: [{id: textId}]};
         dbFilters.$and!.push({isRemovedByMods: false});
         dbFilters.$and!.push(textVisibilityFilter(user));
@@ -207,7 +208,7 @@ export class TextService {
         isPublic?: boolean,
         image?: string;
         audio?: string;
-    }, user: User) {
+    }, user: User, viewDescription: ViewDescription) {
         const isTitleContentChanged = text.title !== updatedTextData.title || text.content !== updatedTextData.content;
         if (isTitleContentChanged) {
             text.title = updatedTextData.title;
@@ -256,14 +257,14 @@ export class TextService {
         await this.em.nativeDelete(Text, {id: text.id});
     }
 
-    async addTextToUserHistory(text: Text, user: User) {
+    async addTextToUserHistory(text: Text, user: User, viewDescription: ViewDescription) {
         const historyEntry = this.em.create(TextHistoryEntry, {pastViewer: user.profile, text: text});
         await this.em.flush();
         await this.em.refresh(historyEntry.text, {populate: ["orderInCollection", "addedBy.user"]});
         return historyEntry;
     }
 
-    async addTextToUserBookmarks(text: Text, user: User) {
+    async addTextToUserBookmarks(text: Text, user: User, viewDescription: ViewDescription) {
         const bookmark = this.em.create(TextBookmark, {bookmarker: user.profile, text: text});
         await this.em.flush();
         await this.textRepo.annotateTextsWithUserData([text], user);
@@ -274,7 +275,7 @@ export class TextService {
         await this.em.nativeDelete(TextBookmark, {text: text, bookmarker: user.profile});
     }
 
-    async hideTextForUser(text: Text, user: User) {
+    async hideTextForUser(text: Text, user: User, viewDescription: ViewDescription) {
         const mapping = this.em.create(MapHiderText, {hider: user.profile, text: text});
         await this.em.flush();
         return mapping;

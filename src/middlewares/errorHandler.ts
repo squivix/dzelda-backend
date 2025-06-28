@@ -43,7 +43,7 @@ export const errorHandler = (error: Error, request: FastifyRequest, reply: Fasti
     if (apiError)
         reply.status(apiError.statusCode).send(apiError.toJSON());
     else {
-        if (process.env.NODE_ENV == "dev" || process.env.NODE_ENV == "test" || process.env.NODE_ENV == "stage")
+        if (process.env.NODE_ENV == "dev" || process.env.NODE_ENV == "test")
             console.log(error);
         reply.status(500).send("Something went wrong");
     }

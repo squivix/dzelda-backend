@@ -1,12 +1,12 @@
 import {CustomSerializer} from "@/src/presentation/response/serializers/CustomSerializer.js";
 import {TextHistoryEntry} from "@/src/models/entities/TextHistoryEntry.js";
 import {AnonymousUser} from "@/src/models/entities/auth/User.js";
-import {CollectionSummarySerializer, collectionSummarySerializer} from "@/src/presentation/response/serializers/Collection/CollectionSummarySerializer.js";
+import {collectionSummarySerializer} from "@/src/presentation/response/serializers/Collection/CollectionSummarySerializer.js";
 import {ViewDescription} from "@/src/models/viewResolver.js";
 
 
 class TextHistoryEntrySerializer extends CustomSerializer<TextHistoryEntry> {
-    static readonly view: ViewDescription = {
+    readonly view: ViewDescription = {
         fields: ["timeViewed"],
         relations: {
             pastViewer: {
@@ -22,7 +22,7 @@ class TextHistoryEntrySerializer extends CustomSerializer<TextHistoryEntry> {
                         fields: [],
                         relations: {user: {fields: ["username"]}}
                     },
-                    collection: CollectionSummarySerializer.view
+                    collection: collectionSummarySerializer.view
                 }
             }
         }

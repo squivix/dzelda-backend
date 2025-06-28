@@ -15,14 +15,14 @@ export const collectionFieldFetchMap: FieldFetchSpecsMap<Collection> = {
     addedOn: {type: "db-column"},
     isPublic: {type: "db-column"},
     avgPastViewersCountPerText: {type: "formula"},
-    language: {type: "relation", populate: "language", fieldFetchSpecsMap: languageFieldFetchMap, relationType: "to-one"},
-    addedBy: {type: "relation", populate: "addedBy", fieldFetchSpecsMap: profileFieldFieldFetchMap, relationType: "to-one"},
-    texts: {type: "relation", populate: "texts", fieldFetchSpecsMap: textFieldFetchMap, relationType: "to-many"},
+    language: {type: "relation", populate: "language", getFieldFetchSpecsMap: () => languageFieldFetchMap, relationType: "to-one"},
+    addedBy: {type: "relation", populate: "addedBy", getFieldFetchSpecsMap: () => profileFieldFieldFetchMap, relationType: "to-one"},
+    texts: {type: "relation", populate: "texts", getFieldFetchSpecsMap: () => textFieldFetchMap, relationType: "to-many"},
     vocabsByLevel: {
         type: "annotated",
         annotate: async (collections, context) => {
             if (!context.user || context.user instanceof AnonymousUser)
-                throw new Error("Context doesn't have logged in user")
+                throw new Error("Context doesn't have logged in user");
             const repo = context.em.getRepository(Collection) as CollectionRepo;
             await repo.annotateVocabsByLevel(collections, context.user.profile.id);
         }

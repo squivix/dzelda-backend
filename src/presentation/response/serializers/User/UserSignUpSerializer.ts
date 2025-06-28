@@ -3,7 +3,7 @@ import {User} from "@/src/models/entities/auth/User.js";
 import {ViewDescription} from "@/src/models/viewResolver.js";
 
 class UserSignUpSerializer extends CustomSerializer<User> {
-    static readonly view: ViewDescription = {
+    readonly view: ViewDescription = {
         fields: ["username", "email", "isEmailConfirmed", "isBanned", "isPendingEmailChange"],
     }
 

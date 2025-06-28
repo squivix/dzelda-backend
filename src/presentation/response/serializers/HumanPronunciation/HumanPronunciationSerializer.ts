@@ -1,14 +1,14 @@
 import {CustomSerializer} from "@/src/presentation/response/serializers/CustomSerializer.js";
 import {HumanPronunciation} from "@/src/models/entities/HumanPronunciation.js";
-import {AttributionSourceSerializer, attributionSourceSerializer} from "@/src/presentation/response/serializers/AttributionSource/AttributionSourceSerializer.js";
+import {attributionSourceSerializer} from "@/src/presentation/response/serializers/AttributionSource/AttributionSourceSerializer.js";
 import {ViewDescription} from "@/src/models/viewResolver.js";
 
 class HumanPronunciationSerializer extends CustomSerializer<HumanPronunciation> {
-    static readonly view: ViewDescription = {
+    readonly view: ViewDescription = {
         fields: ["id", "url", "text", "parsedText", "speakerCountryCode", "speakerRegion", "attribution",],
         relations: {
             language: {fields: ["code"]},
-            attributionSource: AttributionSourceSerializer.view
+            attributionSource: attributionSourceSerializer.view
         }
     }
 

@@ -2,8 +2,8 @@ import {CustomSerializer} from "@/src/presentation/response/serializers/CustomSe
 import {TranslationLanguage} from "@/src/models/entities/TranslationLanguage.js";
 import {ViewDescription} from "@/src/models/viewResolver.js";
 
-export class TranslationLanguageSerializer extends CustomSerializer<TranslationLanguage> {
-    static readonly view: ViewDescription = {
+class TranslationLanguageSerializer extends CustomSerializer<TranslationLanguage> {
+    readonly view: ViewDescription = {
         fields: ["id", "code", "name", "isDefault"],
     }
 

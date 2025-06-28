@@ -3,7 +3,7 @@ import {Dictionary} from "@/src/models/entities/Dictionary.js";
 import {ViewDescription} from "@/src/models/viewResolver.js";
 
 class DictionarySerializer extends CustomSerializer<Dictionary> {
-    static readonly view: ViewDescription = {
+    readonly view: ViewDescription = {
         fields: ["id", "name", "lookupLink", "dictionaryLink", "isPronunciation"],
         relations: {
             language: {fields: ["code"]}

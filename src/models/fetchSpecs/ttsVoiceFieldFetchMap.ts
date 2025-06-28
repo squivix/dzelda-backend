@@ -10,5 +10,5 @@ export const ttsVoiceFieldFetchMap: FieldFetchSpecsMap<TTSVoice> = {
     provider: {type: "db-column"},
     accentCountryCode: {type: "db-column"},
     isDefault: {type: "db-column"},
-    language: {type: "relation", populate: "language", fieldFetchSpecsMap: languageFieldFetchMap, relationType: "to-one"}
+    language: {type: "relation", populate: "language", getFieldFetchSpecsMap: () => languageFieldFetchMap, relationType: "to-one"}
 }

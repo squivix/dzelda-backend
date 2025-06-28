@@ -11,6 +11,7 @@ import {QueryOrderMap} from "@mikro-orm/core/enums.js";
 import {Dictionary} from "@/src/models/entities/Dictionary.js";
 import {TranslationLanguage} from "@/src/models/entities/TranslationLanguage.js";
 import {PreferredTranslationLanguageEntry} from "@/src/models/entities/PreferredTranslationLanguageEntry.js";
+import {ViewDescription} from "@/src/models/viewResolver.js";
 
 export class LanguageService {
     em: EntityManager;
@@ -21,7 +22,7 @@ export class LanguageService {
         this.languageRepo = this.em.getRepository(Language);
     }
 
-    async getLanguages(sort: { sortBy: "name" | "learnersCount" | "secondSpeakersCount", sortOrder: "asc" | "desc" }) {
+    async getLanguages(sort: { sortBy: "name" | "learnersCount" | "secondSpeakersCount", sortOrder: "asc" | "desc" }, viewDescription: ViewDescription) {
         const dbOrderBy: QueryOrderMap<Language>[] = [];
         if (sort.sortBy == "name")
             dbOrderBy.push({name: sort.sortOrder});
@@ -38,7 +39,7 @@ export class LanguageService {
         });
     }
 
-    async getUserLanguages(user: User, filters: {}, sort: { sortBy: "name" | "learnersCount" | "lastOpened", sortOrder: "asc" | "desc" }) {
+    async getUserLanguages(user: User, filters: {}, sort: { sortBy: "name" | "learnersCount" | "lastOpened", sortOrder: "asc" | "desc" }, viewDescription: ViewDescription) {
         const dbFilters: FilterQuery<MapLearnerLanguage> = {$and: []};
         dbFilters.$and!.push({learner: user.profile});
 
@@ -56,11 +57,14 @@ export class LanguageService {
         return await this.em.find(MapLearnerLanguage, dbFilters, {orderBy: dbOrderBy, populate: ["preferredTtsVoice", "preferredTranslationLanguages.translationLanguage"]});
     }
 
-    async getUserLanguage(code: string, user: User) {
+    async getUserLanguage(code: string, user: User, viewDescription: ViewDescription) {
         return await this.em.findOne(MapLearnerLanguage, {language: {code}, learner: user.profile}, {populate: ["preferredTtsVoice", "preferredTranslationLanguages.translationLanguage"]});
     }
 
-    async updateUserLanguage(languageMapping: MapLearnerLanguage, updateFields: { lastOpened: "now" | undefined, preferredTranslationLanguages?: TranslationLanguage[] }) {
+    async updateUserLanguage(languageMapping: MapLearnerLanguage, updateFields: {
+        lastOpened: "now" | undefined,
+        preferredTranslationLanguages?: TranslationLanguage[]
+    }, viewDescription: ViewDescription) {
         if (updateFields.preferredTranslationLanguages !== undefined) {
             const preferredTranslationLanguages = updateFields.preferredTranslationLanguages;
             await this.em.transactional(async (tm) => {
@@ -77,8 +81,11 @@ export class LanguageService {
         return (await this.em.refresh(languageMapping, {populate: ["preferredTtsVoice", "preferredTranslationLanguages.translationLanguage"]}))!;
     }
 
-
-    async addLanguageToUser({user, language, preferredTranslationLanguages}: { user: User, language: Language, preferredTranslationLanguages?: TranslationLanguage[] }) {
+    async addLanguageToUser({user, language, preferredTranslationLanguages}: {
+        user: User,
+        language: Language,
+        preferredTranslationLanguages?: TranslationLanguage[]
+    }, viewDescription: ViewDescription) {
         const mapping = this.em.create(MapLearnerLanguage, {learner: user.profile, language: language});
         await this.em.flush();
         //TODO test this
@@ -106,7 +113,7 @@ export class LanguageService {
         });
     }
 
-    async getTranslationLanguages(filters: { isDefault?: boolean }) {
+    async getTranslationLanguages(filters: { isDefault?: boolean }, viewDescription: ViewDescription) {
         const dbFilters: FilterQuery<TranslationLanguage> = {$and: []};
         if (filters.isDefault !== undefined)
             dbFilters.$and!.push({isDefault: filters.isDefault});

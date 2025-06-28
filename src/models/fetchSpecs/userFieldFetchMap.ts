@@ -9,5 +9,5 @@ export const userFieldFetchMap: FieldFetchSpecsMap<User> = {
     isEmailConfirmed: {type: "db-column"},
     isBanned: {type: "db-column"},
     isPendingEmailChange: {type: "formula"},
-    profile: {type: "relation", populate: "profile", fieldFetchSpecsMap: profileFieldFieldFetchMap, relationType: "to-one"}
+    profile: {type: "relation", populate: "profile", getFieldFetchSpecsMap: () => profileFieldFieldFetchMap, relationType: "to-one"}
 };

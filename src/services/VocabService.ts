@@ -20,6 +20,7 @@ import process from "process";
 import {TTSPronunciation} from "@/src/models/entities/TTSPronunciation.js";
 import urlJoin from "url-join";
 import {VocabVariant} from "@/src/models/entities/VocabVariant.js";
+import {ViewDescription} from "@/src/models/viewResolver.js";
 
 export class VocabService {
     em: EntityManager;
@@ -33,7 +34,7 @@ export class VocabService {
 
     async getPaginatedVocabs(filters: { languageCode?: string, searchQuery?: string },
                              sort: { sortBy: "text" | "textsCount" | "learnersCount", sortOrder: "asc" | "desc" },
-                             pagination: { page: number, pageSize: number }) {
+                             pagination: { page: number, pageSize: number }, viewDescription: ViewDescription) {
         const dbFilters: FilterQuery<Vocab> = {$and: []};
 
         if (filters.languageCode !== undefined)
@@ -57,7 +58,7 @@ export class VocabService {
         });
     }
 
-    async createVocab(vocabData: { text: string; language: Language; isPhrase: boolean }) {
+    async createVocab(vocabData: { text: string; language: Language; isPhrase: boolean }, viewDescription: ViewDescription) {
         const newVocab = this.vocabRepo.create({
             text: vocabData.text,
             language: vocabData.language,
@@ -79,13 +80,13 @@ export class VocabService {
         return newVocab;
     }
 
-    async getVocab(vocabId: number) {
+    async getVocab(vocabId: number, viewDescription: ViewDescription) {
         return await this.vocabRepo.findOne({
             id: vocabId
         }, {populate: ["language", "meanings", "ttsPronunciations", "ttsPronunciations.voice", "tags.category", "rootForms"]});
     }
 
-    async getVocabByStringSearch(vocabData: { text: string; language: Language }) {
+    async getVocabByStringSearch(vocabData: { text: string; language: Language }, viewDescription: ViewDescription) {
         return await this.vocabRepo.findOne({
             text: vocabData.text,
             language: vocabData.language
@@ -94,7 +95,7 @@ export class VocabService {
 
     async getPaginatedLearnerVocabs(filters: { languageCode?: string, level?: VocabLevel[], searchQuery?: string },
                                     sort: { sortBy: "text" | "textsCount" | "learnersCount", sortOrder: "asc" | "desc" },
-                                    pagination: { page: number, pageSize: number }, user: User): Promise<[MapLearnerVocab[], number]> {
+                                    pagination: { page: number, pageSize: number }, user: User, viewDescription: ViewDescription): Promise<[MapLearnerVocab[], number]> {
         const dbFilters: FilterQuery<MapLearnerVocab> = {$and: []};
         dbFilters.$and!.push({learner: user.profile});
 
@@ -132,7 +133,7 @@ export class VocabService {
         return [mappings, totalCount];
     }
 
-    async addVocabToUserLearning(vocab: Vocab, user: User, level?: VocabLevel) {
+    async addVocabToUserLearning(vocab: Vocab, user: User, level?: VocabLevel, viewDescription: ViewDescription) {
         this.em.create(MapLearnerVocab, {
             learner: user.profile,
             vocab: vocab,
@@ -142,7 +143,7 @@ export class VocabService {
         return (await this.getUserVocab(vocab.id, user.profile))!;
     }
 
-    async getUserVocab(vocabId: number, learner: Profile) {
+    async getUserVocab(vocabId: number, learner: Profile, viewDescription: ViewDescription) {
         const mapping = await this.em.findOne(MapLearnerVocab, {
             vocab: vocabId,
             learner
@@ -161,7 +162,7 @@ export class VocabService {
         return mapping;
     }
 
-    async updateUserVocab(mapping: MapLearnerVocab, updatedUserVocabData: { level?: VocabLevel; notes?: string; }) {
+    async updateUserVocab(mapping: MapLearnerVocab, updatedUserVocabData: { level?: VocabLevel; notes?: string; }, viewDescription: ViewDescription) {
         if (updatedUserVocabData.level !== undefined) {
             mapping.level = updatedUserVocabData.level;
             if (updatedUserVocabData.level == VocabLevel.IGNORED) {
@@ -191,7 +192,7 @@ export class VocabService {
         await this.em.flush();
     }
 
-    async getTextVocabs(text: Text, user: User) {
+    async getTextVocabs(text: Text, user: User, viewDescription: ViewDescription) {
         const existingMappings = await this.em.find(MapLearnerVocab, {
             vocab: {textsAppearingIn: text},
             learner: user.profile
@@ -238,7 +239,7 @@ export class VocabService {
         return await this.vocabRepo.countSavedVocabsTimeSeries(user.profile, options);
     }
 
-    async createVocabTTSPronunciation(vocab: Vocab, variant: VocabVariant | null, voice: TTSVoice) {
+    async createVocabTTSPronunciation(vocab: Vocab, variant: VocabVariant | null, voice: TTSVoice, viewDescription: ViewDescription) {
         //TODO move to separate synthesize speech function which selects for provider
         if (voice.provider !== TTSProvider.GOOGLE_CLOUD)
             throw new Error("Unidentified TTS voice provider");
@@ -278,17 +279,17 @@ export class VocabService {
         }
     }
 
-    async createOrGetVocabVariant(vocab: Vocab, variantText: string) {
+    async createOrGetVocabVariant(vocab: Vocab, variantText: string, viewDescription: ViewDescription) {
         const variant = await this.em.upsert(VocabVariant, {vocab: vocab, text: variantText}, {onConflictAction: "ignore"});
         await this.em.populate(vocab, ["vocabVariants.ttsPronunciations"])
         return variant;
     }
 
-    async getVocabVariants(vocab: Vocab) {
+    async getVocabVariants(vocab: Vocab, viewDescription: ViewDescription) {
         return await this.em.find(VocabVariant, {vocab: vocab}, {populate: ["ttsPronunciations"]});
     }
 
-    async createVocabVariant(vocab: Vocab, text: string) {
+    async createVocabVariant(vocab: Vocab, text: string, viewDescription: ViewDescription) {
         const variant = await this.em.upsert(VocabVariant, {vocab: vocab, text: text}, {onConflictAction: "ignore"});
         await this.em.populate(variant, ["ttsPronunciations"])
         return variant;

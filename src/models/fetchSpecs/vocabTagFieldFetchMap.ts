@@ -5,5 +5,5 @@ import {vocabTagCategoryFieldFetchMap} from "@/src/models/fetchSpecs/vocabTagCat
 export const vocabTagFieldFetchMap: FieldFetchSpecsMap<VocabTag> = {
     id: {type: "db-column"},
     name: {type: "db-column"},
-    category: {type: "relation", populate: "category", fieldFetchSpecsMap: vocabTagCategoryFieldFetchMap, relationType: "to-one"}
+    category: {type: "relation", populate: "category", getFieldFetchSpecsMap: () => vocabTagCategoryFieldFetchMap, relationType: "to-one"}
 }

@@ -1,18 +1,18 @@
 import {CustomSerializer} from "@/src/presentation/response/serializers/CustomSerializer.js";
 import {MapLearnerLanguage} from "@/src/models/entities/MapLearnerLanguage.js";
-import {TranslationLanguageSerializer, translationLanguageSerializer} from "@/src/presentation/response/serializers/TranslationLanguage/TranslationLanguageSerializer.js";
-import {TTSVoiceSerializer, ttsVoiceSerializer} from "@/src/presentation/response/serializers/TTSVoice/TtsVoiceSerializer.js";
+import {translationLanguageSerializer} from "@/src/presentation/response/serializers/TranslationLanguage/TranslationLanguageSerializer.js";
+import {ttsVoiceSerializer} from "@/src/presentation/response/serializers/TTSVoice/TtsVoiceSerializer.js";
 import {ViewDescription} from "@/src/models/viewResolver.js";
 
 class LearnerLanguageSerializer extends CustomSerializer<MapLearnerLanguage> {
-    static readonly view: ViewDescription = {
+    readonly view: ViewDescription = {
         fields: ["startedLearningOn", "lastOpened"],
         relations: {
             language: {
                 fields: ["id", "code", "name", "greeting", "flag", "flagCircular", "flagEmoji", "color", "levelThresholds", "learnersCount",]
             },
-            preferredTtsVoice: TTSVoiceSerializer.view,
-            preferredTranslationLanguages: TranslationLanguageSerializer.view
+            preferredTtsVoice: ttsVoiceSerializer.view,
+            preferredTranslationLanguages: translationLanguageSerializer.view
         }
     }
 

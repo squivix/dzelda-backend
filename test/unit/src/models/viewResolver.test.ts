@@ -21,8 +21,8 @@ describe("buildFetchPlan()", function () {
 
             const relationFilters = {};
             const {
-                localFields: topLevelFields,
-                localPopulate: topLevelPopulate,
+                fields: topLevelFields,
+                populate: topLevelPopulate,
                 filteredPopulates,
                 annotatedFields
             } = buildFetchPlan(view, fetchSpecsMap, context, relationFilters);
@@ -43,8 +43,8 @@ describe("buildFetchPlan()", function () {
             const context = {user: null};
             const relationFilters = {};
             const {
-                localFields: topLevelFields,
-                localPopulate: topLevelPopulate,
+                fields: topLevelFields,
+                populate: topLevelPopulate,
                 filteredPopulates,
                 annotatedFields
             } = buildFetchPlan(view, fetchSpecsMap, context, relationFilters);
@@ -84,8 +84,8 @@ describe("buildFetchPlan()", function () {
             const context = {user: null};
             const relationFilters = {};
             const {
-                localFields: topLevelFields,
-                localPopulate: topLevelPopulate,
+                fields: topLevelFields,
+                populate: topLevelPopulate,
                 filteredPopulates,
                 annotatedFields
             } = buildFetchPlan(view, fetchSpecsMap, context, relationFilters);
@@ -106,7 +106,7 @@ describe("buildFetchPlan()", function () {
                 relationField: {
                     type: "relation",
                     populate: "relationField",
-                    fieldFetchSpecsMap: subFetchSpecsMap,
+                    getFieldFetchSpecsMap: subFetchSpecsMap,
                     relationType: "to-many"
                 },
             }
@@ -122,8 +122,8 @@ describe("buildFetchPlan()", function () {
             const context = {user: null};
             const relationFilters = {};
             const {
-                localFields: topLevelFields,
-                localPopulate: topLevelPopulate,
+                fields: topLevelFields,
+                populate: topLevelPopulate,
                 filteredPopulates,
                 annotatedFields
             } = buildFetchPlan(view, fetchSpecsMap, context, relationFilters);
@@ -140,7 +140,7 @@ describe("buildFetchPlan()", function () {
                 subfield2: {type: "formula"},
             }
             const fetchSpecsMap: FieldFetchSpecsMap<any> = {
-                relationField: {type: "relation", populate: "relationField", fieldFetchSpecsMap: subFetchSpecsMap, relationType: "to-many"},
+                relationField: {type: "relation", populate: "relationField", getFieldFetchSpecsMap: subFetchSpecsMap, relationType: "to-many"},
                 columnField: {type: "db-column"},
             }
 
@@ -155,8 +155,8 @@ describe("buildFetchPlan()", function () {
             const context = {user: null};
             const relationFilters = {};
             const {
-                localFields: topLevelFields,
-                localPopulate: topLevelPopulate,
+                fields: topLevelFields,
+                populate: topLevelPopulate,
                 filteredPopulates,
                 annotatedFields
             } = buildFetchPlan(view, fetchSpecsMap, context, relationFilters);
@@ -173,10 +173,10 @@ describe("buildFetchPlan()", function () {
             const subFetchSpecsMap: FieldFetchSpecsMap<any> = {
                 subfield1: {type: "db-column"},
                 subfield2: {type: "formula"},
-                subRelationField: {type: "relation", populate: "subRelationField", fieldFetchSpecsMap: subSubFetchSpecsMap, relationType: "to-many"},
+                subRelationField: {type: "relation", populate: "subRelationField", getFieldFetchSpecsMap: subSubFetchSpecsMap, relationType: "to-many"},
             }
             const fetchSpecsMap: FieldFetchSpecsMap<any> = {
-                relationField: {type: "relation", populate: "relationField", fieldFetchSpecsMap: subFetchSpecsMap, relationType: "to-many"},
+                relationField: {type: "relation", populate: "relationField", getFieldFetchSpecsMap: subFetchSpecsMap, relationType: "to-many"},
                 field1: {type: "db-column"},
             }
 
@@ -197,8 +197,8 @@ describe("buildFetchPlan()", function () {
             const context = {user: null};
             const relationFilters = {};
             const {
-                localFields: topLevelFields,
-                localPopulate: topLevelPopulate,
+                fields: topLevelFields,
+                populate: topLevelPopulate,
                 filteredPopulates,
                 annotatedFields
             } = buildFetchPlan(view, fetchSpecsMap, context, relationFilters);
@@ -222,7 +222,7 @@ describe("buildFetchPlan()", function () {
                     type: "relation",
                     populate: "relationField",
                     relationType: "to-many",
-                    fieldFetchSpecsMap: subFetchSpecsMap,
+                    getFieldFetchSpecsMap: subFetchSpecsMap,
                     defaultContextFilter: populateWithContextFilter
                 },
             }
@@ -236,8 +236,8 @@ describe("buildFetchPlan()", function () {
             const context = {user: null};
             const relationFilters = {};
             const {
-                localFields: topLevelFields,
-                localPopulate: topLevelPopulate,
+                fields: topLevelFields,
+                populate: topLevelPopulate,
                 filteredPopulates,
                 annotatedFields
             } = buildFetchPlan(view, fetchSpecsMap, context, relationFilters);
@@ -259,7 +259,7 @@ describe("buildFetchPlan()", function () {
                     type: "relation",
                     populate: "relationField1",
                     relationType: "to-many",
-                    fieldFetchSpecsMap: subFetchSpecsMap1,
+                    getFieldFetchSpecsMap: subFetchSpecsMap1,
 
                     defaultContextFilter: populateWithContextFilter1
                 },
@@ -267,7 +267,7 @@ describe("buildFetchPlan()", function () {
                     type: "relation",
                     populate: "relationField2",
                     relationType: "to-many",
-                    fieldFetchSpecsMap: subFetchSpecsMap2,
+                    getFieldFetchSpecsMap: subFetchSpecsMap2,
                     defaultContextFilter: populateWithContextFilter2
                 },
             }
@@ -282,8 +282,8 @@ describe("buildFetchPlan()", function () {
             const context = {user: null};
             const relationFilters = {};
             const {
-                localFields: topLevelFields,
-                localPopulate: topLevelPopulate,
+                fields: topLevelFields,
+                populate: topLevelPopulate,
                 filteredPopulates,
                 annotatedFields
             } = buildFetchPlan(view, fetchSpecsMap, context, relationFilters);
@@ -371,8 +371,8 @@ describe("buildFetchPlan()", function () {
                 "ttsPronunciations": {voice: {$or: [{prefererLanguageMappings: {learner: user.profile}}, {isDefault: true}]}}
             };
             const {
-                localFields: topLevelFields,
-                localPopulate: topLevelPopulate,
+                fields: topLevelFields,
+                populate: topLevelPopulate,
                 filteredPopulates,
                 annotatedFields
             } = buildFetchPlan(view, fetchSpecsMap, context, relationFilters);
@@ -426,8 +426,8 @@ describe("buildFetchPlan()", function () {
             const context = {user: null};
             const relationFilters = {};
             const {
-                localFields: topLevelFields,
-                localPopulate: topLevelPopulate,
+                fields: topLevelFields,
+                populate: topLevelPopulate,
                 filteredPopulates,
                 annotatedFields
             } = buildFetchPlan(view, fetchSpecsMap, context, relationFilters);

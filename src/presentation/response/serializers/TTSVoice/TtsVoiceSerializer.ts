@@ -2,8 +2,8 @@ import {CustomSerializer} from "@/src/presentation/response/serializers/CustomSe
 import {TTSVoice} from "@/src/models/entities/TTSVoice.js";
 import {ViewDescription} from "@/src/models/viewResolver.js";
 
-export class TTSVoiceSerializer extends CustomSerializer<TTSVoice> {
-    static readonly view: ViewDescription = {
+class TTSVoiceSerializer extends CustomSerializer<TTSVoice> {
+    readonly view: ViewDescription = {
         fields: ["id", "code", "name", "gender", "provider", "accentCountryCode", "isDefault",],
         relations: {language: {fields: ["code"]}}
     }

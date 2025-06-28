@@ -1,12 +1,12 @@
 import {CustomSerializer} from "@/src/presentation/response/serializers/CustomSerializer.js";
 import {MapLearnerVocab} from "@/src/models/entities/MapLearnerVocab.js";
-import {MeaningSummerySerializer, meaningSummerySerializer} from "@/src/presentation/response/serializers/Meaning/MeaningSummerySerializer.js";
-import {VocabVariantSerializer, vocabVariantSerializer} from "@/src/presentation/response/serializers/VocabVariant/VocabVariantSerializer.js";
-import {VocabTagSerializer, vocabTagSerializer} from "@/src/presentation/response/serializers/VocabTag/VocabTagSerializer.js";
+import {meaningSummerySerializer} from "@/src/presentation/response/serializers/Meaning/MeaningSummerySerializer.js";
+import {vocabVariantSerializer} from "@/src/presentation/response/serializers/VocabVariant/VocabVariantSerializer.js";
+import {vocabTagSerializer} from "@/src/presentation/response/serializers/VocabTag/VocabTagSerializer.js";
 import {ViewDescription} from "@/src/models/viewResolver.js";
 
 class LearnerVocabSerializer extends CustomSerializer<MapLearnerVocab> {
-    static readonly view: ViewDescription = {
+    readonly view: ViewDescription = {
         fields: ["level", "notes"],
         relations: {
             vocab: {
@@ -14,10 +14,10 @@ class LearnerVocabSerializer extends CustomSerializer<MapLearnerVocab> {
                 relations: {
                     language: {fields: ["code"]},
                     ttsPronunciations: {fields: ["url"]},
-                    tags: VocabTagSerializer.view,
-                    vocabVariants: VocabVariantSerializer.view,
-                    learnerMeanings: MeaningSummerySerializer.view,
-                    meanings: MeaningSummerySerializer.view,
+                    tags: vocabTagSerializer.view,
+                    vocabVariants: vocabVariantSerializer.view,
+                    learnerMeanings: meaningSummerySerializer.view,
+                    meanings: meaningSummerySerializer.view,
                 }
             }
         }

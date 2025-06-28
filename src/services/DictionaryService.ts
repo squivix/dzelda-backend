@@ -4,6 +4,8 @@ import {User} from "@/src/models/entities/auth/User.js";
 import {QueryOrderMap} from "@mikro-orm/core/enums.js";
 import {MapLearnerDictionary} from "@/src/models/entities/MapLearnerDictionary.js";
 import {EntityField} from "@mikro-orm/core/drivers/IDatabaseDriver.js";
+import {buildFetchPlan, ViewDescription} from "@/src/models/viewResolver.js";
+import {dictionaryFieldFetchMap} from "@/src/models/fetchSpecs/dictionaryFieldFetchMap.js";
 
 export class DictionaryService {
 
@@ -19,7 +21,7 @@ export class DictionaryService {
     async getDictionaries(filters: { languageCode?: string, isPronunciation?: boolean }, sort: {
         sortBy: "name",
         sortOrder: "asc" | "desc"
-    }) {
+    }, viewDescription: ViewDescription) {
         const dbFilters: FilterQuery<Dictionary> = {$and: []};
         if (filters.languageCode !== undefined)
             dbFilters.$and!.push({language: {code: filters.languageCode}});
@@ -30,10 +32,15 @@ export class DictionaryService {
         if (sort.sortBy == "name")
             dbOrderBy.push({name: sort.sortOrder});
         dbOrderBy.push({id: "asc"});
-        return await this.dictionaryRepo.find(dbFilters, {populate: ["language"], orderBy: dbOrderBy});
+        const {fields: dbFields, populate: dbPopulate} = buildFetchPlan(viewDescription, dictionaryFieldFetchMap, {user: null, em: this.em});
+        return await this.em.find(Dictionary, dbFilters, {
+            fields: dbFields as any,
+            populate: dbPopulate as any,
+            orderBy: dbOrderBy
+        });
     }
 
-    async getLearnerDictionaries(filters: { languageCode?: string, isPronunciation?: boolean }, user: User) {
+    async getLearnerDictionaries(filters: { languageCode?: string, isPronunciation?: boolean }, user: User, viewDescription: ViewDescription) {
         const dbFilters: FilterQuery<MapLearnerDictionary> = {$and: []};
 
         dbFilters.$and!.push({learner: user.profile});
@@ -42,10 +49,13 @@ export class DictionaryService {
         if (filters.isPronunciation !== undefined)
             dbFilters.$and!.push({dictionary: {isPronunciation: filters.isPronunciation}});
 
-        return await this.em.find(MapLearnerDictionary, dbFilters, {
-            populate: ["dictionary", "dictionary.language"],
+        const {fields: dictionaryFields, populate: dictionaryPopulate} = buildFetchPlan(viewDescription, dictionaryFieldFetchMap, {user: null, em: this.em});
+        const learnerMappings = await this.em.find(MapLearnerDictionary, dbFilters, {
+            fields: dictionaryFields.map(f => `dictionary.${f}`) as any,
+            populate: dictionaryPopulate.map(f => `dictionary.${f}`) as any,
             orderBy: [{order: "asc"}, {dictionary: {name: "asc"}, id: "asc"}]
         });
+        return learnerMappings.map(m => m.dictionary);
     }
 
     async updateUserLanguageDictionaries(orderedDictionaryIds: number[], user: User) {

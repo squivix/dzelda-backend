@@ -9,7 +9,7 @@ export const vocabVariantFieldFetchMap: FieldFetchSpecsMap<VocabVariant> = {
     ttsPronunciations: {
         type: "relation",
         populate: "ttsPronunciations",
-        fieldFetchSpecsMap: ttsPronunciationFieldFetchMap,
+        getFieldFetchSpecsMap: () => ttsPronunciationFieldFetchMap,
         relationType: "to-many"
     },
 };

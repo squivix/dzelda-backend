@@ -3,7 +3,7 @@ import {Notification} from "@/src/models/entities/Notification.js";
 import {ViewDescription} from "@/src/models/viewResolver.js";
 
 class NotificationSerializer extends CustomSerializer<Notification> {
-    static readonly view: ViewDescription = {
+    readonly view: ViewDescription = {
         fields: ["id", "text", "createdDate"]
     }
 

@@ -1,10 +1,10 @@
 import {CustomSerializer} from "@/src/presentation/response/serializers/CustomSerializer.js";
 import {Meaning} from "@/src/models/entities/Meaning.js";
-import {VocabVariantSerializer, vocabVariantSerializer} from "@/src/presentation/response/serializers/VocabVariant/VocabVariantSerializer.js";
+import {vocabVariantSerializer} from "@/src/presentation/response/serializers/VocabVariant/VocabVariantSerializer.js";
 import {ViewDescription} from "@/src/models/viewResolver.js";
 
-export class MeaningSummerySerializer extends CustomSerializer<Meaning> {
-    static readonly view: ViewDescription = {
+class MeaningSummerySerializer extends CustomSerializer<Meaning> {
+    readonly view: ViewDescription = {
         fields: ["id", "text", "learnersCount", "addedOn", "attribution", "vocab", "attributionSource"],
         relations: {
             language: {fields: ["code"]},
@@ -12,7 +12,7 @@ export class MeaningSummerySerializer extends CustomSerializer<Meaning> {
                 fields: [],
                 relations: {user: {fields: ["username"]}}
             },
-            vocabVariant: VocabVariantSerializer.view,
+            vocabVariant: vocabVariantSerializer.view,
         }
     }
 

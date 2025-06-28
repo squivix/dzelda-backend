@@ -21,9 +21,9 @@ export const textFieldFetchMap: FieldFetchSpecsMap<Text> = {
     level: {type: "db-column"},
     isLastInCollection: {type: "formula"},
     pastViewersCount: {type: "formula"},
-    language: {type: "relation", populate: "language", fieldFetchSpecsMap: languageFieldFetchMap, relationType: "to-one"},
-    addedBy: {type: "relation", populate: "addedBy", fieldFetchSpecsMap: profileFieldFieldFetchMap, relationType: "to-one"},
-    collection: {type: "relation", populate: "collection", fieldFetchSpecsMap: collectionFieldFetchMap, relationType: "to-one"},
+    language: {type: "relation", populate: "language", getFieldFetchSpecsMap: () => languageFieldFetchMap, relationType: "to-one"},
+    addedBy: {type: "relation", populate: "addedBy", getFieldFetchSpecsMap: () => profileFieldFieldFetchMap, relationType: "to-one"},
+    collection: {type: "relation", populate: "collection", getFieldFetchSpecsMap: () => collectionFieldFetchMap, relationType: "to-one"},
     vocabsByLevel: {
         type: "annotated",
         annotate: async (texts, context) => {

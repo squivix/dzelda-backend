@@ -10,6 +10,7 @@ import {VocabLevel} from "dzelda-common";
 import {TranslationLanguage} from "@/src/models/entities/TranslationLanguage.js";
 import {AttributionSource} from "@/src/models/entities/AttributionSource.js";
 import {VocabVariant} from "@/src/models/entities/VocabVariant.js";
+import {ViewDescription} from "@/src/models/viewResolver.js";
 
 export class MeaningService {
 
@@ -22,7 +23,7 @@ export class MeaningService {
         this.meaningRepo = this.em.getRepository(Meaning);
     }
 
-    async getMeaningByText(meaningData: { vocab: Vocab; language: TranslationLanguage; text: string }) {
+    async getMeaningByText(meaningData: { vocab: Vocab; language: TranslationLanguage; text: string }, viewDescription: ViewDescription) {
         return await this.meaningRepo.findOne({
             vocab: meaningData.vocab,
             text: meaningData.text,
@@ -30,7 +31,7 @@ export class MeaningService {
         }, {populate: ["addedBy.user", "vocab.language", "vocab.vocabVariants"]});
     }
 
-    async createMeaning(meaningData: { vocab: Vocab, vocabVariant: VocabVariant | null; language: TranslationLanguage; text: string }, user: User) {
+    async createMeaning(meaningData: { vocab: Vocab, vocabVariant: VocabVariant | null; language: TranslationLanguage; text: string }, user: User, viewDescription: ViewDescription) {
         const newMeaning = this.meaningRepo.create({
             text: meaningData.text,
             language: meaningData.language,
@@ -47,7 +48,7 @@ export class MeaningService {
     async getUserMeanings(filters: { vocabId?: number },
                           sort: { sortBy: "text" | "learnersCount", sortOrder: "asc" | "desc" },
                           pagination: { page: number, pageSize: number },
-                          user: User): Promise<[Meaning[], number]> {
+                          user: User, viewDescription: ViewDescription): Promise<[Meaning[], number]> {
         const dbFilters: FilterQuery<Meaning> = {$and: []};
         dbFilters.$and!.push({learners: user.profile});
         if (filters.vocabId)
@@ -67,7 +68,7 @@ export class MeaningService {
         });
     }
 
-    async getTextMeanings(text: Text, user: User | AnonymousUser | null) {
+    async getTextMeanings(text: Text, user: User | AnonymousUser | null, viewDescription: ViewDescription) {
         const meanings = await this.em.find(Meaning, {
             vocab: {textsAppearingIn: text}
         }, {
@@ -93,15 +94,15 @@ export class MeaningService {
         }
     }
 
-    async getUserMeaning(meaningId: number, user: User) {
+    async getUserMeaning(meaningId: number, user: User, viewDescription: ViewDescription) {
         return await this.em.findOne(MapLearnerMeaning, {meaning: meaningId, learner: user.profile});
     }
 
-    async getMeaning(meaningId: number) {
+    async getMeaning(meaningId: number, viewDescription: ViewDescription) {
         return await this.meaningRepo.findOne({id: meaningId}, {populate: ["language", "vocab.language", "addedBy.user", "learnersCount"]});
     }
 
-    async addMeaningToUserLearning(meaning: Meaning, user: User) {
+    async addMeaningToUserLearning(meaning: Meaning, user: User, viewDescription: ViewDescription) {
         const mapping = this.em.create(MapLearnerMeaning, {learner: user.profile, meaning: meaning});
         await this.em.flush();
         await this.em.nativeUpdate(MapLearnerVocab, {
@@ -118,7 +119,7 @@ export class MeaningService {
         await this.em.flush();
     }
 
-    async getAttributionSource(attributionSourceId: number) {
+    async getAttributionSource(attributionSourceId: number, viewDescription: ViewDescription) {
         return this.em.findOne(AttributionSource, {id: attributionSourceId})
     }
 }

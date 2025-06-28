@@ -1,10 +1,10 @@
 import {CustomSerializer} from "@/src/presentation/response/serializers/CustomSerializer.js";
 import {Collection} from "@/src/models/entities/Collection.js";
-import {TextSummarySerializer, textSummarySerializer} from "@/src/presentation/response/serializers/Text/TextSummarySerializer.js";
+import {textSummarySerializer} from "@/src/presentation/response/serializers/Text/TextSummarySerializer.js";
 import {ViewDescription} from "@/src/models/viewResolver.js";
 
 class CollectionSerializer extends CustomSerializer<Collection> {
-    static readonly view: ViewDescription = {
+    readonly view: ViewDescription = {
         fields: ["id", "title", "description", "image", "addedOn", "isPublic", "avgPastViewersCountPerText"],
         relations: {
             language: {
@@ -18,7 +18,7 @@ class CollectionSerializer extends CustomSerializer<Collection> {
                     }
                 }
             },
-            texts: TextSummarySerializer.view,
+            texts: textSummarySerializer.view,
         }
     }
 

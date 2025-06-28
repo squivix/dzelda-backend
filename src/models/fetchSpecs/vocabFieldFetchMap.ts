@@ -13,12 +13,12 @@ export const vocabFieldFetchMap: FieldFetchSpecsMap<Vocab> = {
     isPhrase: {type: "db-column"},
     learnersCount: {type: "formula"},
 
-    language: {type: "relation", populate: "language", fieldFetchSpecsMap: languageFieldFetchMap, relationType: "to-one"},
-    meanings: {type: "relation", populate: "meanings", fieldFetchSpecsMap: meaningFieldFetchMap, relationType: "to-many"},
+    language: {type: "relation", populate: "language", getFieldFetchSpecsMap: () => languageFieldFetchMap, relationType: "to-one"},
+    meanings: {type: "relation", populate: "meanings", getFieldFetchSpecsMap: () => meaningFieldFetchMap, relationType: "to-many"},
     learnerMeanings: {
         type: "relation",
         populate: "learnerMeanings",
-        fieldFetchSpecsMap: meaningFieldFetchMap,
+        getFieldFetchSpecsMap: () => meaningFieldFetchMap,
         relationType: "to-many",
         defaultContextFilter: (context) => {
             if (!context.user || context.user instanceof AnonymousUser)
@@ -29,11 +29,11 @@ export const vocabFieldFetchMap: FieldFetchSpecsMap<Vocab> = {
     ttsPronunciations: {
         type: "relation",
         populate: "ttsPronunciations",
-        fieldFetchSpecsMap: ttsPronunciationFieldFetchMap,
+        getFieldFetchSpecsMap: () => ttsPronunciationFieldFetchMap,
         relationType: "to-many"
     },
-    tags: {type: "relation", populate: "tags", fieldFetchSpecsMap: vocabTagFieldFetchMap, relationType: "to-many"},
-    vocabVariants: {type: "relation", populate: "vocabVariants", fieldFetchSpecsMap: vocabVariantFieldFetchMap, relationType: "to-many"},
+    tags: {type: "relation", populate: "tags", getFieldFetchSpecsMap: () => vocabTagFieldFetchMap, relationType: "to-many"},
+    vocabVariants: {type: "relation", populate: "vocabVariants", getFieldFetchSpecsMap: () => vocabVariantFieldFetchMap, relationType: "to-many"},
 }
 
 

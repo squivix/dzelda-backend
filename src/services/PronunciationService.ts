@@ -3,6 +3,7 @@ import {HumanPronunciation} from "@/src/models/entities/HumanPronunciation.js";
 import {Language} from "@/src/models/entities/Language.js";
 import {Vocab} from "@/src/models/entities/Vocab.js";
 import {TTSPronunciation} from "@/src/models/entities/TTSPronunciation.js";
+import {ViewDescription} from "@/src/models/viewResolver.js";
 
 export class PronunciationService {
     em: EntityManager;
@@ -13,7 +14,7 @@ export class PronunciationService {
 
 
     async getPaginatedHumanPronunciations(filters: { text?: string, languageCode?: string },
-                                          pagination: { page: number, pageSize: number }) {
+                                          pagination: { page: number, pageSize: number }, viewDescription: ViewDescription) {
         const dbFilters: FilterQuery<HumanPronunciation> = {$and: []};
         if (filters.languageCode !== undefined)
             dbFilters.$and!.push({language: {code: filters.languageCode}});
@@ -30,14 +31,14 @@ export class PronunciationService {
         });
     }
 
-    async getHumanPronunciations(text: string, language: Language) {
+    async getHumanPronunciations(text: string, language: Language, viewDescription: ViewDescription) {
         return await this.em.find(HumanPronunciation, {
             parsedText: {$ilike: text},
             language: language
         }, {populate: ["language"]});
     }
 
-    async getVocabTTSPronunciations(vocab: Vocab) {
+    async getVocabTTSPronunciations(vocab: Vocab, viewDescription: ViewDescription) {
         return await this.em.find(TTSPronunciation, {vocab}, {populate: ["voice"]});
     }
 }

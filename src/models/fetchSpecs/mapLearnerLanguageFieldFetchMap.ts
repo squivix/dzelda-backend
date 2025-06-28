@@ -7,8 +7,8 @@ import {translationLanguageFieldFetchMap} from "@/src/models/fetchSpecs/translat
 export const mapLearnerLanguageFieldFetchMap: FieldFetchSpecsMap<MapLearnerLanguage> = {
     startedLearningOn: {type: "db-column"},
     lastOpened: {type: "db-column"},
-    language: {type: "relation", populate: "language", relationType: "to-one", fieldFetchSpecsMap: languageFieldFetchMap},
-    preferredTtsVoice: {type: "relation", populate: "preferredTtsVoice", relationType: "to-one", fieldFetchSpecsMap: ttsVoiceFieldFetchMap},
-    preferredTranslationLanguages: {type: "relation", populate: "preferredTranslationLanguages", relationType: "to-many", fieldFetchSpecsMap: translationLanguageFieldFetchMap},
+    language: {type: "relation", populate: "language", relationType: "to-one", getFieldFetchSpecsMap: () => languageFieldFetchMap},
+    preferredTtsVoice: {type: "relation", populate: "preferredTtsVoice", relationType: "to-one", getFieldFetchSpecsMap: () => ttsVoiceFieldFetchMap},
+    preferredTranslationLanguages: {type: "relation", populate: "preferredTranslationLanguages", relationType: "to-many", getFieldFetchSpecsMap: () => translationLanguageFieldFetchMap},
 
 }

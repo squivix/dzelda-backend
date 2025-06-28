@@ -19,6 +19,7 @@ import {FileUploadRequest} from "@/src/models/entities/FileUploadRequest.js";
 import {Notification} from "@/src/models/entities/Notification.js";
 import {PendingJob} from "@/src/models/entities/PendingJob.js";
 import {checkPendingJobs} from "@/src/utils/pending-jobs/checkPendingJobs.js";
+import {ViewDescription} from "@/src/models/viewResolver.js";
 
 
 export class UserService {
@@ -34,7 +35,7 @@ export class UserService {
         this.languageRepo = this.em.getRepository(Language);
     }
 
-    async createUser(username: string, email: string, password: string) {
+    async createUser(username: string, email: string, password: string, viewDescription: ViewDescription) {
         // emailEncrypter.encrypt(email)
         const newUser = new User(username, email, await passwordHasher.hash(password), false);
         const newProfile = new Profile(newUser);
@@ -73,7 +74,7 @@ export class UserService {
         }
     }
 
-    async getUser(username: "me" | string, authenticatedUser: User | AnonymousUser | null) {
+    async getUser(username: "me" | string, authenticatedUser: User | AnonymousUser | null, viewDescription: ViewDescription) {
         let user: User | null;
         if (username == "me") {
             if (!authenticatedUser || authenticatedUser instanceof AnonymousUser)
@@ -82,6 +83,12 @@ export class UserService {
         } else
             user = await this.em.findOne(User, {username: username}, {populate: ["profile", "profile.languagesLearning"]});
         return user;
+    }
+
+    async getUserNotifications(user: User) {
+        return await this.em.find(Notification, {
+            recipient: user.profile
+        }, {orderBy: {createdDate: "desc"}});
     }
 
     async getLoginSession(sessionToken: string) {
@@ -97,10 +104,6 @@ export class UserService {
 
     async deleteLoginSession(session: Session) {
         await this.em.nativeDelete(Session, {id: session.id});
-    }
-
-    async findUser(where: FilterQuery<User>, fields: EntityField<User>[] = ["id", "email", "username"]) {
-        return await this.userRepo.findOne(where, {fields: fields as any});
     }
 
     async generateEmailConfirmToken(tokenData: { user: User, email: string }) {
@@ -207,7 +210,7 @@ export class UserService {
         await this.em.flush();
     }
 
-    async updateUserProfile(user: User, updatedProfileData: { bio: string, profilePicture?: string }) {
+    async updateUserProfile(user: User, updatedProfileData: { bio: string, profilePicture?: string }, viewDescription: ViewDescription) {
         user.profile.bio = updatedProfileData.bio;
         if (updatedProfileData.profilePicture !== undefined)
             user.profile.profilePicture = updatedProfileData.profilePicture;
@@ -253,18 +256,16 @@ export class UserService {
         await checkPendingJobs(pendingJobs, this.em)
     }
 
-    async getUserNotifications(user: User) {
-        return await this.em.find(Notification, {
-            recipient: user.profile
-        }, {orderBy: {createdDate: "desc"}});
+    async deleteUserNotification(notification: Notification) {
+        this.em.remove(notification);
+        await this.em.flush();
+    }
+
+    async findUser(where: FilterQuery<User>, fields: EntityField<User>[] = ["id", "email", "username"]) {
+        return await this.userRepo.findOne(where, {fields: fields as any});
     }
 
     async findUserNotification(where: FilterQuery<Notification>) {
         return this.em.findOne(Notification, where);
-    }
-
-    async deleteUserNotification(notification: Notification) {
-        this.em.remove(notification);
-        await this.em.flush();
     }
 }

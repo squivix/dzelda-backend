@@ -3,7 +3,7 @@ import {Collection} from "@/src/models/entities/Collection.js";
 import {CollectionRepo} from "@/src/models/repos/CollectionRepo.js";
 import {AnonymousUser, User} from "@/src/models/entities/auth/User.js";
 import {Language} from "@/src/models/entities/Language.js";
-import {defaultVocabsByLevel, LanguageLevel} from "dzelda-common";
+import {LanguageLevel} from "dzelda-common";
 import {Text} from "@/src/models/entities/Text.js";
 import {TextRepo} from "@/src/models/repos/TextRepo.js";
 import {QueryOrderMap} from "@mikro-orm/core/enums.js";
@@ -14,6 +14,8 @@ import {TextService} from "@/src/services/TextService.js";
 import {PendingJob} from "@/src/models/entities/PendingJob.js";
 import {collectionVisibilityFilter} from "@/src/filters/collectionVisibilityFilter.js";
 import {textVisibilityFilter} from "@/src/filters/textVisibilityFilter.js"
+import {annotateFields, buildFetchPlan, ViewDescription} from "@/src/models/viewResolver.js";
+import {collectionFieldFetchMap} from "@/src/models/fetchSpecs/collectionFieldFetchMap.js";
 
 export class CollectionService {
     em: SqlEntityManager;
@@ -31,7 +33,7 @@ export class CollectionService {
     }, sort: {
         sortBy: "title" | "createdDate" | "avgPastViewersCountPerText",
         sortOrder: "asc" | "desc"
-    }, pagination: { page: number, pageSize: number }, user: User | AnonymousUser | null): Promise<[Collection[], number]> {
+    }, pagination: { page: number, pageSize: number }, user: User | AnonymousUser | null, viewDescription: ViewDescription): Promise<[Collection[], number]> {
         const dbFilters: FilterQuery<Collection> = {$and: []};
         dbFilters.$and!.push(collectionVisibilityFilter(user));
 
@@ -53,15 +55,15 @@ export class CollectionService {
             dbOrderBy.push({avgPastViewersCountPerText: sort.sortOrder});
         dbOrderBy.push({id: "asc"});
 
+        const {fields: dbFields, populate: dbPopulate, annotatedFields} = buildFetchPlan(viewDescription, collectionFieldFetchMap, {user, em: this.em});
         const [collections, totalCount] = await this.collectionRepo.findAndCount(dbFilters, {
-            populate: ["language", "addedBy.user"],
+            fields: dbFields as any,
+            populate: dbPopulate as any,
             orderBy: dbOrderBy,
             limit: pagination.pageSize,
             offset: pagination.pageSize * (pagination.page - 1),
         });
-        if (user && !(user instanceof AnonymousUser))
-            await this.collectionRepo.annotateCollectionsWithUserData(collections, user);
-
+        await annotateFields(collections, annotatedFields, collectionFieldFetchMap);
         return [collections, totalCount];
     }
 
@@ -72,8 +74,8 @@ export class CollectionService {
             isPublic: boolean,
             level?: LanguageLevel,
         }>
-    }, user: User) {
-        const newCollection = this.collectionRepo.create({
+    }, user: User, viewDescription?: ViewDescription) {
+        let newCollection = this.collectionRepo.create({
             title: fields.title,
             addedBy: user.profile,
             language: fields.language,
@@ -81,8 +83,6 @@ export class CollectionService {
             image: fields.image,
             isPublic: fields.isPublic
         });
-        newCollection.vocabsByLevel = defaultVocabsByLevel();
-        newCollection.isBookmarked = false;
         await this.em.flush();
 
         if (fields.texts) {
@@ -96,7 +96,6 @@ export class CollectionService {
                     isPublic: textData.isPublic,
                     level: textData.level,
                 }, user, {populate: false, parsingPriority: 1});
-
             }
             await this.em.insert(PendingJob, {
                 jobType: "bulk-import-collection",
@@ -104,21 +103,24 @@ export class CollectionService {
                 jobParams: {collectionId: newCollection.id}
             });
         }
-        return newCollection;
+        if (!viewDescription)
+            return newCollection;
+        return (await this.getCollection(newCollection.id, user, viewDescription))!;
     }
 
-    async getCollection(collectionId: number, user: User | AnonymousUser | null) {
+    async getCollection(collectionId: number, user: User | AnonymousUser | null, viewDescription: ViewDescription) {
+        const {fields: dbFields, populate: dbPopulate, annotatedFields} = buildFetchPlan(viewDescription, collectionFieldFetchMap, {user, em: this.em});
         const collection = await this.collectionRepo.findOne({
             $and: [{id: collectionId}, collectionVisibilityFilter(user)]
-        }, {populate: ["language", "addedBy", "addedBy.user"]});
-        if (collection) {
-            await collection.texts.init({orderBy: {orderInCollection: "asc"}, populate: ["orderInCollection", "addedBy.user"]});
-            if (user && !(user instanceof AnonymousUser)) {
-                await this.collectionRepo.annotateCollectionsWithUserData([collection], user);
-                await this.textRepo.annotateTextsWithUserData(collection.texts.getItems(), user);
-            }
-        }
-        return collection;
+        }, {
+            fields: dbFields as any,
+            populate: dbPopulate as any,
+            populateOrderBy: [{texts: {orderInCollection: "asc"}}, {texts: {id: "asc"}}],
+            refresh: true
+        });
+        if (collection)
+            await annotateFields([collection], annotatedFields, collectionFieldFetchMap);
+        return collection as Collection;
     }
 
     async updateCollection(collection: Collection, updatedCollectionData: {
@@ -127,7 +129,7 @@ export class CollectionService {
         description: string;
         image?: string;
         textsOrder: number[]
-    }, user: User) {
+    }, user: User, viewDescription: ViewDescription) {
         collection.title = updatedCollectionData.title;
         collection.description = updatedCollectionData.description;
         if (updatedCollectionData.isPublic !== undefined)
@@ -135,17 +137,15 @@ export class CollectionService {
         if (updatedCollectionData.image !== undefined)
             collection.image = updatedCollectionData.image;
 
-        const idToOrder: Record<number, number> = updatedCollectionData.textsOrder.reduce((acc, curr, index) => ({
-            ...acc,
-            [curr]: index
-        }), {});
+        const idToOrder: Record<number, number> = {};
+        for (let index = 0; index < updatedCollectionData.textsOrder.length; index++)
+            idToOrder[updatedCollectionData.textsOrder[index]] = index;
         const collectionTexts = collection.texts.getItems();
         collectionTexts.forEach(l => l.orderInCollection = idToOrder[l.id]);
         this.em.persist(collection);
         this.em.persist(collectionTexts);
         await this.em.flush();
-
-        return (await this.getCollection(collection.id, user))!;
+        return (await this.getCollection(collection.id, user, viewDescription))!;
     }
 
     async deleteCollection(collection: Collection, options: { cascadeTexts: boolean }) {
@@ -157,16 +157,26 @@ export class CollectionService {
     }
 
     async getNextTextInCollection(collection: Collection, textId: number, user: User | AnonymousUser | null) {
-        const queryBuilder = this.textRepo.createQueryBuilder("l0");
+        const textQueryBuilder = this.textRepo.createQueryBuilder("l0");
         const subQueryBuilder = this.textRepo.createQueryBuilder("l1").select("orderInCollection").where({id: textId}).getKnexQuery();
 
-        return await queryBuilder.select("*")
+        return await textQueryBuilder.select("*")
             .where({collection: collection.id})
             .andWhere({"orderInCollection": {$gt: raw(`(${subQueryBuilder})`)}})
             .andWhere(textVisibilityFilter(user) as QBFilterQuery<Text>)
             .orderBy({orderInCollection: "asc"})
             .limit(1)
             .execute("get");
+    }
+
+    async addCollectionToUserBookmarks(collection: Collection, user: User) {
+        this.em.create(CollectionBookmark, {bookmarker: user.profile, collection: collection});
+        await this.em.flush();
+        collection.isBookmarked = true;
+    }
+
+    async removeCollectionFromUserBookmarks(collection: Collection, user: User) {
+        await this.em.nativeDelete(CollectionBookmark, {collection: collection, bookmarker: user.profile}, {});
     }
 
     async findCollection(where: FilterQuery<Collection>, fields: EntityField<Collection>[] = ["id", "addedBy", "isPublic"]) {
@@ -176,16 +186,4 @@ export class CollectionService {
     async findBookMarkerCollectionMapping(where: FilterQuery<CollectionBookmark>, fields: EntityField<CollectionBookmark>[] = ["collection"]) {
         return await this.em.findOne(CollectionBookmark, where, {fields}) as CollectionBookmark;
     }
-
-    async addCollectionToUserBookmarks(collection: Collection, user: User) {
-        const bookmark = this.em.create(CollectionBookmark, {bookmarker: user.profile, collection: collection});
-        await this.em.flush();
-        await this.collectionRepo.annotateCollectionsWithUserData([collection], user);
-        return bookmark;
-    }
-
-    async removeCollectionFromUserBookmarks(collection: Collection, user: User) {
-        await this.em.nativeDelete(CollectionBookmark, {collection: collection, bookmarker: user.profile}, {});
-    }
-
 }

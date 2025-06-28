@@ -1,13 +1,13 @@
 import {CustomSerializer} from "@/src/presentation/response/serializers/CustomSerializer.js";
 import {TTSPronunciation} from "@/src/models/entities/TTSPronunciation.js";
-import {TTSVoiceSerializer, ttsVoiceSerializer} from "@/src/presentation/response/serializers/TTSVoice/TtsVoiceSerializer.js";
+import {ttsVoiceSerializer} from "@/src/presentation/response/serializers/TTSVoice/TtsVoiceSerializer.js";
 import {ViewDescription} from "@/src/models/viewResolver.js";
 
 class TTSPronunciationSerializer extends CustomSerializer<TTSPronunciation> {
-    static readonly view: ViewDescription = {
+    readonly view: ViewDescription = {
         fields: ["id", "url", "addedOn", "vocab", "vocabVariant"],
         relations: {
-            voice: TTSVoiceSerializer.view
+            voice: ttsVoiceSerializer.view
         }
     }
 

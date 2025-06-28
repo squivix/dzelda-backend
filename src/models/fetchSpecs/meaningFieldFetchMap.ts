@@ -12,9 +12,9 @@ export const meaningFieldFetchMap: FieldFetchSpecsMap<Meaning> = {
     learnersCount: {type: "formula"},
     addedOn: {type: "db-column"},
     attribution: {type: "db-column"},
-    vocab: {type: "relation", populate: "vocab", fieldFetchSpecsMap: vocabFieldFetchMap, relationType: "to-one"},
-    addedBy: {type: "relation", populate: "addedBy", fieldFetchSpecsMap: profileFieldFieldFetchMap, relationType: "to-one"},
-    language: {type: "relation", populate: "language", fieldFetchSpecsMap: languageFieldFetchMap, relationType: "to-one"},
-    attributionSource: {type: "relation", populate: "attributionSource", fieldFetchSpecsMap: attributionSourceFieldFetchMap, relationType: "to-one"},
-    vocabVariant: {type: "relation", populate: "vocabVariant", fieldFetchSpecsMap: vocabVariantFieldFetchMap, relationType: "to-one"}
+    vocab: {type: "relation", populate: "vocab", getFieldFetchSpecsMap: () => vocabFieldFetchMap, relationType: "to-one"},
+    addedBy: {type: "relation", populate: "addedBy", getFieldFetchSpecsMap: () => profileFieldFieldFetchMap, relationType: "to-one"},
+    language: {type: "relation", populate: "language", getFieldFetchSpecsMap: () => languageFieldFetchMap, relationType: "to-one"},
+    attributionSource: {type: "relation", populate: "attributionSource", getFieldFetchSpecsMap: () => attributionSourceFieldFetchMap, relationType: "to-one"},
+    vocabVariant: {type: "relation", populate: "vocabVariant", getFieldFetchSpecsMap: () => vocabVariantFieldFetchMap, relationType: "to-one"}
 }

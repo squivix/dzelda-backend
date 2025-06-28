@@ -18,6 +18,7 @@ import {collectionSerializer} from "@/src/presentation/response/serializers/Coll
 import {collectionSummarySerializer} from "@/src/presentation/response/serializers/Collection/CollectionSummarySerializer.js";
 import {collectionLoggedInSerializer} from "@/src/presentation/response/serializers/Collection/CollectionLoggedInSerializer.js";
 import {collectionSummaryLoggedInSerializer} from "@/src/presentation/response/serializers/Collection/CollectionSummaryLoggedInSerializer.js";
+import {collectionVisibilityFilter} from "@/src/filters/collectionVisibilityFilter.js";
 
 class CollectionController {
     async getCollections(request: FastifyRequest, reply: FastifyReply) {
@@ -36,6 +37,7 @@ class CollectionController {
                 throw new UnauthenticatedAPIError(request.user as AnonymousUser | null);
             queryParams.addedBy = request.user?.username;
         }
+        const serializer = request.isLoggedIn ? collectionSummaryLoggedInSerializer : collectionSummarySerializer;
         const filters = {
             languageCode: queryParams.languageCode,
             addedBy: queryParams.addedBy,
@@ -44,12 +46,12 @@ class CollectionController {
         const sort = {sortBy: queryParams.sortBy, sortOrder: queryParams.sortOrder};
         const pagination = {page: queryParams.page, pageSize: queryParams.pageSize};
         const collectionService = new CollectionService(request.em);
-        const [collections, recordsCount] = await collectionService.getPaginatedCollections(filters, sort, pagination, request.user);
+        const [collections, recordsCount] = await collectionService.getPaginatedCollections(filters, sort, pagination, request.user, serializer.view);
         reply.send({
             page: pagination.page,
             pageSize: pagination.pageSize,
             pageCount: Math.ceil(recordsCount / pagination.pageSize),
-            data: (request.isLoggedIn ? collectionSummaryLoggedInSerializer : collectionSummarySerializer).serializeList(collections)
+            data: serializer.serializeList(collections)
         });
     }
 
@@ -68,7 +70,7 @@ class CollectionController {
             })).optional()
         });
         const body = bodyValidator.parse(request.body);
-
+        const serializer = collectionSummaryLoggedInSerializer;
         const languageService = new LanguageService(request.em);
         const language = await languageService.findLearningLanguage({code: body.languageCode});
         if (!language)
@@ -84,23 +86,20 @@ class CollectionController {
             isPublic: body.isPublic,
             image: body.image,
             texts: body.texts,
-        }, request.user as User);
-        reply.status(201).send(collectionSummaryLoggedInSerializer.serialize(collection));
+        }, request.user as User, serializer.view);
+        reply.status(201).send(serializer.serialize(collection));
     }
 
     async getCollection(request: FastifyRequest, reply: FastifyReply) {
         const pathParamsValidator = z.object({collectionId: numericStringValidator});
         const pathParams = pathParamsValidator.parse(request.params);
-
+        const serializer = request.isLoggedIn ? collectionLoggedInSerializer : collectionSerializer;
         const collectionService = new CollectionService(request.em);
-        const collection = await collectionService.getCollection(pathParams.collectionId, request.user);
+        const collection = await collectionService.getCollection(pathParams.collectionId, request.user, serializer.view);
 
         if (!collection)
             throw new NotFoundAPIError("Collection");
-        if (request.user && !(request.user instanceof AnonymousUser))
-            reply.status(200).send(collectionLoggedInSerializer.serialize(collection));
-        else
-            reply.status(200).send(collectionSerializer.serialize(collection));
+        reply.status(200).send(serializer.serialize(collection));
     }
 
     async updateCollection(request: FastifyRequest, reply: FastifyReply) {
@@ -115,7 +114,7 @@ class CollectionController {
             image: z.string().optional(),
         });
         const body = bodyValidator.parse(request.body);
-
+        const serializer = collectionLoggedInSerializer;
         const collectionService = new CollectionService(request.em);
         const collection = await collectionService.findCollection(pathParams.collectionId, ["id", "addedBy", "texts", "isPublic"]);
 
@@ -137,8 +136,8 @@ class CollectionController {
             image: body.image,
             textsOrder: body.textsOrder,
             isPublic: body.isPublic
-        }, request.user as User);
-        reply.status(200).send(collectionLoggedInSerializer.serialize(updatedCollection));
+        }, request.user as User, serializer.view);
+        reply.status(200).send(serializer.serialize(updatedCollection));
     }
 
     async deleteCollection(request: FastifyRequest, reply: FastifyReply) {
@@ -151,7 +150,7 @@ class CollectionController {
 
         const user = request.user as User;
         const collectionService = new CollectionService(request.em);
-        const collection = await collectionService.getCollection(pathParams.collectionId, request.user);
+        const collection = await collectionService.findCollection({id: pathParams.collectionId, ...collectionVisibilityFilter(user) as object});
 
         if (!collection)
             throw new NotFoundAPIError("Collection");
@@ -174,6 +173,7 @@ class CollectionController {
         const queryParams = queryParamsValidator.parse(request.query);
         if (queryParams.addedBy == "me")
             queryParams.addedBy = request.user!.username;
+        const serializer = collectionSummaryLoggedInSerializer;
         const filters = {
             languageCode: queryParams.languageCode,
             addedBy: queryParams.addedBy,
@@ -183,12 +183,12 @@ class CollectionController {
         const sort = {sortBy: queryParams.sortBy, sortOrder: queryParams.sortOrder};
         const pagination = {page: queryParams.page, pageSize: queryParams.pageSize};
         const collectionService = new CollectionService(request.em);
-        const [collections, recordsCount] = await collectionService.getPaginatedCollections(filters, sort, pagination, request.user);
+        const [collections, recordsCount] = await collectionService.getPaginatedCollections(filters, sort, pagination, request.user, serializer.view);
         reply.send({
             page: pagination.page,
             pageSize: pagination.pageSize,
             pageCount: Math.ceil(recordsCount / pagination.pageSize),
-            data: collectionSummaryLoggedInSerializer.serializeList(collections)
+            data: serializer.serializeList(collections)
         });
     }
 
@@ -196,20 +196,20 @@ class CollectionController {
         const user = request.user as User;
         const bodyValidator = z.object({collectionId: z.number().min(0)});
         const body = bodyValidator.parse(request.body);
+        const serializer = collectionLoggedInSerializer;
 
         const collectionService = new CollectionService(request.em);
-        const collection = await collectionService.getCollection(body.collectionId, request.user);
+        const collection = await collectionService.getCollection(body.collectionId, request.user, serializer.view);
         if (!collection)
             throw new ValidationAPIError({collection: "Not found"});
         if (!(request.user as User).profile.languagesLearning.contains(collection.language))
             throw new ValidationAPIError({collection: "not in a language the user is learning"});
+
         const existingCollectionMapping = await collectionService.findBookMarkerCollectionMapping({collection: collection, bookmarker: user.profile});
-        if (existingCollectionMapping) {
-            reply.status(200).send(collectionLoggedInSerializer.serialize(existingCollectionMapping.collection));
-            return;
-        }
-        const newCollectionMapping = await collectionService.addCollectionToUserBookmarks(collection, request.user as User);
-        reply.status(201).send(collectionLoggedInSerializer.serialize(newCollectionMapping.collection));
+        if (!existingCollectionMapping)
+            await collectionService.addCollectionToUserBookmarks(collection, request.user as User);
+
+        reply.status(existingCollectionMapping ? 200 : 201).send(serializer.serialize(collection));
     }
 
     async removeCollectionFromUserBookmarks(request: FastifyRequest, reply: FastifyReply) {
@@ -218,11 +218,15 @@ class CollectionController {
         const pathParams = pathParamsValidator.parse(request.params);
 
         const collectionService = new CollectionService(request.em);
-        const collection = await collectionService.getCollection(pathParams.collectionId, request.user);
+
+        const collection = await collectionService.findCollection(pathParams.collectionId);
         if (!collection)
             throw new NotFoundAPIError("Collection");
-        if (!collection.isBookmarked)
+
+        const existingCollectionMapping = await collectionService.findBookMarkerCollectionMapping({collection: collection, bookmarker: user.profile});
+        if (!existingCollectionMapping)
             throw new APIError(404, "Collection is not bookmarked");
+
         await collectionService.removeCollectionFromUserBookmarks(collection, user);
         reply.status(204).send();
     }

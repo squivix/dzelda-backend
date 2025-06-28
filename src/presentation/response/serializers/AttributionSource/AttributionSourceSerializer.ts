@@ -3,8 +3,8 @@ import {AttributionSource} from "@/src/models/entities/AttributionSource.js";
 import {ViewDescription} from "@/src/models/viewResolver.js";
 
 
-export class AttributionSourceSerializer extends CustomSerializer<AttributionSource> {
-    static readonly view: ViewDescription = {
+class AttributionSourceSerializer extends CustomSerializer<AttributionSource> {
+    readonly view: ViewDescription = {
         fields: ["id", "name", "url", "logoUrl"]
     }
 
