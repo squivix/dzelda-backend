@@ -40,6 +40,12 @@ export class Text extends CustomBaseEntity {
     @Property({type: types.boolean, default: false})
     isProcessing: boolean = false;
 
+    @Property({type: types.integer, nullable: true, default: null})
+    orderInCollection: number | null = null;
+
+    @Property({type: types.datetime, defaultRaw: "now()"})
+    addedOn!: Date;
+
     @ManyToOne({entity: () => Language, inversedBy: (language) => language.texts, deleteRule: "cascade", updateRule: "cascade"})
     language!: Language;
 
@@ -55,11 +61,6 @@ export class Text extends CustomBaseEntity {
     @Enum({items: () => LanguageLevel, type: types.enum, default: LanguageLevel.ADVANCED_1})
     level: LanguageLevel = LanguageLevel.ADVANCED_1;
 
-    @Property({type: types.integer, nullable: true, default: null})
-    orderInCollection: number | null = null;
-
-    @Property({type: types.datetime, defaultRaw: "now()"})
-    addedOn!: Date;
 
     @Property({type: types.boolean, default: false})
     isRemovedByMods!: boolean;

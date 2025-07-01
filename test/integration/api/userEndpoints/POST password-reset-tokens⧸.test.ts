@@ -1,5 +1,5 @@
 import {describe, expect, test, TestContext, vi} from "vitest";
-import {fetchRequest, parseUrlQueryString} from "@/test/integration/utils.js";
+import {fetchRequest, parseUrlQueryString} from "@/test/integration/integrationTestUtils.js";
 import {BASE_URL, PASSWORD_RESET_TOKEN_LENGTH} from "@/src/constants.js";
 import {emailTransporter} from "@/src/nodemailer.config.js";
 import {PasswordResetToken} from "@/src/models/entities/auth/PasswordResetToken.js";
@@ -27,7 +27,7 @@ describe("POST password-reset-tokens/", function () {
         });
 
         const newlyCreatedToken = await context.em.findOne(PasswordResetToken, {user});
-        expect(response.statusCode).to.equal(204);
+        expect(response.statusCode).toEqual(204);
 
         expect(newlyCreatedToken).not.toBeNull();
         expect(sendMailSpy).toHaveBeenCalledOnce();
@@ -61,7 +61,7 @@ describe("POST password-reset-tokens/", function () {
         });
 
         const userTokens = await context.em.find(PasswordResetToken, {user});
-        expect(response.statusCode).to.equal(204);
+        expect(response.statusCode).toEqual(204);
         expect(userTokens).toHaveLength(1);
         const newlyCreatedToken = userTokens[0];
         expect(await context.em.findOne(PasswordResetToken, {token: oldToken.token})).toBeNull();
@@ -89,7 +89,7 @@ describe("POST password-reset-tokens/", function () {
             email: fakeUser.email
         });
 
-        expect(response.statusCode).to.equal(204);
+        expect(response.statusCode).toEqual(204);
         expect(sendMailSpy).not.toHaveBeenCalled();
     });
     test<TestContext>("If username and email, do not match, do not create a token or send an email, return 204", async (context) => {
@@ -102,7 +102,7 @@ describe("POST password-reset-tokens/", function () {
             email: otherUser.email
         });
 
-        expect(response.statusCode).to.equal(204);
+        expect(response.statusCode).toEqual(204);
         expect(await context.em.findOne(PasswordResetToken, {user})).toBeNull();
         expect(await context.em.findOne(PasswordResetToken, {user: otherUser})).toBeNull();
         expect(sendMailSpy).not.toHaveBeenCalled();

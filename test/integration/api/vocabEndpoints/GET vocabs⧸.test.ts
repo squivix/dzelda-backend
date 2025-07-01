@@ -1,10 +1,10 @@
 import {describe, expect, test, TestContext} from "vitest";
 import {InjectOptions} from "light-my-request";
-import {buildQueryString, createComparator, fetchRequest} from "@/test/integration/utils.js";
+import {buildQueryString, createComparator, fetchRequest} from "@/test/integration/integrationTestUtils.js";
 import {Vocab} from "@/src/models/entities/Vocab.js";
-import {vocabSerializer} from "@/src/presentation/response/serializers/entities/VocabSerializer.js";
 import {randomCase} from "@/test/utils.js";
 import {faker} from "@faker-js/faker";
+import {vocabSerializer} from "@/src/presentation/response/serializers/Vocab/VocabSerializer.js";
 
 /**{@link VocabController#getVocabs}*/
 describe("GET vocabs/", () => {
@@ -27,7 +27,7 @@ describe("GET vocabs/", () => {
         const response = await makeRequest({});
         const recordsCount = expectedVocabs.length;
 
-        expect(response.statusCode).to.equal(200);
+        expect(response.statusCode).toEqual(200);
         expect(response.json()).toEqual({
             page: queryDefaults.pagination.page,
             pageSize: queryDefaults.pagination.pageSize,
@@ -46,7 +46,7 @@ describe("GET vocabs/", () => {
 
                 const response = await makeRequest({languageCode: language1.code});
                 const recordsCount = expectedVocabs.length;
-                expect(response.statusCode).to.equal(200);
+                expect(response.statusCode).toEqual(200);
                 expect(response.json()).toEqual({
                     page: queryDefaults.pagination.page,
                     pageSize: queryDefaults.pagination.pageSize,
@@ -60,7 +60,7 @@ describe("GET vocabs/", () => {
 
                 const response = await makeRequest({languageCode: language.code});
 
-                expect(response.statusCode).to.equal(200);
+                expect(response.statusCode).toEqual(200);
                 expect(response.json()).toEqual({
                     page: queryDefaults.pagination.page,
                     pageSize: queryDefaults.pagination.pageSize,
@@ -71,7 +71,7 @@ describe("GET vocabs/", () => {
             test<TestContext>("If language filter is invalid return 400", async (context) => {
                 const response = await makeRequest({languageCode: 12345});
 
-                expect(response.statusCode).to.equal(400);
+                expect(response.statusCode).toEqual(400);
             });
         });
         describe("test searchQuery filter", () => {
@@ -91,7 +91,7 @@ describe("GET vocabs/", () => {
                 const response = await makeRequest({searchQuery: searchQuery});
 
                 const recordsCount = expectedVocabs.length;
-                expect(response.statusCode).to.equal(200);
+                expect(response.statusCode).toEqual(200);
                 expect(response.json()).toEqual({
                     page: queryDefaults.pagination.page,
                     pageSize: queryDefaults.pagination.pageSize,
@@ -105,7 +105,7 @@ describe("GET vocabs/", () => {
 
                 const response = await makeRequest({searchQuery: faker.random.alpha({count: 200})});
 
-                expect(response.statusCode).to.equal(200);
+                expect(response.statusCode).toEqual(200);
                 expect(response.json()).toEqual({
                     page: queryDefaults.pagination.page,
                     pageSize: queryDefaults.pagination.pageSize,
@@ -116,7 +116,7 @@ describe("GET vocabs/", () => {
             test<TestContext>("If searchQuery is invalid return 400", async (context) => {
                 const response = await makeRequest({searchQuery: faker.random.alpha({count: 300})});
 
-                expect(response.statusCode).to.equal(400);
+                expect(response.statusCode).toEqual(400);
             });
         });
     });
@@ -132,7 +132,7 @@ describe("GET vocabs/", () => {
 
                 const recordsCount = expectedVocabs.length;
 
-                expect(response.statusCode).to.equal(200);
+                expect(response.statusCode).toEqual(200);
                 expect(response.json()).toEqual({
                     page: queryDefaults.pagination.page,
                     pageSize: queryDefaults.pagination.pageSize,
@@ -152,7 +152,7 @@ describe("GET vocabs/", () => {
                 const response = await makeRequest({sortBy: "learnersCount"});
                 const recordsCount = expectedVocabs.length;
 
-                expect(response.statusCode).to.equal(200);
+                expect(response.statusCode).toEqual(200);
                 expect(response.json()).toEqual({
                     page: queryDefaults.pagination.page,
                     pageSize: queryDefaults.pagination.pageSize,
@@ -172,7 +172,7 @@ describe("GET vocabs/", () => {
 
                 const recordsCount = expectedVocabs.length;
 
-                expect(response.statusCode).to.equal(200);
+                expect(response.statusCode).toEqual(200);
                 expect(response.json()).toEqual({
                     page: queryDefaults.pagination.page,
                     pageSize: queryDefaults.pagination.pageSize,
@@ -182,7 +182,7 @@ describe("GET vocabs/", () => {
             });
             test<TestContext>("If sortBy is invalid return 400", async (context) => {
                 const response = await makeRequest({sortBy: "popularity"});
-                expect(response.statusCode).to.equal(400);
+                expect(response.statusCode).toEqual(400);
             });
         });
         describe("test sortOrder", () => {
@@ -196,7 +196,7 @@ describe("GET vocabs/", () => {
 
                 const recordsCount = expectedVocabs.length;
 
-                expect(response.statusCode).to.equal(200);
+                expect(response.statusCode).toEqual(200);
                 expect(response.json()).toEqual({
                     page: queryDefaults.pagination.page,
                     pageSize: queryDefaults.pagination.pageSize,
@@ -214,7 +214,7 @@ describe("GET vocabs/", () => {
 
                 const recordsCount = expectedVocabs.length;
 
-                expect(response.statusCode).to.equal(200);
+                expect(response.statusCode).toEqual(200);
                 expect(response.json()).toEqual({
                     page: queryDefaults.pagination.page,
                     pageSize: queryDefaults.pagination.pageSize,
@@ -224,7 +224,7 @@ describe("GET vocabs/", () => {
             });
             test<TestContext>("If sortOrder is invalid return 400", async (context) => {
                 const response = await makeRequest({sortOrder: "rising"});
-                expect(response.statusCode).to.equal(400);
+                expect(response.statusCode).toEqual(400);
             });
         });
     });
@@ -240,7 +240,7 @@ describe("GET vocabs/", () => {
 
                 const response = await makeRequest({page, pageSize});
 
-                expect(response.statusCode).to.equal(200);
+                expect(response.statusCode).toEqual(200);
                 expect(response.json()).toEqual({
                     page: page,
                     pageSize: pageSize,
@@ -259,7 +259,7 @@ describe("GET vocabs/", () => {
 
                 const response = await makeRequest({page, pageSize});
 
-                expect(response.statusCode).to.equal(200);
+                expect(response.statusCode).toEqual(200);
                 expect(response.json()).toEqual({
                     page: page,
                     pageSize: pageSize,
@@ -279,7 +279,7 @@ describe("GET vocabs/", () => {
 
                 const response = await makeRequest({page, pageSize});
 
-                expect(response.statusCode).to.equal(200);
+                expect(response.statusCode).toEqual(200);
                 expect(response.json()).toEqual({
                     page: page,
                     pageSize: pageSize,
@@ -298,7 +298,7 @@ describe("GET vocabs/", () => {
 
                 const response = await makeRequest({page, pageSize});
 
-                expect(response.statusCode).to.equal(200);
+                expect(response.statusCode).toEqual(200);
                 expect(response.json()).toEqual({
                     page: page,
                     pageSize: pageSize,
@@ -310,12 +310,12 @@ describe("GET vocabs/", () => {
                 test<TestContext>("If page is less than 1 return 400", async (context) => {
                     const response = await makeRequest({page: 0, pageSize: 3});
 
-                    expect(response.statusCode).to.equal(400);
+                    expect(response.statusCode).toEqual(400);
                 });
                 test<TestContext>("If page is not a number return 400", async (context) => {
                     const response = await makeRequest({page: "last", pageSize: 3});
 
-                    expect(response.statusCode).to.equal(400);
+                    expect(response.statusCode).toEqual(400);
                 });
             });
         });
@@ -331,7 +331,7 @@ describe("GET vocabs/", () => {
 
                 const response = await makeRequest({page, pageSize});
 
-                expect(response.statusCode).to.equal(200);
+                expect(response.statusCode).toEqual(200);
                 expect(response.json()).toEqual({
                     page: page,
                     pageSize: pageSize,
@@ -344,17 +344,17 @@ describe("GET vocabs/", () => {
                 test<TestContext>("If pageSize is too big return 400", async (context) => {
                     const response = await makeRequest({page: 1, pageSize: 500});
 
-                    expect(response.statusCode).to.equal(400);
+                    expect(response.statusCode).toEqual(400);
                 });
                 test<TestContext>("If pageSize is negative return 400", async (context) => {
                     const response = await makeRequest({page: 1, pageSize: -10});
 
-                    expect(response.statusCode).to.equal(400);
+                    expect(response.statusCode).toEqual(400);
                 });
                 test<TestContext>("If pageSize is not a number return 400", async (context) => {
                     const response = await makeRequest({page: 1, pageSize: "a lot"});
 
-                    expect(response.statusCode).to.equal(400);
+                    expect(response.statusCode).toEqual(400);
                 });
             });
         });

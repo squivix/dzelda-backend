@@ -1,9 +1,9 @@
 import {describe, expect, test, TestContext} from "vitest";
 import {InjectOptions} from "light-my-request";
-import {fetchRequest} from "@/test/integration/utils.js";
-import {meaningSerializer} from "@/src/presentation/response/serializers/entities/MeaningSerializer.js";
+import {fetchRequest, omit} from "@/test/integration/integrationTestUtils.js";
 import {Meaning} from "@/src/models/entities/Meaning.js";
 import {faker} from "@faker-js/faker";
+import {meaningSerializer} from "@/src/presentation/response/serializers/Meaning/MeaningSerializer.js";
 
 /**{@link MeaningController#createMeaning}*/
 describe("POST meanings/", () => {
@@ -21,7 +21,7 @@ describe("POST meanings/", () => {
         const language = await context.languageFactory.createOne();
         const translationLanguage = await context.translationLanguageFactory.createOne();
         const vocab = await context.vocabFactory.createOne({language: language});
-        const newMeaning = context.meaningFactory.makeOne({language: translationLanguage, vocab: vocab, addedBy: user.profile, learnersCount: 0});
+        const newMeaning = context.meaningFactory.makeOne({language: translationLanguage, vocab: vocab, addedBy: user.profile, learnersCount: 0, addedOn: new Date()});
 
         const response = await makeRequest({
             languageCode: translationLanguage.code,
@@ -30,10 +30,10 @@ describe("POST meanings/", () => {
         }, session.token);
 
         expect(response.statusCode).toEqual(201);
-        expect(response.json()).toMatchObject(meaningSerializer.serialize(newMeaning, {ignore: ["addedOn"]}));
+        expect(response.json()).toMatchObject(omit(meaningSerializer.serialize(newMeaning, {assertNoUndefined: false}), ["id", "addedOn"]));
         const dbRecord = await context.em.findOne(Meaning, {text: newMeaning.text, language, vocab});
         expect(dbRecord).not.toBeNull();
-        expect(meaningSerializer.serialize(dbRecord!)).toMatchObject(meaningSerializer.serialize(newMeaning, {ignore: ["addedOn"]}));
+        expect(meaningSerializer.serialize(dbRecord!)).toMatchObject(omit(meaningSerializer.serialize(newMeaning, {assertNoUndefined: false}), ["id", "addedOn"]));
     });
     test<TestContext>("If meaning with same text and language for same vocab already exists return 200", async (context) => {
         const user = await context.userFactory.createOne();

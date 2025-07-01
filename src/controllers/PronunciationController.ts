@@ -2,7 +2,7 @@ import {FastifyReply, FastifyRequest} from "fastify";
 import {z} from "zod";
 import {languageCodeValidator} from "@/src/validators/languageValidators.js";
 import {PronunciationService} from "@/src/services/PronunciationService.js";
-import {humanPronunciationSerializer} from "@/src/presentation/response/serializers/entities/HumanPronunciationSerializer.js";
+import {humanPronunciationSerializer} from "@/src/presentation/response/serializers/HumanPronunciation/HumanPronunciationSerializer.js";
 
 class PronunciationController {
     async getHumanPronunciations(request: FastifyRequest, reply: FastifyReply) {
@@ -13,6 +13,7 @@ class PronunciationController {
             pageSize: z.coerce.number().int().min(1).max(100).optional().default(10),
         });
         const queryParams = queryParamsValidator.parse(request.query);
+        const serializer = humanPronunciationSerializer;
 
         const filters = {
             languageCode: queryParams.languageCode,
@@ -20,12 +21,12 @@ class PronunciationController {
         };
         const pagination = {page: queryParams.page, pageSize: queryParams.pageSize};
         const pronunciationService = new PronunciationService(request.em);
-        const [humanPronunciations, recordsCount] = await pronunciationService.getPaginatedHumanPronunciations(filters, pagination);
+        const [humanPronunciations, recordsCount] = await pronunciationService.getPaginatedHumanPronunciations(filters, pagination, serializer.view);
         reply.send({
             page: pagination.page,
             pageSize: pagination.pageSize,
             pageCount: Math.ceil(recordsCount / pagination.pageSize),
-            data: humanPronunciationSerializer.serializeList(humanPronunciations)
+            data: serializer.serializeList(humanPronunciations)
         });
     }
 }

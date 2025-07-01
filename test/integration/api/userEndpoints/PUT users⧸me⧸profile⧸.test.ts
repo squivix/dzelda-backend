@@ -1,8 +1,8 @@
 import {describe, expect, test, TestContext} from "vitest";
-import {fetchRequest} from "@/test/integration/utils.js";
-import {profileSerializer} from "@/src/presentation/response/serializers/entities/ProfileSerializer.js";
+import {fetchRequest, onlyKeep} from "@/test/integration/integrationTestUtils.js";
 import {ProfileSchema} from "dzelda-common";
 import {faker} from "@faker-js/faker";
+import {profileSerializer} from "@/src/presentation/response/serializers/Profile/ProfileSerializer.js";
 
 /**{@link UserController#updateUserProfile}*/
 describe("PUT users/me/profile/", function () {
@@ -25,10 +25,10 @@ describe("PUT users/me/profile/", function () {
             }, session.token);
             await context.em.refresh(user.profile);
 
-            expect(response.statusCode).to.equal(200);
+            expect(response.statusCode).toEqual(200);
             expect(response.json()).toEqual(profileSerializer.serialize(user.profile));
             const updatedFields: (keyof ProfileSchema)[] = ["bio"];
-            expect(profileSerializer.serialize(user.profile, {include: updatedFields})).toEqual(profileSerializer.serialize(updatedProfile, {include: updatedFields}));
+            expect(onlyKeep(profileSerializer.serialize(user.profile), updatedFields)).toEqual(onlyKeep(profileSerializer.serialize(updatedProfile, {assertNoUndefined: false}), updatedFields));
         });
         test<TestContext>("If new profile picture is blank clear profile picture", async (context) => {
             const user = await context.userFactory.createOne();
@@ -41,10 +41,10 @@ describe("PUT users/me/profile/", function () {
             }, session.token);
             await context.em.refresh(user.profile);
 
-            expect(response.statusCode).to.equal(200);
+            expect(response.statusCode).toEqual(200);
             expect(response.json()).toEqual(profileSerializer.serialize(user.profile));
             const updatedFields: (keyof ProfileSchema)[] = ["profilePicture", "bio"];
-            expect(profileSerializer.serialize(user.profile, {include: updatedFields})).toEqual(profileSerializer.serialize(updatedProfile, {include: updatedFields}));
+            expect(onlyKeep(profileSerializer.serialize(user.profile), updatedFields)).toEqual(onlyKeep(profileSerializer.serialize(updatedProfile, {assertNoUndefined: false}), updatedFields));
         });
         test<TestContext>("If new profile picture is provided, update profile picture", async (context) => {
             const user = await context.userFactory.createOne();
@@ -58,10 +58,10 @@ describe("PUT users/me/profile/", function () {
             }, session.token);
             await context.em.refresh(user.profile);
 
-            expect(response.statusCode).to.equal(200);
+            expect(response.statusCode).toEqual(200);
             expect(response.json()).toEqual(profileSerializer.serialize(user.profile));
             const updatedFields: (keyof ProfileSchema)[] = ["profilePicture", "bio"];
-            expect(profileSerializer.serialize(user.profile, {include: updatedFields})).toEqual(profileSerializer.serialize(updatedProfile, {include: updatedFields}));
+            expect(onlyKeep(profileSerializer.serialize(user.profile), updatedFields)).toEqual(onlyKeep(profileSerializer.serialize(updatedProfile, {assertNoUndefined: false}), updatedFields));
         });
     });
     describe("If required fields are missing return 400", async (context) => {
@@ -71,7 +71,7 @@ describe("PUT users/me/profile/", function () {
 
             const response = await makeRequest({}, session.token);
 
-            expect(response.statusCode).to.equal(400);
+            expect(response.statusCode).toEqual(400);
         });
     });
     describe("If fields are invalid do not update profile, return 4XX", async (context) => {
@@ -83,7 +83,7 @@ describe("PUT users/me/profile/", function () {
                 bio: faker.random.alpha(300)
             }, session.token);
 
-            expect(response.statusCode).to.equal(400);
+            expect(response.statusCode).toEqual(400);
         });
         describe("If profile picture is invalid return 400", async (context) => {
             test<TestContext>("If file upload request with key does not exist return 400", async (context) => {
@@ -98,7 +98,7 @@ describe("PUT users/me/profile/", function () {
                 }, session.token);
                 await context.em.refresh(user.profile);
 
-                expect(response.statusCode).to.equal(400);
+                expect(response.statusCode).toEqual(400);
             });
             test<TestContext>("If file upload request with key was not requested by user return 400", async (context) => {
                 const user = await context.userFactory.createOne();
@@ -113,7 +113,7 @@ describe("PUT users/me/profile/", function () {
                 }, session.token);
                 await context.em.refresh(user.profile);
 
-                expect(response.statusCode).to.equal(400);
+                expect(response.statusCode).toEqual(400);
             });
             test<TestContext>("If file upload request with key is not for profilePicture field return 400", async (context) => {
                 const user = await context.userFactory.createOne();
@@ -127,7 +127,7 @@ describe("PUT users/me/profile/", function () {
                 }, session.token);
                 await context.em.refresh(user.profile);
 
-                expect(response.statusCode).to.equal(400);
+                expect(response.statusCode).toEqual(400);
             });
         });
     });
@@ -138,7 +138,7 @@ describe("PUT users/me/profile/", function () {
             bio: updatedProfile.bio
         });
 
-        expect(response.statusCode).to.equal(401);
+        expect(response.statusCode).toEqual(401);
     });
     test<TestContext>("If user email is not confirmed return 403", async (context) => {
         const user = await context.userFactory.createOne({isEmailConfirmed: false});
@@ -149,6 +149,6 @@ describe("PUT users/me/profile/", function () {
             bio: updatedProfile.bio
         }, session.token);
 
-        expect(response.statusCode).to.equal(403);
+        expect(response.statusCode).toEqual(403);
     });
 });

@@ -4,10 +4,8 @@ import {AnonymousUser, User} from "@/src/models/entities/auth/User.js";
 import {Profile} from "@/src/models/entities/Profile.js";
 import {Language} from "@/src/models/entities/Language.js";
 import {Session} from "@/src/models/entities/auth/Session.js";
-import {StatusCodes} from "http-status-codes";
 import {APIError} from "@/src/utils/errors/APIError.js";
 import {EntityManager, EntityRepository, FilterQuery, UniqueConstraintViolationException} from "@mikro-orm/core";
-import {UnauthenticatedAPIError} from "@/src/utils/errors/UnauthenticatedAPIError.js";
 import {AUTH_TOKEN_LENGTH, EMAIL_CONFIRM_TOKEN_LENGTH, PASSWORD_RESET_TOKEN_LENGTH} from "@/src/constants.js";
 import {EntityField} from "@mikro-orm/core/drivers/IDatabaseDriver.js";
 import {PasswordResetToken} from "@/src/models/entities/auth/PasswordResetToken.js";
@@ -20,6 +18,9 @@ import {FileUploadRequest} from "@/src/models/entities/FileUploadRequest.js";
 import {Notification} from "@/src/models/entities/Notification.js";
 import {PendingJob} from "@/src/models/entities/PendingJob.js";
 import {checkPendingJobs} from "@/src/utils/pending-jobs/checkPendingJobs.js";
+import {buildFetchPlan, ViewDescription} from "@/src/models/viewResolver.js";
+import {userFetchSpecs} from "@/src/models/fetchSpecs/userFetchSpecs.js";
+import {notificationFetchSpecs} from "@/src/models/fetchSpecs/notificationFetchSpecs.js";
 
 
 export class UserService {
@@ -36,7 +37,6 @@ export class UserService {
     }
 
     async createUser(username: string, email: string, password: string) {
-        // emailEncrypter.encrypt(email)
         const newUser = new User(username, email, await passwordHasher.hash(password), false);
         const newProfile = new Profile(newUser);
         this.em.persist(newUser);
@@ -67,22 +67,25 @@ export class UserService {
             return token;
         } else {
             throw new APIError(
-                StatusCodes.UNAUTHORIZED,
+                401,
                 "Username and/or password is incorrect",
                 "The username and/or password you entered is incorrect"
             );
         }
     }
 
-    async getUser(username: "me" | string, authenticatedUser: User | AnonymousUser | null) {
-        let user: User | null;
-        if (username == "me") {
-            if (!authenticatedUser || authenticatedUser instanceof AnonymousUser)
-                throw new UnauthenticatedAPIError(authenticatedUser);
-            user = authenticatedUser;
-        } else
-            user = await this.em.findOne(User, {username: username}, {populate: ["profile", "profile.languagesLearning"]});
-        return user;
+    async getUser(username: string, authenticatedUser: User | AnonymousUser | null, view: ViewDescription) {
+        const {fields, populate} = buildFetchPlan(view, userFetchSpecs(), {user: authenticatedUser, em: this.em});
+        return await this.em.findOne(User, {username: username}, {fields: fields as any, populate: populate as any});
+    }
+
+    async getUserNotifications(user: User, view: ViewDescription) {
+        const {fields, populate} = buildFetchPlan(view, notificationFetchSpecs(), {user, em: this.em});
+        return await this.em.find(Notification, {recipient: user.profile}, {
+            fields: fields as any,
+            populate: populate as any,
+            orderBy: {createdDate: "desc"}
+        });
     }
 
     async getLoginSession(sessionToken: string) {
@@ -98,10 +101,6 @@ export class UserService {
 
     async deleteLoginSession(session: Session) {
         await this.em.nativeDelete(Session, {id: session.id});
-    }
-
-    async findUser(where: FilterQuery<User>, fields: EntityField<User>[] = ["id", "email", "username"]) {
-        return await this.userRepo.findOne(where, {fields: fields as any});
     }
 
     async generateEmailConfirmToken(tokenData: { user: User, email: string }) {
@@ -187,7 +186,7 @@ export class UserService {
             await this.em.nativeDelete(Session, {user: user, id: {$ne: session.id}});
         } else {
             throw new APIError(
-                StatusCodes.UNAUTHORIZED,
+                401,
                 "Old password is incorrect",
                 "The password you entered is incorrect"
             );
@@ -208,7 +207,7 @@ export class UserService {
         await this.em.flush();
     }
 
-    async updateUserProfile(user: User, updatedProfileData: { bio: string, profilePicture?: string }) {
+    async updateUserProfile(user: User, updatedProfileData: { bio: string, profilePicture?: string }, viewDescription: ViewDescription) {
         user.profile.bio = updatedProfileData.bio;
         if (updatedProfileData.profilePicture !== undefined)
             user.profile.profilePicture = updatedProfileData.profilePicture;
@@ -254,18 +253,20 @@ export class UserService {
         await checkPendingJobs(pendingJobs, this.em)
     }
 
-    async getUserNotifications(user: User) {
-        return await this.em.find(Notification, {
-            recipient: user.profile
-        }, {orderBy: {createdDate: "desc"}});
+    async deleteUserNotification(notification: Notification) {
+        this.em.remove(notification);
+        await this.em.flush();
+    }
+
+    async findUser(where: FilterQuery<User>, fields: EntityField<User>[] = ["id", "email", "username"]) {
+        return await this.em.findOne(User, where, {fields: fields as any});
+    }
+
+    async findProfile(where: FilterQuery<Profile>, fields: EntityField<Profile>[] = ["id", "isPublic", "user"]) {
+        return await this.em.findOne(Profile, where, {fields: fields as any});
     }
 
     async findUserNotification(where: FilterQuery<Notification>) {
         return this.em.findOne(Notification, where);
-    }
-
-    async deleteUserNotification(notification: Notification) {
-        this.em.remove(notification);
-        await this.em.flush();
     }
 }

@@ -10,7 +10,7 @@ export class DictionaryFactory extends CustomFactory<Dictionary> {
         return {
             name: faker.random.alpha(20),
             lookupLink: faker.internet.url(),
-            dictionaryLink:faker.internet.url()
+            dictionaryLink: faker.internet.url()
         };
     }
 }

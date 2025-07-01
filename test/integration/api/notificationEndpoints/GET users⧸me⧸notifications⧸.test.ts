@@ -1,11 +1,11 @@
 import {describe, expect, test, TestContext, vi} from "vitest";
 import {InjectOptions} from "light-my-request";
-import {createComparator, fetchRequest} from "@/test/integration/utils.js";
+import {createComparator, fetchRequest} from "@/test/integration/integrationTestUtils.js";
 import {Notification} from "@/src/models/entities/Notification.js";
 import * as checkPendingJobsModule from "@/src/utils/pending-jobs/checkPendingJobs.js";
 import {PendingJob} from "@/src/models/entities/PendingJob.js";
-import {notificationSerializer} from "@/src/presentation/response/serializers/entities/NotificationSerializer.js";
 import {faker} from "@faker-js/faker";
+import {notificationSerializer} from "@/src/presentation/response/serializers/Notification/NotificationSerializer.js";
 
 /**{@link UserController#getUserNotifications}*/
 describe("GET users/me/notifications/", function () {
@@ -32,7 +32,7 @@ describe("GET users/me/notifications/", function () {
 
         const response = await makeRequest(session.token);
 
-        expect(response.statusCode).to.equal(200);
+        expect(response.statusCode).toEqual(200);
         expect(response.json()).toEqual(notificationSerializer.serializeList(expectedNotifications));
         expect(checkPendingJobsSpy).toHaveBeenCalledOnce();
     });
@@ -53,7 +53,7 @@ describe("GET users/me/notifications/", function () {
                 const response = await makeRequest(session.token);
                 context.em.clear();
 
-                expect(response.statusCode).to.equal(200);
+                expect(response.statusCode).toEqual(200);
                 expect(await context.em.findOne(PendingJob, {id: pendingJob.id})).not.toBeNull();
             });
             test<TestContext>("If bulk-import-collection job is completed, create notifications and delete job", async (context) => {
@@ -72,7 +72,7 @@ describe("GET users/me/notifications/", function () {
                 context.em.clear();
 
                 const dbNotifications = await context.em.find(Notification, {recipient: user.profile,});
-                expect(response.statusCode).to.equal(200);
+                expect(response.statusCode).toEqual(200);
                 expect(response.json()).toEqual(notificationSerializer.serializeList(dbNotifications));
                 expect(notificationSerializer.serializeList(dbNotifications)).toEqual(expect.arrayContaining([expect.objectContaining({
                     text: `Collection "${collection.title}" finished importing`,
@@ -91,20 +91,20 @@ describe("GET users/me/notifications/", function () {
                 const response = await makeRequest(session.token);
                 context.em.clear();
 
-                expect(response.statusCode).to.equal(200);
+                expect(response.statusCode).toEqual(200);
                 expect(await context.em.findOne(PendingJob, {id: pendingJob.id})).toBeNull();
             });
         });
     });
     test<TestContext>("If user is not logged in return 401", async () => {
         const response = await makeRequest();
-        expect(response.statusCode).to.equal(401);
+        expect(response.statusCode).toEqual(401);
     });
     test<TestContext>("If user email is not confirmed return 403", async (context) => {
         const user = await context.userFactory.createOne({isEmailConfirmed: false});
         const session = await context.sessionFactory.createOne({user});
 
         const response = await makeRequest(session.token);
-        expect(response.statusCode).to.equal(403);
+        expect(response.statusCode).toEqual(403);
     });
 });

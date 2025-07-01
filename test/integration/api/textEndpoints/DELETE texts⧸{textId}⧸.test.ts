@@ -1,6 +1,6 @@
 import {describe, expect, test, TestContext} from "vitest";
 import {InjectOptions} from "light-my-request";
-import {fetchRequest} from "@/test/integration/utils.js";
+import {fetchRequest} from "@/test/integration/integrationTestUtils.js";
 import {Text} from "@/src/models/entities/Text.js";
 import {faker} from "@faker-js/faker";
 
@@ -23,7 +23,7 @@ describe("DELETE texts/{textId}/", () => {
         const response = await makeRequest(text.id, session.token);
         context.em.clear();
 
-        expect(response.statusCode).to.equal(204);
+        expect(response.statusCode).toEqual(204);
         expect(await context.em.findOne(Text, {id: text.id})).toBeNull();
     });
     test<TestContext>("If user is not logged in return 401", async (context) => {
@@ -33,7 +33,7 @@ describe("DELETE texts/{textId}/", () => {
 
         const response = await makeRequest(text.id);
 
-        expect(response.statusCode).to.equal(401);
+        expect(response.statusCode).toEqual(401);
     });
     test<TestContext>("If user email is not confirmed return 403", async (context) => {
         const user = await context.userFactory.createOne({isEmailConfirmed: false});
@@ -43,7 +43,7 @@ describe("DELETE texts/{textId}/", () => {
 
         const response = await makeRequest(text.id, session.token);
 
-        expect(response.statusCode).to.equal(403);
+        expect(response.statusCode).toEqual(403);
     });
     test<TestContext>("If text does not exist return 404", async (context) => {
         const author = await context.userFactory.createOne();
@@ -51,7 +51,7 @@ describe("DELETE texts/{textId}/", () => {
 
         const response = await makeRequest(faker.datatype.number({min: 100000}), session.token);
 
-        expect(response.statusCode).to.equal(404);
+        expect(response.statusCode).toEqual(404);
     });
     test<TestContext>("If text is not public and user is not author return 404", async (context) => {
         const author = await context.userFactory.createOne();
@@ -62,7 +62,7 @@ describe("DELETE texts/{textId}/", () => {
 
         const response = await makeRequest(text.id, session.token);
 
-        expect(response.statusCode).to.equal(404);
+        expect(response.statusCode).toEqual(404);
     });
     test<TestContext>("If text is public and user is not author return 403", async (context) => {
         const author = await context.userFactory.createOne();
@@ -73,7 +73,7 @@ describe("DELETE texts/{textId}/", () => {
 
         const response = await makeRequest(text.id, session.token);
 
-        expect(response.statusCode).to.equal(403);
+        expect(response.statusCode).toEqual(403);
     });
     test<TestContext>("If text id is invalid return 400", async (context) => {
         const otherUser = await context.userFactory.createOne();
@@ -81,6 +81,6 @@ describe("DELETE texts/{textId}/", () => {
 
         const response = await makeRequest(faker.random.alpha(8), session.token);
 
-        expect(response.statusCode).to.equal(400);
+        expect(response.statusCode).toEqual(400);
     });
 });

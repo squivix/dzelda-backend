@@ -38,6 +38,9 @@ export class Collection extends CustomBaseEntity {
     @OneToMany({entity: () => Text, mappedBy: (text) => text.collection})
     texts: MikroOrmCollection<Text> = new MikroOrmCollection<Text>(this);
 
+    @Formula((alias: string) => `(SELECT COUNT(*) FROM text WHERE collection_id = ${alias}.id)`, {type: "number",})
+    textsCount!: number;
+
     @ManyToMany({
         entity: () => Profile,
         inversedBy: (bookmarker: Profile) => bookmarker.collectionsBookmarked,
@@ -47,7 +50,7 @@ export class Collection extends CustomBaseEntity {
     })
     bookmarkers!: Profile;
 
-    [OptionalProps]?: "description" | "image" | "isPublic" | "addedOn" | "level" | "bookmarkers" | "avgPastViewersCountPerText";
+    [OptionalProps]?: "description" | "image" | "isPublic" | "addedOn" | "level" | "bookmarkers" | "avgPastViewersCountPerText" | "textsCount";
 
     //annotated properties
     @Formula((alias: string) => `(SELECT COUNT(DISTINCT text_history_entry.past_viewer_id)::float / GREATEST(COUNT(DISTINCT text.id), 1) FROM collection LEFT JOIN text on collection.id = text.collection_id LEFT JOIN text_history_entry on text_history_entry.text_id = text.id WHERE collection.id = ${alias}.id)`, {

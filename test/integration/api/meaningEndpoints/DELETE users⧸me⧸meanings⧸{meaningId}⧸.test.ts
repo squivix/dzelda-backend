@@ -1,11 +1,10 @@
-/**{@link MeaningController#removeMeaningFromUser}*/
 import {describe, expect, test, TestContext} from "vitest";
 import {InjectOptions} from "light-my-request";
-import {fetchRequest} from "@/test/integration/utils.js";
+import {fetchRequest} from "@/test/integration/integrationTestUtils.js";
 import {MapLearnerMeaning} from "@/src/models/entities/MapLearnerMeaning.js";
 import {faker} from "@faker-js/faker";
 
-
+/**{@link MeaningController#removeMeaningFromUser}*/
 describe("DELETE users/me/meanings/{meaningId}/", () => {
     const makeRequest = async (meaningId: number | string, authToken?: string) => {
         const options: InjectOptions = {
@@ -26,7 +25,7 @@ describe("DELETE users/me/meanings/{meaningId}/", () => {
 
         const response = await makeRequest(meaning.id, session.token);
 
-        expect(response.statusCode).to.equal(204);
+        expect(response.statusCode).toEqual(204);
         expect(await context.em.findOne(MapLearnerMeaning, {learner: user.profile, meaning})).toBeNull();
         expect(await meaning.learners.loadCount()).toEqual(oldLearnersCount - 1);
     });
@@ -40,14 +39,14 @@ describe("DELETE users/me/meanings/{meaningId}/", () => {
 
         const response = await makeRequest(meaning.id, session.token);
 
-        expect(response.statusCode).to.equal(404);
+        expect(response.statusCode).toEqual(404);
     });
     test<TestContext>("If meaning does not exist return 404", async (context) => {
         const user = await context.userFactory.createOne();
         const session = await context.sessionFactory.createOne({user});
 
         const response = await makeRequest(faker.datatype.number({min: 10000000}), session.token);
-        expect(response.statusCode).to.equal(404);
+        expect(response.statusCode).toEqual(404);
     });
     test<TestContext>("If user is not logged in return 401", async (context) => {
         const user = await context.userFactory.createOne();
@@ -56,7 +55,7 @@ describe("DELETE users/me/meanings/{meaningId}/", () => {
         const vocab = await context.vocabFactory.createOne({language});
         const meaning = await context.meaningFactory.createOne({vocab, language: translationLanguage, addedBy: user.profile, learners: user.profile});
         const response = await makeRequest(meaning.id);
-        expect(response.statusCode).to.equal(401);
+        expect(response.statusCode).toEqual(401);
     });
     test<TestContext>("If user email is not confirmed return 403", async (context) => {
         const user = await context.userFactory.createOne({isEmailConfirmed: false});
@@ -68,6 +67,6 @@ describe("DELETE users/me/meanings/{meaningId}/", () => {
 
         const response = await makeRequest(meaning.id, session.token);
 
-        expect(response.statusCode).to.equal(403);
+        expect(response.statusCode).toEqual(403);
     });
 });

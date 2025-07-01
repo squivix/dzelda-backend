@@ -1,8 +1,8 @@
 import {describe, expect, test, TestContext} from "vitest";
 import {InjectOptions} from "light-my-request";
-import {fetchRequest} from "@/test/integration/utils.js";
-import {humanPronunciationSerializer} from "@/src/presentation/response/serializers/entities/HumanPronunciationSerializer.js";
+import {fetchRequest} from "@/test/integration/integrationTestUtils.js";
 import {faker} from "@faker-js/faker";
+import {humanPronunciationSerializer} from "@/src/presentation/response/serializers/HumanPronunciation/HumanPronunciationSerializer.js";
 
 /**{@link VocabController#getVocabHumanPronunciations}*/
 describe("GET /vocabs/{vocabId}/human-pronunciations/", () => {
@@ -31,15 +31,15 @@ describe("GET /vocabs/{vocabId}/human-pronunciations/", () => {
 
         const response = await makeRequest(vocab.id);
 
-        expect(response.statusCode).to.equal(200);
+        expect(response.statusCode).toEqual(200);
         expect(response.json()).toEqual(humanPronunciationSerializer.serializeList(expectedPronunciations));
     });
     test<TestContext>("If vocab does not exist return 404", async () => {
         const response = await makeRequest(faker.datatype.number({min: 100000}));
-        expect(response.statusCode).to.equal(404);
+        expect(response.statusCode).toEqual(404);
     });
     test("If vocab id is invalid return 400", async () => {
         const response = await makeRequest(faker.random.alpha(8));
-        expect(response.statusCode).to.equal(400);
+        expect(response.statusCode).toEqual(400);
     });
 });

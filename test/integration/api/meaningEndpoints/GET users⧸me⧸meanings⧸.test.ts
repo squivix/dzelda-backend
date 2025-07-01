@@ -1,8 +1,8 @@
 import {describe, expect, test, TestContext} from "vitest";
 import {InjectOptions} from "light-my-request";
-import {buildQueryString, createComparator, fetchRequest} from "@/test/integration/utils.js";
+import {buildQueryString, createComparator, fetchRequest} from "@/test/integration/integrationTestUtils.js";
 import {Meaning} from "@/src/models/entities/Meaning.js";
-import {meaningSerializer} from "@/src/presentation/response/serializers/entities/MeaningSerializer.js";
+import {meaningSerializer} from "@/src/presentation/response/serializers/Meaning/MeaningSerializer.js";
 
 /**{@link MeaningController#getUserMeanings}*/
 describe("GET users/me/meanings/", () => {
@@ -33,7 +33,7 @@ describe("GET users/me/meanings/", () => {
 
         const response = await makeRequest({}, session.token);
 
-        expect(response.statusCode).to.equal(200);
+        expect(response.statusCode).toEqual(200);
         expect(response.json()).toEqual({
             page: queryDefaults.pagination.page,
             pageSize: queryDefaults.pagination.pageSize,
@@ -50,16 +50,16 @@ describe("GET users/me/meanings/", () => {
                 const translationLanguage = await context.translationLanguageFactory.createOne();
                 const vocab1 = await context.vocabFactory.createOne({language});
                 const vocab2 = await context.vocabFactory.createOne({language});
-                const expectedMeanings = await context.meaningFactory.create(5, {vocab: vocab1, language:translationLanguage, learners: [user.profile]});
-                await context.meaningFactory.create(5, {vocab: vocab2, language:translationLanguage, learners: [user.profile]});
-                await context.meaningFactory.create(5, {vocab: vocab1, language:translationLanguage});
-                await context.meaningFactory.create(5, {vocab: vocab2, language:translationLanguage});
+                const expectedMeanings = await context.meaningFactory.create(5, {vocab: vocab1, language: translationLanguage, learners: [user.profile]});
+                await context.meaningFactory.create(5, {vocab: vocab2, language: translationLanguage, learners: [user.profile]});
+                await context.meaningFactory.create(5, {vocab: vocab1, language: translationLanguage});
+                await context.meaningFactory.create(5, {vocab: vocab2, language: translationLanguage});
                 expectedMeanings.sort(defaultSortComparator);
                 const recordsCount = expectedMeanings.length;
 
                 const response = await makeRequest({vocabId: vocab1.id}, session.token);
 
-                expect(response.statusCode).to.equal(200);
+                expect(response.statusCode).toEqual(200);
                 expect(response.json()).toEqual({
                     page: queryDefaults.pagination.page,
                     pageSize: queryDefaults.pagination.pageSize,
@@ -75,13 +75,13 @@ describe("GET users/me/meanings/", () => {
                 const translationLanguage = await context.translationLanguageFactory.createOne();
                 const vocab1 = await context.vocabFactory.createOne({language});
                 const vocab2 = await context.vocabFactory.createOne({language});
-                await context.meaningFactory.create(5, {vocab: vocab2, language:translationLanguage, addedBy: otherUser.profile, learners: user.profile,});
-                await context.meaningFactory.create(5, {vocab: vocab1, language:translationLanguage, addedBy: otherUser.profile});
-                await context.meaningFactory.create(5, {vocab: vocab2, language:translationLanguage, addedBy: otherUser.profile});
+                await context.meaningFactory.create(5, {vocab: vocab2, language: translationLanguage, addedBy: otherUser.profile, learners: user.profile,});
+                await context.meaningFactory.create(5, {vocab: vocab1, language: translationLanguage, addedBy: otherUser.profile});
+                await context.meaningFactory.create(5, {vocab: vocab2, language: translationLanguage, addedBy: otherUser.profile});
 
                 const response = await makeRequest({vocabId: vocab1.id}, session.token);
 
-                expect(response.statusCode).to.equal(200);
+                expect(response.statusCode).toEqual(200);
                 expect(response.json()).toEqual({
                     page: queryDefaults.pagination.page,
                     pageSize: queryDefaults.pagination.pageSize,
@@ -95,7 +95,7 @@ describe("GET users/me/meanings/", () => {
 
                 const response = await makeRequest({vocabId: "all"}, session.token);
 
-                expect(response.statusCode).to.equal(400);
+                expect(response.statusCode).toEqual(400);
             });
         });
     });
@@ -108,15 +108,15 @@ describe("GET users/me/meanings/", () => {
                 const translationLanguage = await context.translationLanguageFactory.createOne();
                 const vocab = await context.vocabFactory.createOne({language});
                 const expectedMeanings = [
-                    await context.meaningFactory.createOne({text: "abc", vocab, language:translationLanguage, learners: user.profile}),
-                    await context.meaningFactory.createOne({text: "def", vocab, language:translationLanguage, learners: user.profile}),
+                    await context.meaningFactory.createOne({text: "abc", vocab, language: translationLanguage, learners: user.profile}),
+                    await context.meaningFactory.createOne({text: "def", vocab, language: translationLanguage, learners: user.profile}),
                 ];
                 await context.meaningFactory.create(5, {vocab, language: translationLanguage});
                 const recordsCount = expectedMeanings.length;
 
                 const response = await makeRequest({sortBy: "text"}, session.token);
 
-                expect(response.statusCode).to.equal(200);
+                expect(response.statusCode).toEqual(200);
                 expect(response.json()).toEqual({
                     page: queryDefaults.pagination.page,
                     pageSize: queryDefaults.pagination.pageSize,
@@ -142,7 +142,7 @@ describe("GET users/me/meanings/", () => {
 
                 const response = await makeRequest({sortBy: "learnersCount"}, session.token);
 
-                expect(response.statusCode).to.equal(200);
+                expect(response.statusCode).toEqual(200);
                 expect(response.json()).toEqual({
                     page: queryDefaults.pagination.page,
                     pageSize: queryDefaults.pagination.pageSize,
@@ -154,7 +154,7 @@ describe("GET users/me/meanings/", () => {
                 const user = await context.userFactory.createOne();
                 const session = await context.sessionFactory.createOne({user: user});
                 const response = await makeRequest({sortBy: "popularity"}, session.token);
-                expect(response.statusCode).to.equal(400);
+                expect(response.statusCode).toEqual(400);
             });
         });
         describe("test sortOrder", () => {
@@ -165,15 +165,15 @@ describe("GET users/me/meanings/", () => {
                 const translationLanguage = await context.translationLanguageFactory.createOne();
                 const vocab = await context.vocabFactory.createOne({language});
                 const expectedMeanings = [
-                    await context.meaningFactory.createOne({text: "abc", vocab, language:translationLanguage, learners: user.profile}),
-                    await context.meaningFactory.createOne({text: "def", vocab, language:translationLanguage, learners: user.profile}),
+                    await context.meaningFactory.createOne({text: "abc", vocab, language: translationLanguage, learners: user.profile}),
+                    await context.meaningFactory.createOne({text: "def", vocab, language: translationLanguage, learners: user.profile}),
                 ];
                 await context.meaningFactory.create(5, {vocab, language: translationLanguage});
                 const recordsCount = expectedMeanings.length;
 
                 const response = await makeRequest({sortOrder: "asc"}, session.token);
 
-                expect(response.statusCode).to.equal(200);
+                expect(response.statusCode).toEqual(200);
                 expect(response.json()).toEqual({
                     page: queryDefaults.pagination.page,
                     pageSize: queryDefaults.pagination.pageSize,
@@ -188,15 +188,15 @@ describe("GET users/me/meanings/", () => {
                 const translationLanguage = await context.translationLanguageFactory.createOne();
                 const vocab = await context.vocabFactory.createOne({language});
                 const expectedMeanings = [
-                    await context.meaningFactory.createOne({text: "def", vocab, language:translationLanguage, learners: user.profile}),
-                    await context.meaningFactory.createOne({text: "abc", vocab, language:translationLanguage, learners: user.profile}),
+                    await context.meaningFactory.createOne({text: "def", vocab, language: translationLanguage, learners: user.profile}),
+                    await context.meaningFactory.createOne({text: "abc", vocab, language: translationLanguage, learners: user.profile}),
                 ];
                 await context.meaningFactory.create(5, {vocab, language: translationLanguage});
                 const recordsCount = expectedMeanings.length;
 
                 const response = await makeRequest({sortOrder: "desc"}, session.token);
 
-                expect(response.statusCode).to.equal(200);
+                expect(response.statusCode).toEqual(200);
                 expect(response.json()).toEqual({
                     page: queryDefaults.pagination.page,
                     pageSize: queryDefaults.pagination.pageSize,
@@ -208,7 +208,7 @@ describe("GET users/me/meanings/", () => {
                 const user = await context.userFactory.createOne();
                 const session = await context.sessionFactory.createOne({user: user});
                 const response = await makeRequest({sortOrder: "rising"}, session.token);
-                expect(response.statusCode).to.equal(400);
+                expect(response.statusCode).toEqual(400);
             });
         });
     });
@@ -229,7 +229,7 @@ describe("GET users/me/meanings/", () => {
 
                 const response = await makeRequest({page, pageSize}, session.token);
 
-                expect(response.statusCode).to.equal(200);
+                expect(response.statusCode).toEqual(200);
                 expect(response.json()).toEqual({
                     page: page,
                     pageSize: pageSize,
@@ -252,7 +252,7 @@ describe("GET users/me/meanings/", () => {
 
                 const response = await makeRequest({page, pageSize}, session.token);
 
-                expect(response.statusCode).to.equal(200);
+                expect(response.statusCode).toEqual(200);
                 expect(response.json()).toEqual({
                     page: page,
                     pageSize: pageSize,
@@ -276,7 +276,7 @@ describe("GET users/me/meanings/", () => {
 
                 const response = await makeRequest({page, pageSize}, session.token);
 
-                expect(response.statusCode).to.equal(200);
+                expect(response.statusCode).toEqual(200);
                 expect(response.json()).toEqual({
                     page: page,
                     pageSize: pageSize,
@@ -299,7 +299,7 @@ describe("GET users/me/meanings/", () => {
 
                 const response = await makeRequest({page, pageSize}, session.token);
 
-                expect(response.statusCode).to.equal(200);
+                expect(response.statusCode).toEqual(200);
                 expect(response.json()).toEqual({
                     page: page,
                     pageSize: pageSize,
@@ -313,14 +313,14 @@ describe("GET users/me/meanings/", () => {
                     const session = await context.sessionFactory.createOne({user: user});
                     const response = await makeRequest({page: 0, pageSize: 3}, session.token);
 
-                    expect(response.statusCode).to.equal(400);
+                    expect(response.statusCode).toEqual(400);
                 });
                 test<TestContext>("If page is not a number return 400", async (context) => {
                     const user = await context.userFactory.createOne();
                     const session = await context.sessionFactory.createOne({user: user});
                     const response = await makeRequest({page: "last", pageSize: 3}, session.token);
 
-                    expect(response.statusCode).to.equal(400);
+                    expect(response.statusCode).toEqual(400);
                 });
             });
         });
@@ -341,7 +341,7 @@ describe("GET users/me/meanings/", () => {
 
                 const response = await makeRequest({page, pageSize}, session.token);
 
-                expect(response.statusCode).to.equal(200);
+                expect(response.statusCode).toEqual(200);
                 expect(response.json()).toEqual({
                     page: page,
                     pageSize: pageSize,
@@ -355,21 +355,21 @@ describe("GET users/me/meanings/", () => {
                     const session = await context.sessionFactory.createOne({user: user});
                     const response = await makeRequest({page: 1, pageSize: 75}, session.token);
 
-                    expect(response.statusCode).to.equal(400);
+                    expect(response.statusCode).toEqual(400);
                 });
                 test<TestContext>("If pageSize is negative return 400", async (context) => {
                     const user = await context.userFactory.createOne();
                     const session = await context.sessionFactory.createOne({user: user});
                     const response = await makeRequest({page: 1, pageSize: -10}, session.token);
 
-                    expect(response.statusCode).to.equal(400);
+                    expect(response.statusCode).toEqual(400);
                 });
                 test<TestContext>("If pageSize is not a number return 400", async (context) => {
                     const user = await context.userFactory.createOne();
                     const session = await context.sessionFactory.createOne({user: user});
                     const response = await makeRequest({page: 1, pageSize: "a lot"}, session.token);
 
-                    expect(response.statusCode).to.equal(400);
+                    expect(response.statusCode).toEqual(400);
                 });
             });
         });

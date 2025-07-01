@@ -3,12 +3,9 @@ import {UserService} from "@/src/services/UserService.js";
 import {FastifyReply, FastifyRequest} from "fastify";
 import {NotFoundAPIError} from "@/src/utils/errors/NotFoundAPIError.js";
 import {emailValidator, passwordValidator, usernameValidator} from "@/src/validators/userValidator.js";
-import {userSerializer} from "@/src/presentation/response/serializers/entities/UserSerializer.js";
 import {emailTransporter} from "@/src/nodemailer.config.js";
 import {APIError} from "@/src/utils/errors/APIError.js";
-import {StatusCodes} from "http-status-codes";
-import {profileSerializer} from "@/src/presentation/response/serializers/entities/ProfileSerializer.js";
-import {User} from "@/src/models/entities/auth/User.js";
+import {AnonymousUser, User} from "@/src/models/entities/auth/User.js";
 import {Session} from "@/src/models/entities/auth/Session.js";
 import {ValidationAPIError} from "@/src/utils/errors/ValidationAPIError.js";
 import {bioValidator} from "@/src/validators/profileValidators.js";
@@ -19,14 +16,19 @@ import {s3Client} from "@/src/storageClient.js";
 import * as process from "process";
 import mime from "mime-types";
 import {fileFields, fileFieldsKeys, FileFieldType} from "@/src/validators/fileValidator.js";
-import {validateFileObjectKey} from "@/src/controllers/ControllerUtils.js";
+import {validateFileObjectKey} from "@/src/controllers/controllerUtils.js";
 import {confirmEmailChangeTemplate} from "@/src/presentation/response/templates/email/confirmEmailChangeTemplate.js";
 import {passwordChangedNotificationTemplate} from "@/src/presentation/response/templates/email/passwordChangedNotificationTemplate.js";
 import {confirmEmailTemplate} from "@/src/presentation/response/templates/email/confirmEmailTemplate.js";
 import {passwordResetTemplate} from "@/src/presentation/response/templates/email/passwordResetTemplate.js";
 import urlJoin from "url-join";
 import {numericStringValidator} from "@/src/validators/utilValidators.js";
-import {notificationSerializer} from "@/src/presentation/response/serializers/entities/NotificationSerializer.js";
+import {profileSerializer} from "@/src/presentation/response/serializers/Profile/ProfileSerializer.js";
+import {notificationSerializer} from "@/src/presentation/response/serializers/Notification/NotificationSerializer.js";
+import {userPublicSerializer} from "@/src/presentation/response/serializers/User/UserPublicSerializer.js";
+import {userPrivateSerializer} from "@/src/presentation/response/serializers/User/UserPrivateSerializer.js";
+import {userSignUpSerializer} from "@/src/presentation/response/serializers/User/UserSignUpSerializer.js";
+import {UnauthenticatedAPIError} from "@/src/utils/errors/UnauthenticatedAPIError.js";
 
 class UserController {
     async signUp(request: FastifyRequest, reply: FastifyReply) {
@@ -36,11 +38,15 @@ class UserController {
             password: passwordValidator
         }).strict();
         const body = bodyValidator.parse(request.body);
+        const serializer = userSignUpSerializer;
+
         const userService = new UserService(request.em);
-        const newUser = await userService.createUser(body.username, body.email, body.password);
+        let newUser = await userService.createUser(body.username, body.email, body.password);
         const token = await userService.generateEmailConfirmToken({user: newUser, email: newUser.email});
         await emailTransporter.sendMail(confirmEmailTemplate(newUser.email, {token}));
-        reply.status(201).send(userSerializer.serialize(newUser, {ignore: ["profile"]}));
+
+        newUser = (await userService.getUser(newUser.username, null, serializer.view))!;
+        reply.status(201).send(serializer.serialize(newUser));
     }
 
     async login(request: FastifyRequest, reply: FastifyReply) {
@@ -72,7 +78,7 @@ class UserController {
         const user = request.user as User;
 
         if (user.isEmailConfirmed && !user.isPendingEmailChange)
-            throw new APIError(StatusCodes.BAD_REQUEST, "Email is already confirmed");
+            throw new APIError(400, "Email is already confirmed");
 
         const email = body.email ?? user.email;
         await userService.changeUserEmail(user, email);
@@ -110,7 +116,7 @@ class UserController {
         const userService = new UserService(request.em);
         const token = await userService.confirmUserEmail(body.token);
         if (token == null)
-            throw new APIError(StatusCodes.UNAUTHORIZED, "Email confirmation token is invalid or expired");
+            throw new APIError(401, "Email confirmation token is invalid or expired");
 
         reply.status(204).send();
     }
@@ -119,11 +125,19 @@ class UserController {
         const pathParamsValidator = z.object({username: z.string().min(1).or(z.literal("me")),});
         const pathParams = pathParamsValidator.parse(request.params);
         const userService = new UserService(request.em);
-        const user = await userService.getUser(pathParams.username, request.user);
+        if (pathParams.username == "me") {
+            if (!request.isLoggedIn)
+                throw new UnauthenticatedAPIError(request.user as AnonymousUser | null);
+            pathParams.username = request.user!.username;
+        }
+        const profile = await userService.findProfile({user: {username: pathParams.username}});
         // private user don't exist to the outside
-        if (!user || (!user.profile.isPublic && user !== request.user))
-            throw new NotFoundAPIError("User");
-        reply.status(200).send(userSerializer.serialize(user, {ignore: request.user !== user ? ["email", "isEmailConfirmed", "isPendingEmailChange"] : []}));
+        if (!profile || (!profile.isPublic && profile !== request.user?.profile))
+            throw new NotFoundAPIError("User profile");
+        const serializer = request.user?.profile === profile ? userPrivateSerializer : userPublicSerializer
+
+        const user = (await userService.getUser(pathParams.username, request.user, serializer.view))!;
+        reply.status(200).send(serializer.serialize(user));
     }
 
     async requestPasswordReset(request: FastifyRequest, reply: FastifyReply) {
@@ -147,7 +161,7 @@ class UserController {
         const userService = new UserService(request.em);
         const token = await userService.verifyPasswordResetToken(body.token);
         if (token == null)
-            throw new APIError(StatusCodes.UNAUTHORIZED, "Password reset token is invalid or expired");
+            throw new APIError(401, "Password reset token is invalid or expired");
         reply.status(204).send();
     }
 
@@ -162,7 +176,7 @@ class UserController {
         const userService = new UserService(request.em);
         const user = await userService.resetPassword(body.token, body.newPassword);
         if (user === null)
-            throw new APIError(StatusCodes.UNAUTHORIZED, "Password reset token is invalid or expired");
+            throw new APIError(401, "Password reset token is invalid or expired");
         await emailTransporter.sendMail(passwordChangedNotificationTemplate(user.email));
         reply.status(204).send();
     }
@@ -195,14 +209,15 @@ class UserController {
             profilePicture: z.string().optional()
         });
         const body = bodyValidator.parse(request.body);
+        const serializer = profileSerializer;
         const userService = new UserService(request.em);
         const user = request.user as User;
 
         if (body.profilePicture)
             body.profilePicture = await validateFileObjectKey(userService, request.user as User, body.profilePicture, "profilePicture", "profilePicture");
-        await userService.updateUserProfile(user, {bio: body.bio, profilePicture: body.profilePicture});
+        await userService.updateUserProfile(user, {bio: body.bio, profilePicture: body.profilePicture}, serializer.view);
 
-        reply.status(200).send(profileSerializer.serialize(user.profile));
+        reply.status(200).send(serializer.serialize(user.profile));
     }
 
     async generateFileUploadPresignedUrl(request: FastifyRequest, reply: FastifyReply) {
@@ -253,10 +268,13 @@ class UserController {
 
     async getUserNotifications(request: FastifyRequest, reply: FastifyReply) {
         const userService = new UserService(request.em);
+        const serializer = notificationSerializer;
+        const user = request.user as User;
         await userService.checkUserPendingJobs(request.user as User);
-        const notifications = await userService.getUserNotifications(request.user as User);
 
-        reply.status(200).send(notificationSerializer.serializeList(notifications));
+        const notifications = await userService.getUserNotifications(user, serializer.view);
+
+        reply.status(200).send(serializer.serializeList(notifications));
     }
 
     async deleteUserNotification(request: FastifyRequest, reply: FastifyReply) {

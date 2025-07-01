@@ -1,11 +1,12 @@
 import {describe, expect, test, TestContext} from "vitest";
 import {InjectOptions} from "light-my-request";
-import {buildQueryString, createComparator, fetchRequest} from "@/test/integration/utils.js";
+import {buildQueryString, createComparator, fetchRequest} from "@/test/integration/integrationTestUtils.js";
 import {Language} from "@/src/models/entities/Language.js";
 import {MapLearnerLanguage} from "@/src/models/entities/MapLearnerLanguage.js";
-import {learnerLanguageSerializer} from "@/src/presentation/response/serializers/mappings/LearnerLanguageSerializer.js";
 import {faker} from "@faker-js/faker";
 import {RequiredEntityData} from "@mikro-orm/core";
+import {learnerLanguageSerializer} from "@/src/presentation/response/serializers/Language/LearnerLanguageSerializer.js";
+import {PreferredTranslationLanguageEntry} from "@/src/models/entities/PreferredTranslationLanguageEntry.js";
 
 /**{@link LanguageController#getUserLanguages}*/
 describe("GET users/{username}/languages/", function () {
@@ -25,28 +26,40 @@ describe("GET users/{username}/languages/", function () {
         const user = await context.userFactory.createOne({profile: {isPublic: true}});
         const expectedLanguages = await context.languageFactory.create(10);
         expectedLanguages.sort(defaultSortComparator);
+
         const expectedMappings = expectedLanguages.map(language => {
             language.learnersCount++;
             return context.em.create(MapLearnerLanguage, {language, learner: user.profile});
         });
+        const translationLanguages = await context.translationLanguageFactory.create(3);
+        expectedMappings.map(m => {
+            translationLanguages.forEach((t, i) => {
+                context.em.create(PreferredTranslationLanguageEntry, {
+                    translationLanguage: t,
+                    learnerLanguageMapping: m,
+                    precedenceOrder: i
+                }, {persist: true})
+            })
+        })
+
         await context.em.flush();
 
         const response = await makeRequest(user.username);
 
         //TODO hide lastOpened from other users
-        expect(response.statusCode).to.equal(200);
+        expect(response.statusCode).toEqual(200);
         expect(response.json()).toEqual(learnerLanguageSerializer.serializeList(expectedMappings));
     });
     test<TestContext>("If username does not exist return 404", async () => {
         const response = await makeRequest(faker.random.alphaNumeric(20));
-        expect(response.statusCode).to.equal(404);
+        expect(response.statusCode).toEqual(404);
     });
     test<TestContext>(`If username exists and is not public and not authenticated as user return 404`, async (context) => {
         const user = await context.userFactory.createOne({profile: {isPublic: false}});
         await context.languageFactory.create(10, {learners: user.profile});
 
         const response = await makeRequest(user.username);
-        expect(response.statusCode).to.equal(404);
+        expect(response.statusCode).toEqual(404);
     });
     test<TestContext>(`If username exists and is not public but authenticated as user return languages`, async (context) => {
         const user = await context.userFactory.createOne({profile: {isPublic: false}});
@@ -61,7 +74,7 @@ describe("GET users/{username}/languages/", function () {
 
         const response = await makeRequest(user.username, {}, session.token);
 
-        expect(response.statusCode).to.equal(200);
+        expect(response.statusCode).toEqual(200);
         expect(response.json()).toEqual(learnerLanguageSerializer.serializeList(expectedMappings));
     });
     test<TestContext>(`If username is me and not authenticated as user return 401`, async (context) => {
@@ -69,7 +82,7 @@ describe("GET users/{username}/languages/", function () {
         await context.languageFactory.create(10, {learners: user.profile});
 
         const response = await makeRequest("me");
-        expect(response.statusCode).to.equal(401);
+        expect(response.statusCode).toEqual(401);
     });
     test<TestContext>(`If username is me and authenticated as user return languages`, async (context) => {
         const user = await context.userFactory.createOne({profile: {isPublic: false}});
@@ -84,7 +97,7 @@ describe("GET users/{username}/languages/", function () {
 
         const response = await makeRequest("me", {}, session.token);
 
-        expect(response.statusCode).to.equal(200);
+        expect(response.statusCode).toEqual(200);
         expect(response.json()).toEqual(learnerLanguageSerializer.serializeList(expectedMappings));
     });
 
@@ -104,7 +117,7 @@ describe("GET users/{username}/languages/", function () {
 
                 const response = await makeRequest(user.username, {sortBy: "name"});
 
-                expect(response.statusCode).to.equal(200);
+                expect(response.statusCode).toEqual(200);
                 expect(response.json()).toEqual(learnerLanguageSerializer.serializeList(expectedMappings));
             });
             test<TestContext>("test sortBy learnersCount", async (context) => {
@@ -124,7 +137,7 @@ describe("GET users/{username}/languages/", function () {
 
                 const response = await makeRequest(user.username, {sortBy: "learnersCount"});
 
-                expect(response.statusCode).to.equal(200);
+                expect(response.statusCode).toEqual(200);
                 expect(response.json()).toEqual(learnerLanguageSerializer.serializeList(expectedMappings));
             });
             test<TestContext>("test sortBy lastOpened", async (context) => {
@@ -143,7 +156,7 @@ describe("GET users/{username}/languages/", function () {
 
                 const response = await makeRequest(user.username, {sortBy: "lastOpened"});
 
-                expect(response.statusCode).to.equal(200);
+                expect(response.statusCode).toEqual(200);
                 expect(response.json()).toEqual(learnerLanguageSerializer.serializeList(expectedMappings));
             });
             test<TestContext>("if sortBy is invalid return 400", async (context) => {
@@ -151,7 +164,7 @@ describe("GET users/{username}/languages/", function () {
 
                 const response = await makeRequest(user.username, {sortBy: "flag"});
 
-                expect(response.statusCode).to.equal(400);
+                expect(response.statusCode).toEqual(400);
             });
         });
         describe("test sortOrder", () => {
@@ -169,7 +182,7 @@ describe("GET users/{username}/languages/", function () {
 
                 const response = await makeRequest(user.username, {sortOrder: "asc"});
 
-                expect(response.statusCode).to.equal(200);
+                expect(response.statusCode).toEqual(200);
                 expect(response.json()).toEqual(learnerLanguageSerializer.serializeList(expectedMappings));
             });
             test<TestContext>("If sortOrder is desc return the languages in descending order", async (context) => {
@@ -186,7 +199,7 @@ describe("GET users/{username}/languages/", function () {
 
                 const response = await makeRequest(user.username, {sortOrder: "desc"});
 
-                expect(response.statusCode).to.equal(200);
+                expect(response.statusCode).toEqual(200);
                 expect(response.json()).toEqual(learnerLanguageSerializer.serializeList(expectedMappings));
             });
             test<TestContext>("If sortOrder is invalid return 400", async (context) => {
@@ -194,7 +207,7 @@ describe("GET users/{username}/languages/", function () {
 
                 const response = await makeRequest(user.username, {sortOrder: "rising"});
 
-                expect(response.statusCode).to.equal(400);
+                expect(response.statusCode).toEqual(400);
             });
         });
     });

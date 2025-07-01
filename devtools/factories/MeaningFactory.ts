@@ -11,6 +11,7 @@ export class MeaningFactory extends CustomFactory<Meaning> {
             text: faker.random.alpha({count: 20}),
             learners: [],
             attribution: null,
+            attributionSource: null,
             learnersCount: 0
         };
     }

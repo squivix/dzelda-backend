@@ -1,5 +1,5 @@
 import {describe, expect, test, TestContext} from "vitest";
-import {fetchRequest} from "@/test/integration/utils.js";
+import {fetchRequest} from "@/test/integration/integrationTestUtils.js";
 import {faker} from "@faker-js/faker";
 import {passwordHasher} from "@/src/utils/security/PasswordHasher.js";
 import {Session} from "@/src/models/entities/auth/Session.js";
@@ -23,7 +23,7 @@ describe("POST sessions/", () => {
         });
         await context.em.refresh(user);
 
-        expect(response.statusCode).to.equal(201);
+        expect(response.statusCode).toEqual(201);
         const session = await context.em.findOne(Session, {user: user});
         expect(session).not.toBeNull();
         expect(response.json()).toEqual({authToken: session!.token});
@@ -39,7 +39,7 @@ describe("POST sessions/", () => {
                 username: faker.random.alphaNumeric(20),
                 password: password,
             });
-            expect(response.statusCode).to.equal(401);
+            expect(response.statusCode).toEqual(401);
         });
         test<TestContext>("If password is incorrect return 401", async (context) => {
             const password = faker.random.alphaNumeric(20);
@@ -50,7 +50,7 @@ describe("POST sessions/", () => {
                 password: faker.random.alphaNumeric(20),
             });
 
-            expect(response.statusCode).to.equal(401);
+            expect(response.statusCode).toEqual(401);
         });
     });
 });

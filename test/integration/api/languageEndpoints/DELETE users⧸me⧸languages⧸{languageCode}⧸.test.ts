@@ -1,6 +1,6 @@
 import {describe, expect, test, TestContext} from "vitest";
 import {InjectOptions} from "light-my-request";
-import {fetchRequest} from "@/test/integration/utils.js";
+import {fetchRequest} from "@/test/integration/integrationTestUtils.js";
 import {TextHistoryEntry} from "@/src/models/entities/TextHistoryEntry.js";
 import {MapLearnerDictionary} from "@/src/models/entities/MapLearnerDictionary.js";
 import {MapLearnerVocab} from "@/src/models/entities/MapLearnerVocab.js";
@@ -42,7 +42,7 @@ describe("DELETE users/me/languages/{languageCode}/", () => {
 
         const response = await makeRequest(language.code, session.token);
 
-        expect(response.statusCode).to.equal(204);
+        expect(response.statusCode).toEqual(204);
 
         expect(await context.em.findOne(MapLearnerLanguage, {learner: user.profile, language})).toBeNull();
         expect(await context.em.find(MapLearnerDictionary, {learner: user.profile, dictionary: {language}})).toHaveLength(0);
@@ -55,7 +55,7 @@ describe("DELETE users/me/languages/{languageCode}/", () => {
 
         const response = await makeRequest(language.code);
 
-        expect(response.statusCode).to.equal(401);
+        expect(response.statusCode).toEqual(401);
     });
     test<TestContext>("If user email is not confirmed return 403", async (context) => {
         const user = await context.userFactory.createOne({isEmailConfirmed: false});
@@ -64,7 +64,7 @@ describe("DELETE users/me/languages/{languageCode}/", () => {
 
         const response = await makeRequest(language.code, session.token);
 
-        expect(response.statusCode).to.equal(403);
+        expect(response.statusCode).toEqual(403);
     });
     test<TestContext>("If languageCode is invalid return  400", async (context) => {
         const user = await context.userFactory.createOne();
@@ -72,7 +72,7 @@ describe("DELETE users/me/languages/{languageCode}/", () => {
 
         const response = await makeRequest("", session.token);
 
-        expect(response.statusCode).to.equal(400);
+        expect(response.statusCode).toEqual(400);
     });
     test<TestContext>("If language is not found return  404", async (context) => {
         const user = await context.userFactory.createOne();
@@ -81,7 +81,7 @@ describe("DELETE users/me/languages/{languageCode}/", () => {
 
         const response = await makeRequest(language.code, session.token);
 
-        expect(response.statusCode).to.equal(404);
+        expect(response.statusCode).toEqual(404);
     });
     test<TestContext>("If user is not learning language return  404", async (context) => {
         const user = await context.userFactory.createOne();
@@ -90,6 +90,6 @@ describe("DELETE users/me/languages/{languageCode}/", () => {
 
         const response = await makeRequest(language.code, session.token);
 
-        expect(response.statusCode).to.equal(404);
+        expect(response.statusCode).toEqual(404);
     });
 });

@@ -28,6 +28,8 @@ export class TextFactory extends CustomFactory<Text> {
             audio: "https://upload.wikimedia.org/wikipedia/commons/d/de/Lorem_ipsum.ogg",
             addedBy: profileFactory.makeDefinition({user: userFactory.makeDefinition({}, ["profile"])}),
             pastViewersCount: 0,
+            orderInCollection: null,
+            isLastInCollection: null,
         };
     }
 

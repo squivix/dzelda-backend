@@ -1,9 +1,9 @@
 import {describe, expect, test, TestContext, vi} from "vitest";
-import {fetchRequest} from "@/test/integration/utils.js";
-import {LanguageLevel} from "dzelda-common";
-import {textSerializer} from "@/src/presentation/response/serializers/entities/TextSerializer.js";
+import {fetchRequest, omit} from "@/test/integration/integrationTestUtils.js";
+import {defaultVocabsByLevel, LanguageLevel} from "dzelda-common";
 import {faker} from "@faker-js/faker";
 import {TextService} from "@/src/services/TextService.js";
+import {textLoggedInSerializer} from "@/src/presentation/response/serializers/Text/TextLoggedInSerializer.js";
 
 
 /**{@link TextController#createText}*/
@@ -29,7 +29,9 @@ describe("POST texts/", () => {
                 language,
                 image: "",
                 audio: "",
-                addedBy: user.profile
+                addedBy: user.profile,
+                isBookmarked: false,
+                vocabsByLevel: defaultVocabsByLevel(),
             });
             const sendTextToParsingQueueSpy = vi.spyOn(TextService, "sendTextToParsingQueue").mockResolvedValue(undefined);
 
@@ -39,7 +41,7 @@ describe("POST texts/", () => {
                 content: newText.content,
             }, session.token);
 
-            expect(response.statusCode).to.equal(201);
+            expect(response.statusCode).toEqual(201);
             const dbRecord = await context.textRepo.findOne({
                 language,
                 title: newText.title
@@ -47,8 +49,8 @@ describe("POST texts/", () => {
             expect(dbRecord).not.toBeNull();
             if (!dbRecord) return;
             await context.textRepo.annotateTextsWithUserData([dbRecord], user);
-            expect(response.json()).toMatchObject(textSerializer.serialize(newText, {ignore: ["addedOn"]}));
-            expect(textSerializer.serialize(dbRecord)).toMatchObject(textSerializer.serialize(newText, {ignore: ["addedOn"]}));
+            expect(response.json()).toMatchObject(omit(textLoggedInSerializer.serialize(newText, {assertNoUndefined: false}), ["id", "addedOn"]));
+            expect(textLoggedInSerializer.serialize(dbRecord)).toMatchObject(omit(textLoggedInSerializer.serialize(newText, {assertNoUndefined: false}), ["id", "addedOn"]));
             expect(sendTextToParsingQueueSpy).toHaveBeenCalledOnce();
             expect(sendTextToParsingQueueSpy).toHaveBeenCalledWith({
                 textId: dbRecord.id,
@@ -87,6 +89,8 @@ describe("POST texts/", () => {
                 isProcessing: true,
                 parsedContent: null,
                 parsedTitle: null,
+                orderInCollection: 0,
+                isLastInCollection: true,
                 language: language,
                 image: imageUploadRequest.fileUrl,
                 audio: audioUploadRequest.fileUrl,
@@ -94,6 +98,8 @@ describe("POST texts/", () => {
                 collection: collection,
                 isPublic: false,
                 level: LanguageLevel.BEGINNER_2,
+                isBookmarked: false,
+                vocabsByLevel: defaultVocabsByLevel(),
             });
             const sendTextToParsingQueueSpy = vi.spyOn(TextService, "sendTextToParsingQueue").mockResolvedValue(undefined);
 
@@ -108,7 +114,7 @@ describe("POST texts/", () => {
                 audio: audioUploadRequest.objectKey,
             }, session.token);
 
-            expect(response.statusCode).to.equal(201);
+            expect(response.statusCode).toEqual(201);
             const dbRecord = await context.textRepo.findOne({
                 collection,
                 title: newText.title
@@ -116,9 +122,8 @@ describe("POST texts/", () => {
             expect(dbRecord).not.toBeNull();
             if (!dbRecord) return;
             await context.textRepo.annotateTextsWithUserData([dbRecord], user);
-            await context.collectionRepo.annotateCollectionsWithUserData([dbRecord.collection!], user);
-            expect(response.json()).toMatchObject(textSerializer.serialize(newText, {ignore: ["addedOn"]}));
-            expect(textSerializer.serialize(dbRecord)).toMatchObject(textSerializer.serialize(newText, {ignore: ["addedOn",]}));
+            expect(response.json()).toMatchObject(omit(textLoggedInSerializer.serialize(newText, {assertNoUndefined: false}), ["id", "addedOn"]));
+            expect(textLoggedInSerializer.serialize(dbRecord)).toMatchObject(omit(textLoggedInSerializer.serialize(newText, {assertNoUndefined: false}), ["id", "addedOn",]));
             expect(sendTextToParsingQueueSpy).toHaveBeenCalledOnce();
             expect(sendTextToParsingQueueSpy).toHaveBeenCalledWith({
                 textId: dbRecord.id,
@@ -136,7 +141,7 @@ describe("POST texts/", () => {
             content: newText.content,
         });
 
-        expect(response.statusCode).to.equal(401);
+        expect(response.statusCode).toEqual(401);
     });
     test<TestContext>("If user email is not confirmed return 403", async (context) => {
         const user = await context.userFactory.createOne({isEmailConfirmed: false});
@@ -150,7 +155,7 @@ describe("POST texts/", () => {
             content: newText.content,
         }, session.token);
 
-        expect(response.statusCode).to.equal(403);
+        expect(response.statusCode).toEqual(403);
     });
     describe("If required fields are missing return 400", async () => {
         test<TestContext>("If title is missing return 400", async (context) => {
@@ -164,7 +169,7 @@ describe("POST texts/", () => {
                 content: newText.content,
             }, session.token);
 
-            expect(response.statusCode).to.equal(400);
+            expect(response.statusCode).toEqual(400);
         });
         test<TestContext>("If text is missing return 400", async (context) => {
             const user = await context.userFactory.createOne();
@@ -177,7 +182,7 @@ describe("POST texts/", () => {
                 title: newText.title,
             }, session.token);
 
-            expect(response.statusCode).to.equal(400);
+            expect(response.statusCode).toEqual(400);
         });
         test<TestContext>("If languageCode is missing return 400", async (context) => {
             const user = await context.userFactory.createOne();
@@ -190,7 +195,7 @@ describe("POST texts/", () => {
                 content: newText.content,
             }, session.token);
 
-            expect(response.statusCode).to.equal(400);
+            expect(response.statusCode).toEqual(400);
         });
     });
     describe("If fields are invalid return 400", async () => {
@@ -206,7 +211,7 @@ describe("POST texts/", () => {
                 content: newText.content,
             }, session.token);
 
-            expect(response.statusCode).to.equal(400);
+            expect(response.statusCode).toEqual(400);
         });
         test<TestContext>("If text is invalid return 400", async (context) => {
             const user = await context.userFactory.createOne();
@@ -220,7 +225,7 @@ describe("POST texts/", () => {
                 content: faker.random.words(40000),
             }, session.token);
 
-            expect(response.statusCode).to.equal(400);
+            expect(response.statusCode).toEqual(400);
         });
         describe("If collection is invalid return 400", async () => {
             test<TestContext>("If collection id is not a number return 400", async (context) => {
@@ -236,7 +241,7 @@ describe("POST texts/", () => {
                     collectionId: faker.random.alpha(3),
                 }, session.token);
 
-                expect(response.statusCode).to.equal(400);
+                expect(response.statusCode).toEqual(400);
             });
             test<TestContext>("If collection does not exist return 400", async (context) => {
                 const user = await context.userFactory.createOne();
@@ -251,7 +256,7 @@ describe("POST texts/", () => {
                     collectionId: faker.datatype.number({min: 10000}),
                 }, session.token);
 
-                expect(response.statusCode).to.equal(400);
+                expect(response.statusCode).toEqual(400);
             });
             test<TestContext>("If collection is in a different language than text return 400", async (context) => {
                 const user = await context.userFactory.createOne();
@@ -268,7 +273,7 @@ describe("POST texts/", () => {
                     collectionId: collection.id,
                 }, session.token);
 
-                expect(response.statusCode).to.equal(400);
+                expect(response.statusCode).toEqual(400);
             });
             test<TestContext>("If user is not author of collection return 403", async (context) => {
                 const user = await context.userFactory.createOne();
@@ -289,7 +294,7 @@ describe("POST texts/", () => {
                     collectionId: collection.id,
                 }, session.token);
 
-                expect(response.statusCode).to.equal(403);
+                expect(response.statusCode).toEqual(403);
             });
 
         });
@@ -298,7 +303,7 @@ describe("POST texts/", () => {
                 const user = await context.userFactory.createOne();
                 const session = await context.sessionFactory.createOne({user: user});
                 const language = await context.languageFactory.createOne();
-                const imageUploadRequest = await context.fileUploadRequestFactory.makeOne({
+                const imageUploadRequest = context.fileUploadRequestFactory.makeOne({
                     user: user,
                     fileField: "textImage"
                 });
@@ -320,7 +325,7 @@ describe("POST texts/", () => {
                     audio: audioUploadRequest.objectKey,
                 }, session.token);
 
-                expect(response.statusCode).to.equal(400);
+                expect(response.statusCode).toEqual(400);
             });
             test<TestContext>("If file upload request with key was not requested by user return 400", async (context) => {
                 const user = await context.userFactory.createOne();
@@ -349,7 +354,7 @@ describe("POST texts/", () => {
                     audio: audioUploadRequest.objectKey,
                 }, session.token);
 
-                expect(response.statusCode).to.equal(400);
+                expect(response.statusCode).toEqual(400);
             });
             test<TestContext>("If file upload request with key is not for textImage field return 400", async (context) => {
                 const user = await context.userFactory.createOne();
@@ -377,7 +382,7 @@ describe("POST texts/", () => {
                     audio: audioUploadRequest.objectKey,
                 }, session.token);
 
-                expect(response.statusCode).to.equal(400);
+                expect(response.statusCode).toEqual(400);
             });
         });
         describe("If audio is invalid return 400", async () => {
@@ -389,7 +394,7 @@ describe("POST texts/", () => {
                     user: user,
                     fileField: "textImage"
                 });
-                const audioUploadRequest = await context.fileUploadRequestFactory.makeOne({
+                const audioUploadRequest = context.fileUploadRequestFactory.makeOne({
                     user: user,
                     fileField: "textAudio"
                 });
@@ -407,7 +412,7 @@ describe("POST texts/", () => {
                     audio: audioUploadRequest.objectKey,
                 }, session.token);
 
-                expect(response.statusCode).to.equal(400);
+                expect(response.statusCode).toEqual(400);
             });
             test<TestContext>("If file upload request with key was not requested by user return 400", async (context) => {
                 const user = await context.userFactory.createOne();
@@ -436,7 +441,7 @@ describe("POST texts/", () => {
                     audio: audioUploadRequest.objectKey,
                 }, session.token);
 
-                expect(response.statusCode).to.equal(400);
+                expect(response.statusCode).toEqual(400);
             });
             test<TestContext>("If file upload request with key is not for textAudio field return 400", async (context) => {
                 const user = await context.userFactory.createOne();
@@ -464,7 +469,7 @@ describe("POST texts/", () => {
                     audio: audioUploadRequest.objectKey,
                 }, session.token);
 
-                expect(response.statusCode).to.equal(400);
+                expect(response.statusCode).toEqual(400);
             });
         });
     });

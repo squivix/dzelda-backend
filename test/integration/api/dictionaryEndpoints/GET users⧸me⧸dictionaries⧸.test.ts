@@ -1,8 +1,8 @@
 import {describe, expect, test, TestContext} from "vitest";
 import {InjectOptions} from "light-my-request";
-import {buildQueryString, createComparator, fetchRequest} from "@/test/integration/utils.js";
+import {buildQueryString, createComparator, fetchRequest} from "@/test/integration/integrationTestUtils.js";
 import {Dictionary} from "@/src/models/entities/Dictionary.js";
-import {dictionarySerializer} from "@/src/presentation/response/serializers/entities/DictionarySerializer.js";
+import {dictionarySerializer} from "@/src/presentation/response/serializers/Dictionary/DictionarySerializer.js";
 
 /**{@link DictionaryController#getUserDictionaries}*/
 describe("GET users/me/dictionaries/", function () {
@@ -29,7 +29,7 @@ describe("GET users/me/dictionaries/", function () {
 
         const response = await makeRequest({}, session.token);
 
-        expect(response.statusCode).to.equal(200);
+        expect(response.statusCode).toEqual(200);
         expect(response.json()).toEqual(dictionarySerializer.serializeList(expectedDictionaries));
     });
     describe("test language filter", () => {
@@ -45,7 +45,7 @@ describe("GET users/me/dictionaries/", function () {
 
             const response = await makeRequest({languageCode: language1.code}, session.token);
 
-            expect(response.statusCode).to.equal(200);
+            expect(response.statusCode).toEqual(200);
             expect(response.json()).toEqual(dictionarySerializer.serializeList(expectedDictionaries));
         });
         test<TestContext>("If language does not exist return empty dictionary list", async (context) => {
@@ -58,24 +58,24 @@ describe("GET users/me/dictionaries/", function () {
             const language = await context.languageFactory.makeOne();
 
             const response = await makeRequest({languageCode: language.code}, session.token);
-            expect(response.statusCode).to.equal(200);
+            expect(response.statusCode).toEqual(200);
             expect(response.json()).toEqual([]);
         });
         test<TestContext>("If language filter is invalid return 400", async (context) => {
             const user = await context.userFactory.createOne();
             const session = await context.sessionFactory.createOne({user: user});
             const response = await makeRequest({languageCode: 12345}, session.token);
-            expect(response.statusCode).to.equal(400);
+            expect(response.statusCode).toEqual(400);
         });
     });
     test<TestContext>("If user is not logged in return 401", async () => {
         const response = await makeRequest();
-        expect(response.statusCode).to.equal(401);
+        expect(response.statusCode).toEqual(401);
     });
     test<TestContext>("If user email is not confirmed return 403", async (context) => {
         const user = await context.userFactory.createOne({isEmailConfirmed: false});
         const session = await context.sessionFactory.createOne({user});
         const response = await makeRequest({}, session.token);
-        expect(response.statusCode).to.equal(403);
+        expect(response.statusCode).toEqual(403);
     });
 });

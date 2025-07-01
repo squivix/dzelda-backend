@@ -17,6 +17,9 @@ import {TranslationLanguageFactory} from "@/devtools/factories/TranslationLangua
 import {NotificationFactory} from "@/devtools/factories/NotificationFactory.js";
 import {HumanPronunciationFactory} from "@/devtools/factories/HumanPronunciationFactory.js";
 
+interface CustomMatchers<R = unknown> {
+    arrayEqualRegardlessOfOrder: (expected: any[]) => R,
+}
 
 declare module "vitest" {
     export interface TestContext {
@@ -35,7 +38,7 @@ declare module "vitest" {
         meaningFactory: MeaningFactory;
         notificationFactory: NotificationFactory;
         pendingJobFactory: PendingJobFactory;
-        humanPronunciationFactory:HumanPronunciationFactory;
+        humanPronunciationFactory: HumanPronunciationFactory;
 
         //repos
         collectionRepo: CollectionRepo;
@@ -43,4 +46,8 @@ declare module "vitest" {
         vocabRepo: VocabRepo;
         meaningRepo: EntityRepository<Meaning>;
     }
+
+    interface Matchers<T = any> extends CustomMatchers<T> {
+    }
+
 }

@@ -1,5 +1,5 @@
 import {describe, expect, test, TestContext} from "vitest";
-import {fetchRequest} from "@/test/integration/utils.js";
+import {fetchRequest} from "@/test/integration/integrationTestUtils.js";
 import crypto from "crypto";
 import {PASSWORD_RESET_TOKEN_LENGTH} from "@/src/constants.js";
 import {PasswordResetToken} from "@/src/models/entities/auth/PasswordResetToken.js";
@@ -24,13 +24,13 @@ describe("POST password-reset-tokens/verify/", function () {
         await context.em.flush();
 
         const response = await makeRequest({token: token});
-        expect(response.statusCode).to.equal(204);
+        expect(response.statusCode).toEqual(204);
 
     });
     test<TestContext>("If token does not exist return 401", async (context) => {
         const response = await makeRequest({token: crypto.randomBytes(PASSWORD_RESET_TOKEN_LENGTH).toString("hex")});
 
-        expect(response.statusCode).to.equal(401);
+        expect(response.statusCode).toEqual(401);
     });
     test<TestContext>("If token is expired, delete it and return 401", async (context) => {
         const user = await context.userFactory.createOne();
@@ -44,7 +44,7 @@ describe("POST password-reset-tokens/verify/", function () {
 
         const response = await makeRequest({token: token});
 
-        expect(response.statusCode).to.equal(401);
+        expect(response.statusCode).toEqual(401);
         expect(await context.em.findOne(PasswordResetToken, {token: resetToken.token}, {refresh: true})).toBeNull();
     });
 

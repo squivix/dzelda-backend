@@ -1,8 +1,8 @@
 import {describe, expect, test, TestContext} from "vitest";
 import {InjectOptions} from "light-my-request";
-import {fetchRequest} from "@/test/integration/utils.js";
+import {fetchRequest, omit} from "@/test/integration/integrationTestUtils.js";
 import {MapLearnerLanguage} from "@/src/models/entities/MapLearnerLanguage.js";
-import {learnerLanguageSerializer} from "@/src/presentation/response/serializers/mappings/LearnerLanguageSerializer.js";
+import {learnerLanguageSerializer} from "@/src/presentation/response/serializers/Language/LearnerLanguageSerializer.js";
 
 /**{@link LanguageController#updateUserLanguage}*/
 describe("PATCH users/me/languages/{languageCode}/", () => {
@@ -14,6 +14,8 @@ describe("PATCH users/me/languages/{languageCode}/", () => {
         };
         return await fetchRequest(options, authToken);
     };
+    test.todo<TestContext>("test preferred translation language update", async (context) => {
+    });
     test<TestContext>("If user is logged in, and all fields are valid return 200", async (context) => {
         const user = await context.userFactory.createOne();
         const session = await context.sessionFactory.createOne({user: user});
@@ -32,8 +34,8 @@ describe("PATCH users/me/languages/{languageCode}/", () => {
         const responseBody = response.json();
         const dbRecord = await context.em.findOneOrFail(MapLearnerLanguage, {language, learner: user.profile});
 
-        expect(response.statusCode).to.equal(200);
-        expect(responseBody).toMatchObject(learnerLanguageSerializer.serialize(expectedMapping, {ignore: ["startedLearningOn", "lastOpened"]}));
+        expect(response.statusCode).toEqual(200);
+        expect(responseBody).toMatchObject(omit(learnerLanguageSerializer.serialize(expectedMapping, {assertNoUndefined: false}), ["startedLearningOn", "lastOpened"]));
         expect(responseBody).toMatchObject(learnerLanguageSerializer.serialize(dbRecord));
         const {addedOn: newAddedOn, lastOpened: newLastOpened} = responseBody;
         expect(newAddedOn).not.toEqual(oldAddedOn);
@@ -44,7 +46,7 @@ describe("PATCH users/me/languages/{languageCode}/", () => {
 
         const response = await makeRequest(language.code, {lastOpened: "now"});
 
-        expect(response.statusCode).to.equal(401);
+        expect(response.statusCode).toEqual(401);
     });
     test<TestContext>("If user email is not confirmed return 403", async (context) => {
         const user = await context.userFactory.createOne({isEmailConfirmed: false});
@@ -53,7 +55,7 @@ describe("PATCH users/me/languages/{languageCode}/", () => {
 
         const response = await makeRequest(language.code, {lastOpened: "now"}, session.token);
 
-        expect(response.statusCode).to.equal(403);
+        expect(response.statusCode).toEqual(403);
     });
     test<TestContext>("If languageCode is invalid return  400", async (context) => {
         const user = await context.userFactory.createOne();
@@ -61,7 +63,7 @@ describe("PATCH users/me/languages/{languageCode}/", () => {
 
         const response = await makeRequest("", {lastOpened: "now"}, session.token);
 
-        expect(response.statusCode).to.equal(400);
+        expect(response.statusCode).toEqual(400);
     });
     test<TestContext>("If language is not found return  404", async (context) => {
         const user = await context.userFactory.createOne();
@@ -70,7 +72,7 @@ describe("PATCH users/me/languages/{languageCode}/", () => {
 
         const response = await makeRequest(language.code, {lastOpened: "now"}, session.token);
 
-        expect(response.statusCode).to.equal(404);
+        expect(response.statusCode).toEqual(404);
     });
     test<TestContext>("If user is not learning language return  404", async (context) => {
         const user = await context.userFactory.createOne();
@@ -79,7 +81,7 @@ describe("PATCH users/me/languages/{languageCode}/", () => {
 
         const response = await makeRequest(language.code, {lastOpened: "now"}, session.token);
 
-        expect(response.statusCode).to.equal(404);
+        expect(response.statusCode).toEqual(404);
     });
     test<TestContext>("If lastOpened is not 'now' return  400", async (context) => {
         const user = await context.userFactory.createOne();
@@ -88,6 +90,6 @@ describe("PATCH users/me/languages/{languageCode}/", () => {
 
         const response = await makeRequest(language.code, {lastOpened: "2023-02-14T11:00:43.818Z"}, session.token);
 
-        expect(response.statusCode).to.equal(400);
+        expect(response.statusCode).toEqual(400);
     });
 });

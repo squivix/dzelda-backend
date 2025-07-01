@@ -1,9 +1,9 @@
 import {describe, expect, test, TestContext} from "vitest";
 import {InjectOptions} from "light-my-request";
-import {fetchRequest} from "@/test/integration/utils.js";
-import {vocabSerializer} from "@/src/presentation/response/serializers/entities/VocabSerializer.js";
+import {fetchRequest, omit} from "@/test/integration/integrationTestUtils.js";
 import {faker} from "@faker-js/faker";
 import {MapTextVocab} from "@/src/models/entities/MapTextVocab.js";
+import {vocabSerializer} from "@/src/presentation/response/serializers/Vocab/VocabSerializer.js";
 
 /**{@link VocabController#createVocab}*/
 describe("POST vocabs/", () => {
@@ -36,8 +36,8 @@ describe("POST vocabs/", () => {
         }, session.token);
 
         expect(response.statusCode).toEqual(201);
-        expect(response.json()).toEqual(expect.objectContaining(vocabSerializer.serialize(newVocab)));
-        const dbRecord= await context.vocabRepo.findOne({text: newVocab.text, isPhrase: newVocab.isPhrase, language})
+        expect(response.json()).toEqual(expect.objectContaining(omit(vocabSerializer.serialize(newVocab, {assertNoUndefined: false}), ["id"])));
+        const dbRecord = await context.vocabRepo.findOne({text: newVocab.text, isPhrase: newVocab.isPhrase, language})
         expect(dbRecord).not.toBeNull();
         expect(new Set((await context.em.find(MapTextVocab, {vocab: dbRecord})).map(m => m.text.id))).toEqual(new Set(expectedTextsAppearingIn.map(t => t.id)))
     });

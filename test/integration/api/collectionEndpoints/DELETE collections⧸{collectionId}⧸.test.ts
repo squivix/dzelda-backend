@@ -1,6 +1,6 @@
 import {describe, expect, test, TestContext} from "vitest";
 import {InjectOptions} from "light-my-request";
-import {buildQueryString, fetchRequest} from "@/test/integration/utils.js";
+import {buildQueryString, fetchRequest} from "@/test/integration/integrationTestUtils.js";
 import {faker} from "@faker-js/faker";
 
 /**{@link CollectionController#deleteCollection}*/
@@ -28,7 +28,7 @@ describe("DELETE collections/{collectionId}/", function () {
             const response = await makeRequest(collection.id, {}, session.token);
             context.em.clear();
 
-            expect(response.statusCode).to.equal(204);
+            expect(response.statusCode).toEqual(204);
 
             const dbRecord = await context.collectionRepo.findOne({id: collection.id});
             expect(dbRecord).toBeNull();
@@ -46,7 +46,7 @@ describe("DELETE collections/{collectionId}/", function () {
             const response = await makeRequest(collection.id, {cascadeTexts: true}, session.token);
             context.em.clear();
 
-            expect(response.statusCode).to.equal(204);
+            expect(response.statusCode).toEqual(204);
             expect(await context.collectionRepo.findOne({id: collection.id})).toBeNull();
             expect(await context.textRepo.find({id: texts.map(t => t.id)})).toHaveLength(0);
         });
@@ -57,7 +57,7 @@ describe("DELETE collections/{collectionId}/", function () {
 
             const response = await makeRequest(collection.id);
 
-            expect(response.statusCode).to.equal(401);
+            expect(response.statusCode).toEqual(401);
         });
         test<TestContext>("If user email is not confirmed return 403", async (context) => {
             const user = await context.userFactory.createOne({isEmailConfirmed: false});
@@ -67,7 +67,7 @@ describe("DELETE collections/{collectionId}/", function () {
 
             const response = await makeRequest(collection.id, {}, session.token);
 
-            expect(response.statusCode).to.equal(403);
+            expect(response.statusCode).toEqual(403);
         });
         test<TestContext>("If collection does not exist return 404", async (context) => {
             const user = await context.userFactory.createOne();
@@ -75,7 +75,7 @@ describe("DELETE collections/{collectionId}/", function () {
 
             const response = await makeRequest(faker.datatype.number({min: 100000}), {}, session.token);
 
-            expect(response.statusCode).to.equal(404);
+            expect(response.statusCode).toEqual(404);
         });
         test<TestContext>("If user is not author of public collection return 403", async (context) => {
             const author = await context.userFactory.createOne();
@@ -86,7 +86,7 @@ describe("DELETE collections/{collectionId}/", function () {
 
             const response = await makeRequest(collection.id, {}, session.token);
 
-            expect(response.statusCode).to.equal(403);
+            expect(response.statusCode).toEqual(403);
         });
         test<TestContext>("If collection is private and user is not author return 404", async (context) => {
             const author = await context.userFactory.createOne();
@@ -101,7 +101,7 @@ describe("DELETE collections/{collectionId}/", function () {
 
             const response = await makeRequest(collection.id, {}, session.token);
 
-            expect(response.statusCode).to.equal(404);
+            expect(response.statusCode).toEqual(404);
         });
         test<TestContext>("If collectionId is invalid return 400", async (context) => {
             const user = await context.userFactory.createOne();
@@ -109,7 +109,7 @@ describe("DELETE collections/{collectionId}/", function () {
 
             const response = await makeRequest("invalid", {}, session.token);
 
-            expect(response.statusCode).to.equal(400);
+            expect(response.statusCode).toEqual(400);
         });
         test<TestContext>("If cascadeTexts query param is invalid return 400", async (context) => {
             const user = await context.userFactory.createOne();
@@ -119,7 +119,7 @@ describe("DELETE collections/{collectionId}/", function () {
 
             const response = await makeRequest(collection.id, {cascadeTexts: "maybe"}, session.token);
 
-            expect(response.statusCode).to.equal(400);
+            expect(response.statusCode).toEqual(400);
         });
     });
 });

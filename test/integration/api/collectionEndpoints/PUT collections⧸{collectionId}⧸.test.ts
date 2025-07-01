@@ -1,9 +1,9 @@
 import {describe, expect, test, TestContext} from "vitest";
-import {fetchRequest} from "@/test/integration/utils.js";
+import {fetchRequest, onlyKeep} from "@/test/integration/integrationTestUtils.js";
 import {shuffleArray} from "@/test/utils.js";
-import {collectionSerializer} from "@/src/presentation/response/serializers/entities/CollectionSerializer.js";
 import {CollectionSchema, TextSchema} from "dzelda-common";
 import {faker} from "@faker-js/faker";
+import {collectionLoggedInSerializer} from "@/src/presentation/response/serializers/Collection/CollectionLoggedInSerializer.js";
 
 /**{@link CollectionController#updateCollection}*/
 describe("PUT collections/{collectionId}/", function () {
@@ -41,11 +41,11 @@ describe("PUT collections/{collectionId}/", function () {
             await context.collectionRepo.annotateCollectionsWithUserData([collection], author);
             await context.textRepo.annotateTextsWithUserData(collection.texts.getItems(), author);
 
-            expect(response.statusCode).to.equal(200);
-            expect(response.json()).toEqual(collectionSerializer.serialize(collection));
+            expect(response.statusCode).toEqual(200);
+            expect(response.json()).toEqual(collectionLoggedInSerializer.serialize(collection));
             expect(response.json().texts.map((l: TextSchema) => l.id)).toEqual(shuffledTextIds);
             const updatedFields: (keyof CollectionSchema)[] = ["title", "description"];
-            expect(collectionSerializer.serialize(collection, {include: updatedFields})).toEqual(collectionSerializer.serialize(updatedCollection, {include: updatedFields}));
+            expect(onlyKeep(collectionLoggedInSerializer.serialize(collection), updatedFields)).toEqual(onlyKeep(collectionLoggedInSerializer.serialize(updatedCollection, {assertNoUndefined: false}), updatedFields));
         });
         test<TestContext>("If new image is blank clear collection image", async (context) => {
             const author = await context.userFactory.createOne();
@@ -74,12 +74,12 @@ describe("PUT collections/{collectionId}/", function () {
             await context.collectionRepo.annotateCollectionsWithUserData([collection], author);
             await context.textRepo.annotateTextsWithUserData(collection.texts.getItems(), author);
 
-            expect(response.statusCode).to.equal(200);
-            expect(response.json()).toEqual(collectionSerializer.serialize(collection));
+            expect(response.statusCode).toEqual(200);
+            expect(response.json()).toEqual(collectionLoggedInSerializer.serialize(collection));
             expect(collection.image).toEqual("");
             expect(response.json().texts.map((l: TextSchema) => l.id)).toEqual(shuffledTextIds);
             const updatedFields: (keyof CollectionSchema)[] = ["title", "description", "image"];
-            expect(collectionSerializer.serialize(collection, {include: updatedFields})).toEqual(collectionSerializer.serialize(updatedCollection, {include: updatedFields}));
+            expect(onlyKeep(collectionLoggedInSerializer.serialize(collection), updatedFields)).toEqual(onlyKeep(collectionLoggedInSerializer.serialize(updatedCollection, {assertNoUndefined: false}), updatedFields));
         });
         test<TestContext>("If new image is provided, update collection image", async (context) => {
             const author = await context.userFactory.createOne();
@@ -115,11 +115,11 @@ describe("PUT collections/{collectionId}/", function () {
             await context.collectionRepo.annotateCollectionsWithUserData([collection], author);
             await context.textRepo.annotateTextsWithUserData(collection.texts.getItems(), author);
 
-            expect(response.statusCode).to.equal(200);
-            expect(response.json()).toEqual(collectionSerializer.serialize(collection));
+            expect(response.statusCode).toEqual(200);
+            expect(response.json()).toEqual(collectionLoggedInSerializer.serialize(collection));
             expect(response.json().texts.map((l: TextSchema) => l.id)).toEqual(shuffledTextIds);
             const updatedFields: (keyof CollectionSchema)[] = ["title", "description", "image", "isPublic"];
-            expect(collectionSerializer.serialize(collection, {include: updatedFields})).toEqual(collectionSerializer.serialize(updatedCollection, {include: updatedFields}));
+            expect(onlyKeep(collectionLoggedInSerializer.serialize(collection), updatedFields)).toEqual(onlyKeep(collectionLoggedInSerializer.serialize(updatedCollection, {assertNoUndefined: false}), updatedFields));
         });
     });
     test<TestContext>("If user not logged in return 401", async (context) => {
@@ -140,7 +140,7 @@ describe("PUT collections/{collectionId}/", function () {
             textsOrder: shuffleArray(collectionTexts).map(l => l.id)
         });
 
-        expect(response.statusCode).to.equal(401);
+        expect(response.statusCode).toEqual(401);
     });
     test<TestContext>("If user email is not confirmed return 403", async (context) => {
         const user = await context.userFactory.createOne({isEmailConfirmed: false});
@@ -162,7 +162,7 @@ describe("PUT collections/{collectionId}/", function () {
             textsOrder: shuffleArray(collectionTexts).map(l => l.id)
         }, session.token);
 
-        expect(response.statusCode).to.equal(403);
+        expect(response.statusCode).toEqual(403);
     });
     test<TestContext>("If collection does not exist return 404", async (context) => {
         const user = await context.userFactory.createOne();
@@ -176,7 +176,7 @@ describe("PUT collections/{collectionId}/", function () {
             textsOrder: [1, 2, 3]
         }, session.token);
 
-        expect(response.statusCode).to.equal(404);
+        expect(response.statusCode).toEqual(404);
     });
     test<TestContext>("If user is not author of collection return 403", async (context) => {
         const author = await context.userFactory.createOne();
@@ -202,7 +202,7 @@ describe("PUT collections/{collectionId}/", function () {
             textsOrder: shuffleArray(collectionTexts).map(l => l.id)
         }, session.token);
 
-        expect(response.statusCode).to.equal(403);
+        expect(response.statusCode).toEqual(403);
     });
     test<TestContext>("If collection is not public and user is not author return 404", async (context) => {
         const author = await context.userFactory.createOne();
@@ -229,7 +229,7 @@ describe("PUT collections/{collectionId}/", function () {
             textsOrder: shuffleArray(collectionTexts).map(l => l.id)
         }, session.token);
 
-        expect(response.statusCode).to.equal(404);
+        expect(response.statusCode).toEqual(404);
     });
     describe("If required fields are missing return 400", async () => {
         test<TestContext>("If title is missing return 400", async (context) => {
@@ -250,7 +250,7 @@ describe("PUT collections/{collectionId}/", function () {
                 textsOrder: shuffleArray(collectionTexts).map(l => l.id)
             }, session.token);
 
-            expect(response.statusCode).to.equal(400);
+            expect(response.statusCode).toEqual(400);
         });
         test<TestContext>("If description is missing return 400", async (context) => {
             const author = await context.userFactory.createOne();
@@ -270,7 +270,7 @@ describe("PUT collections/{collectionId}/", function () {
                 textsOrder: shuffleArray(collectionTexts).map(l => l.id)
             }, session.token);
 
-            expect(response.statusCode).to.equal(400);
+            expect(response.statusCode).toEqual(400);
         });
         test<TestContext>("If textsOrder is missing return 400", async (context) => {
             const author = await context.userFactory.createOne();
@@ -290,7 +290,7 @@ describe("PUT collections/{collectionId}/", function () {
                 description: updatedCollection.description,
             }, session.token);
 
-            expect(response.statusCode).to.equal(400);
+            expect(response.statusCode).toEqual(400);
         });
     });
     describe("If fields are invalid return 400", async () => {
@@ -313,7 +313,7 @@ describe("PUT collections/{collectionId}/", function () {
                 textsOrder: shuffleArray(collectionTexts).map(l => l.id)
             }, session.token);
 
-            expect(response.statusCode).to.equal(400);
+            expect(response.statusCode).toEqual(400);
         });
         test<TestContext>("If description is invalid return 400", async (context) => {
             const author = await context.userFactory.createOne();
@@ -334,7 +334,7 @@ describe("PUT collections/{collectionId}/", function () {
                 textsOrder: shuffleArray(collectionTexts).map(l => l.id),
             }, session.token);
 
-            expect(response.statusCode).to.equal(400);
+            expect(response.statusCode).toEqual(400);
         });
         describe("If textsOrder is invalid return 400", async () => {
             test<TestContext>("If textsOrder is not an array of integers return 400", async (context) => {
@@ -350,7 +350,7 @@ describe("PUT collections/{collectionId}/", function () {
                     textsOrder: [1, 2, 3.5, -1, "42"]
                 }, session.token);
 
-                expect(response.statusCode).to.equal(400);
+                expect(response.statusCode).toEqual(400);
             });
             describe("If textsOrder is not a permutation of collection text ids return 400", () => {
                 test<TestContext>("If textsOrder has any new text ids return 400", async (context) => {
@@ -377,7 +377,7 @@ describe("PUT collections/{collectionId}/", function () {
                         textsOrder: [...shuffleArray(collectionTexts.map(l => l.id)), otherText.id]
                     }, session.token);
 
-                    expect(response.statusCode).to.equal(400);
+                    expect(response.statusCode).toEqual(400);
                 });
                 test<TestContext>("If textsOrder is missing text ids return 400", async (context) => {
                     const author = await context.userFactory.createOne();
@@ -405,7 +405,7 @@ describe("PUT collections/{collectionId}/", function () {
                         textsOrder: textsOrder
                     }, session.token);
 
-                    expect(response.statusCode).to.equal(400);
+                    expect(response.statusCode).toEqual(400);
                 });
                 test<TestContext>("If textsOrder has any repeated ids return 400", async (context) => {
                     const author = await context.userFactory.createOne();
@@ -432,7 +432,7 @@ describe("PUT collections/{collectionId}/", function () {
                         textsOrder: textsOrder
                     }, session.token);
 
-                    expect(response.statusCode).to.equal(400);
+                    expect(response.statusCode).toEqual(400);
                 });
             });
         });
@@ -458,7 +458,7 @@ describe("PUT collections/{collectionId}/", function () {
                     image: fileUploadRequest.objectKey
                 }, session.token);
 
-                expect(response.statusCode).to.equal(400);
+                expect(response.statusCode).toEqual(400);
             });
             test<TestContext>("If file upload request with key was not requested by user return 400", async (context) => {
                 const author = await context.userFactory.createOne();
@@ -482,7 +482,7 @@ describe("PUT collections/{collectionId}/", function () {
                     image: fileUploadRequest.objectKey
                 }, session.token);
 
-                expect(response.statusCode).to.equal(400);
+                expect(response.statusCode).toEqual(400);
             });
             test<TestContext>("If file upload request with key is not for collectionImage field return 400", async (context) => {
                 const author = await context.userFactory.createOne();
@@ -505,7 +505,7 @@ describe("PUT collections/{collectionId}/", function () {
                     image: fileUploadRequest.objectKey
                 }, session.token);
 
-                expect(response.statusCode).to.equal(400);
+                expect(response.statusCode).toEqual(400);
             });
         });
     });

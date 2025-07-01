@@ -1,10 +1,11 @@
 import {describe, expect, test, TestContext} from "vitest";
 import {InjectOptions} from "light-my-request";
-import {fetchRequest} from "@/test/integration/utils.js";
+import {fetchRequest} from "@/test/integration/integrationTestUtils.js";
 import {Vocab} from "@/src/models/entities/Vocab.js";
 import {MapLearnerVocab} from "@/src/models/entities/MapLearnerVocab.js";
-import {learnerVocabSerializer} from "@/src/presentation/response/serializers/mappings/LearnerVocabSerializer.js";
 import {faker} from "@faker-js/faker";
+import {learnerVocabForTextSerializer} from "@/src/presentation/response/serializers/Vocab/LearnerVocabForTextSerializer.js";
+import {vocabForTextSerializer} from "@/src/presentation/response/serializers/Vocab/VocabForTextSerializer.js";
 
 /**{@link VocabController#getTextVocabs}*/
 describe("GET texts/{textId}/vocabs/", () => {
@@ -30,14 +31,13 @@ describe("GET texts/{textId}/vocabs/", () => {
         for (let vocab of expectedExistingVocabs)
             expectedExistingMappings.push(context.em.create(MapLearnerVocab, {learner: user.profile, vocab}));
         await context.em.flush();
-        const expectedTextVocabs = [...expectedExistingMappings, ...expectedNewVocabs];
         await context.vocabFactory.create(10, {language});
         const response = await makeRequest(text.id, session.token);
         await context.em.find(Vocab, expectedExistingVocabs, {refresh: true});
 
-        expect(response.statusCode).to.equal(200);
+        expect(response.statusCode).toEqual(200);
         const responseBody = response.json();
-        const expectedBody = learnerVocabSerializer.serializeList(expectedTextVocabs, {ignore: ["meanings", "learnerMeanings"]});
+        const expectedBody = [...learnerVocabForTextSerializer.serializeList(expectedExistingMappings), ...vocabForTextSerializer.serializeList(expectedNewVocabs)];
         //ignore order
         expect(responseBody.length).toEqual(expectedBody.length);
         expect(responseBody).toEqual(expect.arrayContaining(expectedBody));
@@ -49,7 +49,7 @@ describe("GET texts/{textId}/vocabs/", () => {
 
         const response = await makeRequest(text.id);
 
-        expect(response.statusCode).to.equal(401);
+        expect(response.statusCode).toEqual(401);
     });
     test<TestContext>("If user email is not confirmed return 403", async (context) => {
         const user = await context.userFactory.createOne({isEmailConfirmed: false});
@@ -59,7 +59,7 @@ describe("GET texts/{textId}/vocabs/", () => {
 
         const response = await makeRequest(text.id, session.token);
 
-        expect(response.statusCode).to.equal(403);
+        expect(response.statusCode).toEqual(403);
     });
     test<TestContext>("If text does not exists return 404", async (context) => {
         const user = await context.userFactory.createOne();
@@ -67,7 +67,7 @@ describe("GET texts/{textId}/vocabs/", () => {
 
         const response = await makeRequest(faker.datatype.number({min: 10000000}), session.token);
 
-        expect(response.statusCode).to.equal(404);
+        expect(response.statusCode).toEqual(404);
     });
     describe("test privacy", () => {
         describe("Hide private texts from non-authors", () => {
@@ -79,7 +79,7 @@ describe("GET texts/{textId}/vocabs/", () => {
 
                 const response = await makeRequest(text.id, session.token);
 
-                expect(response.statusCode).to.equal(404);
+                expect(response.statusCode).toEqual(404);
             });
             test<TestContext>("If the text is private and the user is author return vocabs in text", async (context) => {
                 const author = await context.userFactory.createOne();
@@ -92,14 +92,13 @@ describe("GET texts/{textId}/vocabs/", () => {
                 for (let vocab of expectedExistingVocabs)
                     expectedExistingMappings.push(context.em.create(MapLearnerVocab, {learner: author.profile, vocab}));
                 await context.em.flush();
-                const expectedTextVocabs = [...expectedExistingMappings, ...expectedNewVocabs];
                 await context.vocabFactory.create(10, {language});
                 const response = await makeRequest(text.id, session.token);
                 await context.em.find(Vocab, expectedExistingVocabs, {refresh: true});
 
-                expect(response.statusCode).to.equal(200);
+                expect(response.statusCode).toEqual(200);
                 const responseBody = response.json();
-                const expectedBody = learnerVocabSerializer.serializeList(expectedTextVocabs, {ignore: ["meanings", "learnerMeanings"]});
+                const expectedBody = [...learnerVocabForTextSerializer.serializeList(expectedExistingMappings), ...vocabForTextSerializer.serializeList(expectedNewVocabs)];
                 //ignore order
                 expect(responseBody.length).toEqual(expectedBody.length);
                 expect(responseBody).toEqual(expect.arrayContaining(expectedBody));
@@ -116,7 +115,7 @@ describe("GET texts/{textId}/vocabs/", () => {
 
                     const response = await makeRequest(text.id, session.token);
 
-                    expect(response.statusCode).to.equal(404);
+                    expect(response.statusCode).toEqual(404);
                 });
                 test<TestContext>("If the text is in private collection and user is author return vocabs in text", async (context) => {
                     const author = await context.userFactory.createOne();
@@ -130,14 +129,13 @@ describe("GET texts/{textId}/vocabs/", () => {
                     for (let vocab of expectedExistingVocabs)
                         expectedExistingMappings.push(context.em.create(MapLearnerVocab, {learner: author.profile, vocab}));
                     await context.em.flush();
-                    const expectedTextVocabs = [...expectedExistingMappings, ...expectedNewVocabs];
                     await context.vocabFactory.create(10, {language});
                     const response = await makeRequest(text.id, session.token);
                     await context.em.find(Vocab, expectedExistingVocabs, {refresh: true});
 
-                    expect(response.statusCode).to.equal(200);
+                    expect(response.statusCode).toEqual(200);
                     const responseBody = response.json();
-                    const expectedBody = learnerVocabSerializer.serializeList(expectedTextVocabs, {ignore: ["meanings", "learnerMeanings"]});
+                    const expectedBody = [...learnerVocabForTextSerializer.serializeList(expectedExistingMappings), ...vocabForTextSerializer.serializeList(expectedNewVocabs)];
                     //ignore order
                     expect(responseBody.length).toEqual(expectedBody.length);
                     expect(responseBody).toEqual(expect.arrayContaining(expectedBody));
@@ -155,14 +153,13 @@ describe("GET texts/{textId}/vocabs/", () => {
                 for (let vocab of expectedExistingVocabs)
                     expectedExistingMappings.push(context.em.create(MapLearnerVocab, {learner: user.profile, vocab}));
                 await context.em.flush();
-                const expectedTextVocabs = [...expectedExistingMappings, ...expectedNewVocabs];
                 await context.vocabFactory.create(10, {language});
                 const response = await makeRequest(text.id, session.token);
                 await context.em.find(Vocab, expectedExistingVocabs, {refresh: true});
 
-                expect(response.statusCode).to.equal(200);
+                expect(response.statusCode).toEqual(200);
                 const responseBody = response.json();
-                const expectedBody = learnerVocabSerializer.serializeList(expectedTextVocabs, {ignore: ["meanings", "learnerMeanings"]});
+                const expectedBody = [...learnerVocabForTextSerializer.serializeList(expectedExistingMappings), ...vocabForTextSerializer.serializeList(expectedNewVocabs)]
                 //ignore order
                 expect(responseBody.length).toEqual(expectedBody.length);
                 expect(responseBody).toEqual(expect.arrayContaining(expectedBody));

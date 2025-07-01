@@ -1,5 +1,5 @@
 import {describe, expect, test, TestContext} from "vitest";
-import {fetchRequest} from "@/test/integration/utils.js";
+import {fetchRequest} from "@/test/integration/integrationTestUtils.js";
 import crypto from "crypto";
 import {EMAIL_CONFIRM_TOKEN_LENGTH} from "@/src/constants.js";
 import {EmailConfirmationToken} from "@/src/models/entities/auth/EmailConfirmationToken.js";
@@ -28,8 +28,8 @@ describe("POST users/me/email/confirm", function () {
             const response = await makeRequest({token: token});
             await context.em.refresh(user);
 
-            expect(response.statusCode).to.equal(204);
-            expect(user.isEmailConfirmed).to.equal(true);
+            expect(response.statusCode).toEqual(204);
+            expect(user.isEmailConfirmed).toEqual(true);
             expect(await context.em.findOne(EmailConfirmationToken, {token: token}, {refresh: true})).toBeNull();
         });
         test<TestContext>("If token is from email change, update user email to new confirmed email from token, delete token and return 204", async (context) => {
@@ -46,7 +46,7 @@ describe("POST users/me/email/confirm", function () {
             const response = await makeRequest({token: token});
             await context.em.refresh(user);
 
-            expect(response.statusCode).to.equal(204);
+            expect(response.statusCode).toEqual(204);
             expect(user.email).toEqual(newEmail);
             expect(await context.em.findOne(EmailConfirmationToken, {token: token}, {refresh: true})).toBeNull();
         });
@@ -55,7 +55,7 @@ describe("POST users/me/email/confirm", function () {
         const token = crypto.randomBytes(EMAIL_CONFIRM_TOKEN_LENGTH).toString("hex");
         const response = await makeRequest({token: await expiringTokenHasher.hash(token)});
 
-        expect(response.statusCode).to.equal(401);
+        expect(response.statusCode).toEqual(401);
     });
     test<TestContext>("If token is expired, delete it and return 401", async (context) => {
         const user = await context.userFactory.createOne({isEmailConfirmed: false});
@@ -71,7 +71,7 @@ describe("POST users/me/email/confirm", function () {
         const response = await makeRequest({token: token});
         await context.em.refresh(user);
 
-        expect(response.statusCode).to.equal(401);
+        expect(response.statusCode).toEqual(401);
         expect(user.isEmailConfirmed).toEqual(false);
         expect(await context.em.findOne(EmailConfirmationToken, {token: token}, {refresh: true})).toBeNull();
     });

@@ -1,5 +1,5 @@
 import {describe, expect, test, TestContext, vi} from "vitest";
-import {fetchRequest, parseUrlQueryString} from "@/test/integration/utils.js";
+import {fetchRequest, parseUrlQueryString} from "@/test/integration/integrationTestUtils.js";
 import {DOMAIN_NAME, PASSWORD_RESET_TOKEN_LENGTH} from "@/src/constants.js";
 import {emailTransporter} from "@/src/nodemailer.config.js";
 import {EmailConfirmationToken} from "@/src/models/entities/auth/EmailConfirmationToken.js";
@@ -27,7 +27,7 @@ describe("POST email-confirm-tokens/", function () {
             const response = await makeRequest({}, session.token);
 
             const newlyCreatedToken = await context.em.findOne(EmailConfirmationToken, {user});
-            expect(response.statusCode).to.equal(204);
+            expect(response.statusCode).toEqual(204);
             expect(newlyCreatedToken).not.toBeNull();
             expect(sendMailSpy).toHaveBeenCalledOnce();
             expect(sendMailSpy).toHaveBeenCalledWith(expect.objectContaining({
@@ -52,7 +52,7 @@ describe("POST email-confirm-tokens/", function () {
             await context.em.refresh(user);
 
             const newlyCreatedToken = await context.em.findOne(EmailConfirmationToken, {user});
-            expect(response.statusCode).to.equal(204);
+            expect(response.statusCode).toEqual(204);
             expect(user.email).toEqual(newEmail);
             expect(user.isEmailConfirmed).toEqual(false);
             expect(newlyCreatedToken).not.toBeNull();
@@ -84,7 +84,7 @@ describe("POST email-confirm-tokens/", function () {
         const response = await makeRequest({}, session.token);
 
         const newlyCreatedToken = await context.em.findOne(EmailConfirmationToken, {user});
-        expect(response.statusCode).to.equal(204);
+        expect(response.statusCode).toEqual(204);
         expect(await context.em.findOne(EmailConfirmationToken, {token: oldToken.token})).toBeNull();
         expect(newlyCreatedToken).not.toBeNull();
         expect(sendMailSpy).toHaveBeenCalledOnce();
@@ -107,7 +107,7 @@ describe("POST email-confirm-tokens/", function () {
         const sendMailSpy = vi.spyOn(emailTransporter, "sendMail");
         const response = await makeRequest({}, session.token);
 
-        expect(response.statusCode).to.equal(400);
+        expect(response.statusCode).toEqual(400);
         expect(await context.em.findOne(EmailConfirmationToken, {user})).toBeNull();
         expect(sendMailSpy).not.toHaveBeenCalled();
     });
@@ -119,7 +119,7 @@ describe("POST email-confirm-tokens/", function () {
             const sendMailSpy = vi.spyOn(emailTransporter, "sendMail");
             const response = await makeRequest({email: faker.random.alpha(8)}, session.token);
 
-            expect(response.statusCode).to.equal(400);
+            expect(response.statusCode).toEqual(400);
             expect(await context.em.findOne(EmailConfirmationToken, {user})).toBeNull();
             expect(sendMailSpy).not.toHaveBeenCalled();
         });
@@ -130,7 +130,7 @@ describe("POST email-confirm-tokens/", function () {
             const sendMailSpy = vi.spyOn(emailTransporter, "sendMail");
             const response = await makeRequest({email: faker.internet.email(faker.random.alpha(257))}, session.token);
 
-            expect(response.statusCode).to.equal(400);
+            expect(response.statusCode).toEqual(400);
             expect(await context.em.findOne(EmailConfirmationToken, {user})).toBeNull();
             expect(sendMailSpy).not.toHaveBeenCalled();
         });
@@ -142,7 +142,7 @@ describe("POST email-confirm-tokens/", function () {
             const sendMailSpy = vi.spyOn(emailTransporter, "sendMail");
             const response = await makeRequest({email: otherUser.email}, session.token);
 
-            expect(response.statusCode).to.equal(400);
+            expect(response.statusCode).toEqual(400);
             expect(await context.em.findOne(EmailConfirmationToken, {user})).toBeNull();
             expect(sendMailSpy).not.toHaveBeenCalled();
         });
@@ -151,7 +151,7 @@ describe("POST email-confirm-tokens/", function () {
     test<TestContext>("If user is not logged in return 401", async (context) => {
         const response = await makeRequest({});
 
-        expect(response.statusCode).to.equal(401);
+        expect(response.statusCode).toEqual(401);
     });
 
 });

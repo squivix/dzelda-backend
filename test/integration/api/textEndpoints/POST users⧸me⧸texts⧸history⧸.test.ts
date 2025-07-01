@@ -1,10 +1,10 @@
 import {describe, expect, test, TestContext} from "vitest";
 import {InjectOptions} from "light-my-request";
-import {fetchRequest} from "@/test/integration/utils.js";
-import {textSerializer} from "@/src/presentation/response/serializers/entities/TextSerializer.js";
+import {fetchRequest, omit} from "@/test/integration/integrationTestUtils.js";
 import {TextHistoryEntry} from "@/src/models/entities/TextHistoryEntry.js";
 import {faker} from "@faker-js/faker";
-import {textHistoryEntrySerializer} from "@/src/presentation/response/serializers/mappings/TextHistoryEntrySerializer.js";
+import {textHistoryEntrySerializer} from "@/src/presentation/response/serializers/TextHistoryEntry/TextHistoryEntrySerializer.js";
+import {textLoggedInSerializer} from "@/src/presentation/response/serializers/Text/TextLoggedInSerializer.js";
 
 /**{@link TextController#addTextToUserHistory}*/
 describe("POST users/me/texts/history/", () => {
@@ -22,18 +22,18 @@ describe("POST users/me/texts/history/", () => {
         const language = await context.languageFactory.createOne({learners: user.profile});
         const text = await context.textFactory.createOne({language, isPublic: true});
         await context.textRepo.annotateTextsWithUserData([text], user);
-        const expectedTextHistoryEntry = context.em.create(TextHistoryEntry, {pastViewer: user.profile, text: text});
+        const expectedTextHistoryEntry = context.em.create(TextHistoryEntry, {pastViewer: user.profile, text: text, timeViewed: new Date()});
 
         const response = await makeRequest({textId: text.id}, session.token);
 
         await context.em.refresh(text, {populate: ["pastViewersCount"]});
-        expect(response.statusCode).to.equal(201);
-        expect(response.json()).toMatchObject(textHistoryEntrySerializer.serialize(expectedTextHistoryEntry, {ignore: ["timeViewed"]}));
+        expect(response.statusCode).toEqual(201);
+        expect(response.json()).toMatchObject(omit(textHistoryEntrySerializer.serialize(expectedTextHistoryEntry, {assertNoUndefined: false}), ["timeViewed"]));
         const dbRecord = await context.em.findOne(TextHistoryEntry, {
             pastViewer: user.profile, text: text
         }, {populate: ["text"]});
         expect(dbRecord).not.toBeNull();
-        expect(textSerializer.serialize(dbRecord!.text)).toEqual(textSerializer.serialize(text));
+        expect(textLoggedInSerializer.serialize(dbRecord!.text)).toEqual(textLoggedInSerializer.serialize(text));
     });
     test<TestContext>("If text is already in user history but is not latest add it again with newer timestamp", async (context) => {
         const user = await context.userFactory.createOne();
@@ -41,23 +41,23 @@ describe("POST users/me/texts/history/", () => {
         const language = await context.languageFactory.createOne({learners: user.profile});
         const text1 = await context.textFactory.createOne({language, isPublic: true});
         const text2 = await context.textFactory.createOne({language, isPublic: true});
-        const oldTextHistoryEntry = context.em.create(TextHistoryEntry, {pastViewer: user.profile, text: text1});
-        context.em.create(TextHistoryEntry, {pastViewer: user.profile, text: text2});
+        const oldTextHistoryEntry = context.em.create(TextHistoryEntry, {pastViewer: user.profile, text: text1, timeViewed: new Date("2023-06-22T00:00:00.0000")});
+        context.em.create(TextHistoryEntry, {pastViewer: user.profile, text: text2, timeViewed: new Date("2024-06-22T00:00:00.0000")});
         await context.em.flush();
-        const expectedTextHistoryEntry = context.em.create(TextHistoryEntry, {pastViewer: user.profile, text: text1});
-        await context.textRepo.annotateTextsWithUserData([text1], user);
+        const expectedTextHistoryEntry = context.em.create(TextHistoryEntry, {pastViewer: user.profile, text: text1, timeViewed: new Date("2025-06-22T00:00:00.0000")}, {persist: false});
 
         const response = await makeRequest({textId: text1.id}, session.token);
-        await context.em.refresh(text1, {populate: ["pastViewersCount"]});
+        await context.em.refresh(text1, {populate: ["pastViewersCount",]});
+        await context.textRepo.annotateTextsWithUserData([text1], user);
 
-        expect(response.statusCode).to.equal(200);
-        expect(response.json()).toMatchObject(textHistoryEntrySerializer.serialize(expectedTextHistoryEntry, {ignore: ["timeViewed"]}));
+        expect(response.statusCode).toEqual(201);
+        expect(response.json()).toMatchObject(omit(textHistoryEntrySerializer.serialize(expectedTextHistoryEntry, {assertNoUndefined: false}), ["timeViewed"]));
         const dbRecords = await context.em.find(TextHistoryEntry, {
             pastViewer: user.profile, text: text1
         }, {populate: ["text"], orderBy: {timeViewed: "desc"}});
         expect(dbRecords).toHaveLength(2);
-        expect(textSerializer.serialize(dbRecords[0].text)).toEqual(textSerializer.serialize(text1));
-        expect(new Date(expectedTextHistoryEntry.timeViewed).getTime()).toBeGreaterThan(new Date(oldTextHistoryEntry.timeViewed).getTime());
+        expect(textLoggedInSerializer.serialize(dbRecords[0].text)).toEqual(textLoggedInSerializer.serialize(text1));
+        expect(new Date(dbRecords[0].timeViewed).getTime()).toBeGreaterThan(new Date(oldTextHistoryEntry.timeViewed).getTime());
     });
     test<TestContext>("If text is already in user history and is latest don't add it again, return 200", async (context) => {
         const user = await context.userFactory.createOne();
@@ -71,13 +71,13 @@ describe("POST users/me/texts/history/", () => {
         const response = await makeRequest({textId: text.id}, session.token);
         await context.em.refresh(text, {populate: ["pastViewersCount"]});
 
-        expect(response.statusCode).to.equal(200);
-        expect(response.json()).toMatchObject(textHistoryEntrySerializer.serialize(expectedTextHistoryEntry, {ignore: ["timeViewed"]}));
+        expect(response.statusCode).toEqual(200);
+        expect(response.json()).toMatchObject(omit(textHistoryEntrySerializer.serialize(expectedTextHistoryEntry, {assertNoUndefined: false}), ["timeViewed"]));
         const dbRecords = await context.em.find(TextHistoryEntry, {
             pastViewer: user.profile, text: text
         }, {populate: ["text"], orderBy: {timeViewed: "desc"}});
         expect(dbRecords).toHaveLength(1);
-        expect(textSerializer.serialize(dbRecords[0].text)).toEqual(textSerializer.serialize(text));
+        expect(textLoggedInSerializer.serialize(dbRecords[0].text)).toEqual(textLoggedInSerializer.serialize(text));
     });
     describe("If required fields are missing return 400", function () {
         test<TestContext>("If the textId is missing return 400", async (context) => {
@@ -85,7 +85,7 @@ describe("POST users/me/texts/history/", () => {
             const session = await context.sessionFactory.createOne({user});
 
             const response = await makeRequest({}, session.token);
-            expect(response.statusCode).to.equal(400);
+            expect(response.statusCode).toEqual(400);
         });
     });
     describe("If fields are invalid return 400", function () {
@@ -95,14 +95,14 @@ describe("POST users/me/texts/history/", () => {
                 const session = await context.sessionFactory.createOne({user});
 
                 const response = await makeRequest({textId: faker.random.alpha(10)}, session.token);
-                expect(response.statusCode).to.equal(400);
+                expect(response.statusCode).toEqual(400);
             });
             test<TestContext>("If the text is not found return 400", async (context) => {
                 const user = await context.userFactory.createOne();
                 const session = await context.sessionFactory.createOne({user});
 
                 const response = await makeRequest({textId: faker.datatype.number({min: 100000})}, session.token);
-                expect(response.statusCode).to.equal(400);
+                expect(response.statusCode).toEqual(400);
             });
             test<TestContext>("If the text is not public and the user is logged in as author return 400", async (context) => {
                 const user = await context.userFactory.createOne();
@@ -113,7 +113,7 @@ describe("POST users/me/texts/history/", () => {
 
                 const response = await makeRequest({textId: text.id}, session.token);
 
-                expect(response.statusCode).to.equal(400);
+                expect(response.statusCode).toEqual(400);
             });
             test<TestContext>("If the text is not in a language the user is learning return 400", async (context) => {
                 const user = await context.userFactory.createOne();
@@ -123,13 +123,13 @@ describe("POST users/me/texts/history/", () => {
 
                 const response = await makeRequest({textId: text.id}, session.token);
 
-                expect(response.statusCode).to.equal(400);
+                expect(response.statusCode).toEqual(400);
             });
         });
     });
     test<TestContext>("If user is not logged in return 401", async () => {
         const response = await makeRequest({});
-        expect(response.statusCode).to.equal(401);
+        expect(response.statusCode).toEqual(401);
     });
     test<TestContext>("If user email is not confirmed return 403", async (context) => {
         const user = await context.userFactory.createOne({isEmailConfirmed: false});
@@ -138,6 +138,6 @@ describe("POST users/me/texts/history/", () => {
         const text = await context.textFactory.createOne({language, isPublic: true});
 
         const response = await makeRequest({textId: text.id}, session.token);
-        expect(response.statusCode).to.equal(403);
+        expect(response.statusCode).toEqual(403);
     });
 });

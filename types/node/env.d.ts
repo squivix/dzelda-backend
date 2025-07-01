@@ -3,7 +3,7 @@
 declare global {
     namespace NodeJS {
         interface ProcessEnv {
-            NODE_ENV?: "dev" | "test" | "prod" | string;
+            NODE_ENV?: "dev" | "test" | "prod";
             PORT?: string;
             MIKRO_ORM_CLIENT_URL?: string;
             SMTP_HOST?: string;
@@ -17,8 +17,8 @@ declare global {
             SPACES_BUCKET?: string;
             SPACES_REGION?: string;
             DB_SSL_CA_CERT_PATH?: string;
-            RABBITMQ_CONNECTION_URL?:string;
-            PARSE_TEXT_WORKER_PREFETCH?:number;
+            RABBITMQ_CONNECTION_URL?: string;
+            PARSE_TEXT_WORKER_PREFETCH?: number;
         }
     }
 }

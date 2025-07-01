@@ -1,6 +1,6 @@
 import {describe, expect, test, TestContext} from "vitest";
 import {InjectOptions} from "light-my-request";
-import {fetchRequest} from "@/test/integration/utils.js";
+import {fetchRequest} from "@/test/integration/integrationTestUtils.js";
 import {API_ROOT} from "@/src/server.js";
 import {faker} from "@faker-js/faker";
 
@@ -26,14 +26,14 @@ describe("GET collections/{collectionId}/texts/{textId}/next/", () => {
 
         const response = await makeRequest(collection.id, previousText.id);
 
-        expect(response.statusCode).to.equal(303);
+        expect(response.statusCode).toEqual(303);
         expect(response.headers.location).toEqual(`${API_ROOT}/texts/${expectedText.id}/`);
     });
     test<TestContext>("If the collection does not exist return 404", async (context) => {
         const language = await context.languageFactory.createOne();
         const text = await context.textFactory.createOne({collection: await context.collectionFactory.createOne({language}), language, isPublic: true});
         const response = await makeRequest(Number(faker.random.numeric(8)), text.id);
-        expect(response.statusCode).to.equal(404);
+        expect(response.statusCode).toEqual(404);
     });
     describe("If the collection is private hide it from non-author user", () => {
         test<TestContext>("If the user is not logged in and collection is private return 404", async (context) => {
@@ -49,7 +49,7 @@ describe("GET collections/{collectionId}/texts/{textId}/next/", () => {
 
             const response = await makeRequest(collection.id, previousText.id);
 
-            expect(response.statusCode).to.equal(404);
+            expect(response.statusCode).toEqual(404);
         });
         test<TestContext>("If the user is not author of private collection return 404", async (context) => {
             const user = await context.userFactory.createOne();
@@ -66,7 +66,7 @@ describe("GET collections/{collectionId}/texts/{textId}/next/", () => {
 
             const response = await makeRequest(collection.id, previousText.id, session.token);
 
-            expect(response.statusCode).to.equal(404);
+            expect(response.statusCode).toEqual(404);
         });
     })
 
@@ -75,7 +75,7 @@ describe("GET collections/{collectionId}/texts/{textId}/next/", () => {
         const collection = await context.collectionFactory.createOne({language, texts: context.textFactory.makeDefinitions(5, {language, isPublic: true})});
         const response = await makeRequest(collection.id, Number(faker.random.numeric(8)));
 
-        expect(response.statusCode).to.equal(404);
+        expect(response.statusCode).toEqual(404);
     });
     test<TestContext>("If the text is last in collection return 404", async (context) => {
         const language = await context.languageFactory.createOne();
@@ -84,20 +84,20 @@ describe("GET collections/{collectionId}/texts/{textId}/next/", () => {
 
         const response = await makeRequest(collection.id, previousText.id);
 
-        expect(response.statusCode).to.equal(404);
+        expect(response.statusCode).toEqual(404);
     });
     test<TestContext>("If collection id is invalid return 400", async (context) => {
         const language = await context.languageFactory.createOne();
         const text = await context.textFactory.createOne({collection: await context.collectionFactory.createOne({language}), language, isPublic: true});
 
         const response = await makeRequest(faker.random.alpha(8), text.id);
-        expect(response.statusCode).to.equal(400);
+        expect(response.statusCode).toEqual(400);
     });
     test<TestContext>("If text id is invalid return 400", async (context) => {
         const language = await context.languageFactory.createOne();
         const collection = await context.collectionFactory.createOne({language, texts: context.textFactory.makeDefinitions(5, {language, isPublic: true})});
 
         const response = await makeRequest(collection.id, faker.random.alpha(8));
-        expect(response.statusCode).to.equal(400);
+        expect(response.statusCode).toEqual(400);
     });
 });

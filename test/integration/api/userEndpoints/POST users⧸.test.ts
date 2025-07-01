@@ -1,13 +1,13 @@
 import {describe, expect, test, TestContext, vi} from "vitest";
-import {fetchRequest, parseUrlQueryString} from "@/test/integration/utils.js";
+import {fetchRequest, parseUrlQueryString} from "@/test/integration/integrationTestUtils.js";
 import {DOMAIN_NAME} from "@/src/constants.js";
 import {emailTransporter} from "@/src/nodemailer.config.js";
-import {userSerializer} from "@/src/presentation/response/serializers/entities/UserSerializer.js";
 import {User} from "@/src/models/entities/auth/User.js";
 import {EmailConfirmationToken} from "@/src/models/entities/auth/EmailConfirmationToken.js";
 import {expiringTokenHasher} from "@/src/utils/security/ExpiringTokenHasher.js";
 import {faker} from "@faker-js/faker";
 import {BANNED_LITERAL_USERNAMES} from "@/src/validators/userValidator.js";
+import {userSignUpSerializer} from "@/src/presentation/response/serializers/User/UserSignUpSerializer.js";
 
 /**{@link UserController#signUp}*/
 describe("POST users/", function () {
@@ -28,13 +28,13 @@ describe("POST users/", function () {
             password: newUserData.password,
             email: newUserData.email
         });
-        expect(response.statusCode).to.equal(201);
-        expect(response.json()).toEqual(userSerializer.serialize(newUserData, {ignore: ["profile"]}));
+        expect(response.statusCode).toEqual(201);
+        expect(response.json()).toEqual(userSignUpSerializer.serialize(newUserData));
 
         const newUser = await context.em.findOne(User, {username: newUserData.username}, {populate: ["profile"]});
         expect(newUser).not.toBeNull();
         expect(newUser!.profile).not.toBeNull();
-        expect(newUser!.isEmailConfirmed).to.equal(false);
+        expect(newUser!.isEmailConfirmed).toEqual(false);
         const emailConfirmToken = await context.em.findOne(EmailConfirmationToken, {user: newUser});
         expect(emailConfirmToken).not.toBeNull();
         expect(sendMailSpy).toHaveBeenCalledOnce();
@@ -57,7 +57,7 @@ describe("POST users/", function () {
                 email: newUser.email
             });
 
-            expect(response.statusCode).to.equal(400);
+            expect(response.statusCode).toEqual(400);
         });
         test<TestContext>("If email is missing return 400", async (context) => {
             const newUser = context.userFactory.makeOne();
@@ -66,7 +66,7 @@ describe("POST users/", function () {
                 password: newUser.password,
             });
 
-            expect(response.statusCode).to.equal(400);
+            expect(response.statusCode).toEqual(400);
         });
         test<TestContext>("If password is missing return 400", async (context) => {
             const newUser = context.userFactory.makeOne();
@@ -75,7 +75,7 @@ describe("POST users/", function () {
                 email: newUser.email
             });
 
-            expect(response.statusCode).to.equal(400);
+            expect(response.statusCode).toEqual(400);
         });
     });
     describe("If fields are invalid return 400", async () => {
@@ -88,7 +88,7 @@ describe("POST users/", function () {
                     email: newUser.email
                 });
 
-                expect(response.statusCode).to.equal(400);
+                expect(response.statusCode).toEqual(400);
             });
             test<TestContext>("If username is longer than 20 characters return 400", async (context) => {
                 const newUser = context.userFactory.makeOne();
@@ -98,7 +98,7 @@ describe("POST users/", function () {
                     email: newUser.email
                 });
 
-                expect(response.statusCode).to.equal(400);
+                expect(response.statusCode).toEqual(400);
             });
             test<TestContext>("If username contains any characters other than A-Z,a-z,_,0-9  return 400", async (context) => {
                 const newUser = context.userFactory.makeOne();
@@ -108,7 +108,7 @@ describe("POST users/", function () {
                     email: newUser.email
                 });
 
-                expect(response.statusCode).to.equal(400);
+                expect(response.statusCode).toEqual(400);
             });
             test<TestContext>("If username already exists return 400", async (context) => {
                 const otherUser = await context.userFactory.createOne();
@@ -119,7 +119,7 @@ describe("POST users/", function () {
                     email: newUser.email
                 });
 
-                expect(response.statusCode).to.equal(400);
+                expect(response.statusCode).toEqual(400);
             });
             test<TestContext>("If username is a banned literal username return 400", async (context) => {
                 const newUser = context.userFactory.makeOne();
@@ -129,7 +129,7 @@ describe("POST users/", function () {
                     email: newUser.email
                 });
 
-                expect(response.statusCode).to.equal(400);
+                expect(response.statusCode).toEqual(400);
             });
         });
         describe("If email is invalid return 400", async () => {
@@ -140,7 +140,7 @@ describe("POST users/", function () {
                     password: newUser.password,
                     email: faker.random.alphaNumeric(20)
                 });
-                expect(response.statusCode).to.equal(400);
+                expect(response.statusCode).toEqual(400);
             });
             test<TestContext>("If email is longer than 255 characters return 400", async (context) => {
                 const newUser = context.userFactory.makeOne();
@@ -149,7 +149,7 @@ describe("POST users/", function () {
                     password: newUser.password,
                     email: faker.internet.email(faker.random.alpha(257))
                 });
-                expect(response.statusCode).to.equal(400);
+                expect(response.statusCode).toEqual(400);
             });
             test<TestContext>("If email is not unique return 400", async (context) => {
                 const otherUser = await context.userFactory.createOne();
@@ -159,7 +159,7 @@ describe("POST users/", function () {
                     password: newUser.password,
                     email: newUser.email
                 });
-                expect(response.statusCode).to.equal(400);
+                expect(response.statusCode).toEqual(400);
             });
         });
         describe("If password is invalid return 400", async () => {
@@ -170,7 +170,7 @@ describe("POST users/", function () {
                     password: faker.random.alphaNumeric(7),
                     email: newUser.email
                 });
-                expect(response.statusCode).to.equal(400);
+                expect(response.statusCode).toEqual(400);
             });
         });
     });

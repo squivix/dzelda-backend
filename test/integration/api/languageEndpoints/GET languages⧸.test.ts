@@ -1,7 +1,7 @@
 import {describe, expect, test, TestContext} from "vitest";
-import {buildQueryString, createComparator, fetchRequest} from "@/test/integration/utils.js";
+import {buildQueryString, createComparator, fetchRequest} from "@/test/integration/integrationTestUtils.js";
 import {Language} from "@/src/models/entities/Language.js";
-import {languageSerializer} from "@/src/presentation/response/serializers/entities/LanguageSerializer.js";
+import {languageSerializer} from "@/src/presentation/response/serializers/Language/LanguageSerializer.js";
 
 /**{@link LanguageController#getLanguages}*/
 describe("GET languages/", function () {
@@ -23,7 +23,7 @@ describe("GET languages/", function () {
 
         const response = await makeRequest();
 
-        expect(response.statusCode).to.equal(200);
+        expect(response.statusCode).toEqual(200);
         expect(response.json()).toEqual(languageSerializer.serializeList(expectedLanguages));
     });
     describe("test sort", () => {
@@ -36,7 +36,7 @@ describe("GET languages/", function () {
 
                 const response = await makeRequest({sortBy: "name"});
 
-                expect(response.statusCode).to.equal(200);
+                expect(response.statusCode).toEqual(200);
                 expect(response.json()).toEqual(languageSerializer.serializeList(expectedLanguages));
             });
             test<TestContext>("test sortBy learnersCount", async (context) => {
@@ -50,7 +50,7 @@ describe("GET languages/", function () {
 
                 const response = await makeRequest({sortBy: "learnersCount"});
 
-                expect(response.statusCode).to.equal(200);
+                expect(response.statusCode).toEqual(200);
                 expect(response.json()).toEqual(languageSerializer.serializeList(expectedLanguages));
             });
             test<TestContext>("test sortBy secondSpeakersCount", async (context) => {
@@ -61,12 +61,12 @@ describe("GET languages/", function () {
 
                 const response = await makeRequest({sortBy: "secondSpeakersCount"});
 
-                expect(response.statusCode).to.equal(200);
+                expect(response.statusCode).toEqual(200);
                 expect(response.json()).toEqual(languageSerializer.serializeList(expectedLanguages));
             });
             test<TestContext>("if sortBy is invalid return 400", async (context) => {
                 const response = await makeRequest({sortBy: "flag"});
-                expect(response.statusCode).to.equal(400);
+                expect(response.statusCode).toEqual(400);
             });
         });
         describe("test sortOrder", () => {
@@ -78,7 +78,7 @@ describe("GET languages/", function () {
 
                 const response = await makeRequest({sortOrder: "asc"});
 
-                expect(response.statusCode).to.equal(200);
+                expect(response.statusCode).toEqual(200);
                 expect(response.json()).toEqual(languageSerializer.serializeList(expectedLanguages));
             });
             test<TestContext>("If sortOrder is desc return the languages in descending order", async (context) => {
@@ -89,12 +89,12 @@ describe("GET languages/", function () {
 
                 const response = await makeRequest({sortOrder: "desc"});
 
-                expect(response.statusCode).to.equal(200);
+                expect(response.statusCode).toEqual(200);
                 expect(response.json()).toEqual(languageSerializer.serializeList(expectedLanguages));
             });
             test<TestContext>("If sortOrder is invalid return 400", async (context) => {
                 const response = await makeRequest({sortOrder: "rising"});
-                expect(response.statusCode).to.equal(400);
+                expect(response.statusCode).toEqual(400);
             });
         });
     });

@@ -1,15 +1,16 @@
 import {describe, expect, test, TestContext} from "vitest";
 import {InjectOptions} from "light-my-request";
-import {createComparator, fetchRequest} from "@/test/integration/utils.js";
+import {createComparator, fetchRequest} from "@/test/integration/integrationTestUtils.js";
 import {Meaning} from "@/src/models/entities/Meaning.js";
 import {MapLearnerVocab} from "@/src/models/entities/MapLearnerVocab.js";
 import {VocabLevel} from "dzelda-common";
-import {learnerVocabSerializer} from "@/src/presentation/response/serializers/mappings/LearnerVocabSerializer.js";
 import {MapLearnerMeaning} from "@/src/models/entities/MapLearnerMeaning.js";
 import {faker} from "@faker-js/faker";
 import {PreferredTranslationLanguageEntry} from "@/src/models/entities/PreferredTranslationLanguageEntry.js";
 import {MapLearnerLanguage} from "@/src/models/entities/MapLearnerLanguage.js";
 import {Vocab} from "@/src/models/entities/Vocab.js";
+import {Collection} from "@mikro-orm/core";
+import {learnerVocabSerializer} from "@/src/presentation/response/serializers/Vocab/LearnerVocabSerializer.js";
 
 /**{@link VocabController#updateUserVocab}*/
 describe("PATCH users/me/vocabs/{vocabId}/", () => {
@@ -22,8 +23,8 @@ describe("PATCH users/me/vocabs/{vocabId}/", () => {
         return await fetchRequest(options, authToken);
     };
     const meaningSortComparator = createComparator(Meaning, [
-        {property: "learnersCount", order: "asc"},
-        {property: "text", order: "asc"},
+        {property: "learnersCount", order: "desc"},
+        {property: "text", order: "asc", preProcess: ((t: string) => t.length)},
         {property: "id", order: "asc"}]
     );
     test<TestContext>("If all fields are valid, the vocab exists and user is learning it update user vocab", async (context) => {
@@ -40,7 +41,7 @@ describe("PATCH users/me/vocabs/{vocabId}/", () => {
         }, session.token);
 
         const dbRecord = await context.em.findOneOrFail(MapLearnerVocab, {learner: user.profile, vocab});
-        expect(response.statusCode).to.equal(200);
+        expect(response.statusCode).toEqual(200);
         expect(response.json()).toEqual(learnerVocabSerializer.serialize(updatedMapping));
         expect(learnerVocabSerializer.serialize(dbRecord)).toEqual(learnerVocabSerializer.serialize(updatedMapping));
     });
@@ -54,29 +55,38 @@ describe("PATCH users/me/vocabs/{vocabId}/", () => {
         await context.em.flush();
         const vocab = await context.vocabFactory.createOne({
             language, learners: user.profile,
-            meanings: context.meaningFactory.makeDefinitions(3, {
-                learners: [user.profile],
-                addedBy: user.profile,
-                language: translationLanguage
-            }).sort(meaningSortComparator)
+            meanings: [
+                ...context.meaningFactory.makeDefinitions(3, {
+                    learners: [],
+                    language: translationLanguage,
+                    learnersCount: 0
+                }),
+                ...context.meaningFactory.makeDefinitions(3, {
+                    learners: [user.profile],
+                    addedBy: user.profile,
+                    language: translationLanguage,
+                    learnersCount: 1
+                }),
+            ].sort(meaningSortComparator)
         });
 
         const updatedMapping = context.em.create(MapLearnerVocab,
             {learner: user.profile, vocab, level: VocabLevel.IGNORED, notes: ""}, {persist: false});
-        updatedMapping.vocab.meanings.getItems().forEach(m => {
-            m.learners.set([]);
-            m.learnersCount = 0;
-        });
-        updatedMapping.vocab.learnerMeanings.set([]);
 
         const response = await makeRequest(vocab.id, {
             level: updatedMapping.level,
             notes: updatedMapping.notes
         }, session.token);
         await context.em.find(Vocab, vocab, {refresh: true});
+        updatedMapping.vocab.meanings.getItems().forEach(m => {
+            m.vocab = vocab;
+            m.learners.set([]);
+            m.learnersCount = 0;
+        });
+        updatedMapping.vocab.learnerMeanings = new Collection(updatedMapping.vocab, []);  //little trick because we don't want all vocab.meanings to have vocab set to null as mikroorm considers them the same
 
         const dbRecord = await context.em.findOneOrFail(MapLearnerVocab, {learner: user.profile, vocab});
-        expect(response.statusCode).to.equal(200);
+        expect(response.statusCode).toEqual(200);
         expect(response.json()).toEqual(learnerVocabSerializer.serialize(updatedMapping));
         expect(learnerVocabSerializer.serialize(dbRecord)).toEqual(learnerVocabSerializer.serialize(updatedMapping));
         expect(await context.em.find(MapLearnerMeaning, {learner: user.profile, meaning: {vocab: vocab}})).toEqual([]);
@@ -90,7 +100,7 @@ describe("PATCH users/me/vocabs/{vocabId}/", () => {
 
             const response = await makeRequest(vocab.id, {level: 7, notes: "Vocab note"}, session.token);
 
-            expect(response.statusCode).to.equal(400);
+            expect(response.statusCode).toEqual(400);
         });
         test<TestContext>("If notes are invalid return 400", async (context) => {
             const user = await context.userFactory.createOne();
@@ -103,7 +113,7 @@ describe("PATCH users/me/vocabs/{vocabId}/", () => {
                 notes: faker.random.alpha(3000)
             }, session.token);
 
-            expect(response.statusCode).to.equal(400);
+            expect(response.statusCode).toEqual(400);
         });
     });
     test<TestContext>(`If vocab does not exist return 404`, async (context) => {
@@ -112,7 +122,7 @@ describe("PATCH users/me/vocabs/{vocabId}/", () => {
 
         const response = await makeRequest(faker.datatype.number({min: 100000}), {level: VocabLevel.LEVEL_3}, session.token);
 
-        expect(response.statusCode).to.equal(404);
+        expect(response.statusCode).toEqual(404);
     });
     test<TestContext>(`If user is not learning vocab return 404`, async (context) => {
         const user = await context.userFactory.createOne();
@@ -122,7 +132,7 @@ describe("PATCH users/me/vocabs/{vocabId}/", () => {
 
         const response = await makeRequest(vocab.id, {level: VocabLevel.LEVEL_3}, session.token);
 
-        expect(response.statusCode).to.equal(404);
+        expect(response.statusCode).toEqual(404);
     });
     test<TestContext>("If user is not logged in return 401", async (context) => {
         const user = await context.userFactory.createOne();
@@ -131,7 +141,7 @@ describe("PATCH users/me/vocabs/{vocabId}/", () => {
 
         const response = await makeRequest(vocab.id, {level: VocabLevel.LEVEL_3});
 
-        expect(response.statusCode).to.equal(401);
+        expect(response.statusCode).toEqual(401);
     });
     test<TestContext>("If user email is not confirmed return 403", async (context) => {
         const user = await context.userFactory.createOne({isEmailConfirmed: false});
@@ -141,6 +151,6 @@ describe("PATCH users/me/vocabs/{vocabId}/", () => {
 
         const response = await makeRequest(vocab.id, {level: VocabLevel.LEVEL_3}, session.token);
 
-        expect(response.statusCode).to.equal(403);
+        expect(response.statusCode).toEqual(403);
     });
 });

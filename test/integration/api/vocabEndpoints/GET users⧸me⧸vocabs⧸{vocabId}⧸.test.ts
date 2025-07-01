@@ -1,10 +1,10 @@
 import {describe, expect, test, TestContext} from "vitest";
 import {InjectOptions} from "light-my-request";
-import {fetchRequest} from "@/test/integration/utils.js";
+import {fetchRequest} from "@/test/integration/integrationTestUtils.js";
 import {MapLearnerVocab} from "@/src/models/entities/MapLearnerVocab.js";
-import {learnerVocabSerializer} from "@/src/presentation/response/serializers/mappings/LearnerVocabSerializer.js";
 import {faker} from "@faker-js/faker";
 import {Vocab} from "@/src/models/entities/Vocab.js";
+import {learnerVocabSerializer} from "@/src/presentation/response/serializers/Vocab/LearnerVocabSerializer.js";
 
 /**{@link VocabController#getUserVocab}*/
 describe("GET users/me/vocabs/{vocabId}/", () => {
@@ -27,7 +27,7 @@ describe("GET users/me/vocabs/{vocabId}/", () => {
         const response = await makeRequest(vocab.id, session.token);
         await context.em.find(Vocab, vocab, {refresh: true});
 
-        expect(response.statusCode).to.equal(200);
+        expect(response.statusCode).toEqual(200);
         expect(response.json()).toEqual(learnerVocabSerializer.serialize(expectedMapping));
     });
     test<TestContext>(`If vocab does not exist return 404`, async (context) => {
@@ -36,7 +36,7 @@ describe("GET users/me/vocabs/{vocabId}/", () => {
 
         const response = await makeRequest(faker.datatype.number({min: 100000}), session.token);
 
-        expect(response.statusCode).to.equal(404);
+        expect(response.statusCode).toEqual(404);
     });
     test<TestContext>(`If user is not learning vocab return 404`, async (context) => {
         const user = await context.userFactory.createOne();
@@ -46,7 +46,7 @@ describe("GET users/me/vocabs/{vocabId}/", () => {
 
         const response = await makeRequest(vocab.id, session.token);
 
-        expect(response.statusCode).to.equal(404);
+        expect(response.statusCode).toEqual(404);
     });
     test<TestContext>("If user is not logged in return 401", async (context) => {
         const user = await context.userFactory.createOne();
@@ -55,7 +55,7 @@ describe("GET users/me/vocabs/{vocabId}/", () => {
 
         const response = await makeRequest(vocab.id);
 
-        expect(response.statusCode).to.equal(401);
+        expect(response.statusCode).toEqual(401);
     });
     test<TestContext>("If user email is not confirmed return 403", async (context) => {
         const user = await context.userFactory.createOne({isEmailConfirmed: false});
@@ -65,6 +65,6 @@ describe("GET users/me/vocabs/{vocabId}/", () => {
 
         const response = await makeRequest(vocab.id, session.token);
 
-        expect(response.statusCode).to.equal(403);
+        expect(response.statusCode).toEqual(403);
     });
 });

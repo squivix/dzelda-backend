@@ -1,11 +1,11 @@
 import {describe, expect, test, TestContext} from "vitest";
 import {InjectOptions} from "light-my-request";
-import {fetchRequest} from "@/test/integration/utils.js";
+import {fetchRequest} from "@/test/integration/integrationTestUtils.js";
 import {faker} from "@faker-js/faker";
 import {AttributionSource} from "@/src/models/entities/AttributionSource.js";
-import {attributionSourceSerializer} from "@/src/presentation/response/serializers/entities/AttributionSourceSerializer.js";
+import {attributionSourceSerializer} from "@/src/presentation/response/serializers/AttributionSource/AttributionSourceSerializer.js";
 
-/**{@link MeaningController#getAttributionSource}*/
+/**{@link AttributionService#getAttributionSource}*/
 describe("GET attribution-sources/{attributionSourcesId}/", function () {
     const makeRequest = async (attributionSourceId: number | string) => {
         const options: InjectOptions = {
@@ -25,17 +25,17 @@ describe("GET attribution-sources/{attributionSourcesId}/", function () {
 
         const response = await makeRequest(expectedSource.id);
 
-        expect(response.statusCode).to.equal(200);
+        expect(response.statusCode).toEqual(200);
         expect(response.json()).toEqual(attributionSourceSerializer.serialize(expectedSource));
     });
 
     test<TestContext>("If attribution source does not exist return 404", async () => {
         const response = await makeRequest(faker.datatype.number({min: 1000000}));
-        expect(response.statusCode).to.equal(404);
+        expect(response.statusCode).toEqual(404);
     });
 
     test<TestContext>("If attribution source id is invalid return 400", async () => {
         const response = await makeRequest(faker.random.alpha(8));
-        expect(response.statusCode).to.equal(400);
+        expect(response.statusCode).toEqual(400);
     });
 })

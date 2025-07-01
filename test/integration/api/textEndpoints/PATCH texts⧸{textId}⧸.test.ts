@@ -1,8 +1,9 @@
 import {describe, expect, test, TestContext, vi} from "vitest";
-import {fetchRequest} from "@/test/integration/utils.js";
-import {textSerializer} from "@/src/presentation/response/serializers/entities/TextSerializer.js";
+import {fetchRequest, omit} from "@/test/integration/integrationTestUtils.js";
 import {faker} from "@faker-js/faker";
 import {TextService} from "@/src/services/TextService.js";
+import {textLoggedInSerializer} from "@/src/presentation/response/serializers/Text/TextLoggedInSerializer.js";
+import {defaultVocabsByLevel} from "dzelda-common";
 
 /**{@link TextController#updateText}*/
 describe("PATCH texts/{textId}/", () => {
@@ -27,6 +28,9 @@ describe("PATCH texts/{textId}/", () => {
                 isProcessing: true,
                 parsedContent: null,
                 parsedTitle: null,
+                id: text.id,
+                isBookmarked: false,
+                vocabsByLevel: defaultVocabsByLevel(),
             });
             const sendTextToParsingQueueSpy = vi.spyOn(TextService, "sendTextToParsingQueue").mockResolvedValue(undefined);
 
@@ -35,13 +39,12 @@ describe("PATCH texts/{textId}/", () => {
                 content: updatedText.content
             }, session.token);
 
-            const dbRecord = await context.textRepo.findOneOrFail({id: text.id}, {populate: ["language", "addedBy.user", "collection.language", "collection.addedBy.user"], refresh:true});
+            const dbRecord = await context.textRepo.findOneOrFail({id: text.id}, {populate: ["language", "addedBy.user", "collection.language", "collection.addedBy.user"], refresh: true});
             await context.textRepo.annotateTextsWithUserData([dbRecord], author);
-            await context.collectionRepo.annotateCollectionsWithUserData([dbRecord.collection!], author);
 
-            expect(response.statusCode).to.equal(200);
-            expect(response.json()).toMatchObject(textSerializer.serialize(updatedText, {ignore: []}));
-            expect(textSerializer.serialize(dbRecord)).toMatchObject(textSerializer.serialize(updatedText, {ignore: []}));
+            expect(response.statusCode).toEqual(200);
+            expect(response.json()).toMatchObject(textLoggedInSerializer.serialize(updatedText));
+            expect(textLoggedInSerializer.serialize(dbRecord)).toMatchObject(textLoggedInSerializer.serialize(updatedText));
             expect(sendTextToParsingQueueSpy).toHaveBeenCalledOnce();
             expect(sendTextToParsingQueueSpy).toHaveBeenCalledWith({
                 textId: dbRecord.id,
@@ -77,7 +80,10 @@ describe("PATCH texts/{textId}/", () => {
                     image: imageUploadRequest.fileUrl,
                     audio: audioUploadRequest.fileUrl,
                     isPublic: !text.isPublic,
-                    addedBy: author.profile
+                    addedBy: author.profile,
+                    id: text.id,
+                    isBookmarked: false,
+                    vocabsByLevel: defaultVocabsByLevel(),
                 });
                 const sendTextToParsingQueueSpy = vi.spyOn(TextService, "sendTextToParsingQueue").mockResolvedValue(undefined);
 
@@ -90,15 +96,13 @@ describe("PATCH texts/{textId}/", () => {
                     audio: audioUploadRequest.objectKey,
                 }, session.token);
 
-                const dbRecord = await context.textRepo.findOneOrFail({id: text.id}, {populate: ["language", "addedBy.user", "collection.language", "collection.addedBy.user"], refresh:true});
+                const dbRecord = await context.textRepo.findOneOrFail({id: text.id}, {populate: ["language", "addedBy.user", "collection.language", "collection.addedBy.user"], refresh: true});
                 await context.em.populate(dbRecord, ["collection"]);
                 await context.textRepo.annotateTextsWithUserData([dbRecord], author);
-                await context.collectionRepo.annotateCollectionsWithUserData([updatedText.collection!], author);
-                await context.collectionRepo.annotateCollectionsWithUserData([dbRecord.collection!], author);
 
-                expect(response.statusCode).to.equal(200);
-                expect(response.json()).toMatchObject(textSerializer.serialize(updatedText, {ignore: ["addedOn"]}));
-                expect(textSerializer.serialize(dbRecord)).toMatchObject(textSerializer.serialize(updatedText, {ignore: ["addedOn"]}));
+                expect(response.statusCode).toEqual(200);
+                expect(response.json()).toMatchObject(omit(textLoggedInSerializer.serialize(updatedText, {assertNoUndefined: false}), ["addedOn"]));
+                expect(textLoggedInSerializer.serialize(dbRecord)).toMatchObject(omit(textLoggedInSerializer.serialize(updatedText, {assertNoUndefined: false}), ["addedOn"]));
                 expect(sendTextToParsingQueueSpy).toHaveBeenCalledOnce();
                 expect(sendTextToParsingQueueSpy).toHaveBeenCalledWith({
                     textId: dbRecord.id,
@@ -125,7 +129,10 @@ describe("PATCH texts/{textId}/", () => {
                     parsedContent: null,
                     parsedTitle: null,
                     isPublic: !text.isPublic,
-                    addedBy: author.profile
+                    addedBy: author.profile,
+                    id: text.id,
+                    isBookmarked: false,
+                    vocabsByLevel: defaultVocabsByLevel(),
                 });
                 const sendTextToParsingQueueSpy = vi.spyOn(TextService, "sendTextToParsingQueue").mockResolvedValue(undefined);
 
@@ -138,15 +145,16 @@ describe("PATCH texts/{textId}/", () => {
                     audio: ""
                 }, session.token);
 
-                const dbRecord = await context.textRepo.findOneOrFail({id: text.id}, {populate: ["language", "addedBy.user", "collection", "collection.language", "collection.addedBy.user"], refresh:true});
+                const dbRecord = await context.textRepo.findOneOrFail({id: text.id}, {
+                    populate: ["language", "addedBy.user", "collection", "collection.language", "collection.addedBy.user"],
+                    refresh: true
+                });
                 await context.em.populate(dbRecord, ["collection"]);
                 await context.textRepo.annotateTextsWithUserData([dbRecord], author);
-                await context.collectionRepo.annotateCollectionsWithUserData([dbRecord.collection!], author);
-                await context.collectionRepo.annotateCollectionsWithUserData([updatedText.collection!], author);
 
-                expect(response.statusCode).to.equal(200);
-                expect(response.json()).toMatchObject(textSerializer.serialize(updatedText, {ignore: ["addedOn"]}));
-                expect(textSerializer.serialize(dbRecord)).toMatchObject(textSerializer.serialize(updatedText, {ignore: ["addedOn"]}));
+                expect(response.statusCode).toEqual(200);
+                expect(response.json()).toMatchObject(omit(textLoggedInSerializer.serialize(updatedText, {assertNoUndefined: false}), ["addedOn"]));
+                expect(textLoggedInSerializer.serialize(dbRecord)).toMatchObject(omit(textLoggedInSerializer.serialize(updatedText, {assertNoUndefined: false}), ["addedOn"]));
                 expect(sendTextToParsingQueueSpy).toHaveBeenCalledOnce();
                 expect(sendTextToParsingQueueSpy).toHaveBeenCalledWith({
                     textId: dbRecord.id,
@@ -165,7 +173,8 @@ describe("PATCH texts/{textId}/", () => {
                 });
                 const newCollection = await context.collectionFactory.createOne({
                     addedBy: author.profile,
-                    language: language
+                    language: language,
+                    texts: []
                 });
                 const text = await context.textFactory.createOne({
                     collection: collection,
@@ -177,9 +186,14 @@ describe("PATCH texts/{textId}/", () => {
                     parsedContent: null,
                     parsedTitle: null,
                     collection: newCollection,
+                    orderInCollection: 0,
+                    isLastInCollection: true,
                     language,
                     isPublic: !text.isPublic,
-                    addedBy: author.profile
+                    addedBy: author.profile,
+                    id: text.id,
+                    isBookmarked: false,
+                    vocabsByLevel: defaultVocabsByLevel(),
                 });
                 const sendTextToParsingQueueSpy = vi.spyOn(TextService, "sendTextToParsingQueue").mockResolvedValue(undefined);
 
@@ -191,16 +205,17 @@ describe("PATCH texts/{textId}/", () => {
                     level: updatedText.level,
                 }, session.token);
 
-                const dbRecord = await context.textRepo.findOneOrFail({id: text.id}, {populate: ["language", "addedBy.user", "collection", "collection.language", "collection.addedBy.user"], refresh:true});
+                const dbRecord = await context.textRepo.findOneOrFail({id: text.id}, {
+                    populate: ["language", "addedBy.user", "collection", "collection.language", "collection.addedBy.user"],
+                    refresh: true
+                });
                 await context.em.populate(dbRecord, ["collection"]);
                 await context.textRepo.annotateTextsWithUserData([dbRecord], author);
-                await context.collectionRepo.annotateCollectionsWithUserData([updatedText.collection!], author);
-                await context.collectionRepo.annotateCollectionsWithUserData([dbRecord.collection!], author);
 
-                expect(response.statusCode).to.equal(200);
-                expect(response.json()).toMatchObject(textSerializer.serialize(updatedText, {ignore: ["addedOn"]}));
-                expect(textSerializer.serialize(dbRecord)).toMatchObject(textSerializer.serialize(updatedText, {ignore: ["addedOn"]}));
-                expect(dbRecord.orderInCollection).toEqual(await newCollection.texts.loadCount() - 1);
+                expect(response.statusCode).toEqual(200);
+                expect(response.json()).toMatchObject(omit(textLoggedInSerializer.serialize(updatedText, {assertNoUndefined: false}), ["addedOn"]));
+                expect(textLoggedInSerializer.serialize(dbRecord)).toMatchObject(omit(textLoggedInSerializer.serialize(updatedText, {assertNoUndefined: false}), ["addedOn"]));
+                expect(dbRecord.orderInCollection).toEqual(await newCollection.texts.loadCount(true) - 1);
                 expect(sendTextToParsingQueueSpy).toHaveBeenCalledOnce();
                 expect(sendTextToParsingQueueSpy).toHaveBeenCalledWith({
                     textId: dbRecord.id,
@@ -226,6 +241,9 @@ describe("PATCH texts/{textId}/", () => {
                     isProcessing: true,
                     parsedContent: null,
                     parsedTitle: null,
+                    id: text.id,
+                    isBookmarked: false,
+                    vocabsByLevel: defaultVocabsByLevel(),
                 });
                 const sendTextToParsingQueueSpy = vi.spyOn(TextService, "sendTextToParsingQueue").mockResolvedValue(undefined);
 
@@ -244,9 +262,9 @@ describe("PATCH texts/{textId}/", () => {
                 await context.em.populate(dbRecord, ["collection"]);
                 await context.textRepo.annotateTextsWithUserData([dbRecord], author);
 
-                expect(response.statusCode).to.equal(200);
-                expect(response.json()).toMatchObject(textSerializer.serialize(updatedText, {ignore: ["addedOn"]}));
-                expect(textSerializer.serialize(dbRecord)).toMatchObject(textSerializer.serialize(updatedText, {ignore: ["addedOn"]}));
+                expect(response.statusCode).toEqual(200);
+                expect(response.json()).toMatchObject(omit(textLoggedInSerializer.serialize(updatedText, {assertNoUndefined: false}), ["addedOn"]));
+                expect(textLoggedInSerializer.serialize(dbRecord)).toMatchObject(omit(textLoggedInSerializer.serialize(updatedText, {assertNoUndefined: false}), ["addedOn"]));
                 expect(dbRecord.orderInCollection).toEqual(null);
                 expect(sendTextToParsingQueueSpy).toHaveBeenCalledOnce();
                 expect(sendTextToParsingQueueSpy).toHaveBeenCalledWith({
@@ -272,7 +290,7 @@ describe("PATCH texts/{textId}/", () => {
             content: updatedText.content,
         });
 
-        expect(response.statusCode).to.equal(401);
+        expect(response.statusCode).toEqual(401);
     });
     test<TestContext>("If user email is not confirmed return 403", async (context) => {
         const user = await context.userFactory.createOne({isEmailConfirmed: false});
@@ -292,7 +310,7 @@ describe("PATCH texts/{textId}/", () => {
             content: updatedText.content,
         }, session.token);
 
-        expect(response.statusCode).to.equal(403);
+        expect(response.statusCode).toEqual(403);
     });
     test<TestContext>("If text does not exist return 404", async (context) => {
         const author = await context.userFactory.createOne();
@@ -304,7 +322,7 @@ describe("PATCH texts/{textId}/", () => {
             content: updatedText.content,
         }, session.token);
 
-        expect(response.statusCode).to.equal(404);
+        expect(response.statusCode).toEqual(404);
     });
     test<TestContext>("If text is not public and user is not author return 404", async (context) => {
         const author = await context.userFactory.createOne();
@@ -314,7 +332,8 @@ describe("PATCH texts/{textId}/", () => {
         const collection = await context.collectionFactory.createOne({
             addedBy: author.profile,
             language: language,
-            texts: []
+            texts: [],
+            isPublic: false,
         });
         const text = await context.textFactory.createOne({
             collection,
@@ -329,7 +348,7 @@ describe("PATCH texts/{textId}/", () => {
             content: updatedText.content,
         }, session.token);
 
-        expect(response.statusCode).to.equal(404);
+        expect(response.statusCode).toEqual(404);
     });
     test<TestContext>("If text is public and user is not author return 403", async (context) => {
         const author = await context.userFactory.createOne();
@@ -354,7 +373,7 @@ describe("PATCH texts/{textId}/", () => {
             content: updatedText.content,
         }, session.token);
 
-        expect(response.statusCode).to.equal(403);
+        expect(response.statusCode).toEqual(403);
     });
     describe("If required fields are missing return 400", async () => {
         test<TestContext>("If title is missing return 400", async (context) => {
@@ -373,7 +392,7 @@ describe("PATCH texts/{textId}/", () => {
             const response = await makeRequest(text.id, {
                 content: updatedText.content,
             }, session.token);
-            expect(response.statusCode).to.equal(400);
+            expect(response.statusCode).toEqual(400);
         });
         test<TestContext>("If text is missing return 400", async (context) => {
             const author = await context.userFactory.createOne();
@@ -391,7 +410,7 @@ describe("PATCH texts/{textId}/", () => {
             const response = await makeRequest(text.id, {
                 title: updatedText.title,
             }, session.token);
-            expect(response.statusCode).to.equal(400);
+            expect(response.statusCode).toEqual(400);
         });
     });
     describe("If fields are invalid return 400", async () => {
@@ -411,7 +430,7 @@ describe("PATCH texts/{textId}/", () => {
                 title: faker.random.alpha({count: 150}),
                 content: updatedText.content,
             }, session.token);
-            expect(response.statusCode).to.equal(400);
+            expect(response.statusCode).toEqual(400);
         });
         test<TestContext>("If text is invalid return 400", async (context) => {
             const author = await context.userFactory.createOne();
@@ -429,7 +448,7 @@ describe("PATCH texts/{textId}/", () => {
                 title: updatedText.title,
                 content: faker.random.alpha({count: 60_000}),
             }, session.token);
-            expect(response.statusCode).to.equal(400);
+            expect(response.statusCode).toEqual(400);
         });
         test<TestContext>("If isPublic is invalid return 400", async (context) => {
             const author = await context.userFactory.createOne();
@@ -448,7 +467,7 @@ describe("PATCH texts/{textId}/", () => {
                 content: updatedText.content,
                 isPublic: "kinda?"
             }, session.token);
-            expect(response.statusCode).to.equal(400);
+            expect(response.statusCode).toEqual(400);
         });
         test<TestContext>("If level is invalid return 400", async (context) => {
             const author = await context.userFactory.createOne();
@@ -467,7 +486,7 @@ describe("PATCH texts/{textId}/", () => {
                 content: updatedText.content,
                 level: "hard",
             }, session.token);
-            expect(response.statusCode).to.equal(400);
+            expect(response.statusCode).toEqual(400);
         });
         describe("If collection is invalid return 400", async () => {
             test<TestContext>("If collection id is not a number return 400", async (context) => {
@@ -488,7 +507,7 @@ describe("PATCH texts/{textId}/", () => {
                     content: updatedText.content,
                 }, session.token);
 
-                expect(response.statusCode).to.equal(400);
+                expect(response.statusCode).toEqual(400);
             });
             test<TestContext>("If collection does not exist return 400", async (context) => {
                 const author = await context.userFactory.createOne();
@@ -508,7 +527,7 @@ describe("PATCH texts/{textId}/", () => {
                     content: updatedText.content,
                 }, session.token);
 
-                expect(response.statusCode).to.equal(400);
+                expect(response.statusCode).toEqual(400);
             });
             test<TestContext>("If user is not author of collection return 403", async (context) => {
                 const user = await context.userFactory.createOne();
@@ -533,7 +552,7 @@ describe("PATCH texts/{textId}/", () => {
                     title: updatedText.title,
                     content: updatedText.content,
                 }, session.token);
-                expect(response.statusCode).to.equal(403);
+                expect(response.statusCode).toEqual(403);
             });
             test<TestContext>("If collection is not in the same language as text return 400", async (context) => {
                 const author = await context.userFactory.createOne();
@@ -562,7 +581,7 @@ describe("PATCH texts/{textId}/", () => {
                     title: updatedText.title,
                     content: updatedText.content,
                 }, session.token);
-                expect(response.statusCode).to.equal(400);
+                expect(response.statusCode).toEqual(400);
             });
         });
         describe("If image is invalid return 400", async () => {
@@ -588,7 +607,7 @@ describe("PATCH texts/{textId}/", () => {
                     image: imageUploadRequest.objectKey,
                 }, session.token);
 
-                expect(response.statusCode).to.equal(400);
+                expect(response.statusCode).toEqual(400);
             });
             test<TestContext>("If file upload request with key was not requested by user return 400", async (context) => {
                 const author = await context.userFactory.createOne();
@@ -613,7 +632,7 @@ describe("PATCH texts/{textId}/", () => {
                     image: imageUploadRequest.objectKey,
                 }, session.token);
 
-                expect(response.statusCode).to.equal(400);
+                expect(response.statusCode).toEqual(400);
             });
             test<TestContext>("If file upload request with key is not for textImage field return 400", async (context) => {
                 const author = await context.userFactory.createOne();
@@ -638,7 +657,7 @@ describe("PATCH texts/{textId}/", () => {
                     image: imageUploadRequest.objectKey,
                 }, session.token);
 
-                expect(response.statusCode).to.equal(400);
+                expect(response.statusCode).toEqual(400);
             });
         });
         describe("If audio is invalid return 400", async () => {
@@ -664,7 +683,7 @@ describe("PATCH texts/{textId}/", () => {
                     audio: audioUploadRequest.objectKey
                 }, session.token);
 
-                expect(response.statusCode).to.equal(400);
+                expect(response.statusCode).toEqual(400);
             });
             test<TestContext>("If file upload request with key was not requested by user return 400", async (context) => {
                 const author = await context.userFactory.createOne();
@@ -689,7 +708,7 @@ describe("PATCH texts/{textId}/", () => {
                     audio: audioUploadRequest.objectKey
                 }, session.token);
 
-                expect(response.statusCode).to.equal(400);
+                expect(response.statusCode).toEqual(400);
             });
             test<TestContext>("If file upload request with key is not for textAudio field return 400", async (context) => {
                 const author = await context.userFactory.createOne();
@@ -714,7 +733,7 @@ describe("PATCH texts/{textId}/", () => {
                     audio: audioUploadRequest.objectKey
                 }, session.token);
 
-                expect(response.statusCode).to.equal(400);
+                expect(response.statusCode).toEqual(400);
             });
         });
     });
