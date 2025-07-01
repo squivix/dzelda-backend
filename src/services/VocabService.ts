@@ -20,7 +20,11 @@ import process from "process";
 import {TTSPronunciation} from "@/src/models/entities/TTSPronunciation.js";
 import urlJoin from "url-join";
 import {VocabVariant} from "@/src/models/entities/VocabVariant.js";
-import {ViewDescription} from "@/src/models/viewResolver.js";
+import {buildFetchPlan, ViewDescription} from "@/src/models/viewResolver.js";
+import {vocabFetchSpecs} from "@/src/models/fetchSpecs/vocabFetchSpecs.js";
+import {mapLearnerVocabFetchSpecs} from "@/src/models/fetchSpecs/mapLearnerVocabFetchSpecs.js";
+import {ttsPronunciationFetchSpecs} from "@/src/models/fetchSpecs/ttsPronunciationFetchSpecs.js";
+import {vocabVariantFetchSpecs} from "@/src/models/fetchSpecs/vocabVariantFetchSpecs.js";
 
 export class VocabService {
     em: EntityManager;
@@ -50,15 +54,17 @@ export class VocabService {
             dbOrderBy.push({textsCount: sort.sortOrder});
         dbOrderBy.push({id: "asc"});
 
+        const {fields: dbFields, populate: dbPopulate} = buildFetchPlan(viewDescription, vocabFetchSpecs(), {user: null, em: this.em});
         return await this.vocabRepo.findAndCount(dbFilters, {
-            populate: ["language", "meanings", "meanings.language", "meanings.addedBy.user", "learnersCount", "textsCount", "tags.category", "rootForms", "vocabVariants.ttsPronunciations.voice"],
+            fields: dbFields as any,
+            populate: dbPopulate as any,
             orderBy: dbOrderBy,
             limit: pagination.pageSize,
             offset: pagination.pageSize * (pagination.page - 1),
         });
     }
 
-    async createVocab(vocabData: { text: string; language: Language; isPhrase: boolean }, viewDescription: ViewDescription) {
+    async createVocab(vocabData: { text: string; language: Language; isPhrase: boolean }) {
         const newVocab = this.vocabRepo.create({
             text: vocabData.text,
             language: vocabData.language,
@@ -81,16 +87,12 @@ export class VocabService {
     }
 
     async getVocab(vocabId: number, viewDescription: ViewDescription) {
-        return await this.vocabRepo.findOne({
-            id: vocabId
-        }, {populate: ["language", "meanings", "ttsPronunciations", "ttsPronunciations.voice", "tags.category", "rootForms"]});
-    }
-
-    async getVocabByStringSearch(vocabData: { text: string; language: Language }, viewDescription: ViewDescription) {
-        return await this.vocabRepo.findOne({
-            text: vocabData.text,
-            language: vocabData.language
-        }, {populate: ["meanings", "meanings.addedBy.user", "tags.category", "vocabVariants.ttsPronunciations.voice"]});
+        const {fields: dbFields, populate: dbPopulate} = buildFetchPlan(viewDescription, vocabFetchSpecs(), {user: null, em: this.em});
+        return await this.vocabRepo.findOne({id: vocabId}, {
+            fields: dbFields as any,
+            populate: dbPopulate as any,
+            refresh: true
+        }) as Vocab;
     }
 
     async getPaginatedLearnerVocabs(filters: { languageCode?: string, level?: VocabLevel[], searchQuery?: string },
@@ -115,54 +117,54 @@ export class VocabService {
             dbOrderBy.push({vocab: {textsCount: sort.sortOrder}});
         dbOrderBy.push({vocab: {id: "asc"}});
 
+        const {fields: dbFields, populate: dbPopulate, filteredPopulates} = buildFetchPlan(viewDescription, mapLearnerVocabFetchSpecs(), {user, em: this.em}, {
+            //todo test all these
+            "vocab.meanings": {language: {prefererEntries: {learnerLanguageMapping: {learner: user.profile}}}},
+            // "vocab.learnerMeanings": {learners: user.profile},
+            "vocab.ttsPronunciations": {voice: {$or: [{prefererLanguageMappings: {learner: user.profile}}, {isDefault: true}]}}
+        });
         const [mappings, totalCount] = await this.em.findAndCount(MapLearnerVocab, dbFilters, {
-            populate: ["vocab", "vocab.language", "vocab.ttsPronunciations", "vocab.ttsPronunciations.voice", "vocab.tags.category", "vocab.rootForms", "vocab.vocabVariants.ttsPronunciations.voice"],
+            fields: dbFields as any,
+            populate: dbPopulate as any,
             orderBy: dbOrderBy,
             limit: pagination.pageSize,
             offset: pagination.pageSize * (pagination.page - 1),
         });
-        await this.em.populate(mappings, ["vocab.meanings", "vocab.meanings.language", "vocab.meanings.addedBy.user"], {
-            where: {vocab: {meanings: {language: {prefererEntries: {learnerLanguageMapping: {learner: user.profile}}}}}},
-        });
-        await this.em.populate(mappings, ["vocab.learnerMeanings", "vocab.learnerMeanings.language", "vocab.learnerMeanings.addedBy.user"], {
-            where: {vocab: {learnerMeanings: {learners: user.profile}}}
-        });
-        await this.em.populate(mappings, ["vocab.ttsPronunciations", "vocab.ttsPronunciations.voice"], {
-            where: {vocab: {ttsPronunciations: {voice: {$or: [{prefererLanguageMappings: {learner: user.profile}}, {isDefault: true}]}}}}
-        });
+        for (const {populate, filter, fields} of filteredPopulates)
+            await this.em.populate(mappings, populate as any, {where: filter, fields: fields});
         return [mappings, totalCount];
     }
 
-    async addVocabToUserLearning(vocab: Vocab, user: User, level?: VocabLevel, viewDescription: ViewDescription) {
-        this.em.create(MapLearnerVocab, {
+    async addVocabToUserLearning(vocab: Vocab, user: User, level?: VocabLevel) {
+        const mapping = this.em.create(MapLearnerVocab, {
             learner: user.profile,
             vocab: vocab,
             level: level
         });
         await this.em.flush();
-        return (await this.getUserVocab(vocab.id, user.profile))!;
+        return mapping
     }
 
-    async getUserVocab(vocabId: number, learner: Profile, viewDescription: ViewDescription) {
+    async getUserVocab(vocabId: number, user: User, viewDescription: ViewDescription) {
+        const {fields: dbFields, populate: dbPopulate, filteredPopulates} = buildFetchPlan(viewDescription, mapLearnerVocabFetchSpecs(), {user, em: this.em}, {
+            "vocab.meanings": {language: {prefererEntries: {learnerLanguageMapping: {learner: user.profile}}}},
+        });
         const mapping = await this.em.findOne(MapLearnerVocab, {
             vocab: vocabId,
-            learner
+            learner: user.profile
         }, {
-            populate: ["vocab.ttsPronunciations", "vocab.ttsPronunciations.voice", "vocab.tags.category", "vocab.rootForms"],
+            fields: dbFields as any,
+            populate: dbPopulate as any,
             refresh: true
         });
         if (mapping) {
-            await this.em.populate(mapping, ["vocab.meanings", "vocab.meanings.learnersCount", "vocab.meanings.addedBy.user", "vocab.meanings.language", "vocab.vocabVariants.ttsPronunciations.voice"], {
-                where: {vocab: {meanings: {language: {prefererEntries: {learnerLanguageMapping: {learner: learner}}}}}},
-            });
-            await this.em.populate(mapping, ["vocab.learnerMeanings", "vocab.learnerMeanings.addedBy.user"], {
-                where: {vocab: {learnerMeanings: {learners: learner}}},
-            });
+            for (const {populate, filter, fields} of filteredPopulates)
+                await this.em.populate(mapping, populate as any, {where: filter, fields: fields, refresh: true});
         }
         return mapping;
     }
 
-    async updateUserVocab(mapping: MapLearnerVocab, updatedUserVocabData: { level?: VocabLevel; notes?: string; }, viewDescription: ViewDescription) {
+    async updateUserVocab(mapping: MapLearnerVocab, updatedUserVocabData: { level?: VocabLevel; notes?: string; }) {
         if (updatedUserVocabData.level !== undefined) {
             mapping.level = updatedUserVocabData.level;
             if (updatedUserVocabData.level == VocabLevel.IGNORED) {
@@ -179,7 +181,7 @@ export class VocabService {
 
         this.em.persist(mapping);
         await this.em.flush();
-        return (await this.getUserVocab(mapping.vocab.id, mapping.learner))!;
+        return mapping;
     }
 
     async deleteUserVocab(mapping: MapLearnerVocab) {
@@ -192,30 +194,46 @@ export class VocabService {
         await this.em.flush();
     }
 
-    async getTextVocabs(text: Text, user: User, viewDescription: ViewDescription) {
+    async getTextVocabs(text: Text, user: User, mapLearnerVocabView: ViewDescription, newVocabView: ViewDescription) {
+        const {
+            fields: mappingFields,
+            populate: mappingPopulate,
+            filteredPopulates: mappingFilteredPopulates
+        } = buildFetchPlan(mapLearnerVocabView, mapLearnerVocabFetchSpecs(), {user, em: this.em}, {
+            //todo test these
+            "vocab.ttsPronunciations": {voice: {$or: [{prefererLanguageMappings: {learner: user.profile}}, {isDefault: true}]}},
+            "vocab.vocabVariants.ttsPronunciations.voice": {$or: [{prefererLanguageMappings: {learner: user.profile}}, {isDefault: true}]}
+        });
+
         const existingMappings = await this.em.find(MapLearnerVocab, {
             vocab: {textsAppearingIn: text},
             learner: user.profile
         }, {
-            populate: ["vocab.language", "vocab.tags.category", "vocab.rootForms", "vocab.vocabVariants"],
+            fields: mappingFields as any,
+            populate: mappingPopulate as any,
         });
-        await this.em.populate(existingMappings, ["vocab.ttsPronunciations", "vocab.ttsPronunciations.voice"], {
-            where: {vocab: {ttsPronunciations: {voice: {$or: [{prefererLanguageMappings: {learner: user.profile}}, {isDefault: true}]}}}}
-        });
-        await this.em.populate(existingMappings, ["vocab.vocabVariants.ttsPronunciations.voice"], {
-            where: {vocab: {vocabVariants: {ttsPronunciations: {voice: {$or: [{prefererLanguageMappings: {learner: user.profile}}, {isDefault: true}]}}}}}
+        for (const {populate, filter, fields} of mappingFilteredPopulates)
+            await this.em.populate(existingMappings, populate as any, {where: filter, fields: fields, refresh: true});
+
+        const {
+            fields: newVocabFields,
+            populate: newVocabPopulate,
+            filteredPopulates: newVocabFilteredPopulates
+        } = buildFetchPlan(newVocabView, vocabFetchSpecs(), {user, em: this.em}, {
+            //todo test these too
+            "ttsPronunciations": {voice: {$or: [{prefererLanguageMappings: {learner: user.profile}}, {isDefault: true}]}},
+            "vocabVariants.ttsPronunciations.voice": {$or: [{prefererLanguageMappings: {learner: user.profile}}, {isDefault: true}]}
         });
         const newVocabs = await this.em.find(Vocab, {
             textsAppearingIn: text,
             $nin: existingMappings.map(m => m.vocab)
         }, {
-            populate: ["language", "tags.category", "rootForms", "vocabVariants"],
-            populateWhere: {meanings: {language: {prefererEntries: {learnerLanguageMapping: {learner: user.profile}}}},}
+            fields: newVocabFields as any,
+            populate: newVocabPopulate as any,
         });
-        await this.em.populate(newVocabs, ["ttsPronunciations", "ttsPronunciations.voice"], {where: {ttsPronunciations: {voice: {$or: [{prefererLanguageMappings: {learner: user.profile}}, {isDefault: true}]}}}});
-        await this.em.populate(newVocabs, ["vocabVariants.ttsPronunciations.voice"], {
-            where: {vocabVariants: {ttsPronunciations: {voice: {$or: [{prefererLanguageMappings: {learner: user.profile}}, {isDefault: true}]}}}}
-        });
+
+        for (const {populate, filter, fields} of newVocabFilteredPopulates)
+            await this.em.populate(newVocabs, populate as any, {where: filter, fields: fields, refresh: true});
         return {learningVocabMappings: existingMappings, newVocabs}
     }
 
@@ -239,7 +257,7 @@ export class VocabService {
         return await this.vocabRepo.countSavedVocabsTimeSeries(user.profile, options);
     }
 
-    async createVocabTTSPronunciation(vocab: Vocab, variant: VocabVariant | null, voice: TTSVoice, viewDescription: ViewDescription) {
+    async createVocabTTSPronunciation(vocab: Vocab, variant: VocabVariant | null, voice: TTSVoice) {
         //TODO move to separate synthesize speech function which selects for provider
         if (voice.provider !== TTSProvider.GOOGLE_CLOUD)
             throw new Error("Unidentified TTS voice provider");
@@ -279,23 +297,34 @@ export class VocabService {
         }
     }
 
-    async createOrGetVocabVariant(vocab: Vocab, variantText: string, viewDescription: ViewDescription) {
-        const variant = await this.em.upsert(VocabVariant, {vocab: vocab, text: variantText}, {onConflictAction: "ignore"});
-        await this.em.populate(vocab, ["vocabVariants.ttsPronunciations"])
-        return variant;
-    }
-
     async getVocabVariants(vocab: Vocab, viewDescription: ViewDescription) {
-        return await this.em.find(VocabVariant, {vocab: vocab}, {populate: ["ttsPronunciations"]});
+        const {fields: dbFields, populate: dbPopulate} = buildFetchPlan(viewDescription, vocabVariantFetchSpecs(), {user: null, em: this.em});
+        return await this.em.find(VocabVariant, {vocab: vocab}, {
+            fields: dbFields as any,
+            populate: dbPopulate as any
+        });
     }
 
-    async createVocabVariant(vocab: Vocab, text: string, viewDescription: ViewDescription) {
-        const variant = await this.em.upsert(VocabVariant, {vocab: vocab, text: text}, {onConflictAction: "ignore"});
-        await this.em.populate(variant, ["ttsPronunciations"])
-        return variant;
+    async getVocabVariant(id: number, viewDescription: ViewDescription) {
+        const {fields: dbFields, populate: dbPopulate} = buildFetchPlan(viewDescription, vocabVariantFetchSpecs(), {user: null, em: this.em});
+        return await this.em.findOne(VocabVariant, {id}, {
+            fields: dbFields as any,
+            populate: dbPopulate as any,
+            refresh: true
+        });
     }
 
-    async findVocab(where: FilterQuery<Vocab>, fields: EntityField<Vocab>[] = ["*", "language"]) {
+    async createVocabVariant(vocabId: number, text: string, ignoreExisting = true) {
+        if (ignoreExisting)
+            return await this.em.upsert(VocabVariant, {vocab: vocabId, text: text}, {onConflictAction: "ignore"});
+        else {
+            const variant = this.em.create(VocabVariant, {vocab: vocabId, text: text}, {persist: true})
+            await this.em.flush();
+            return variant
+        }
+    }
+
+    async findVocab(where: FilterQuery<Vocab>, fields: EntityField<Vocab>[] = ["id", "text", "isPhrase", "language"]) {
         return await this.vocabRepo.findOne(where, {fields: fields as any});
     }
 

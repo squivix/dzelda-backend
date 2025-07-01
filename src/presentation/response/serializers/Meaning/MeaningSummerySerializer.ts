@@ -1,10 +1,11 @@
 import {CustomSerializer} from "@/src/presentation/response/serializers/CustomSerializer.js";
 import {Meaning} from "@/src/models/entities/Meaning.js";
 import {vocabVariantSerializer} from "@/src/presentation/response/serializers/VocabVariant/VocabVariantSerializer.js";
-import {ViewDescription} from "@/src/models/viewResolver.js";
+import {ViewDescriptionFromSpec} from "@/src/models/viewResolver.js";
+import {MeaningFetchSpecsType} from "@/src/models/fetchSpecs/meaningFetchSpecs.js";
 
 class MeaningSummerySerializer extends CustomSerializer<Meaning> {
-    readonly view: ViewDescription = {
+    readonly view: ViewDescriptionFromSpec<Meaning, MeaningFetchSpecsType> = {
         fields: ["id", "text", "learnersCount", "addedOn", "attribution", "vocab", "attributionSource"],
         relations: {
             language: {fields: ["code"]},

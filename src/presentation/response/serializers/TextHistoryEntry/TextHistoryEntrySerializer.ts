@@ -2,11 +2,12 @@ import {CustomSerializer} from "@/src/presentation/response/serializers/CustomSe
 import {TextHistoryEntry} from "@/src/models/entities/TextHistoryEntry.js";
 import {AnonymousUser} from "@/src/models/entities/auth/User.js";
 import {collectionSummarySerializer} from "@/src/presentation/response/serializers/Collection/CollectionSummarySerializer.js";
-import {ViewDescription} from "@/src/models/viewResolver.js";
+import {ViewDescriptionFromSpec} from "@/src/models/viewResolver.js";
+import {TextHistoryEntryFetchSpecsType} from "@/src/models/fetchSpecs/textHistoryEntryFetchSpecs.js";
 
 
 class TextHistoryEntrySerializer extends CustomSerializer<TextHistoryEntry> {
-    readonly view: ViewDescription = {
+    readonly view: ViewDescriptionFromSpec<TextHistoryEntry, TextHistoryEntryFetchSpecsType> = {
         fields: ["timeViewed"],
         relations: {
             pastViewer: {

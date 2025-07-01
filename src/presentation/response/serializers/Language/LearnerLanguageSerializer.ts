@@ -2,10 +2,11 @@ import {CustomSerializer} from "@/src/presentation/response/serializers/CustomSe
 import {MapLearnerLanguage} from "@/src/models/entities/MapLearnerLanguage.js";
 import {translationLanguageSerializer} from "@/src/presentation/response/serializers/TranslationLanguage/TranslationLanguageSerializer.js";
 import {ttsVoiceSerializer} from "@/src/presentation/response/serializers/TTSVoice/TtsVoiceSerializer.js";
-import {ViewDescription} from "@/src/models/viewResolver.js";
+import {ViewDescriptionFromSpec} from "@/src/models/viewResolver.js";
+import {MapLearnerLanguageFetchSpecsType} from "@/src/models/fetchSpecs/mapLearnerLanguageFetchSpecs.js";
 
 class LearnerLanguageSerializer extends CustomSerializer<MapLearnerLanguage> {
-    readonly view: ViewDescription = {
+    readonly view: ViewDescriptionFromSpec<MapLearnerLanguage, MapLearnerLanguageFetchSpecsType> = {
         fields: ["startedLearningOn", "lastOpened"],
         relations: {
             language: {

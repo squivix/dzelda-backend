@@ -1,12 +1,12 @@
-import {FieldFetchSpecsMap} from "@/src/models/viewResolver.js";
 import {Text} from "@/src/models/entities/Text.js";
-import {profileFieldFieldFetchMap} from "@/src/models/fetchSpecs/profileFieldFieldFetchMap.js";
-import {languageFieldFetchMap} from "@/src/models/fetchSpecs/languageFieldFetchMap.js";
-import {collectionFieldFetchMap} from "@/src/models/fetchSpecs/collectionFieldFetchMap.js";
+import {profileFetchSpecs} from "@/src/models/fetchSpecs/profileFetchSpecs.js";
+import {languageFetchSpecs} from "@/src/models/fetchSpecs/languageFetchSpecs.js";
+import {collectionFetchSpecs} from "@/src/models/fetchSpecs/collectionFetchSpecs.js";
 import {AnonymousUser} from "@/src/models/entities/auth/User.js";
 import {TextRepo} from "@/src/models/repos/TextRepo.js";
+import {EntityFetchSpecs} from "@/src/models/viewResolver.js";
 
-export const textFieldFetchMap: FieldFetchSpecsMap<Text> = {
+export const textFetchSpecs = () => ({
     id: {type: "db-column"},
     title: {type: "db-column"},
     content: {type: "db-column"},
@@ -21,9 +21,9 @@ export const textFieldFetchMap: FieldFetchSpecsMap<Text> = {
     level: {type: "db-column"},
     isLastInCollection: {type: "formula"},
     pastViewersCount: {type: "formula"},
-    language: {type: "relation", populate: "language", getFieldFetchSpecsMap: () => languageFieldFetchMap, relationType: "to-one"},
-    addedBy: {type: "relation", populate: "addedBy", getFieldFetchSpecsMap: () => profileFieldFieldFetchMap, relationType: "to-one"},
-    collection: {type: "relation", populate: "collection", getFieldFetchSpecsMap: () => collectionFieldFetchMap, relationType: "to-one"},
+    language: ({type: "relation", populate: "language", entityFetchSpecs: languageFetchSpecs, relationType: "to-one"}),
+    addedBy: ({type: "relation", populate: "addedBy", entityFetchSpecs: profileFetchSpecs, relationType: "to-one"}),
+    collection: ({type: "relation", populate: "collection", entityFetchSpecs: collectionFetchSpecs, relationType: "to-one"}),
     vocabsByLevel: {
         type: "annotated",
         annotate: async (texts, context) => {
@@ -42,4 +42,6 @@ export const textFieldFetchMap: FieldFetchSpecsMap<Text> = {
             await repo.annotateIsBookmarked(texts, context.user.profile.id);
         }
     }
-}
+}) as const satisfies EntityFetchSpecs<Text>
+
+export type TextFetchSpecsType = ReturnType<typeof textFetchSpecs>;

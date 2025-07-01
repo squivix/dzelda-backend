@@ -6,7 +6,6 @@ import {Language} from "@/src/models/entities/Language.js";
 import {Session} from "@/src/models/entities/auth/Session.js";
 import {APIError} from "@/src/utils/errors/APIError.js";
 import {EntityManager, EntityRepository, FilterQuery, UniqueConstraintViolationException} from "@mikro-orm/core";
-import {UnauthenticatedAPIError} from "@/src/utils/errors/UnauthenticatedAPIError.js";
 import {AUTH_TOKEN_LENGTH, EMAIL_CONFIRM_TOKEN_LENGTH, PASSWORD_RESET_TOKEN_LENGTH} from "@/src/constants.js";
 import {EntityField} from "@mikro-orm/core/drivers/IDatabaseDriver.js";
 import {PasswordResetToken} from "@/src/models/entities/auth/PasswordResetToken.js";
@@ -19,7 +18,9 @@ import {FileUploadRequest} from "@/src/models/entities/FileUploadRequest.js";
 import {Notification} from "@/src/models/entities/Notification.js";
 import {PendingJob} from "@/src/models/entities/PendingJob.js";
 import {checkPendingJobs} from "@/src/utils/pending-jobs/checkPendingJobs.js";
-import {ViewDescription} from "@/src/models/viewResolver.js";
+import {buildFetchPlan, ViewDescription} from "@/src/models/viewResolver.js";
+import {userFetchSpecs} from "@/src/models/fetchSpecs/userFetchSpecs.js";
+import {notificationFetchSpecs} from "@/src/models/fetchSpecs/notificationFetchSpecs.js";
 
 
 export class UserService {
@@ -35,8 +36,7 @@ export class UserService {
         this.languageRepo = this.em.getRepository(Language);
     }
 
-    async createUser(username: string, email: string, password: string, viewDescription: ViewDescription) {
-        // emailEncrypter.encrypt(email)
+    async createUser(username: string, email: string, password: string) {
         const newUser = new User(username, email, await passwordHasher.hash(password), false);
         const newProfile = new Profile(newUser);
         this.em.persist(newUser);
@@ -74,21 +74,18 @@ export class UserService {
         }
     }
 
-    async getUser(username: "me" | string, authenticatedUser: User | AnonymousUser | null) {
-        let user: User | null;
-        if (username == "me") {
-            if (!authenticatedUser || authenticatedUser instanceof AnonymousUser)
-                throw new UnauthenticatedAPIError(authenticatedUser);
-            user = authenticatedUser;
-        } else
-            user = await this.em.findOne(User, {username: username}, {populate: ["profile", "profile.languagesLearning"]});
-        return user;
+    async getUser(username: string, authenticatedUser: User | AnonymousUser | null, view: ViewDescription) {
+        const {fields, populate} = buildFetchPlan(view, userFetchSpecs(), {user: authenticatedUser, em: this.em});
+        return await this.em.findOne(User, {username: username}, {fields: fields as any, populate: populate as any});
     }
 
-    async getUserNotifications(user: User) {
-        return await this.em.find(Notification, {
-            recipient: user.profile
-        }, {orderBy: {createdDate: "desc"}});
+    async getUserNotifications(user: User, view: ViewDescription) {
+        const {fields, populate} = buildFetchPlan(view, notificationFetchSpecs(), {user, em: this.em});
+        return await this.em.find(Notification, {recipient: user.profile}, {
+            fields: fields as any,
+            populate: populate as any,
+            orderBy: {createdDate: "desc"}
+        });
     }
 
     async getLoginSession(sessionToken: string) {
@@ -262,7 +259,11 @@ export class UserService {
     }
 
     async findUser(where: FilterQuery<User>, fields: EntityField<User>[] = ["id", "email", "username"]) {
-        return await this.userRepo.findOne(where, {fields: fields as any});
+        return await this.em.findOne(User, where, {fields: fields as any});
+    }
+
+    async findProfile(where: FilterQuery<Profile>, fields: EntityField<Profile>[] = ["id", "isPublic", "user"]) {
+        return await this.em.findOne(Profile, where, {fields: fields as any});
     }
 
     async findUserNotification(where: FilterQuery<Notification>) {

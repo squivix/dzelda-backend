@@ -1,5 +1,5 @@
 import {Text} from "@/src/models/entities/Text.js";
-import {Collection, Entity, Formula, Index, ManyToMany, ManyToOne, OneToMany, OptionalProps, Property, raw, types, Unique} from "@mikro-orm/core";
+import {Collection, Entity, Filter, Formula, Index, ManyToMany, ManyToOne, OneToMany, OptionalProps, Property, raw, types, Unique} from "@mikro-orm/core";
 import {MapTextVocab} from "@/src/models/entities/MapTextVocab.js";
 import {CustomBaseEntity} from "@/src/models/entities/CustomBaseEntity.js";
 import {Language} from "@/src/models/entities/Language.js";
@@ -34,14 +34,14 @@ export class Vocab extends CustomBaseEntity {
 
     @OneToMany({
         entity: () => Meaning, mappedBy: (meaning: Meaning) => meaning.vocab,
-        orderBy: {learnersCount: "desc", [raw(alias => `length(${alias}.text)`)]: "asc"}
+        orderBy: {learnersCount: "desc", [raw(alias => `length(${alias}.text)`)]: "asc", id: "asc"}
     })
     meanings: Collection<Meaning> = new Collection<Meaning>(this);
 
+
     @OneToMany({
         entity: () => Meaning, mappedBy: (meaning: Meaning) => meaning.vocab,
-        orderBy: {learnersCount: "desc", text: "asc"},
-        lazy: true,
+        orderBy: {learnersCount: "desc", [raw(alias => `length(${alias}.text)`)]: "asc", id: "asc"}
     })
     learnerMeanings: Collection<Meaning> = new Collection<Meaning>(this);
 
@@ -95,7 +95,6 @@ export class Vocab extends CustomBaseEntity {
         type: "number"
     })
     learnersCount?: number;
-
 
     @Formula((alias: string) => `(SELECT COUNT(DISTINCT map_text_vocab.text_id) FROM map_text_vocab WHERE vocab_id = ${alias}.id)`, {
         type: "number"

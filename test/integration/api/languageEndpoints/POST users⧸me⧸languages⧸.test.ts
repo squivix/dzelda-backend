@@ -4,6 +4,7 @@ import {fetchRequest, omit} from "@/test/integration/integrationTestUtils.js";
 import {MapLearnerLanguage} from "@/src/models/entities/MapLearnerLanguage.js";
 import {faker} from "@faker-js/faker";
 import {learnerLanguageSerializer} from "@/src/presentation/response/serializers/Language/LearnerLanguageSerializer.js";
+import {PreferredTranslationLanguageEntry} from "@/src/models/entities/PreferredTranslationLanguageEntry.js";
 
 /**{@link LanguageController#addLanguageToUser}*/
 describe("POST users/me/languages/", function () {
@@ -20,14 +21,27 @@ describe("POST users/me/languages/", function () {
         const user = await context.userFactory.createOne();
         const session = await context.sessionFactory.createOne({user});
         const language = await context.languageFactory.createOne({learnersCount: 1});
-        const expectedMapping = context.em.create(MapLearnerLanguage, {language, learner: user.profile, startedLearningOn: new Date(), lastOpened: new Date()}, {persist: false});
+        const translationLanguages = await context.translationLanguageFactory.create(3);
 
-        const response = await makeRequest({languageCode: language.code}, session.token);
+        const expectedMapping = context.em.create(MapLearnerLanguage, {
+            language,
+            learner: user.profile,
+            startedLearningOn: new Date(),
+            lastOpened: new Date(),
+        }, {persist: false});
+        const expectedPreferredTLEntries = translationLanguages.map((t, i) => context.em.create(PreferredTranslationLanguageEntry, {
+            learnerLanguageMapping: expectedMapping,
+            translationLanguage: t,
+            precedenceOrder: i
+        }, {persist: false}))
+        expectedMapping.preferredTranslationLanguageEntries.set(expectedPreferredTLEntries);
+
+        const response = await makeRequest({languageCode: language.code, preferredTranslationLanguageCodes: translationLanguages.map(t => t.code)}, session.token);
 
         const responseBody = response.json();
         expect(response.statusCode).toEqual(201);
         expect(responseBody).toMatchObject(omit(learnerLanguageSerializer.serialize(expectedMapping, {assertNoUndefined: false}), ["startedLearningOn", "lastOpened"]));
-        const dbRecord = await context.em.findOne(MapLearnerLanguage, {language, learner: user.profile}, {populate: ["preferredTranslationLanguages"]});
+        const dbRecord = await context.em.findOne(MapLearnerLanguage, {language, learner: user.profile}, {populate: ["preferredTranslationLanguageEntries"]});
         expect(dbRecord).not.toBeNull();
         expect(learnerLanguageSerializer.serialize(dbRecord!)).toMatchObject(omit(learnerLanguageSerializer.serialize(expectedMapping, {assertNoUndefined: false}), ["startedLearningOn", "lastOpened"]));
     });

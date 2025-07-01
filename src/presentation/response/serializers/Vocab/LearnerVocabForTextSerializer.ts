@@ -2,11 +2,12 @@ import {CustomSerializer} from "@/src/presentation/response/serializers/CustomSe
 import {MapLearnerVocab} from "@/src/models/entities/MapLearnerVocab.js";
 import {vocabTagSerializer} from "@/src/presentation/response/serializers/VocabTag/VocabTagSerializer.js";
 import {vocabVariantSerializer} from "@/src/presentation/response/serializers/VocabVariant/VocabVariantSerializer.js";
-import {ViewDescription} from "@/src/models/viewResolver.js";
+import {ViewDescriptionFromSpec} from "@/src/models/viewResolver.js";
+import {MapLearnerVocabFetchSpecsType} from "@/src/models/fetchSpecs/mapLearnerVocabFetchSpecs.js";
 
 
 class LearnerVocabForTextSerializer extends CustomSerializer<MapLearnerVocab> {
-    readonly view: ViewDescription = {
+    readonly view: ViewDescriptionFromSpec<MapLearnerVocab, MapLearnerVocabFetchSpecsType> = {
         fields: ["level", "notes"],
         relations: {
             vocab: {

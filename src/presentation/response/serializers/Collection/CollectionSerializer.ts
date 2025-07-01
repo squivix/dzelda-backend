@@ -1,10 +1,11 @@
 import {CustomSerializer} from "@/src/presentation/response/serializers/CustomSerializer.js";
 import {Collection} from "@/src/models/entities/Collection.js";
 import {textSummarySerializer} from "@/src/presentation/response/serializers/Text/TextSummarySerializer.js";
-import {ViewDescription} from "@/src/models/viewResolver.js";
+import {ViewDescriptionFromSpec} from "@/src/models/viewResolver.js";
+import {CollectionFetchSpecsType} from "@/src/models/fetchSpecs/collectionFetchSpecs.js";
 
 class CollectionSerializer extends CustomSerializer<Collection> {
-    readonly view: ViewDescription = {
+    readonly view: ViewDescriptionFromSpec<Collection, CollectionFetchSpecsType> = {
         fields: ["id", "title", "description", "image", "addedOn", "isPublic", "avgPastViewersCountPerText"],
         relations: {
             language: {

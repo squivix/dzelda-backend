@@ -16,7 +16,9 @@ import {FlaggedTextReport} from "@/src/models/entities/FlaggedTextReport.js";
 import {TEXT_REPORT_HIDING_THRESHOLD} from "@/src/constants.js";
 import amqp from "amqplib";
 import {textVisibilityFilter} from "@/src/filters/textVisibilityFilter.js";
-import {ViewDescription} from "@/src/models/viewResolver.js";
+import {annotateFields, buildFetchPlan, ViewDescription} from "@/src/models/viewResolver.js";
+import {textFetchSpecs} from "@/src/models/fetchSpecs/textFetchSpecs.js";
+import {textHistoryEntryFetchSpecs} from "@/src/models/fetchSpecs/textHistoryEntryFetchSpecs.js";
 
 const parseTextQueueKey = "parseTextWorkerQueue";
 
@@ -75,15 +77,15 @@ export class TextService {
             dbOrderBy.push({pastViewersCount: sort.sortOrder});
         dbOrderBy.push({id: "asc"});
 
+        const {fields: dbFields, populate: dbPopulate, annotatedFields} = buildFetchPlan(viewDescription, textFetchSpecs(), {user, em: this.em});
         let [texts, totalCount] = await this.textRepo.findAndCount(dbFilters, {
-            populate: ["language", "orderInCollection", "addedBy.user", "collection", "collection.language", "collection.addedBy.user"],
+            fields: dbFields as any,
+            populate: dbPopulate as any,
             orderBy: dbOrderBy,
             limit: pagination.pageSize,
             offset: pagination.pageSize * (pagination.page - 1),
         });
-
-        if (user && !(user instanceof AnonymousUser))
-            await this.textRepo.annotateTextsWithUserData(texts, user);
+        await annotateFields(texts, annotatedFields, textFetchSpecs());
         return [texts, totalCount];
     }
 
@@ -130,14 +132,16 @@ export class TextService {
             dbOrderBy.push({timeViewed: sort.sortOrder});
         dbOrderBy.push({text: {id: "asc"}});
 
+        const {fields: dbFields, populate: dbPopulate, annotatedFields} = buildFetchPlan(viewDescription, textHistoryEntryFetchSpecs(), {user, em: this.em});
         let [textHistoryEntries, totalCount] = await this.em.findAndCount(TextHistoryEntry, dbFilters, {
-            populate: ["text.language", "text.addedBy.user", "text.collection", "text.collection.language", "text.collection.addedBy.user"],
+            fields: dbFields as any,
+            populate: dbPopulate as any,
             orderBy: dbOrderBy,
             limit: pagination.pageSize,
             offset: pagination.pageSize * (pagination.page - 1),
         });
 
-        await this.textRepo.annotateTextsWithUserData(textHistoryEntries.map(e => e.text), user);
+        await annotateFields(textHistoryEntries, annotatedFields, textHistoryEntryFetchSpecs());
         return [textHistoryEntries, totalCount];
     }
 
@@ -147,13 +151,14 @@ export class TextService {
         language: Language;
         collection: Collection | null;
         isPublic: boolean,
+        orderInCollection: number | null
         level?: LanguageLevel,
         image?: string;
         audio?: string;
-    }, user: User, {populate = true, parsingPriority = 2}: {
+    }, user: User, {parsingPriority = 2}: {
         populate?: boolean,
         parsingPriority?: 1 | 2
-    } = {}, viewDescription?: ViewDescription): Promise<Text> {
+    } = {}) {
         let newText = this.textRepo.create({
             title: fields.title,
             content: fields.content,
@@ -164,20 +169,13 @@ export class TextService {
             collection: fields.collection,
             isPublic: fields.isPublic,
             level: fields.level,
-            orderInCollection: fields.collection?.texts?.count(),
+            orderInCollection: fields.orderInCollection,
             isLastInCollection: true,
             isProcessing: true,
             pastViewersCount: 0
         });
         await this.em.flush();
         await TextService.sendTextToParsingQueue({textId: newText.id, parsingPriority: parsingPriority})
-
-        if (populate) {
-            await this.textRepo.annotateTextsWithUserData([newText], user);
-            if (newText.collection)
-                await this.collectionRepo.annotateCollectionsWithUserData([newText.collection], user);
-            await this.em.refresh(newText, {populate: ["addedBy.user", "language", "collection.language", "collection.addedBy.user"]});
-        }
         return newText;
     }
 
@@ -188,16 +186,17 @@ export class TextService {
         if (user instanceof User)
             dbFilters.$and!.push({hiddenBy: {$none: user.profile}});
 
-        let text = await this.textRepo.findOne(dbFilters, {populate: ["language", "addedBy.user", "collection", "collection.language", "collection.addedBy.user"]});
+        const {fields: dbFields, populate: dbPopulate, annotatedFields} = buildFetchPlan(viewDescription, textFetchSpecs(), {user, em: this.em});
 
-        if (text) {
-            if (user && !(user instanceof AnonymousUser)) {
-                await this.textRepo.annotateTextsWithUserData([text], user);
-                if (text.collection)
-                    await this.collectionRepo.annotateCollectionsWithUserData([text.collection], user);
-            }
-        }
-        return text;
+        let text = await this.em.findOne(Text, dbFilters, {
+            fields: dbFields as any,
+            populate: dbPopulate as any,
+            refresh: true,
+        });
+
+        if (text)
+            await annotateFields([text], annotatedFields, textFetchSpecs());
+        return text as Text;
     }
 
     async updateText(text: Text, updatedTextData: {
@@ -208,7 +207,7 @@ export class TextService {
         isPublic?: boolean,
         image?: string;
         audio?: string;
-    }, user: User, viewDescription: ViewDescription) {
+    }, user: User) {
         const isTitleContentChanged = text.title !== updatedTextData.title || text.content !== updatedTextData.content;
         if (isTitleContentChanged) {
             text.title = updatedTextData.title;
@@ -244,30 +243,51 @@ export class TextService {
 
         if (isTitleContentChanged)
             await TextService.sendTextToParsingQueue({textId: text.id, parsingPriority: 2});
-
-        if (user && !(user instanceof AnonymousUser)) {
-            await this.textRepo.annotateTextsWithUserData([text], user);
-            if (text.collection)
-                await this.collectionRepo.annotateCollectionsWithUserData([text.collection], user);
-        }
-        return text;
     }
 
     async deleteText(text: Text) {
         await this.em.nativeDelete(Text, {id: text.id});
     }
 
-    async addTextToUserHistory(text: Text, user: User, viewDescription: ViewDescription) {
+    async addTextToUserHistory(text: Text, user: User) {
         const historyEntry = this.em.create(TextHistoryEntry, {pastViewer: user.profile, text: text});
         await this.em.flush();
         await this.em.refresh(historyEntry.text, {populate: ["orderInCollection", "addedBy.user"]});
         return historyEntry;
     }
 
-    async addTextToUserBookmarks(text: Text, user: User, viewDescription: ViewDescription) {
+    async getLatestTextHistoryEntry(user: User, viewDescription: ViewDescription) {
+        const {fields: dbFields, populate: dbPopulate, annotatedFields} = buildFetchPlan(viewDescription, textHistoryEntryFetchSpecs(), {user, em: this.em});
+
+        let textHistoryEntry = await this.em.findOne(TextHistoryEntry, {pastViewer: user.profile}, {
+            fields: dbFields as any,
+            populate: dbPopulate as any,
+            orderBy: {timeViewed: "desc"},
+            refresh: true,
+        });
+
+        if (textHistoryEntry)
+            await annotateFields([textHistoryEntry], annotatedFields, textHistoryEntryFetchSpecs());
+        return textHistoryEntry;
+        // return await this.em.findOne(TextHistoryEntry, {pastViewer: user.profile}, {orderBy: {timeViewed: "desc"}});
+    }
+
+    async getTextHistoryEntry(textHistoryEntryId: number, user: User, viewDescription: ViewDescription) {
+        const {fields: dbFields, populate: dbPopulate, annotatedFields} = buildFetchPlan(viewDescription, textHistoryEntryFetchSpecs(), {user, em: this.em});
+        let textHistoryEntry = await this.em.findOne(TextHistoryEntry, {id: textHistoryEntryId, pastViewer: user.profile}, {
+            fields: dbFields as any,
+            populate: dbPopulate as any,
+            refresh: true,
+        });
+
+        if (textHistoryEntry)
+            await annotateFields([textHistoryEntry], annotatedFields, textHistoryEntryFetchSpecs());
+        return textHistoryEntry as TextHistoryEntry;
+    }
+
+    async addTextToUserBookmarks(text: Text, user: User) {
         const bookmark = this.em.create(TextBookmark, {bookmarker: user.profile, text: text});
         await this.em.flush();
-        await this.textRepo.annotateTextsWithUserData([text], user);
         return bookmark;
     }
 
@@ -275,10 +295,13 @@ export class TextService {
         await this.em.nativeDelete(TextBookmark, {text: text, bookmarker: user.profile});
     }
 
-    async hideTextForUser(text: Text, user: User, viewDescription: ViewDescription) {
-        const mapping = this.em.create(MapHiderText, {hider: user.profile, text: text});
-        await this.em.flush();
-        return mapping;
+    async hideTextForUser(text: Text, user: User, onConflictIgnore = false) {
+        if (onConflictIgnore)
+            await this.em.upsert(MapHiderText, {hider: user.profile, text: text}, {onConflictAction: "ignore"});
+        else {
+            this.em.create(MapHiderText, {hider: user.profile, text: text});
+            await this.em.flush();
+        }
     }
 
     async unhideTextForUser(text: Text, user: User) {
@@ -305,12 +328,12 @@ export class TextService {
         return report;
     }
 
-    async findText(where: FilterQuery<Text>, fields: EntityField<Text>[] = ["id", "collection", "isPublic", "addedBy"]) {
-        return await this.textRepo.findOne({$and: [where, {isRemovedByMods: false}]}, {fields: fields as any}) as Text;
+    async findText(where: FilterQuery<Text>, fields: EntityField<Text>[] = ["id", "collection", "language", "isPublic", "addedBy"]) {
+        return await this.em.findOne(Text, {$and: [where, {isRemovedByMods: false}]}, {fields: fields as any}) as Text;
     }
 
-    async findLatestTextHistoryEntry(user: User) {
-        return await this.em.findOne(TextHistoryEntry, {pastViewer: user.profile}, {orderBy: {timeViewed: "desc"}});
+    async findTextBookmark(where: FilterQuery<TextBookmark>, fields: EntityField<TextBookmark>[] = ["id", "text", "bookmarker"]) {
+        return await this.em.findOne(TextBookmark, {$and: [where, {text: {isRemovedByMods: false}}]}, {fields: fields as any}) as TextBookmark;
     }
 
     async findHiderTextMapping(where: FilterQuery<MapHiderText>, fields: EntityField<MapHiderText>[] = ["id", "text", "hider"]) {

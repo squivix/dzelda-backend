@@ -1,11 +1,11 @@
 import {CustomBaseEntity} from "@/src/models/entities/CustomBaseEntity.js";
-import {ViewDescription} from "@/src/models/viewResolver.js";
+import {ViewDescription, ViewDescriptionFromSpec} from "@/src/models/viewResolver.js";
 import {assertNoUndefinedProps} from "@/src/presentation/response/serializers/serializerUtils.js";
 import process from "process";
 
 
 export abstract class CustomSerializer<R extends CustomBaseEntity> {
-    abstract readonly view: ViewDescription;
+    abstract readonly view: ViewDescriptionFromSpec<R, any>;
 
     abstract serialize(rootEntity: R, options: { assertNoUndefined: boolean }): any;
 

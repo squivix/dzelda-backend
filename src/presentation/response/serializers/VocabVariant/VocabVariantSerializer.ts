@@ -1,9 +1,10 @@
 import {CustomSerializer} from "@/src/presentation/response/serializers/CustomSerializer.js";
 import {VocabVariant} from "@/src/models/entities/VocabVariant.js";
-import {ViewDescription} from "@/src/models/viewResolver.js";
+import {ViewDescriptionFromSpec} from "@/src/models/viewResolver.js";
+import {VocabVariantFetchSpecsType} from "@/src/models/fetchSpecs/vocabVariantFetchSpecs.js";
 
 class VocabVariantSerializer extends CustomSerializer<VocabVariant> {
-    readonly view: ViewDescription = {
+    readonly view: ViewDescriptionFromSpec<VocabVariant, VocabVariantFetchSpecsType> = {
         fields: ["id", "text"],
         relations: {ttsPronunciations: {fields: ["url"]}}
     }

@@ -12,7 +12,6 @@ import {TextService} from "@/src/services/TextService.js";
 import {textVisibilityFilter} from "@/src/filters/textVisibilityFilter.js";
 import {meaningTextValidator} from "@/src/validators/meaningValidators.js";
 import {VocabVariant} from "@/src/models/entities/VocabVariant.js";
-import {attributionSourceSerializer} from "@/src/presentation/response/serializers/AttributionSource/AttributionSourceSerializer.js";
 import {meaningSerializer} from "@/src/presentation/response/serializers/Meaning/MeaningSerializer.js";
 import {meaningSummerySerializer} from "@/src/presentation/response/serializers/Meaning/MeaningSummerySerializer.js";
 import {APIError} from "@/src/utils/errors/APIError.js";

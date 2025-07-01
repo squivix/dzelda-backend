@@ -8,7 +8,7 @@ import {VocabService} from "@/src/services/VocabService.js";
 import {getParser} from "dzelda-common";
 import {UserService} from "@/src/services/UserService.js";
 import {NotFoundAPIError} from "@/src/utils/errors/NotFoundAPIError.js";
-import {User} from "@/src/models/entities/auth/User.js";
+import {AnonymousUser, User} from "@/src/models/entities/auth/User.js";
 import {booleanStringValidator, numericStringValidator} from "@/src/validators/utilValidators.js";
 import {TextService} from "@/src/services/TextService.js";
 import {APIError} from "@/src/utils/errors/APIError.js";
@@ -23,6 +23,9 @@ import {learnerVocabForTextSerializer} from "@/src/presentation/response/seriali
 import {vocabSerializer} from "@/src/presentation/response/serializers/Vocab/VocabSerializer.js";
 import {ttsPronunciationSerializer} from "@/src/presentation/response/serializers/TTSPronunciation/TtsPronunciationSerializer.js";
 import {vocabForTextSerializer} from "@/src/presentation/response/serializers/Vocab/VocabForTextSerializer.js";
+import {UnauthenticatedAPIError} from "@/src/utils/errors/UnauthenticatedAPIError.js";
+import {serialize} from "@mikro-orm/core";
+import {pronunciationController} from "@/src/controllers/PronunciationController.js";
 
 class VocabController {
 
@@ -35,19 +38,20 @@ class VocabController {
             page: z.coerce.number().int().min(1).optional().default(1),
             pageSize: z.coerce.number().int().min(1).max(200).optional().default(25),
         });
-
         const queryParams = queryParamsValidator.parse(request.query);
         const vocabService = new VocabService(request.em);
+        const serializer = vocabSerializer;
+
         const filters = {languageCode: queryParams.languageCode, searchQuery: queryParams.searchQuery};
         const sort = {sortBy: queryParams.sortBy, sortOrder: queryParams.sortOrder};
         const pagination = {page: queryParams.page, pageSize: queryParams.pageSize};
-        const [vocabs, recordsCount] = await vocabService.getPaginatedVocabs(filters, sort, pagination);
+        const [vocabs, recordsCount] = await vocabService.getPaginatedVocabs(filters, sort, pagination, serializer.view);
         reply.send({
             //TODO check if recordsCount is 0 to avoid a message like Page 1 out of 0
             page: pagination.page,
             pageSize: pagination.pageSize,
             pageCount: Math.ceil(recordsCount / pagination.pageSize),
-            data: vocabSerializer.serializeList(vocabs)
+            data: serializer.serializeList(vocabs)
         });
     }
 
@@ -59,6 +63,7 @@ class VocabController {
             isPhrase: z.boolean()
         });
         const body = bodyValidator.parse(request.body);
+        const serializer = vocabSerializer;
 
         const languageService = new LanguageService(request.em);
         const language = await languageService.findLearningLanguage({code: body.languageCode});
@@ -76,17 +81,24 @@ class VocabController {
 
         const vocabText = parser.combineWords(words);
         const vocabService = new VocabService(request.em);
-        const existingVocab = await vocabService.getVocabByStringSearch({language: language, text: vocabText});
+        const existingVocab = await vocabService.findVocab({language: language, text: vocabText});
+        let vocabId: number;
+        if (!existingVocab) {
+            const newVocab = await vocabService.createVocab({
+                language: language,
+                text: vocabText,
+                isPhrase: body.isPhrase,
+            });
+            vocabId = newVocab.id
+        } else
+            vocabId = existingVocab.id
 
-        const vocab = existingVocab ? existingVocab : await vocabService.createVocab({
-            language: language,
-            text: vocabText,
-            isPhrase: body.isPhrase,
-        });
+
         if (body.variantText !== undefined && body.variantText != parseResult.normalizedText && parser.normalizeText(body.variantText) === parseResult.normalizedText)
-            await vocabService.createOrGetVocabVariant(vocab, body.variantText);
+            await vocabService.createVocabVariant(vocabId, body.variantText, true);
 
-        reply.status(existingVocab ? 200 : 201).send(vocabSerializer.serialize(vocab));
+        const vocab = await vocabService.getVocab(vocabId, serializer.view);
+        reply.status(existingVocab ? 200 : 201).send(serializer.serialize(vocab));
     }
 
     async getUserVocabs(request: FastifyRequest, reply: FastifyReply) {
@@ -102,17 +114,18 @@ class VocabController {
             pageSize: z.coerce.number().int().min(1).max(200).optional().default(25),
         });
         const queryParams = queryParamsValidator.parse(request.query);
-        const vocabService = new VocabService(request.em);
+        const serializer = learnerVocabSerializer;
 
+        const vocabService = new VocabService(request.em);
         const filters = {languageCode: queryParams.languageCode, level: queryParams.level, searchQuery: queryParams.searchQuery};
         const sort = {sortBy: queryParams.sortBy, sortOrder: queryParams.sortOrder};
         const pagination = {page: queryParams.page, pageSize: queryParams.pageSize};
-        const [vocabs, recordsCount] = await vocabService.getPaginatedLearnerVocabs(filters, sort, pagination, user);
+        const [vocabs, recordsCount] = await vocabService.getPaginatedLearnerVocabs(filters, sort, pagination, user, serializer.view);
         reply.send({
             page: pagination.page,
             pageSize: pagination.pageSize,
             pageCount: Math.ceil(recordsCount / pagination.pageSize),
-            data: learnerVocabSerializer.serializeList(vocabs)
+            data: serializer.serializeList(vocabs)
         });
     }
 
@@ -123,7 +136,7 @@ class VocabController {
             level: vocabLevelValidator.optional()
         });
         const body = bodyValidator.parse(request.body);
-
+        const serializer = learnerVocabSerializer
         const vocabService = new VocabService(request.em);
         const vocab = await vocabService.findVocab({id: body.vocabId});
         if (!vocab)
@@ -131,12 +144,12 @@ class VocabController {
         if (!(request.user as User).profile.languagesLearning.contains(vocab.language))
             throw new ValidationAPIError({vocab: "not in a language the user is learning"});
 
-        const existingVocabMapping = await vocabService.getUserVocab(vocab.id, user.profile);
-        if (existingVocabMapping)
-            reply.status(200).send(learnerVocabSerializer.serialize(existingVocabMapping));
+        const existingVocabMapping = await vocabService.findLearnerVocab({vocab: vocab.id, learner: user.profile});
+        if (!existingVocabMapping)
+            await vocabService.addVocabToUserLearning(vocab, user, body.level);
 
-        const newVocabMapping = await vocabService.addVocabToUserLearning(vocab, user, body.level);
-        reply.status(201).send(learnerVocabSerializer.serialize(newVocabMapping));
+        const vocabMapping = (await vocabService.getUserVocab(vocab.id, user, serializer.view))!;
+        reply.status(existingVocabMapping ? 200 : 201).send(serializer.serialize(vocabMapping));
     }
 
     async getUserVocab(request: FastifyRequest, reply: FastifyReply) {
@@ -145,12 +158,13 @@ class VocabController {
             vocabId: numericStringValidator
         });
         const pathParams = pathParamsValidator.parse(request.params);
+        const serializer = learnerVocabSerializer;
 
         const vocabService = new VocabService(request.em);
-        const mapping = await vocabService.getUserVocab(pathParams.vocabId, user.profile);
+        const mapping = await vocabService.getUserVocab(pathParams.vocabId, user, serializer.view);
         if (!mapping)
             throw new APIError(404, "User is not learning vocab", "The user is not learning this vocab.");
-        reply.send(learnerVocabSerializer.serialize(mapping));
+        reply.send(serializer.serialize(mapping));
     }
 
     async updateUserVocab(request: FastifyRequest, reply: FastifyReply) {
@@ -165,21 +179,23 @@ class VocabController {
             notes: vocabNotesValidator.optional()
         });
         const body = bodyValidator.parse(request.body);
+        const serializer = learnerVocabSerializer;
 
         const vocabService = new VocabService(request.em);
         const mapping = await vocabService.findLearnerVocab({vocab: pathParams.vocabId, learner: user.profile});
         if (!mapping)
             throw new APIError(404, "User is not learning vocab", "The user is not learning this vocab.");
-        const updatedMapping = await vocabService.updateUserVocab(mapping, body);
-        reply.send(learnerVocabSerializer.serialize(updatedMapping));
+        await vocabService.updateUserVocab(mapping, body);
+        const updatedMapping = (await vocabService.getUserVocab(pathParams.vocabId, user, serializer.view))!;
+        reply.send(serializer.serialize(updatedMapping));
     }
 
     async deleteUserVocab(request: FastifyRequest, reply: FastifyReply) {
-        const user = request.user as User;
         const pathParamsValidator = z.object({
             vocabId: numericStringValidator
         });
         const pathParams = pathParamsValidator.parse(request.params);
+        const user = request.user as User;
 
         const vocabService = new VocabService(request.em);
         const mapping = await vocabService.findLearnerVocab({vocab: pathParams.vocabId, learner: user.profile});
@@ -199,7 +215,7 @@ class VocabController {
 
         const vocabService = new VocabService(request.em);
 
-        const {learningVocabMappings, newVocabs} = await vocabService.getTextVocabs(text, request.user as User);
+        const {learningVocabMappings, newVocabs} = await vocabService.getTextVocabs(text, request.user as User, learnerVocabForTextSerializer.view, vocabForTextSerializer.view);
         reply.send([
             ...learnerVocabForTextSerializer.serializeList(learningVocabMappings),
             ...vocabForTextSerializer.serializeList(newVocabs)
@@ -210,9 +226,16 @@ class VocabController {
         const pathParamsValidator = z.object({username: z.string().min(1).or(z.literal("me"))});
         const pathParams = pathParamsValidator.parse(request.params);
         const userService = new UserService(request.em);
-        const user = await userService.getUser(pathParams.username, request.user);
-        if (!user || (!user.profile.isPublic && user !== request.user))
+        if (pathParams.username == "me") {
+            if (!request.isLoggedIn)
+                throw new UnauthenticatedAPIError(request.user as AnonymousUser | null);
+            pathParams.username = request.user!.username;
+        }
+        const profile = await userService.findProfile({user: {username: pathParams.username}});
+        if (!profile || (!profile.isPublic && profile !== request.user?.profile))
             throw new NotFoundAPIError("User");
+        const user = profile.user;
+
         const queryParamsValidator = z.object({
             savedOnFrom: z.coerce.date().optional(),
             savedOnTo: z.coerce.date().optional(),
@@ -238,9 +261,16 @@ class VocabController {
         const pathParamsValidator = z.object({username: z.string().min(1).or(z.literal("me"))});
         const pathParams = pathParamsValidator.parse(request.params);
         const userService = new UserService(request.em);
-        const user = await userService.getUser(pathParams.username, request.user);
-        if (!user || (!user.profile.isPublic && user !== request.user))
+        if (pathParams.username == "me") {
+            if (!request.isLoggedIn)
+                throw new UnauthenticatedAPIError(request.user as AnonymousUser | null);
+            pathParams.username = request.user!.username;
+        }
+        const profile = await userService.findProfile({user: {username: pathParams.username}});
+        if (!profile || (!profile.isPublic && profile !== request.user?.profile))
             throw new NotFoundAPIError("User");
+        const user = profile.user;
+
         const epochDate = new Date(0);
         const nowDate = new Date();
 
@@ -271,6 +301,7 @@ class VocabController {
             vocabId: numericStringValidator
         });
         const pathParams = pathParamsValidator.parse(request.params);
+        const serializer = ttsPronunciationSerializer;
 
         const vocabService = new VocabService(request.em);
         const vocab = await vocabService.findVocab({id: pathParams.vocabId});
@@ -278,8 +309,8 @@ class VocabController {
             throw new NotFoundAPIError("vocab");
 
         const pronunciationService = new PronunciationService(request.em);
-        const ttsPronunciations = await pronunciationService.getVocabTTSPronunciations(vocab);
-        reply.send(ttsPronunciationSerializer.serializeList(ttsPronunciations));
+        const ttsPronunciations = await pronunciationService.getVocabTTSPronunciations(vocab, serializer.view);
+        reply.send(serializer.serializeList(ttsPronunciations));
     }
 
     async getVocabVariants(request: FastifyRequest, reply: FastifyReply) {
@@ -287,14 +318,15 @@ class VocabController {
             vocabId: numericStringValidator
         });
         const pathParams = pathParamsValidator.parse(request.params);
+        const serializer = vocabVariantSerializer;
 
         const vocabService = new VocabService(request.em);
         const vocab = await vocabService.findVocab({id: pathParams.vocabId});
         if (!vocab)
             throw new NotFoundAPIError("vocab");
 
-        const vocabVariants = await vocabService.getVocabVariants(vocab);
-        reply.send(vocabVariantSerializer.serializeList(vocabVariants));
+        const vocabVariants = await vocabService.getVocabVariants(vocab, serializer.view);
+        reply.send(serializer.serializeList(vocabVariants));
     }
 
     async createVocabVariant(request: FastifyRequest, reply: FastifyReply) {
@@ -303,9 +335,9 @@ class VocabController {
             text: vocabTextValidator,
         });
         const body = bodyValidator.parse(request.body);
-
+        const serializer = vocabVariantSerializer;
         const vocabService = new VocabService(request.em);
-        const vocab = await vocabService.getVocab(body.vocabId);
+        const vocab = await vocabService.getVocab(body.vocabId, {fields: ["id", "text"], relations: {language: {fields: ["code"]}}});
         if (!vocab)
             throw new NotFoundAPIError("vocab");
         const parser = getParser(vocab.language.code);
@@ -321,8 +353,9 @@ class VocabController {
             return;
         }
 
-        const newVariant = await vocabService.createVocabVariant(vocab, body.text);
-        reply.status(201).send(vocabVariantSerializer.serialize(newVariant));
+        let newVariant = await vocabService.createVocabVariant(vocab.id, body.text);
+        newVariant = (await vocabService.getVocabVariant(newVariant.id, serializer.view))!;
+        reply.status(201).send(serializer.serialize(newVariant));
     }
 
     async getVocabHumanPronunciations(request: FastifyRequest, reply: FastifyReply) {
@@ -330,15 +363,15 @@ class VocabController {
             vocabId: numericStringValidator
         });
         const pathParams = pathParamsValidator.parse(request.params);
-
+        const serializer = humanPronunciationSerializer;
         const vocabService = new VocabService(request.em);
         const vocab = await vocabService.findVocab({id: pathParams.vocabId});
         if (!vocab)
             throw new NotFoundAPIError("vocab");
 
         const pronunciationService = new PronunciationService(request.em);
-        const humanPronunciations = await pronunciationService.getHumanPronunciations(vocab.text, vocab.language);
-        reply.send(humanPronunciationSerializer.serializeList(humanPronunciations));
+        const humanPronunciations = await pronunciationService.getHumanPronunciations(vocab.text, vocab.language, serializer.view);
+        reply.send(serializer.serializeList(humanPronunciations));
     }
 
     async synthesizeTTSPronunciation(request: FastifyRequest, reply: FastifyReply) {
@@ -350,8 +383,11 @@ class VocabController {
             voiceCode: z.string().min(1).optional()
         });
         const body = bodyValidator.parse(request.body);
+        const serializer = ttsPronunciationSerializer;
+
         const vocabService = new VocabService(request.em);
-        const vocab = await vocabService.getVocab(body.vocabId);
+        const pronunciationService = new PronunciationService(request.em);
+        const vocab = await vocabService.findVocab(body.vocabId);
         if (!vocab)
             throw new ValidationAPIError({vocab: "Not found"});
         const voice = await vocabService.findTTSVoice({$or: [{code: body.voiceCode}, {isDefault: true}], language: vocab.language});
@@ -364,13 +400,15 @@ class VocabController {
                 throw new ValidationAPIError({vocabVariantId: "Not found"});
         }
 
-        const existingPronunciation = (variant ? variant : vocab).ttsPronunciations.find(p => p.voice == voice);
-        if (existingPronunciation) {
-            reply.status(200).send(ttsPronunciationSerializer.serialize(existingPronunciation));
-            return;
-        }
-        const newPronunciation = await vocabService.createVocabTTSPronunciation(vocab, variant, voice);
-        reply.status(200).send(ttsPronunciationSerializer.serialize(newPronunciation));
+        const existingPronunciation = await pronunciationService.findTTSPronunciation({vocab, vocabVariant: variant, voice});
+        let pronunciationId: number;
+        if (!existingPronunciation) {
+            const newPronunciation = await vocabService.createVocabTTSPronunciation(vocab, variant, voice);
+            pronunciationId = newPronunciation.id;
+        } else pronunciationId = existingPronunciation.id
+
+        const pronunciation = (await pronunciationService.getTTSPronunciation(pronunciationId, serializer.view))!;
+        reply.status(200).send(serializer.serialize(pronunciation));
     }
 }
 

@@ -1,7 +1,7 @@
-import {FieldFetchSpecsMap} from "@/src/models/viewResolver.js";
+import {EntityFetchSpecs} from "@/src/models/viewResolver.js";
 import {Language} from "@/src/models/entities/Language.js";
 
-export const languageFieldFetchMap: FieldFetchSpecsMap<Language> = {
+export const languageFetchSpecs = () => ({
     id: {type: "db-column"},
     code: {type: "db-column"},
     name: {type: "db-column"},
@@ -15,4 +15,6 @@ export const languageFieldFetchMap: FieldFetchSpecsMap<Language> = {
     isAbjad: {type: "db-column"},
     levelThresholds: {type: "db-column"},
     learnersCount: {type: "formula"},
-};
+}) as const satisfies EntityFetchSpecs<Language>
+
+export type LanguageFetchSpecsType = ReturnType<typeof languageFetchSpecs>;

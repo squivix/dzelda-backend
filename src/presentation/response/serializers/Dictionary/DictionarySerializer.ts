@@ -1,9 +1,10 @@
 import {CustomSerializer} from "@/src/presentation/response/serializers/CustomSerializer.js";
 import {Dictionary} from "@/src/models/entities/Dictionary.js";
-import {ViewDescription} from "@/src/models/viewResolver.js";
+import {ViewDescriptionFromSpec} from "@/src/models/viewResolver.js";
+import {DictionaryFetchSpecsType} from "@/src/models/fetchSpecs/dictionaryFetchSpecs.js";
 
 class DictionarySerializer extends CustomSerializer<Dictionary> {
-    readonly view: ViewDescription = {
+    readonly view: ViewDescriptionFromSpec<Dictionary, DictionaryFetchSpecsType> = {
         fields: ["id", "name", "lookupLink", "dictionaryLink", "isPronunciation"],
         relations: {
             language: {fields: ["code"]}

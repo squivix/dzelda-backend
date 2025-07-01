@@ -5,7 +5,7 @@ import {NotFoundAPIError} from "@/src/utils/errors/NotFoundAPIError.js";
 import {emailValidator, passwordValidator, usernameValidator} from "@/src/validators/userValidator.js";
 import {emailTransporter} from "@/src/nodemailer.config.js";
 import {APIError} from "@/src/utils/errors/APIError.js";
-import {User} from "@/src/models/entities/auth/User.js";
+import {AnonymousUser, User} from "@/src/models/entities/auth/User.js";
 import {Session} from "@/src/models/entities/auth/Session.js";
 import {ValidationAPIError} from "@/src/utils/errors/ValidationAPIError.js";
 import {bioValidator} from "@/src/validators/profileValidators.js";
@@ -28,6 +28,7 @@ import {notificationSerializer} from "@/src/presentation/response/serializers/No
 import {userPublicSerializer} from "@/src/presentation/response/serializers/User/UserPublicSerializer.js";
 import {userPrivateSerializer} from "@/src/presentation/response/serializers/User/UserPrivateSerializer.js";
 import {userSignUpSerializer} from "@/src/presentation/response/serializers/User/UserSignUpSerializer.js";
+import {UnauthenticatedAPIError} from "@/src/utils/errors/UnauthenticatedAPIError.js";
 
 class UserController {
     async signUp(request: FastifyRequest, reply: FastifyReply) {
@@ -37,11 +38,15 @@ class UserController {
             password: passwordValidator
         }).strict();
         const body = bodyValidator.parse(request.body);
+        const serializer = userSignUpSerializer;
+
         const userService = new UserService(request.em);
-        const newUser = await userService.createUser(body.username, body.email, body.password);
+        let newUser = await userService.createUser(body.username, body.email, body.password);
         const token = await userService.generateEmailConfirmToken({user: newUser, email: newUser.email});
         await emailTransporter.sendMail(confirmEmailTemplate(newUser.email, {token}));
-        reply.status(201).send(userSignUpSerializer.serialize(newUser));
+
+        newUser = (await userService.getUser(newUser.username, null, serializer.view))!;
+        reply.status(201).send(serializer.serialize(newUser));
     }
 
     async login(request: FastifyRequest, reply: FastifyReply) {
@@ -120,14 +125,19 @@ class UserController {
         const pathParamsValidator = z.object({username: z.string().min(1).or(z.literal("me")),});
         const pathParams = pathParamsValidator.parse(request.params);
         const userService = new UserService(request.em);
-        const user = await userService.getUser(pathParams.username, request.user);
+        if (pathParams.username == "me") {
+            if (!request.isLoggedIn)
+                throw new UnauthenticatedAPIError(request.user as AnonymousUser | null);
+            pathParams.username = request.user!.username;
+        }
+        const profile = await userService.findProfile({user: {username: pathParams.username}});
         // private user don't exist to the outside
-        if (!user || (!user.profile.isPublic && user !== request.user))
-            throw new NotFoundAPIError("User");
-        if (request.user !== user)
-            reply.status(200).send(userPublicSerializer.serialize(user));
-        else
-            reply.status(200).send(userPrivateSerializer.serialize(user));
+        if (!profile || (!profile.isPublic && profile !== request.user?.profile))
+            throw new NotFoundAPIError("User profile");
+        const serializer = request.user?.profile === profile ? userPrivateSerializer : userPublicSerializer
+
+        const user = (await userService.getUser(pathParams.username, request.user, serializer.view))!;
+        reply.status(200).send(serializer.serialize(user));
     }
 
     async requestPasswordReset(request: FastifyRequest, reply: FastifyReply) {
@@ -199,14 +209,15 @@ class UserController {
             profilePicture: z.string().optional()
         });
         const body = bodyValidator.parse(request.body);
+        const serializer = profileSerializer;
         const userService = new UserService(request.em);
         const user = request.user as User;
 
         if (body.profilePicture)
             body.profilePicture = await validateFileObjectKey(userService, request.user as User, body.profilePicture, "profilePicture", "profilePicture");
-        await userService.updateUserProfile(user, {bio: body.bio, profilePicture: body.profilePicture});
+        await userService.updateUserProfile(user, {bio: body.bio, profilePicture: body.profilePicture}, serializer.view);
 
-        reply.status(200).send(profileSerializer.serialize(user.profile));
+        reply.status(200).send(serializer.serialize(user.profile));
     }
 
     async generateFileUploadPresignedUrl(request: FastifyRequest, reply: FastifyReply) {
@@ -257,10 +268,13 @@ class UserController {
 
     async getUserNotifications(request: FastifyRequest, reply: FastifyReply) {
         const userService = new UserService(request.em);
+        const serializer = notificationSerializer;
+        const user = request.user as User;
         await userService.checkUserPendingJobs(request.user as User);
-        const notifications = await userService.getUserNotifications(request.user as User);
 
-        reply.status(200).send(notificationSerializer.serializeList(notifications));
+        const notifications = await userService.getUserNotifications(user, serializer.view);
+
+        reply.status(200).send(serializer.serializeList(notifications));
     }
 
     async deleteUserNotification(request: FastifyRequest, reply: FastifyReply) {

@@ -3,10 +3,11 @@ import {MapLearnerVocab} from "@/src/models/entities/MapLearnerVocab.js";
 import {meaningSummerySerializer} from "@/src/presentation/response/serializers/Meaning/MeaningSummerySerializer.js";
 import {vocabVariantSerializer} from "@/src/presentation/response/serializers/VocabVariant/VocabVariantSerializer.js";
 import {vocabTagSerializer} from "@/src/presentation/response/serializers/VocabTag/VocabTagSerializer.js";
-import {ViewDescription} from "@/src/models/viewResolver.js";
+import {ViewDescriptionFromSpec} from "@/src/models/viewResolver.js";
+import {MapLearnerVocabFetchSpecsType} from "@/src/models/fetchSpecs/mapLearnerVocabFetchSpecs.js";
 
 class LearnerVocabSerializer extends CustomSerializer<MapLearnerVocab> {
-    readonly view: ViewDescription = {
+    readonly view: ViewDescriptionFromSpec<MapLearnerVocab, MapLearnerVocabFetchSpecsType> = {
         fields: ["level", "notes"],
         relations: {
             vocab: {

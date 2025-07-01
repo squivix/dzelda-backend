@@ -12,9 +12,9 @@ import {Dictionary} from "@/src/models/entities/Dictionary.js";
 import {TranslationLanguage} from "@/src/models/entities/TranslationLanguage.js";
 import {PreferredTranslationLanguageEntry} from "@/src/models/entities/PreferredTranslationLanguageEntry.js";
 import {buildFetchPlan, ViewDescription} from "@/src/models/viewResolver.js";
-import {languageFieldFetchMap} from "@/src/models/fetchSpecs/languageFieldFetchMap.js";
-import {mapLearnerLanguageFieldFetchMap} from "@/src/models/fetchSpecs/mapLearnerLanguageFieldFetchMap.js";
-import {translationLanguageFieldFetchMap} from "@/src/models/fetchSpecs/translationLanguageFieldFetchMap.js";
+import {languageFetchSpecs} from "@/src/models/fetchSpecs/languageFetchSpecs.js";
+import {mapLearnerLanguageFetchSpecs} from "@/src/models/fetchSpecs/mapLearnerLanguageFetchSpecs.js";
+import {translationLanguageFetchSpecs} from "@/src/models/fetchSpecs/translationLanguageFetchSpecs.js";
 
 export class LanguageService {
     em: EntityManager;
@@ -36,7 +36,7 @@ export class LanguageService {
 
         dbOrderBy.push({code: "asc"});
         dbOrderBy.push({id: "asc"});
-        const {fields: dbFields, populate: dbPopulate} = buildFetchPlan(viewDescription, languageFieldFetchMap, {user: null, em: this.em});
+        const {fields: dbFields, populate: dbPopulate} = buildFetchPlan(viewDescription, languageFetchSpecs(), {user: null, em: this.em});
         return await this.languageRepo.find({}, {
             fields: dbFields as any,
             populate: dbPopulate as any,
@@ -58,7 +58,7 @@ export class LanguageService {
 
         dbOrderBy.push({language: {code: "asc"}});
         dbOrderBy.push({language: {id: "asc"}});
-        const {fields: dbFields, populate: dbPopulate} = buildFetchPlan(viewDescription, mapLearnerLanguageFieldFetchMap, {user: user, em: this.em});
+        const {fields: dbFields, populate: dbPopulate} = buildFetchPlan(viewDescription, mapLearnerLanguageFetchSpecs(), {user: user, em: this.em});
         return await this.em.find(MapLearnerLanguage, dbFilters, {
             fields: dbFields as any,
             populate: dbPopulate as any,
@@ -67,10 +67,11 @@ export class LanguageService {
     }
 
     async getUserLanguage(code: string, user: User, viewDescription: ViewDescription) {
-        const {fields: dbFields, populate: dbPopulate} = buildFetchPlan(viewDescription, mapLearnerLanguageFieldFetchMap, {user: user, em: this.em});
+        const {fields: dbFields, populate: dbPopulate} = buildFetchPlan(viewDescription, mapLearnerLanguageFetchSpecs(), {user: user, em: this.em});
         return await this.em.findOne(MapLearnerLanguage, {language: {code}, learner: user.profile}, {
             fields: dbFields as any,
-            populate: dbPopulate as any
+            populate: dbPopulate as any,
+            refresh: true
         }) as MapLearnerLanguage;
     }
 
@@ -129,7 +130,7 @@ export class LanguageService {
         const dbFilters: FilterQuery<TranslationLanguage> = {$and: []};
         if (filters.isDefault !== undefined)
             dbFilters.$and!.push({isDefault: filters.isDefault});
-        const {fields: dbFields, populate: dbPopulate} = buildFetchPlan(viewDescription, translationLanguageFieldFetchMap, {user: null, em: this.em});
+        const {fields: dbFields, populate: dbPopulate} = buildFetchPlan(viewDescription, translationLanguageFetchSpecs(), {user: null, em: this.em});
 
         return await this.em.find(TranslationLanguage, dbFilters, {
             fields: dbFields as any,

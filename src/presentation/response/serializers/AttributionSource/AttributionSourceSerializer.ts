@@ -1,10 +1,11 @@
 import {CustomSerializer} from "@/src/presentation/response/serializers/CustomSerializer.js";
 import {AttributionSource} from "@/src/models/entities/AttributionSource.js";
-import {ViewDescription} from "@/src/models/viewResolver.js";
+import {ViewDescriptionFromSpec} from "@/src/models/viewResolver.js";
+import {AttributionSourceFetchSpecsType} from "@/src/models/fetchSpecs/attributionSourceFetchSpecs.js";
 
 
 class AttributionSourceSerializer extends CustomSerializer<AttributionSource> {
-    readonly view: ViewDescription = {
+    readonly view: ViewDescriptionFromSpec<AttributionSource, AttributionSourceFetchSpecsType> = {
         fields: ["id", "name", "url", "logoUrl"]
     }
 

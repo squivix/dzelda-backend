@@ -1,13 +1,13 @@
-import {FieldFetchSpecsMap} from "@/src/models/viewResolver.js";
+import {EntityFetchSpecs} from "@/src/models/viewResolver.js";
 import {Collection} from "@/src/models/entities/Collection.js";
-import {profileFieldFieldFetchMap} from "@/src/models/fetchSpecs/profileFieldFieldFetchMap.js";
-import {textFieldFetchMap} from "@/src/models/fetchSpecs/textFieldFetchMap.js";
-import {languageFieldFetchMap} from "@/src/models/fetchSpecs/languageFieldFetchMap.js";
+import {profileFetchSpecs} from "@/src/models/fetchSpecs/profileFetchSpecs.js";
+import {textFetchSpecs} from "@/src/models/fetchSpecs/textFetchSpecs.js";
+import {languageFetchSpecs} from "@/src/models/fetchSpecs/languageFetchSpecs.js";
 import {AnonymousUser} from "@/src/models/entities/auth/User.js";
 import {CollectionRepo} from "@/src/models/repos/CollectionRepo.js";
 
 
-export const collectionFieldFetchMap: FieldFetchSpecsMap<Collection> = {
+export const collectionFetchSpecs = () => ({
     id: {type: "db-column"},
     title: {type: "db-column"},
     description: {type: "db-column"},
@@ -15,9 +15,9 @@ export const collectionFieldFetchMap: FieldFetchSpecsMap<Collection> = {
     addedOn: {type: "db-column"},
     isPublic: {type: "db-column"},
     avgPastViewersCountPerText: {type: "formula"},
-    language: {type: "relation", populate: "language", getFieldFetchSpecsMap: () => languageFieldFetchMap, relationType: "to-one"},
-    addedBy: {type: "relation", populate: "addedBy", getFieldFetchSpecsMap: () => profileFieldFieldFetchMap, relationType: "to-one"},
-    texts: {type: "relation", populate: "texts", getFieldFetchSpecsMap: () => textFieldFetchMap, relationType: "to-many"},
+    language: {type: "relation", populate: "language", relationType: "to-one", entityFetchSpecs: languageFetchSpecs},
+    addedBy: {type: "relation", populate: "addedBy", entityFetchSpecs: profileFetchSpecs, relationType: "to-one"},
+    texts: {type: "relation", populate: "texts", entityFetchSpecs: textFetchSpecs, relationType: "to-many"},
     vocabsByLevel: {
         type: "annotated",
         annotate: async (collections, context) => {
@@ -36,4 +36,6 @@ export const collectionFieldFetchMap: FieldFetchSpecsMap<Collection> = {
             await repo.annotateIsBookmarked(collections, context.user.profile.id);
         }
     }
-};
+}) as const satisfies EntityFetchSpecs<Collection>
+
+export type CollectionFetchSpecsType = ReturnType<typeof collectionFetchSpecs>;

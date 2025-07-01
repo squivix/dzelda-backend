@@ -1,9 +1,10 @@
 import {CustomSerializer} from "@/src/presentation/response/serializers/CustomSerializer.js";
 import {User} from "@/src/models/entities/auth/User.js";
-import {ViewDescription} from "@/src/models/viewResolver.js";
+import {ViewDescriptionFromSpec} from "@/src/models/viewResolver.js";
+import {UserFetchSpecsType} from "@/src/models/fetchSpecs/userFetchSpecs.js";
 
 class UserSignUpSerializer extends CustomSerializer<User> {
-    readonly view: ViewDescription = {
+    readonly view: ViewDescriptionFromSpec<User, UserFetchSpecsType> = {
         fields: ["username", "email", "isEmailConfirmed", "isBanned", "isPendingEmailChange"],
     }
 

@@ -1,9 +1,10 @@
 import {CustomSerializer} from "@/src/presentation/response/serializers/CustomSerializer.js";
 import {Language} from "@/src/models/entities/Language.js";
-import {ViewDescription} from "@/src/models/viewResolver.js";
+import {ViewDescriptionFromSpec} from "@/src/models/viewResolver.js";
+import {LanguageFetchSpecsType} from "@/src/models/fetchSpecs/languageFetchSpecs.js";
 
 class LanguageSerializer extends CustomSerializer<Language> {
-    readonly view: ViewDescription = {
+    readonly view: ViewDescriptionFromSpec<Language, LanguageFetchSpecsType> = {
         fields: ["id", "code", "name", "greeting", "isRtl", "flag", "flagCircular", "flagEmoji", "color", "levelThresholds", "learnersCount",]
     }
 

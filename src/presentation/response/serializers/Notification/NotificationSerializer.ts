@@ -1,9 +1,10 @@
 import {CustomSerializer} from "@/src/presentation/response/serializers/CustomSerializer.js";
 import {Notification} from "@/src/models/entities/Notification.js";
-import {ViewDescription} from "@/src/models/viewResolver.js";
+import {ViewDescriptionFromSpec} from "@/src/models/viewResolver.js";
+import {NotificationFetchSpecsType} from "@/src/models/fetchSpecs/notificationFetchSpecs.js";
 
 class NotificationSerializer extends CustomSerializer<Notification> {
-    readonly view: ViewDescription = {
+    readonly view: ViewDescriptionFromSpec<Notification, NotificationFetchSpecsType> = {
         fields: ["id", "text", "createdDate"]
     }
 

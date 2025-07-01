@@ -5,7 +5,7 @@ import {QueryOrderMap} from "@mikro-orm/core/enums.js";
 import {MapLearnerDictionary} from "@/src/models/entities/MapLearnerDictionary.js";
 import {EntityField} from "@mikro-orm/core/drivers/IDatabaseDriver.js";
 import {buildFetchPlan, ViewDescription} from "@/src/models/viewResolver.js";
-import {dictionaryFieldFetchMap} from "@/src/models/fetchSpecs/dictionaryFieldFetchMap.js";
+import {dictionaryFetchSpecs} from "@/src/models/fetchSpecs/dictionaryFetchSpecs.js";
 
 export class DictionaryService {
 
@@ -32,7 +32,7 @@ export class DictionaryService {
         if (sort.sortBy == "name")
             dbOrderBy.push({name: sort.sortOrder});
         dbOrderBy.push({id: "asc"});
-        const {fields: dbFields, populate: dbPopulate} = buildFetchPlan(viewDescription, dictionaryFieldFetchMap, {user: null, em: this.em});
+        const {fields: dbFields, populate: dbPopulate} = buildFetchPlan(viewDescription, dictionaryFetchSpecs(), {user: null, em: this.em});
         return await this.em.find(Dictionary, dbFilters, {
             fields: dbFields as any,
             populate: dbPopulate as any,
@@ -49,7 +49,7 @@ export class DictionaryService {
         if (filters.isPronunciation !== undefined)
             dbFilters.$and!.push({dictionary: {isPronunciation: filters.isPronunciation}});
 
-        const {fields: dictionaryFields, populate: dictionaryPopulate} = buildFetchPlan(viewDescription, dictionaryFieldFetchMap, {user: null, em: this.em});
+        const {fields: dictionaryFields, populate: dictionaryPopulate} = buildFetchPlan(viewDescription, dictionaryFetchSpecs(), {user: null, em: this.em});
         const learnerMappings = await this.em.find(MapLearnerDictionary, dbFilters, {
             fields: dictionaryFields.map(f => `dictionary.${f}`) as any,
             populate: dictionaryPopulate.map(f => `dictionary.${f}`) as any,

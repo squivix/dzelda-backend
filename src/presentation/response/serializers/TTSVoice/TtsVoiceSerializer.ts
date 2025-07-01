@@ -1,9 +1,10 @@
 import {CustomSerializer} from "@/src/presentation/response/serializers/CustomSerializer.js";
 import {TTSVoice} from "@/src/models/entities/TTSVoice.js";
-import {ViewDescription} from "@/src/models/viewResolver.js";
+import {ViewDescriptionFromSpec} from "@/src/models/viewResolver.js";
+import {TTSVoiceFetchSpecsType} from "@/src/models/fetchSpecs/ttsVoiceFetchSpecs.js";
 
 class TTSVoiceSerializer extends CustomSerializer<TTSVoice> {
-    readonly view: ViewDescription = {
+    readonly view: ViewDescriptionFromSpec<TTSVoice, TTSVoiceFetchSpecsType> = {
         fields: ["id", "code", "name", "gender", "provider", "accentCountryCode", "isDefault",],
         relations: {language: {fields: ["code"]}}
     }

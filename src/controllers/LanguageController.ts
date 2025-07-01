@@ -5,13 +5,14 @@ import {NotFoundAPIError} from "@/src/utils/errors/NotFoundAPIError.js";
 import {UserService} from "@/src/services/UserService.js";
 import {ValidationAPIError} from "@/src/utils/errors/ValidationAPIError.js";
 import {languageCodeValidator} from "@/src/validators/languageValidators.js";
-import {User} from "@/src/models/entities/auth/User.js";
+import {AnonymousUser, User} from "@/src/models/entities/auth/User.js";
 import {APIError} from "@/src/utils/errors/APIError.js";
 import {TranslationLanguage} from "@/src/models/entities/TranslationLanguage.js";
 import {booleanStringValidator} from "@/src/validators/utilValidators.js";
 import {languageSerializer} from "@/src/presentation/response/serializers/Language/LanguageSerializer.js";
 import {translationLanguageSerializer} from "@/src/presentation/response/serializers/TranslationLanguage/TranslationLanguageSerializer.js";
 import {learnerLanguageSerializer} from "@/src/presentation/response/serializers/Language/LearnerLanguageSerializer.js";
+import {UnauthenticatedAPIError} from "@/src/utils/errors/UnauthenticatedAPIError.js";
 
 class LanguageController {
     async getLanguages(request: FastifyRequest, reply: FastifyReply) {
@@ -32,9 +33,15 @@ class LanguageController {
         const pathParamsValidator = z.object({username: z.string().min(1).or(z.literal("me"))});
         const pathParams = pathParamsValidator.parse(request.params);
         const userService = new UserService(request.em);
-        const user = await userService.getUser(pathParams.username, request.user);
-        if (!user || (!user.profile.isPublic && user !== request.user))
+        if (pathParams.username == "me") {
+            if (!request.isLoggedIn)
+                throw new UnauthenticatedAPIError(request.user as AnonymousUser | null);
+            pathParams.username = request.user!.username;
+        }
+        const profile = await userService.findProfile({user: {username: pathParams.username}});
+        if (!profile || (!profile.isPublic && profile !== request.user?.profile))
             throw new NotFoundAPIError("User");
+
         const queryParamsValidator = z.object({
             sortBy: z.union([z.literal("name"), z.literal("learnersCount"), z.literal("lastOpened")]).optional().default("name"),
             sortOrder: z.union([z.literal("asc"), z.literal("desc")]).optional().default("asc"),
@@ -45,7 +52,7 @@ class LanguageController {
         const languageService = new LanguageService(request.em);
         const filters = {};
         const sort = {sortBy: queryParams.sortBy, sortOrder: queryParams.sortOrder};
-        const languageMappings = await languageService.getUserLanguages(user, filters, sort, serializer.view);
+        const languageMappings = await languageService.getUserLanguages(profile.user, filters, sort, serializer.view);
         reply.send(serializer.serializeList(languageMappings));
     }
 

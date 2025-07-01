@@ -332,7 +332,8 @@ describe("PATCH texts/{textId}/", () => {
         const collection = await context.collectionFactory.createOne({
             addedBy: author.profile,
             language: language,
-            texts: []
+            texts: [],
+            isPublic: false,
         });
         const text = await context.textFactory.createOne({
             collection,

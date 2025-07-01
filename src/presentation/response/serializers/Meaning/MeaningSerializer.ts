@@ -3,10 +3,11 @@ import {Meaning} from "@/src/models/entities/Meaning.js";
 import {attributionSourceSerializer} from "@/src/presentation/response/serializers/AttributionSource/AttributionSourceSerializer.js";
 import {vocabForMeaningSerializer} from "@/src/presentation/response/serializers/Vocab/VocabForMeaningSerializer.js";
 import {vocabVariantSerializer} from "@/src/presentation/response/serializers/VocabVariant/VocabVariantSerializer.js";
-import {ViewDescription} from "@/src/models/viewResolver.js";
+import {ViewDescription, ViewDescriptionFromSpec} from "@/src/models/viewResolver.js";
+import {MeaningFetchSpecsType} from "@/src/models/fetchSpecs/meaningFetchSpecs.js";
 
 class MeaningSerializer extends CustomSerializer<Meaning> {
-    readonly view: ViewDescription = {
+    readonly view: ViewDescriptionFromSpec<Meaning, MeaningFetchSpecsType> = {
         fields: ["id", "text", "learnersCount", "addedOn", "attribution",],
         relations: {
             language: {fields: ["code"]},

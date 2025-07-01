@@ -70,7 +70,10 @@ class CollectionController {
             })).optional()
         });
         const body = bodyValidator.parse(request.body);
+        const user = request.user as User;
         const serializer = collectionSummaryLoggedInSerializer;
+
+
         const languageService = new LanguageService(request.em);
         const language = await languageService.findLearningLanguage({code: body.languageCode});
         if (!language)
@@ -79,15 +82,16 @@ class CollectionController {
         if (body.image)
             body.image = await validateFileObjectKey(userService, request.user as User, body.image, "collectionImage", "image");
         const collectionService = new CollectionService(request.em);
-        const collection = await collectionService.createCollection({
+        let newCollection = await collectionService.createCollection({
             language: language,
             title: body.title,
             description: body.description,
             isPublic: body.isPublic,
             image: body.image,
             texts: body.texts,
-        }, request.user as User, serializer.view);
-        reply.status(201).send(serializer.serialize(collection));
+        }, user);
+        newCollection = await collectionService.getCollection(newCollection.id, user, serializer.view)
+        reply.status(201).send(serializer.serialize(newCollection));
     }
 
     async getCollection(request: FastifyRequest, reply: FastifyReply) {
@@ -105,7 +109,6 @@ class CollectionController {
     async updateCollection(request: FastifyRequest, reply: FastifyReply) {
         const pathParamsValidator = z.object({collectionId: numericStringValidator});
         const pathParams = pathParamsValidator.parse(request.params);
-
         const bodyValidator = z.object({
             title: collectionTitleValidator,
             description: collectionDescriptionValidator,
@@ -114,7 +117,9 @@ class CollectionController {
             image: z.string().optional(),
         });
         const body = bodyValidator.parse(request.body);
+        const user = request.user as User;
         const serializer = collectionLoggedInSerializer;
+
         const collectionService = new CollectionService(request.em);
         const collection = await collectionService.findCollection(pathParams.collectionId, ["id", "addedBy", "texts", "isPublic"]);
 
@@ -130,13 +135,14 @@ class CollectionController {
         if (body.image)
             body.image = await validateFileObjectKey(userService, request.user as User, body.image, "collectionImage", "image");
 
-        const updatedCollection = await collectionService.updateCollection(collection, {
+        await collectionService.updateCollection(collection, {
             title: body.title,
             description: body.description,
             image: body.image,
             textsOrder: body.textsOrder,
             isPublic: body.isPublic
-        }, request.user as User, serializer.view);
+        }, request.user as User);
+        const updatedCollection = await collectionService.getCollection(collection.id, user, serializer.view);
         reply.status(200).send(serializer.serialize(updatedCollection));
     }
 

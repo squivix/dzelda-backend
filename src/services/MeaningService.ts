@@ -1,4 +1,4 @@
-import {EntityManager, EntityRepository, FilterQuery, raw} from "@mikro-orm/core";
+import {EntityManager, FilterQuery, raw} from "@mikro-orm/core";
 import {Meaning} from "@/src/models/entities/Meaning.js";
 import {Vocab} from "@/src/models/entities/Vocab.js";
 import {Text} from "@/src/models/entities/Text.js";
@@ -10,8 +10,7 @@ import {VocabLevel} from "dzelda-common";
 import {TranslationLanguage} from "@/src/models/entities/TranslationLanguage.js";
 import {VocabVariant} from "@/src/models/entities/VocabVariant.js";
 import {buildFetchPlan, ViewDescription} from "@/src/models/viewResolver.js";
-import {meaningFieldFetchMap} from "@/src/models/fetchSpecs/meaningFieldFetchMap.js";
-import {MapLearnerLanguage} from "@/src/models/entities/MapLearnerLanguage.js";
+import {meaningFetchSpecs} from "@/src/models/fetchSpecs/meaningFetchSpecs.js";
 import {EntityField} from "@mikro-orm/core/drivers/IDatabaseDriver.js";
 
 export class MeaningService {
@@ -23,7 +22,7 @@ export class MeaningService {
     }
 
     async getMeaning(meaningId: number, viewDescription: ViewDescription) {
-        const {fields: dbFields, populate: dbPopulate} = buildFetchPlan(viewDescription, meaningFieldFetchMap, {user: null, em: this.em});
+        const {fields: dbFields, populate: dbPopulate} = buildFetchPlan(viewDescription, meaningFetchSpecs(), {user: null, em: this.em});
         return await this.em.findOne(Meaning, {id: meaningId}, {
             fields: dbFields as any,
             populate: dbPopulate as any,
@@ -31,7 +30,7 @@ export class MeaningService {
     }
 
     async getMeaningByText(meaningData: { vocab: Vocab; language: TranslationLanguage; text: string }, viewDescription: ViewDescription) {
-        const {fields: dbFields, populate: dbPopulate} = buildFetchPlan(viewDescription, meaningFieldFetchMap, {user: null, em: this.em});
+        const {fields: dbFields, populate: dbPopulate} = buildFetchPlan(viewDescription, meaningFetchSpecs(), {user: null, em: this.em});
         return await this.em.findOne(Meaning, {
             vocab: meaningData.vocab,
             text: meaningData.text,
@@ -70,7 +69,7 @@ export class MeaningService {
         else if (sort.sortBy == "learnersCount")
             dbOrderBy.push({learnersCount: sort.sortOrder});
 
-        const {fields: dbFields, populate: dbPopulate} = buildFetchPlan(viewDescription, meaningFieldFetchMap, {user: null, em: this.em});
+        const {fields: dbFields, populate: dbPopulate} = buildFetchPlan(viewDescription, meaningFetchSpecs(), {user: null, em: this.em});
         return await this.em.findAndCount(Meaning, dbFilters, {
             fields: dbFields as any,
             populate: dbPopulate as any,
@@ -81,7 +80,7 @@ export class MeaningService {
     }
 
     async getTextMeanings(text: Text, user: User | AnonymousUser | null, viewDescription: ViewDescription) {
-        const {fields: dbFields, populate: dbPopulate} = buildFetchPlan(viewDescription, meaningFieldFetchMap, {user: user, em: this.em});
+        const {fields: dbFields, populate: dbPopulate} = buildFetchPlan(viewDescription, meaningFetchSpecs(), {user: user, em: this.em});
         const meanings = await this.em.find(Meaning, {
             vocab: {textsAppearingIn: text}
         }, {
@@ -111,7 +110,7 @@ export class MeaningService {
     }
 
     async getUserMeaning(meaningId: number, user: User, viewDescription: ViewDescription) {
-        const {fields: meaningFields, populate: meaningPopulate} = buildFetchPlan(viewDescription, meaningFieldFetchMap, {user: user, em: this.em});
+        const {fields: meaningFields, populate: meaningPopulate} = buildFetchPlan(viewDescription, meaningFetchSpecs(), {user: user, em: this.em});
         return await this.em.findOne(MapLearnerMeaning, {
             meaning: meaningId,
             learner: user.profile

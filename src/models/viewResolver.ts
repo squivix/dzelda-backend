@@ -16,14 +16,14 @@ export interface FormulaFieldSpec {
     type: "formula"
 }
 
-export interface RelationFieldSpec {
+
+type RelationFieldSpec = {
     type: "relation";
     populate: string;
-    /** field fetch specs map for the related entity allowing nested composition */
-    getFieldFetchSpecsMap: () => FieldFetchSpecsMap<any>;
-    defaultContextFilter?: (context: FetchContext) => FilterQuery<any>;
     relationType: "to-one" | "to-many";
-}
+    entityFetchSpecs: () => EntityFetchSpecs<any>;
+    defaultContextFilter?: (context: FetchContext) => FilterQuery<any>;
+};
 
 export interface AnnotatedFieldSpec<T extends AnyEntity> {
     type: "annotated";
@@ -36,7 +36,6 @@ export type FieldFetchSpec<T extends AnyEntity> =
     | RelationFieldSpec
     | AnnotatedFieldSpec<T>;
 
-export type FieldFetchSpecsMap<T extends AnyEntity> = Record<string, FieldFetchSpec<T>>;
 
 export interface ViewDescription {
     fields: string[];
@@ -44,6 +43,38 @@ export interface ViewDescription {
     relations?: Record<string, ViewDescription | string[]>;
 }
 
+
+export type EntityFetchSpecs<T extends AnyEntity> = Record<string, FieldFetchSpec<T>>;
+
+type GetRelationSpec<Spec> = Spec extends RelationFieldSpec ? Spec : never;
+
+type RelationKeys<SpecMap> = {
+    [K in keyof SpecMap]: SpecMap[K] extends RelationFieldSpec ? K : never;
+}[keyof SpecMap];
+
+type Prev = [never, 0, 1, 2, 3, 4, 5];
+
+export type ViewDescriptionFromSpec<
+    T extends AnyEntity,
+    SpecMap extends EntityFetchSpecs<T>,
+    Depth extends number = 5
+> = Depth extends 0
+    ? {
+        fields: Array<keyof SpecMap>;
+        relations?: { [K in RelationKeys<SpecMap>]?: string[] };
+    }
+    : {
+        fields: Array<keyof SpecMap>;
+        relations?: {
+            [K in RelationKeys<SpecMap>]?:
+            | ViewDescriptionFromSpec<
+            any,
+            ReturnType<GetRelationSpec<SpecMap[K]>["entityFetchSpecs"]>,
+            Prev[Depth]
+        >
+            | Array<keyof ReturnType<GetRelationSpec<SpecMap[K]>["entityFetchSpecs"]>>
+        };
+    };
 
 type RelationFilters = Record<string, FilterQuery<any>>;
 
@@ -54,30 +85,30 @@ interface FetchPlan {
     annotatedFields: Array<{ path: string, annotate: ((records: AnyEntity[]) => Promise<void> | void) }>,
 }
 
-
 export function getResultAtPath<T extends AnyEntity>(
-    rootFetchMap: FieldFetchSpecsMap<T>,
+    rootFetchMap: EntityFetchSpecs<T>,
     path: string,
     topLevelResults: T[]
 ): T[] {
     if (path === "")
         return topLevelResults;
     const keys = path.split(".");
-    let currentFetchSpec: FieldFetchSpec<any> | undefined = rootFetchMap[keys[0]];
+    if (keys.length < 1)
+        throw new Error(`Invalid path ${path}`);
+    let currentFetchSpec: FieldFetchSpec<any> | undefined = rootFetchMap[keys[0]!];
     let currentResults: T[] = topLevelResults;
 
     if (!currentFetchSpec)
         throw new Error(`Field fetch map for '${keys[0]}' not found`);
 
-
     for (let i = 0; i < keys.length; i++) {
-        const key = keys[i];
+        const key = keys[i]!;
 
         if (i > 0) {
             if (currentFetchSpec?.type !== "relation")
                 throw new Error(`Expected 'relation' field at '${keys.slice(0, i).join(".")}', got '${currentFetchSpec?.type}'`);
 
-            const relationFieldFetchMap: FieldFetchSpecsMap<T> = currentFetchSpec.getFieldFetchSpecsMap();
+            const relationFieldFetchMap: EntityFetchSpecs<T> = currentFetchSpec.entityFetchSpecs();
             currentFetchSpec = relationFieldFetchMap[key];
 
             if (!currentFetchSpec)
@@ -111,7 +142,7 @@ export function getResultAtPath<T extends AnyEntity>(
 
 export function buildFetchPlan(
     currentView: ViewDescription,
-    currentFieldFetchSpecsMap: FieldFetchSpecsMap<any>,
+    currentFieldFetchSpecsMap: EntityFetchSpecs<any>,
     context: FetchContext,
     relationFilters: RelationFilters = {},
     prefix = ""
@@ -144,7 +175,7 @@ export function buildFetchPlan(
                 continue;
             const path = prefix ? `${prefix}.${relationFieldFetchSpec.populate}` : relationFieldFetchSpec.populate;
             const subView: ViewDescription = Array.isArray(sub) ? {fields: sub} : sub;
-            const nested = buildFetchPlan(subView, relationFieldFetchSpec.getFieldFetchSpecsMap(), context, relationFilters, path);
+            const nested = buildFetchPlan(subView, relationFieldFetchSpec.entityFetchSpecs(), context, relationFilters, path);
 
             const externalFilter = relationFilters?.[path];
             const contextFilter = relationFieldFetchSpec.defaultContextFilter?.(context);
@@ -177,13 +208,12 @@ export function buildFetchPlan(
     };
 }
 
-
 export async function queryDbFromFetchPlan<T extends AnyEntity>(
     repo: EntityRepository<T>,
     topLevelWhere: FilterQuery<T>,
     relationFilters: RelationFilters,
     view: ViewDescription,
-    fieldFetchSpecsMap: FieldFetchSpecsMap<T>,
+    fieldFetchSpecsMap: EntityFetchSpecs<T>,
     context: FetchContext,
 ): Promise<T[]> {
     const {
@@ -205,7 +235,7 @@ export async function queryDbFromFetchPlan<T extends AnyEntity>(
     return result;
 }
 
-export async function annotateFields<T extends AnyEntity>(result: T[], annotatedFields: FetchPlan["annotatedFields"], fieldFetchSpecMap: FieldFetchSpecsMap<T>) {
+export async function annotateFields<T extends AnyEntity>(result: T[], annotatedFields: FetchPlan["annotatedFields"], fieldFetchSpecMap: EntityFetchSpecs<T>) {
     await Promise.all(annotatedFields.map(({path, annotate}) => {
         return annotate(getResultAtPath(fieldFetchSpecMap, path, result));
     }));

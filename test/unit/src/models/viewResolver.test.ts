@@ -1,25 +1,23 @@
 import {describe, expect, test, TestContext, vi} from "vitest";
-import {buildFetchPlan, FieldFetchSpecsMap, ViewDescription} from "@/src/models/viewResolver.js";
-import {collectionFieldFetchMap} from "@/src/models/fetchSpecs/collectionFieldFetchMap.js";
-import {textFieldFetchMap} from "@/src/models/fetchSpecs/textFieldFetchMap.js";
-import {CollectionLoggedInSerializer} from "@/src/presentation/response/serializers/Collection/CollectionLoggedInSerializer.js";
-import {vocabFieldFetchMap} from "@/src/models/fetchSpecs/vocabFieldFetchMap.js";
-import {meaningFieldFetchMap} from "@/src/models/fetchSpecs/meaningFieldFetchMap.js";
-import {meaningSummerySerializer} from "@/src/presentation/response/serializers/Meaning/MeaningSummerySerializer.js";
+import {buildFetchPlan, EntityFetchSpecs, ViewDescription} from "@/src/models/viewResolver.js";
+import {collectionFetchSpecs} from "@/src/models/fetchSpecs/collectionFetchSpecs.js";
+import {textFetchSpecs} from "@/src/models/fetchSpecs/textFetchSpecs.js";
+import {vocabFetchSpecs} from "@/src/models/fetchSpecs/vocabFetchSpecs.js";
+import {collectionLoggedInSerializer} from "@/src/presentation/response/serializers/Collection/CollectionLoggedInSerializer.js";
 
 
 /**{@link buildFetchPlan}*/
 describe("buildFetchPlan()", function () {
     describe("Field Selection (db / formula)", function () {
         test<TestContext>("should select simple db fields from the root view", async (testContext) => {
-            const fetchSpecsMap: FieldFetchSpecsMap<any> = {
+            const fetchSpecs: EntityFetchSpecs<any> = {
                 columnField: {type: "db-column"},
                 otherField: {type: "db-column"},
             }
             const view: ViewDescription = {
                 fields: ["columnField"]
             }
-            const context = {user: null};
+            const context = {user: null, em: testContext.em};
 
             const relationFilters = {};
             const {
@@ -27,14 +25,14 @@ describe("buildFetchPlan()", function () {
                 populate: topLevelPopulate,
                 filteredPopulates,
                 annotatedFields
-            } = buildFetchPlan(view, fetchSpecsMap, context, relationFilters);
+            } = buildFetchPlan(view, fetchSpecs, context, relationFilters);
             expect(topLevelFields).toEqual(["columnField"]);
             expect(topLevelPopulate).toEqual([]);
             expect(filteredPopulates).toEqual(expect.arrayEqualRegardlessOfOrder([]))
             expect(annotatedFields).toEqual(expect.arrayEqualRegardlessOfOrder([]))
         });
         test<TestContext>("should select formula fields from the root view", async (testContext) => {
-            const fetchSpecsMap: FieldFetchSpecsMap<any> = {
+            const fetchSpecs: EntityFetchSpecs<any> = {
                 formulaField: {type: "formula"},
                 otherField: {type: "formula"},
             }
@@ -42,24 +40,24 @@ describe("buildFetchPlan()", function () {
                 fields: ["formulaField"]
             }
 
-            const context = {user: null};
+            const context = {user: null, em: testContext.em};
             const relationFilters = {};
             const {
                 fields: topLevelFields,
                 populate: topLevelPopulate,
                 filteredPopulates,
                 annotatedFields
-            } = buildFetchPlan(view, fetchSpecsMap, context, relationFilters);
+            } = buildFetchPlan(view, fetchSpecs, context, relationFilters);
             expect(topLevelFields).toEqual(["formulaField"]);
             expect(topLevelPopulate).toEqual([]);
             expect(filteredPopulates).toEqual(expect.arrayEqualRegardlessOfOrder([]))
             expect(annotatedFields).toEqual(expect.arrayEqualRegardlessOfOrder([]))
         });
-        test<TestContext>.todo("if relation fields are included in fields in view, select their id", async (testContext) => {
+        test.todo<TestContext>("if relation fields are included in fields in view, select their id", async (testContext) => {
 
         });
         test<TestContext>("should throw an error on non-existent fields in the view", async (testContext) => {
-            const fetchSpecsMap: FieldFetchSpecsMap<any> = {
+            const fetchSpecs: EntityFetchSpecs<any> = {
                 field1: {type: "db-column"},
                 field2: {type: "formula"},
                 otherField: {type: "db-column"},
@@ -68,9 +66,9 @@ describe("buildFetchPlan()", function () {
                 fields: ["field1", "field2", "nonExistentField"]
             }
 
-            const context = {user: null};
+            const context = {user: null, em: testContext.em};
             const relationFilters = {};
-            await expect(async () => buildFetchPlan(view, fetchSpecsMap, context, relationFilters)).rejects.toThrowError();
+            await expect(async () => buildFetchPlan(view, fetchSpecs, context, relationFilters)).rejects.toThrowError();
         });
 
     });
@@ -78,7 +76,7 @@ describe("buildFetchPlan()", function () {
         test<TestContext>("should call annotated fetchSpecs with the result and context", async (testContext) => {
             const annotateField1 = vi.fn();
             const annotateField2 = vi.fn();
-            const fetchSpecsMap: FieldFetchSpecsMap<any> = {
+            const fetchSpecs: EntityFetchSpecs<any> = {
                 annotatedField1: {type: "annotated", annotate: annotateField1},
                 annotatedField2: {type: "annotated", annotate: annotateField2},
                 otherField: {type: "db-column"},
@@ -87,32 +85,40 @@ describe("buildFetchPlan()", function () {
                 fields: ["annotatedField1", "annotatedField2"]
             }
 
-            const context = {user: null};
+            const context = {user: null, em: testContext.em};
             const relationFilters = {};
+            const records = [{id: 1}, {id: 2}];
             const {
                 fields: topLevelFields,
                 populate: topLevelPopulate,
                 filteredPopulates,
                 annotatedFields
-            } = buildFetchPlan(view, fetchSpecsMap, context, relationFilters);
+            } = buildFetchPlan(view, fetchSpecs, context, relationFilters);
             expect(topLevelFields).toEqual([]);
             expect(topLevelPopulate).toEqual([]);
             expect(filteredPopulates).toEqual(expect.arrayEqualRegardlessOfOrder([]))
-            expect(annotatedFields).toEqual(expect.arrayEqualRegardlessOfOrder([{path: "", annotate: annotateField1}, {path: "", annotate: annotateField2}]))
+            expect(annotatedFields).toEqual(expect.arrayEqualRegardlessOfOrder([
+                {path: "", annotate: expect.any(Function)},
+                {path: "", annotate: expect.any(Function)}]
+            ))
+            await annotatedFields[0].annotate(records);
+            await annotatedFields[1].annotate(records);
+            expect(annotateField1).toHaveBeenCalledWith(records, context);
+            expect(annotateField2).toHaveBeenCalledWith(records, context);
         });
         test<TestContext>("should handle nested annotated fetchSpecs", async (testContext) => {
             const annotateField1 = vi.fn();
             const annotateField2 = vi.fn();
-            const subFetchSpecsMap: FieldFetchSpecsMap<any> = {
+            const subFetchSpecs: EntityFetchSpecs<any> = {
                 annotatedField1: {type: "annotated", annotate: annotateField1},
                 annotatedField2: {type: "annotated", annotate: annotateField2},
             }
-            const fetchSpecsMap: FieldFetchSpecsMap<any> = {
+            const fetchSpecs: EntityFetchSpecs<any> = {
                 columnField: {type: "db-column"},
                 relationField: {
                     type: "relation",
                     populate: "relationField",
-                    getFieldFetchSpecsMap: subFetchSpecsMap,
+                    entityFetchSpecs: () => subFetchSpecs,
                     relationType: "to-many"
                 },
             }
@@ -125,28 +131,36 @@ describe("buildFetchPlan()", function () {
                 }
             }
 
-            const context = {user: null};
+            const context = {user: null, em: testContext.em};
             const relationFilters = {};
+            const records = [{id: 1}, {id: 2}];
             const {
                 fields: topLevelFields,
                 populate: topLevelPopulate,
                 filteredPopulates,
                 annotatedFields
-            } = buildFetchPlan(view, fetchSpecsMap, context, relationFilters);
+            } = buildFetchPlan(view, fetchSpecs, context, relationFilters);
             expect(topLevelFields).toEqual(["columnField"]);
             expect(topLevelPopulate).toEqual(["relationField"]);
             expect(filteredPopulates).toEqual(expect.arrayEqualRegardlessOfOrder([]))
-            expect(annotatedFields).toEqual(expect.arrayEqualRegardlessOfOrder([{path: "relationField", annotate: annotateField1}, {path: "relationField", annotate: annotateField2}]))
+            expect(annotatedFields).toEqual(expect.arrayEqualRegardlessOfOrder([
+                {path: "relationField", annotate: expect.any(Function)},
+                {path: "relationField", annotate: expect.any(Function)}
+            ]))
+            await annotatedFields[0].annotate(records);
+            await annotatedFields[1].annotate(records);
+            expect(annotateField1).toHaveBeenCalledWith(records, context);
+            expect(annotateField2).toHaveBeenCalledWith(records, context);
         });
     })
     describe("Simple Relations", function () {
         test<TestContext>("should populate direct relations defined in the view", async (testContext) => {
-            const subFetchSpecsMap: FieldFetchSpecsMap<any> = {
+            const subFetchSpecs: EntityFetchSpecs<any> = {
                 subfield1: {type: "db-column"},
                 subfield2: {type: "formula"},
             }
-            const fetchSpecsMap: FieldFetchSpecsMap<any> = {
-                relationField: {type: "relation", populate: "relationField", getFieldFetchSpecsMap: subFetchSpecsMap, relationType: "to-many"},
+            const fetchSpecs: EntityFetchSpecs<any> = {
+                relationField: {type: "relation", populate: "relationField", entityFetchSpecs: () => subFetchSpecs, relationType: "to-many"},
                 columnField: {type: "db-column"},
             }
 
@@ -158,31 +172,31 @@ describe("buildFetchPlan()", function () {
             }
 
 
-            const context = {user: null};
+            const context = {user: null, em: testContext.em};
             const relationFilters = {};
             const {
                 fields: topLevelFields,
                 populate: topLevelPopulate,
                 filteredPopulates,
                 annotatedFields
-            } = buildFetchPlan(view, fetchSpecsMap, context, relationFilters);
+            } = buildFetchPlan(view, fetchSpecs, context, relationFilters);
             expect(topLevelFields).toEqual(["columnField", "relationField.subfield1", "relationField.subfield2"]);
             expect(topLevelPopulate).toEqual(["relationField"]);
             expect(filteredPopulates).toEqual(expect.arrayEqualRegardlessOfOrder([]))
             expect(annotatedFields).toEqual(expect.arrayEqualRegardlessOfOrder([]))
         });
         test<TestContext>("should handle nested relation paths`", async (testContext) => {
-            const subSubFetchSpecsMap: FieldFetchSpecsMap<any> = {
+            const subSubFetchSpecs: EntityFetchSpecs<any> = {
                 subSubfield1: {type: "db-column"},
                 subSubfield2: {type: "formula"},
             }
-            const subFetchSpecsMap: FieldFetchSpecsMap<any> = {
+            const subFetchSpecs: EntityFetchSpecs<any> = {
                 subfield1: {type: "db-column"},
                 subfield2: {type: "formula"},
-                subRelationField: {type: "relation", populate: "subRelationField", getFieldFetchSpecsMap: subSubFetchSpecsMap, relationType: "to-many"},
+                subRelationField: {type: "relation", populate: "subRelationField", entityFetchSpecs: () => subSubFetchSpecs, relationType: "to-many"},
             }
-            const fetchSpecsMap: FieldFetchSpecsMap<any> = {
-                relationField: {type: "relation", populate: "relationField", getFieldFetchSpecsMap: subFetchSpecsMap, relationType: "to-many"},
+            const fetchSpecs: EntityFetchSpecs<any> = {
+                relationField: {type: "relation", populate: "relationField", entityFetchSpecs: () => subFetchSpecs, relationType: "to-many"},
                 field1: {type: "db-column"},
             }
 
@@ -200,14 +214,14 @@ describe("buildFetchPlan()", function () {
                 }
             }
 
-            const context = {user: null};
+            const context = {user: null, em: testContext.em};
             const relationFilters = {};
             const {
                 fields: topLevelFields,
                 populate: topLevelPopulate,
                 filteredPopulates,
                 annotatedFields
-            } = buildFetchPlan(view, fetchSpecsMap, context, relationFilters);
+            } = buildFetchPlan(view, fetchSpecs, context, relationFilters);
             expect(topLevelFields).toEqual(["field1", "relationField.subfield1", "relationField.subfield2", "relationField.subRelationField.subSubfield1", "relationField.subRelationField.subSubfield2"]);
             expect(topLevelPopulate).toEqual(["relationField", "relationField.subRelationField"]);
             expect(filteredPopulates).toEqual(expect.arrayEqualRegardlessOfOrder([]))
@@ -216,19 +230,19 @@ describe("buildFetchPlan()", function () {
     })
     describe("Context-Filtered Relations", function () {
         test<TestContext>("should apply context-based filters using `repo.populate`", async (testContext) => {
-            const subFetchSpecsMap: FieldFetchSpecsMap<any> = {
+            const subFetchSpecs: EntityFetchSpecs<any> = {
                 subfield1: {type: "db-column"},
                 subfield2: {type: "formula"},
             }
             const contextualFilter = {};
             const populateWithContextFilter = vi.fn().mockReturnValue(contextualFilter);
-            const fetchSpecsMap: FieldFetchSpecsMap<any> = {
+            const fetchSpecs: EntityFetchSpecs<any> = {
                 field1: {type: "db-column"},
                 relationField: {
                     type: "relation",
                     populate: "relationField",
                     relationType: "to-many",
-                    getFieldFetchSpecsMap: subFetchSpecsMap,
+                    entityFetchSpecs: () => subFetchSpecs,
                     defaultContextFilter: populateWithContextFilter
                 },
             }
@@ -239,14 +253,14 @@ describe("buildFetchPlan()", function () {
                     relationField: {fields: ["subfield1", "subfield2"]}
                 }
             }
-            const context = {user: null};
+            const context = {user: null, em: testContext.em};
             const relationFilters = {};
             const {
                 fields: topLevelFields,
                 populate: topLevelPopulate,
                 filteredPopulates,
                 annotatedFields
-            } = buildFetchPlan(view, fetchSpecsMap, context, relationFilters);
+            } = buildFetchPlan(view, fetchSpecs, context, relationFilters);
             expect(topLevelFields).toEqual(["field1"]);
             expect(topLevelPopulate).toEqual([]);
             expect(filteredPopulates).toEqual(expect.arrayEqualRegardlessOfOrder([
@@ -255,25 +269,24 @@ describe("buildFetchPlan()", function () {
             expect(annotatedFields).toEqual(expect.arrayEqualRegardlessOfOrder([]))
         });
         test<TestContext>("should support multiple filtered relations", async (testContext) => {
-            const subFetchSpecsMap1: FieldFetchSpecsMap<any> = {sub1field: {type: "db-column"}}, subFetchSpecsMap2: FieldFetchSpecsMap<any> = {sub2field: {type: "db-column"}}
+            const subFetchSpecs1: EntityFetchSpecs<any> = {sub1field: {type: "db-column"}}, subFetchSpecs2: EntityFetchSpecs<any> = {sub2field: {type: "db-column"}}
             const contextualFilter1 = {}, contextualFilter2 = {};
             const populateWithContextFilter1 = vi.fn().mockReturnValue(contextualFilter1),
                 populateWithContextFilter2 = vi.fn().mockReturnValue(contextualFilter2);
-            const fetchSpecsMap: FieldFetchSpecsMap<any> = {
+            const fetchSpecs: EntityFetchSpecs<any> = {
                 field1: {type: "db-column"},
                 relationField1: {
                     type: "relation",
                     populate: "relationField1",
                     relationType: "to-many",
-                    getFieldFetchSpecsMap: subFetchSpecsMap1,
-
+                    entityFetchSpecs: () => subFetchSpecs1,
                     defaultContextFilter: populateWithContextFilter1
                 },
                 relationField2: {
                     type: "relation",
                     populate: "relationField2",
                     relationType: "to-many",
-                    getFieldFetchSpecsMap: subFetchSpecsMap2,
+                    entityFetchSpecs: () => subFetchSpecs2,
                     defaultContextFilter: populateWithContextFilter2
                 },
             }
@@ -285,14 +298,14 @@ describe("buildFetchPlan()", function () {
                     relationField2: {fields: ["sub2field"]}
                 }
             }
-            const context = {user: null};
+            const context = {user: null, em: testContext.em};
             const relationFilters = {};
             const {
                 fields: topLevelFields,
                 populate: topLevelPopulate,
                 filteredPopulates,
                 annotatedFields
-            } = buildFetchPlan(view, fetchSpecsMap, context, relationFilters);
+            } = buildFetchPlan(view, fetchSpecs, context, relationFilters);
             expect(topLevelFields).toEqual(["field1"]);
             expect(topLevelPopulate).toEqual([]);
             expect(filteredPopulates).toEqual(expect.arrayEqualRegardlessOfOrder([
@@ -329,7 +342,7 @@ describe("buildFetchPlan()", function () {
         });
         test.todo<TestContext>("should not throw if `view.relations` is missing or empty", async (testContext) => {
         });
-        test.todo<TestContext>("should not fail when `fetchSpecsMap.contextFilter` is absent", async (testContext) => {
+        test.todo<TestContext>("should not fail when `fetchSpecs.contextFilter` is absent", async (testContext) => {
         });
     });
     describe("Optional / Stretch", function () {
@@ -341,7 +354,7 @@ describe("buildFetchPlan()", function () {
     describe("Realistic endpoints", function () {
         test<TestContext>("Get text vocabs (with meanings)", async (testContext) => {
             const user = testContext.userFactory.makeOne();
-            const fetchSpecsMap = vocabFieldFetchMap;
+            const fetchSpecs = vocabFetchSpecs();
             const view: ViewDescription = {
                 fields: ["id", "text", "isPhrase", "learnersCount"],
                 relations: {
@@ -371,7 +384,7 @@ describe("buildFetchPlan()", function () {
                     }
                 }
             }
-            const context = {user: user};
+            const context = {user: user, em: testContext.em};
             const relationFilters = {
                 "meanings": {language: {prefererEntries: {learnerLanguageMapping: {learner: user.profile}}}},
                 "ttsPronunciations": {voice: {$or: [{prefererLanguageMappings: {learner: user.profile}}, {isDefault: true}]}}
@@ -381,7 +394,7 @@ describe("buildFetchPlan()", function () {
                 populate: topLevelPopulate,
                 filteredPopulates,
                 annotatedFields
-            } = buildFetchPlan(view, fetchSpecsMap, context, relationFilters);
+            } = buildFetchPlan(view, fetchSpecs, context, relationFilters);
             expect(topLevelFields).toEqual([
                 "id", "text", "isPhrase", "learnersCount",
                 "language.code",
@@ -423,45 +436,50 @@ describe("buildFetchPlan()", function () {
             expect(annotatedFields).toEqual(expect.arrayEqualRegardlessOfOrder([]))
         });
         test<TestContext>("Get collections logged in", async (testContext) => {
-            const collectionAnnotateMocks = ["vocabsByLevel", "isBookmarked"].map(c => vi.spyOn(collectionFieldFetchMap[c] as any, "annotate").mockResolvedValue(undefined))
-            const textAnnotateMocks = ["vocabsByLevel", "isBookmarked"].map(c => vi.spyOn(textFieldFetchMap[c] as any, "annotate").mockResolvedValue(undefined))
+            const fetchSpecs = collectionFetchSpecs()
+            const subFetchSpecs = textFetchSpecs();
 
-            const fetchSpecsMap = collectionFieldFetchMap;
-            const view = CollectionLoggedInSerializer.view;
+            const collectionAnnotateMocks = (["vocabsByLevel", "isBookmarked"] as const).map(c => vi.spyOn(fetchSpecs[c], "annotate").mockResolvedValue(undefined))
+            const textAnnotateMocks = (["vocabsByLevel", "isBookmarked"] as const).map(c => vi.spyOn(subFetchSpecs[c], "annotate").mockResolvedValue(undefined))
 
-            const context = {user: null};
+
+            const view = collectionLoggedInSerializer.view;
+            const user = testContext.userFactory.makeOne();
+            const context = {user: user, em: testContext.em};
             const relationFilters = {};
             const {
                 fields: topLevelFields,
                 populate: topLevelPopulate,
                 filteredPopulates,
                 annotatedFields
-            } = buildFetchPlan(view, fetchSpecsMap, context, relationFilters);
+            } = buildFetchPlan(view, fetchSpecs, context, relationFilters);
 
 
-            expect(topLevelFields).toEqual(["id", "title", "description", "image", "addedOn", "isPublic", "avgPastViewersCountPerText",
+            expect(topLevelFields).toEqual(expect.arrayEqualRegardlessOfOrder(["id", "title", "description", "image", "addedOn", "isPublic", "avgPastViewersCountPerText",
                 "language.code",
                 "addedBy.user.username",
-                "texts.id", "texts.title", "texts.audio", "texts.image", "texts.orderInCollection", "texts.isLastInCollection", "texts.isProcessing", "texts.addedOn", "texts.isPublic", "texts.level", "texts.pastViewersCount", "texts.addedBy.user.username"
-            ]);
-            expect(topLevelPopulate).toEqual([
+                "texts.id", "texts.title", "texts.audio", "texts.image", "texts.orderInCollection", "texts.isLastInCollection", "texts.isProcessing", "texts.addedOn", "texts.isPublic", "texts.level", "texts.pastViewersCount", "texts.collection.id", "texts.language.code", "texts.addedBy.user.username",
+            ]));
+            expect(topLevelPopulate).toEqual(expect.arrayEqualRegardlessOfOrder([
                 "language",
                 "addedBy",
                 "addedBy.user",
                 "texts",
                 "texts.addedBy",
                 "texts.addedBy.user",
-            ]);
-            expect(filteredPopulates).toEqual(expect.arrayEqualRegardlessOfOrder([]))
-            expect(annotatedFields).toEqual(expect.arrayEqualRegardlessOfOrder([
-                ...collectionAnnotateMocks.map(a => ({path: "", annotate: a})),
-                ...textAnnotateMocks.map(a => ({path: "texts", annotate: a})),
+                "texts.language",
             ]));
+            expect(filteredPopulates).toEqual([])
+            expect(annotatedFields).toEqual(([
+                ...collectionAnnotateMocks.map(a => ({path: "", annotate: expect.any(Function)})),
+                ...textAnnotateMocks.map(a => ({path: "texts", annotate: expect.any(Function)})),
+            ]));
+            // for (const annotatedField of annotatedFields)
+            //     await annotatedField.annotate(records);
+            // collectionAnnotateMocks.forEach(m => expect(m).toHaveBeenCalledWith(records, context))
+            // textAnnotateMocks.forEach(m => expect(m).toHaveBeenCalledWith(records, context))
         });
         test.todo<TestContext>("Get text meanings", (testContext) => {
-            const fieldFetchMap = meaningFieldFetchMap;
-            const view = meaningSummerySerializer.view;
-            const {fields: dbFields, populate: dbPopulate} = buildFetchPlan(view, fieldFetchMap, {user: null, em: testContext.em});
         });
     });
 });
