@@ -1,22 +1,20 @@
-import nodemailer from "nodemailer";
+import nodemailer, {Transporter} from "nodemailer";
 import process from "process";
+import {Resend} from "resend";
 
-let config: any;
-if (process.env.NODE_ENV == "prod") {
-    config = {
-        host: process.env.SMTP_HOST,
-        secure: true,
-        port: process.env.SMTP_PORT,
-        auth: {
-            user: process.env.SMTP_USERNAME,
-            pass: process.env.SMTP_PASSWORD
-        },
-    };
-} else {
-    // Mailhog mock server accessed at http://localhost:8025
-    config = {
+let resend: Resend, localMailTransporter: Transporter;
+if (process.env.NODE_ENV == "prod")
+    resend = new Resend(process.env.SMTP_PASSWORD);
+else
+    localMailTransporter = nodemailer.createTransport({
         host: process.env.EMAIL_SERVER_HOST ?? "localhost",
         port: 1025,
-    };
+    });
+export const emailTransporter = {
+    async sendMail(options: { from: string, to: string, subject: string, text: string, html: string }) {
+        if (process.env.NODE_ENV == "prod")
+            await resend.emails.send(options);
+        else
+            await localMailTransporter.sendMail(options)
+    }
 }
-export const emailTransporter = nodemailer.createTransport(config);
